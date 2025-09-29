@@ -34,6 +34,30 @@ export type TokenSummary = {
   details?: Record<string, unknown>
 }
 
+type CoverageStat = {
+  usage: number
+  selectors: Set<string>
+  components: Set<string>
+  sources: Set<string>
+  variables: Set<string>
+  aliases: Set<string>
+  metadata?: Record<string, unknown>
+  instances?: MotionInstance[]
+  qaFlags: Set<string>
+}
+
+type MotionInstance = {
+  selector: string | null
+  type: 'transition' | 'animation' | 'keyframes'
+  property?: string
+  duration?: string
+  easing?: string
+  delay?: string
+  iteration?: string
+  sourceProperty: string
+  variables?: string[]
+}
+
 export type TokenQualityInsights = {
   categories: Record<
     keyof GeneratedTokenSet['tokenGroups'],
@@ -115,6 +139,139 @@ const BORDER_PROPS = new Set([
   'outline-style',
   'outline-color'
 ])
+
+function createCoverageStat(): CoverageStat {
+  return {
+    usage: 0,
+    selectors: new Set<string>(),
+    components: new Set<string>(),
+    sources: new Set<string>(),
+    variables: new Set<string>(),
+    aliases: new Set<string>(),
+    metadata: undefined,
+    instances: undefined,
+    qaFlags: new Set<string>()
+  }
+}
+
+function mergeSets(target: Set<string>, values: Iterable<string | null | undefined>) {
+  for (const value of values) {
+    if (value) {
+      target.add(value)
+    }
+  }
+}
+
+function getSelectorFromDecl(decl: postcss.Declaration): string | null {
+  let node: postcss.Node | undefined | null = decl.parent
+  while (node && node.type !== 'rule') {
+    node = (node as postcss.Container).parent
+  }
+  return node && node.type === 'rule' ? (node as postcss.Rule).selector ?? null : null
+}
+
+const COMPONENT_KEYWORDS: Array<{ pattern: RegExp; label: string }> = [
+  { pattern: /(\.|\b)(btn|button|cta)\b/, label: 'button' },
+  { pattern: /(\.|\b)(nav|menu|tabs|breadcrumb)\b/, label: 'navigation' },
+  { pattern: /(\.|\b)(form|input|field|field__|control|checkbox|radio|select)\b/, label: 'form' },
+  { pattern: /(\.|\b)(card|tile|panel|module)\b/, label: 'card' },
+  { pattern: /(\.|\b)(hero|banner|jumbotron)\b/, label: 'hero' },
+  { pattern: /(\.|\b)(footer)\b/, label: 'footer' },
+  { pattern: /(\.|\b)(header|topbar|appbar)\b/, label: 'header' },
+  { pattern: /(\.|\b)(table|grid|datatable)\b/, label: 'table' },
+  { pattern: /(\.|\b)(modal|dialog|popover|tooltip)\b/, label: 'overlay' },
+  { pattern: /(\.|\b)(list|item|collection)\b/, label: 'list' }
+]
+
+function classifySelector(selector: string | null): Set<string> {
+  const matches = new Set<string>()
+  if (!selector) return matches
+  const normalized = selector.toLowerCase()
+  COMPONENT_KEYWORDS.forEach(({ pattern, label }) => {
+    if (pattern.test(normalized)) {
+      matches.add(label)
+    }
+  })
+  if (normalized.includes('main ') || normalized.includes(' main') || normalized.includes('content')) {
+    matches.add('content')
+  }
+  return matches
+}
+
+function extractVariableNames(value: string | undefined): string[] {
+  if (!value) return []
+  const result = new Set<string>()
+  const regex = /var\(--([a-z0-9-]+)\b/gi
+  let match: RegExpExecArray | null
+  while ((match = regex.exec(value)) !== null) {
+    result.add(`--${match[1]}`)
+  }
+  return Array.from(result)
+}
+
+function collectVariableUsageStats(root: Root, variableName: string): {
+  usage: number
+  selectors: Set<string>
+  components: Set<string>
+  sources: Set<string>
+} {
+  const selectors = new Set<string>()
+  const components = new Set<string>()
+  const sources = new Set<string>()
+  let usage = 0
+
+  const pattern = new RegExp(`var\\(${escapeRegExp(variableName)}\\)`, 'gi')
+  root.walkDecls((decl) => {
+    if (!pattern.test(decl.value)) return
+    usage += (decl.value.match(pattern) ?? []).length
+    const selector = getSelectorFromDecl(decl)
+    if (selector) selectors.add(selector)
+    classifySelector(selector).forEach((component) => components.add(component))
+    sources.add(decl.prop.toLowerCase())
+  })
+
+  return { usage, selectors, components, sources }
+}
+
+function buildCoverageDetails(stat: CoverageStat) {
+  return {
+    selectors: Array.from(stat.selectors).slice(0, 10),
+    selectorCount: stat.selectors.size,
+    keyComponents: Array.from(stat.components),
+    sources: Array.from(stat.sources),
+    variables: Array.from(stat.variables),
+    aliases: Array.from(stat.aliases)
+  }
+}
+
+function splitCommaSeparated(value: string): string[] {
+  return value
+    .split(/,(?![^()]*\))/)
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+}
+
+function buildTransitionKey(property?: string, duration?: string, easing?: string, delay?: string): string {
+  return [property ?? 'all', duration ?? '0s', easing ?? 'ease', delay ?? '0s']
+    .map((part) => part.trim())
+    .join(' | ')
+}
+
+function buildAnimationKey(name?: string, duration?: string, easing?: string, delay?: string, iteration?: string): string {
+  return [name ?? 'unnamed', duration ?? '0s', easing ?? 'ease', delay ?? '0s', iteration ?? '1']
+    .map((part) => part.trim())
+    .join(' | ')
+}
+
+function durationToMs(value?: string): number | null {
+  if (!value) return null
+  const trimmed = value.trim()
+  const match = /^(-?\d*\.?\d+)(ms|s)$/i.exec(trimmed)
+  if (!match) return null
+  const number = Number(match[1])
+  if (Number.isNaN(number)) return null
+  return match[2].toLowerCase() === 's' ? number * 1000 : number
+}
 
 export function generateTokenSet(
   sources: CssSource[],
@@ -665,63 +822,156 @@ function extractMotion(css: string, variableMap: Map<string, string>): TokenSumm
 }
 
 function extractGradients(root: Root, variableMap: Map<string, string>): TokenSummary[] {
-  const counts = new Map<string, number>()
+  const gradientStats = new Map<string, CoverageStat>()
 
   root.walkDecls((decl) => {
-    const value = sanitizeTokenValue(decl.value)
-    if (!value) return
-    const matches = value.match(GRADIENT_REGEX)
-    matches?.forEach((gradient) => {
+    const rawValue = decl.value
+    const sanitizedValue = sanitizeTokenValue(rawValue)
+    if (!sanitizedValue) return
+    const matches = sanitizedValue.match(GRADIENT_REGEX)
+    if (!matches) return
+
+    const selector = getSelectorFromDecl(decl)
+    const componentHits = classifySelector(selector)
+    const variables = extractVariableNames(rawValue)
+
+    matches.forEach((gradient) => {
       const sanitized = sanitizeGradientValue(gradient)
       if (!sanitized) return
-      counts.set(sanitized, (counts.get(sanitized) ?? 0) + 1)
+      const stat = gradientStats.get(sanitized) ?? createCoverageStat()
+      stat.usage += 1
+      if (selector) stat.selectors.add(selector)
+      componentHits.forEach((component) => stat.components.add(component))
+      stat.sources.add(decl.prop.toLowerCase())
+      variables.forEach((variable) => stat.variables.add(variable))
+
+      const metadata = parseGradientMetadata(sanitized)
+      if (metadata) {
+        stat.metadata = { ...(stat.metadata ?? {}), ...metadata }
+      }
+
+      gradientStats.set(sanitized, stat)
     })
   })
 
-  const aliases: TokenSummary[] = []
   variableMap.forEach((value, name) => {
     const resolved = resolveValue(value, variableMap)
     if (!resolved) return
     const sanitized = sanitizeGradientValue(resolved)
     if (!sanitized) return
-    const usage = countVariableUsage(root, name) || 1
-    aliases.push({
-      name: `gradient-${name.slice(2)}`,
-      value: sanitized,
-      confidence: 85,
-      usage,
-      qualityScore: 0,
-      flags: [],
-      details: { alias: name }
-    })
+
+    const usageDetails = collectVariableUsageStats(root, name)
+    if (usageDetails.usage === 0) return
+
+    const stat = gradientStats.get(sanitized) ?? createCoverageStat()
+    stat.usage += usageDetails.usage
+    mergeSets(stat.selectors, usageDetails.selectors)
+    mergeSets(stat.components, usageDetails.components)
+    mergeSets(stat.sources, usageDetails.sources)
+    stat.aliases.add(name)
+
+    const metadata = parseGradientMetadata(sanitized)
+    if (metadata) {
+      stat.metadata = { ...(stat.metadata ?? {}), ...metadata }
+    }
+
+    gradientStats.set(sanitized, stat)
   })
 
-  const generic = Array.from(counts.entries()).map(([value, usage], index) => ({
-    name: `gradient-${index + 1}`,
-    value,
-    confidence: 75,
-    usage,
-    qualityScore: 0,
-    flags: []
-  }))
+  let counter = 0
+  return Array.from(gradientStats.entries()).map(([value, stat]) => {
+    counter += 1
+    const aliasName = stat.aliases.size > 0 ? Array.from(stat.aliases)[0].slice(2) : `${counter}`
+    const name = `gradient-${aliasName}`
+    const flags: string[] = stat.qaFlags.size > 0 ? Array.from(stat.qaFlags) : []
+    if (stat.aliases.size === 0) {
+      flags.push('missing_alias')
+    }
 
-  return dedupeTokens([...aliases, ...generic])
+    const details: Record<string, unknown> = {
+      coverage: buildCoverageDetails(stat)
+    }
+    if (stat.metadata) {
+      details.metadata = stat.metadata
+    }
+
+    if (stat.aliases.size > 1) {
+      details.aliases = Array.from(stat.aliases)
+    }
+
+    return {
+      name,
+      value,
+      confidence: stat.aliases.size > 0 ? 88 : 75,
+      usage: stat.usage,
+      qualityScore: 0,
+      flags,
+      details
+    }
+  })
 }
 
 function extractBorders(root: Root, variableMap: Map<string, string>): TokenSummary[] {
-  const borders = new Map<string, { usage: number; details: Record<string, unknown> }>()
+  const composite = new Map<string, CoverageStat>()
+  const widths = new Map<string, CoverageStat>()
+  const styles = new Map<string, CoverageStat>()
+  const colors = new Map<string, CoverageStat>()
+
+  const recordDimension = (
+    map: Map<string, CoverageStat>,
+    key: string,
+    selector: string | null,
+    components: Set<string>,
+    source: string,
+    variables: string[],
+    metadata: Record<string, unknown>,
+    alias?: string
+  ) => {
+    if (!key) return
+    const stat = map.get(key) ?? createCoverageStat()
+    stat.usage += 1
+    if (selector) stat.selectors.add(selector)
+    components.forEach((component) => stat.components.add(component))
+    stat.sources.add(source)
+    variables.forEach((variable) => stat.variables.add(variable))
+    stat.metadata = { ...(stat.metadata ?? {}), ...metadata }
+    if (alias) stat.aliases.add(alias)
+    map.set(key, stat)
+  }
 
   root.walkDecls((decl) => {
     const prop = decl.prop.toLowerCase()
     if (!BORDER_PROPS.has(prop)) return
-    const resolved = resolveValue(decl.value, variableMap) ?? sanitizeTokenValue(decl.value)
+
+    const rawValue = decl.value
+    const resolved = resolveValue(rawValue, variableMap) ?? sanitizeTokenValue(rawValue)
     if (!resolved) return
+
     const parsed = parseBorderValue(resolved)
     if (!parsed) return
-    const key = `${parsed.width ?? ''} ${parsed.style ?? ''} ${parsed.color ?? ''}`.trim() || resolved
-    const current = borders.get(key) ?? { usage: 0, details: parsed }
-    current.usage += 1
-    borders.set(key, current)
+
+    const selector = getSelectorFromDecl(decl)
+    const componentHits = classifySelector(selector)
+    const variables = extractVariableNames(rawValue)
+    const source = prop
+
+    const compositeKey = `${parsed.width ?? ''} ${parsed.style ?? ''} ${parsed.color ?? ''}`.trim() || resolved
+    recordDimension(composite, compositeKey, selector, componentHits, source, variables, {
+      type: 'composite',
+      width: parsed.width,
+      style: parsed.style,
+      color: parsed.color
+    })
+
+    if (parsed.width) {
+      recordDimension(widths, parsed.width, selector, componentHits, source, variables, { type: 'width' })
+    }
+    if (parsed.style) {
+      recordDimension(styles, parsed.style, selector, componentHits, source, variables, { type: 'style' })
+    }
+    if (parsed.color) {
+      recordDimension(colors, parsed.color, selector, componentHits, source, variables, { type: 'color' })
+    }
   })
 
   variableMap.forEach((value, name) => {
@@ -729,22 +979,80 @@ function extractBorders(root: Root, variableMap: Map<string, string>): TokenSumm
     if (!resolved) return
     const parsed = parseBorderValue(resolved)
     if (!parsed) return
-    const key = `${parsed.width ?? ''} ${parsed.style ?? ''} ${parsed.color ?? ''}`.trim() || resolved
-    borders.set(key, {
-      usage: (borders.get(key)?.usage ?? 0) + (countVariableUsage(root, name) || 1),
-      details: { ...parsed, alias: name }
+
+    const usageDetails = collectVariableUsageStats(root, name)
+    if (usageDetails.usage === 0) return
+
+    const compositeKey = `${parsed.width ?? ''} ${parsed.style ?? ''} ${parsed.color ?? ''}`.trim() || resolved
+    const alias = name
+
+    const ensureStat = (map: Map<string, CoverageStat>, key: string, metadata: Record<string, unknown>) => {
+      if (!key) return
+      const stat = map.get(key) ?? createCoverageStat()
+      stat.usage += usageDetails.usage
+      mergeSets(stat.selectors, usageDetails.selectors)
+      mergeSets(stat.components, usageDetails.components)
+      mergeSets(stat.sources, usageDetails.sources)
+      stat.aliases.add(alias)
+      stat.metadata = { ...(stat.metadata ?? {}), ...metadata }
+      map.set(key, stat)
+    }
+
+    ensureStat(composite, compositeKey, {
+      type: 'composite',
+      width: parsed.width,
+      style: parsed.style,
+      color: parsed.color
     })
+
+    if (parsed.width) ensureStat(widths, parsed.width, { type: 'width' })
+    if (parsed.style) ensureStat(styles, parsed.style, { type: 'style' })
+    if (parsed.color) ensureStat(colors, parsed.color, { type: 'color' })
   })
 
-  return Array.from(borders.entries()).map(([value, info], index) => ({
-    name: `border-${index + 1}`,
-    value,
-    confidence: 72,
-    usage: info.usage,
-    qualityScore: 0,
-    flags: [],
-    details: info.details
-  }))
+  const buildTokens = (
+    map: Map<string, CoverageStat>,
+    prefix: string,
+    defaultConfidence: number
+  ): TokenSummary[] => {
+    let index = 0
+    return Array.from(map.entries()).map(([value, stat]) => {
+      index += 1
+      const aliasName = stat.aliases.size > 0 ? Array.from(stat.aliases)[0].slice(2) : `${index}`
+      const name = `${prefix}-${aliasName}`
+      const flags: string[] = stat.qaFlags.size > 0 ? Array.from(stat.qaFlags) : []
+      if (stat.aliases.size === 0) {
+        flags.push('missing_alias')
+      }
+
+      const details: Record<string, unknown> = {
+        coverage: buildCoverageDetails(stat)
+      }
+      if (stat.metadata) {
+        details.metadata = stat.metadata
+      }
+      if (stat.aliases.size > 1) {
+        details.aliases = Array.from(stat.aliases)
+      }
+
+      return {
+        name,
+        value,
+        confidence: stat.aliases.size > 0 ? Math.max(defaultConfidence, 80) : defaultConfidence,
+        usage: stat.usage,
+        qualityScore: 0,
+        flags,
+        details
+      }
+    })
+  }
+
+  return [
+    ...buildTokens(composite, 'border', 72),
+    ...buildTokens(widths, 'border-width', 70),
+    ...buildTokens(styles, 'border-style', 68),
+    ...buildTokens(colors, 'border-color', 74)
+  ]
 }
 
 function sanitizeFontValue(value: string | undefined): string | null {

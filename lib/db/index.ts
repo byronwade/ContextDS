@@ -12,39 +12,39 @@ if (process.env.DATABASE_URL) {
   // Ultrathink optimized connection to Neon database
   client = postgres(process.env.DATABASE_URL, {
     // Connection pooling optimization
-  max: 20,                    // Maximum connections in pool
-  idle_timeout: 20,           // Close idle connections after 20s
-  connect_timeout: 10,        // Connection timeout in seconds
+    max: 20,                    // Maximum connections in pool
+    idle_timeout: 20,           // Close idle connections after 20s
+    connect_timeout: 10,        // Connection timeout in seconds
 
-  // Performance optimization
-  prepare: true,              // Enable prepared statements for repeated queries
-  ssl: 'require',             // Required for Neon
+    // Performance optimization
+    prepare: true,              // Enable prepared statements for repeated queries
+    ssl: 'require',             // Required for Neon
 
-  // Query optimization
-  transform: {
-    undefined: null           // Convert undefined to null for cleaner queries
-  },
+    // Query optimization
+    transform: {
+      undefined: null           // Convert undefined to null for cleaner queries
+    },
 
-  // Connection metadata
-  connection: {
-    application_name: 'contextds-production',
-    statement_timeout: '30s',                    // Prevent hanging queries
-    idle_in_transaction_session_timeout: '10s', // Prevent idle transactions
-    tcp_keepalives_idle: '60',                   // TCP keepalive for stable connections
-    tcp_keepalives_interval: '30',
-    tcp_keepalives_count: '3'
-  },
+    // Connection metadata
+    connection: {
+      application_name: 'contextds-production',
+      statement_timeout: '30s',                    // Prevent hanging queries
+      idle_in_transaction_session_timeout: '10s', // Prevent idle transactions
+      tcp_keepalives_idle: '60',                   // TCP keepalive for stable connections
+      tcp_keepalives_interval: '30',
+      tcp_keepalives_count: '3'
+    },
 
-  // Debugging and monitoring
-  debug: process.env.NODE_ENV === 'development',
+    // Debugging and monitoring
+    debug: process.env.NODE_ENV === 'development',
 
-  // Error handling
-  onnotice: (notice) => {
-    if (notice.severity === 'WARNING') {
-      console.warn('PostgreSQL warning:', notice.message)
+    // Error handling
+    onnotice: (notice) => {
+      if (notice.severity === 'WARNING') {
+        console.warn('PostgreSQL warning:', notice.message)
+      }
     }
-  }
-})
+  })
 } else {
   console.log('⚠️ Database connection skipped - DATABASE_URL not available (build time)')
 }

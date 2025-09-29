@@ -1,4 +1,3 @@
-import { openai } from 'ai'
 import type { W3CTokenSet } from '../analyzers/token-generator'
 import type { LayoutDNAProfile } from '../analyzers/layout-dna'
 
@@ -35,16 +34,29 @@ export interface StyledComponentsMappings {
 }
 
 export class PromptPackGenerator {
-  private client = openai({
-    apiKey: process.env.VERCEL_AI_API_KEY,
-    baseURL: 'https://api.vercel.com/v1/ai'
-  })
+  private client: any = null
+
+  constructor() {
+    // Initialize OpenAI client only when API key is available
+    if (process.env.VERCEL_AI_API_KEY) {
+      const { openai } = require('ai')
+      this.client = openai({
+        apiKey: process.env.VERCEL_AI_API_KEY,
+        baseURL: 'https://api.vercel.com/v1/ai'
+      })
+    }
+  }
 
   async generatePromptPack(
     tokenSet: W3CTokenSet,
     layoutDNA?: LayoutDNAProfile,
     intent: 'component-authoring' | 'marketing-site' = 'component-authoring'
   ): Promise<PromptPack> {
+    if (!this.client) {
+      // Return a basic prompt pack without AI generation
+      return this.generateFallbackPack(tokenSet, layoutDNA, intent)
+    }
+
     try {
       const prompt = this.buildPrompt(tokenSet, layoutDNA, intent)
 
