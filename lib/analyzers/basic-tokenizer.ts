@@ -58,6 +58,17 @@ type MotionInstance = {
   variables?: string[]
 }
 
+type GradientMetadata = {
+  type: 'linear' | 'radial' | 'conic'
+  angle?: string
+  shape?: string
+  position?: string
+  stops: Array<{
+    color: string
+    position?: string
+  }>
+}
+
 export type TokenQualityInsights = {
   categories: Record<
     keyof GeneratedTokenSet['tokenGroups'],
@@ -165,7 +176,7 @@ function mergeSets(target: Set<string>, values: Iterable<string | null | undefin
 function getSelectorFromDecl(decl: postcss.Declaration): string | null {
   let node: postcss.Node | undefined | null = decl.parent
   while (node && node.type !== 'rule') {
-    node = (node as postcss.Container).parent
+    node = node.parent
   }
   return node && node.type === 'rule' ? (node as postcss.Rule).selector ?? null : null
 }
@@ -220,10 +231,10 @@ function collectVariableUsageStats(root: Root, variableName: string): {
   const sources = new Set<string>()
   let usage = 0
 
-  const pattern = new RegExp(`var\\(${escapeRegExp(variableName)}\\)`, 'gi')
   root.walkDecls((decl) => {
-    if (!pattern.test(decl.value)) return
-    usage += (decl.value.match(pattern) ?? []).length
+    const matches = decl.value.match(new RegExp(`var\\(${escapeRegExp(variableName)}\\)`, 'gi'))
+    if (!matches) return
+    usage += matches.length
     const selector = getSelectorFromDecl(decl)
     if (selector) selectors.add(selector)
     classifySelector(selector).forEach((component) => components.add(component))
@@ -763,23 +774,272 @@ function extractShadows(root: Root, variableMap: Map<string, string>): TokenSumm
   return dedupeTokens([...aliases, ...generic])
 }
 
-function extractMotion(css: string, variableMap: Map<string, string>): TokenSummary[] {
-  const values = new Map<string, number>()
-  let match: RegExpExecArray | null
+function extractMotion(root: Root, css: string, variableMap: Map<string, string>): TokenSummary[] {
+  const motionStats = new Map<string, CoverageStat>()
 
-  while ((match = TRANSITION_REGEX.exec(css)) !== null) {
-    const normalized = normalizeMotionValue('transition', match[1])
-    if (!normalized) return
-    values.set(normalized, (values.get(normalized) ?? 0) + 1)
+  const registerInstance = (
+    key: string,
+    instance: MotionInstance,
+    components: Set<string>,
+    variables: string[]
+  ) => {
+    const stat = motionStats.get(key) ?? createCoverageStat()
+    stat.usage += 1
+    if (instance.selector) stat.selectors.add(instance.selector)
+    components.forEach((component) => stat.components.add(component))
+    stat.sources.add(instance.sourceProperty)
+    variables.forEach((variable) => stat.variables.add(variable))
+    stat.metadata = {
+      ...(stat.metadata ?? {}),
+      type: instance.type
+    }
+    if (!stat.instances) {
+      stat.instances = []
+    }
+    if (stat.instances.length < 10) {
+      stat.instances.push(instance)
+    }
+
+    const durationMs = durationToMs(instance.duration)
+    if (durationMs !== null && durationMs >= 750) {
+      stat.qaFlags.add('qa_high_duration')
+    }
+    if (instance.easing && instance.easing.toLowerCase().includes('ease-in-out')) {
+      stat.qaFlags.add('qa_ease_in_out')
+    }
+
+    motionStats.set(key, stat)
   }
 
-  while ((match = ANIMATION_REGEX.exec(css)) !== null) {
-    const normalized = normalizeMotionValue('animation', match[1])
-    if (!normalized) return
-    values.set(normalized, (values.get(normalized) ?? 0) + 1)
-  }
+  root.walkRules((rule) => {
+    const selector = rule.selector ?? null
+    const componentHits = classifySelector(selector)
 
+    const transitionFragments = {
+      property: [] as string[],
+      duration: [] as string[],
+      easing: [] as string[],
+      delay: [] as string[],
+      variables: new Set<string>(),
+      sources: new Set<string>()
+    }
+
+    const animationFragments = {
+      name: [] as string[],
+      duration: [] as string[],
+      easing: [] as string[],
+      delay: [] as string[],
+      iteration: [] as string[],
+      variables: new Set<string>(),
+      sources: new Set<string>()
+    }
+
+    let hasTransitionShorthand = false
+    let hasAnimationShorthand = false
+
+    rule.walkDecls((decl) => {
+      const prop = decl.prop.toLowerCase()
+      const rawValue = decl.value
+      const resolved = resolveValue(rawValue, variableMap) ?? sanitizeTokenValue(rawValue)
+      if (!resolved) return
+
+      const variables = extractVariableNames(rawValue)
+
+      switch (prop) {
+        case 'transition': {
+          hasTransitionShorthand = true
+          splitCommaSeparated(resolved).forEach((segment) => {
+            const parts = segment.split(/\s+/).filter(Boolean)
+            if (parts.length === 0) return
+            const { property, duration, easing, delay } = parseTransitionParts(parts)
+            const key = buildTransitionKey(property, duration, easing, delay)
+            registerInstance(
+              key,
+              {
+                type: 'transition',
+                selector,
+                property: property ?? 'all',
+                duration,
+                easing,
+                delay,
+                sourceProperty: 'transition',
+                variables
+              },
+              componentHits,
+              variables
+            )
+          })
+          break
+        }
+        case 'transition-property': {
+          transitionFragments.property.push(...splitCommaSeparated(resolved))
+          variables.forEach((variable) => transitionFragments.variables.add(variable))
+          transitionFragments.sources.add(prop)
+          break
+        }
+        case 'transition-duration': {
+          transitionFragments.duration.push(...splitCommaSeparated(resolved))
+          variables.forEach((variable) => transitionFragments.variables.add(variable))
+          transitionFragments.sources.add(prop)
+          break
+        }
+        case 'transition-timing-function': {
+          transitionFragments.easing.push(...splitCommaSeparated(resolved))
+          variables.forEach((variable) => transitionFragments.variables.add(variable))
+          transitionFragments.sources.add(prop)
+          break
+        }
+        case 'transition-delay': {
+          transitionFragments.delay.push(...splitCommaSeparated(resolved))
+          variables.forEach((variable) => transitionFragments.variables.add(variable))
+          transitionFragments.sources.add(prop)
+          break
+        }
+        case 'animation': {
+          hasAnimationShorthand = true
+          splitCommaSeparated(resolved).forEach((segment) => {
+            const parts = segment.split(/\s+/).filter(Boolean)
+            if (parts.length === 0) return
+            const { name, duration, easing, delay, iteration } = parseAnimationParts(parts)
+            const key = buildAnimationKey(name, duration, easing, delay, iteration)
+            registerInstance(
+              key,
+              {
+                type: 'animation',
+                selector,
+                property: name,
+                duration,
+                easing,
+                delay,
+                iteration,
+                sourceProperty: 'animation',
+                variables
+              },
+              componentHits,
+              variables
+            )
+          })
+          break
+        }
+        case 'animation-name': {
+          animationFragments.name.push(...splitCommaSeparated(resolved))
+          variables.forEach((variable) => animationFragments.variables.add(variable))
+          animationFragments.sources.add(prop)
+          break
+        }
+        case 'animation-duration': {
+          animationFragments.duration.push(...splitCommaSeparated(resolved))
+          variables.forEach((variable) => animationFragments.variables.add(variable))
+          animationFragments.sources.add(prop)
+          break
+        }
+        case 'animation-timing-function': {
+          animationFragments.easing.push(...splitCommaSeparated(resolved))
+          variables.forEach((variable) => animationFragments.variables.add(variable))
+          animationFragments.sources.add(prop)
+          break
+        }
+        case 'animation-delay': {
+          animationFragments.delay.push(...splitCommaSeparated(resolved))
+          variables.forEach((variable) => animationFragments.variables.add(variable))
+          animationFragments.sources.add(prop)
+          break
+        }
+        case 'animation-iteration-count': {
+          animationFragments.iteration.push(...splitCommaSeparated(resolved))
+          variables.forEach((variable) => animationFragments.variables.add(variable))
+          animationFragments.sources.add(prop)
+          break
+        }
+        default:
+          break
+      }
+    })
+
+    if (!hasTransitionShorthand && (
+      transitionFragments.property.length ||
+      transitionFragments.duration.length ||
+      transitionFragments.easing.length ||
+      transitionFragments.delay.length
+    )) {
+      const max = Math.max(
+        transitionFragments.property.length,
+        transitionFragments.duration.length,
+        transitionFragments.easing.length,
+        transitionFragments.delay.length,
+        1
+      )
+
+      for (let index = 0; index < max; index++) {
+        const property = transitionFragments.property[index] ?? transitionFragments.property[0] ?? 'all'
+        const duration = transitionFragments.duration[index] ?? transitionFragments.duration[0]
+        const easing = transitionFragments.easing[index] ?? transitionFragments.easing[0]
+        const delay = transitionFragments.delay[index] ?? transitionFragments.delay[0]
+        const key = buildTransitionKey(property, duration, easing, delay)
+        registerInstance(
+          key,
+          {
+            type: 'transition',
+            selector,
+            property,
+            duration,
+            easing,
+            delay,
+            sourceProperty: 'transition-composed',
+            variables: Array.from(transitionFragments.variables)
+          },
+          componentHits,
+          Array.from(transitionFragments.variables)
+        )
+      }
+    }
+
+    if (!hasAnimationShorthand && (
+      animationFragments.name.length ||
+      animationFragments.duration.length ||
+      animationFragments.easing.length ||
+      animationFragments.delay.length ||
+      animationFragments.iteration.length
+    )) {
+      const max = Math.max(
+        animationFragments.name.length,
+        animationFragments.duration.length,
+        animationFragments.easing.length,
+        animationFragments.delay.length,
+        animationFragments.iteration.length,
+        1
+      )
+
+      for (let index = 0; index < max; index++) {
+        const name = animationFragments.name[index] ?? animationFragments.name[0] ?? undefined
+        const duration = animationFragments.duration[index] ?? animationFragments.duration[0]
+        const easing = animationFragments.easing[index] ?? animationFragments.easing[0]
+        const delay = animationFragments.delay[index] ?? animationFragments.delay[0]
+        const iteration = animationFragments.iteration[index] ?? animationFragments.iteration[0]
+        const key = buildAnimationKey(name, duration, easing, delay, iteration)
+        registerInstance(
+          key,
+          {
+            type: 'animation',
+            selector,
+            property: name,
+            duration,
+            easing,
+            delay,
+            iteration,
+            sourceProperty: 'animation-composed',
+            variables: Array.from(animationFragments.variables)
+          },
+          componentHits,
+          Array.from(animationFragments.variables)
+        )
+      }
+    }
+  })
+
+  // Capture @keyframes definitions
   const keyframes = new Set<string>()
+  let match: RegExpExecArray | null
   while ((match = KEYFRAMES_REGEX.exec(css)) !== null) {
     const name = match[1]?.trim()
     if (name) {
@@ -789,36 +1049,155 @@ function extractMotion(css: string, variableMap: Map<string, string>): TokenSumm
 
   keyframes.forEach((name) => {
     const key = `keyframes ${name}`
-    values.set(key, (values.get(key) ?? 0) + 1)
+    registerInstance(
+      key,
+      {
+        type: 'keyframes',
+        selector: null,
+        property: name,
+        sourceProperty: '@keyframes'
+      },
+      new Set<string>(),
+      []
+    )
   })
 
-  const aliases: TokenSummary[] = []
+  // Handle motion variables defined in :root
   variableMap.forEach((value, name) => {
     const resolved = resolveValue(value, variableMap)
     if (!resolved) return
-    if (!/(ms|s|ease|cubic-bezier|steps)/i.test(resolved)) return
-    const usage = countVariableUsageCss(css, name) || 1
-    aliases.push({
-      name: `motion-${name.slice(2)}`,
-      value: resolved,
-      confidence: 70,
-      usage,
-      qualityScore: 0,
-      flags: [],
-      details: { alias: name }
+    if (!/(ms|s|ease|cubic-bezier|steps|linear|infinite)/i.test(resolved)) return
+
+    const usageDetails = collectVariableUsageStats(root, name)
+    if (usageDetails.usage === 0) return
+
+    const candidates = splitCommaSeparated(resolved)
+    candidates.forEach((candidate) => {
+      const parts = candidate.split(/\s+/).filter(Boolean)
+      if (parts.length === 0) return
+
+      const transitionParts = parseTransitionParts(parts)
+      const hasTransition = Boolean(
+        transitionParts.property ||
+        transitionParts.duration ||
+        transitionParts.easing ||
+        transitionParts.delay
+      )
+
+      if (hasTransition) {
+        const key = buildTransitionKey(
+          transitionParts.property,
+          transitionParts.duration,
+          transitionParts.easing,
+          transitionParts.delay
+        )
+        const stat = motionStats.get(key) ?? createCoverageStat()
+        stat.usage += usageDetails.usage
+        mergeSets(stat.selectors, usageDetails.selectors)
+        mergeSets(stat.components, usageDetails.components)
+        mergeSets(stat.sources, usageDetails.sources)
+        stat.aliases.add(name)
+        stat.metadata = { ...(stat.metadata ?? {}), type: 'transition' }
+        stat.instances = stat.instances ?? []
+        if (stat.instances.length < 10) {
+          stat.instances.push({
+            type: 'transition',
+            selector: null,
+            property: transitionParts.property ?? 'all',
+            duration: transitionParts.duration,
+            easing: transitionParts.easing,
+            delay: transitionParts.delay,
+            sourceProperty: `var(${name})`,
+            variables: [name]
+          })
+        }
+        const durationMs = durationToMs(transitionParts.duration)
+        if (durationMs !== null && durationMs >= 750) {
+          stat.qaFlags.add('qa_high_duration')
+        }
+        if (transitionParts.easing && transitionParts.easing.toLowerCase().includes('ease-in-out')) {
+          stat.qaFlags.add('qa_ease_in_out')
+        }
+        motionStats.set(key, stat)
+        return
+      }
+
+      const animationParts = parseAnimationParts(parts)
+      const hasAnimation = Boolean(animationParts.duration || animationParts.iteration || animationParts.name)
+      if (hasAnimation) {
+        const key = buildAnimationKey(
+          animationParts.name,
+          animationParts.duration,
+          animationParts.easing,
+          animationParts.delay,
+          animationParts.iteration
+        )
+        const stat = motionStats.get(key) ?? createCoverageStat()
+        stat.usage += usageDetails.usage
+        mergeSets(stat.selectors, usageDetails.selectors)
+        mergeSets(stat.components, usageDetails.components)
+        mergeSets(stat.sources, usageDetails.sources)
+        stat.aliases.add(name)
+        stat.metadata = { ...(stat.metadata ?? {}), type: 'animation' }
+        stat.instances = stat.instances ?? []
+        if (stat.instances.length < 10) {
+          stat.instances.push({
+            type: 'animation',
+            selector: null,
+            property: animationParts.name,
+            duration: animationParts.duration,
+            easing: animationParts.easing,
+            delay: animationParts.delay,
+            iteration: animationParts.iteration,
+            sourceProperty: `var(${name})`,
+            variables: [name]
+          })
+        }
+        const durationMs = durationToMs(animationParts.duration)
+        if (durationMs !== null && durationMs >= 750) {
+          stat.qaFlags.add('qa_high_duration')
+        }
+        if (animationParts.easing && animationParts.easing.toLowerCase().includes('ease-in-out')) {
+          stat.qaFlags.add('qa_ease_in_out')
+        }
+        motionStats.set(key, stat)
+      }
     })
   })
 
-  const generic = Array.from(values.entries()).map(([value, usage], index) => ({
-    name: `motion-${index + 1}`,
-    value,
-    confidence: 60,
-    usage,
-    qualityScore: 0,
-    flags: []
-  }))
+  let index = 0
+  return Array.from(motionStats.entries()).map(([value, stat]) => {
+    index += 1
+    const metadataType = (stat.metadata?.type as string) || 'transition'
+    const aliasName = stat.aliases.size > 0 ? Array.from(stat.aliases)[0].slice(2) : `${index}`
+    const prefix = metadataType === 'animation' ? 'motion-animation' : metadataType === 'keyframes' ? 'motion-keyframes' : 'motion'
+    const name = `${prefix}-${aliasName}`
+    const flags: string[] = stat.qaFlags.size > 0 ? Array.from(stat.qaFlags) : []
+    if (stat.aliases.size === 0) {
+      flags.push('missing_alias')
+    }
 
-  return dedupeTokens([...aliases, ...generic])
+    const details: Record<string, unknown> = {
+      coverage: buildCoverageDetails(stat),
+      type: metadataType
+    }
+    if (stat.instances) {
+      details.instances = stat.instances.slice(0, 5)
+    }
+    if (stat.aliases.size > 1) {
+      details.aliases = Array.from(stat.aliases)
+    }
+
+    return {
+      name,
+      value,
+      confidence: stat.aliases.size > 0 ? 80 : 68,
+      usage: stat.usage,
+      qualityScore: 0,
+      flags,
+      details
+    }
+  })
 }
 
 function extractGradients(root: Root, variableMap: Map<string, string>): TokenSummary[] {
@@ -1332,9 +1711,9 @@ function rankTokenGroups(groups: GeneratedTokenSet['tokenGroups']): GeneratedTok
         const usageScore = token.usage / maxUsage
         const confidenceScore = token.confidence / 100
         const qualityScore = Math.round((usageScore * 0.6 + confidenceScore * 0.4) * 100)
-        const flags: string[] = []
-        if (token.usage <= 1) flags.push('low_usage')
-        if (token.confidence < 70) flags.push('low_confidence')
+        const flags = [...new Set(token.flags)]
+        if (token.usage <= 1 && !flags.includes('low_usage')) flags.push('low_usage')
+        if (token.confidence < 70 && !flags.includes('low_confidence')) flags.push('low_confidence')
         return {
           ...token,
           qualityScore,
@@ -1428,6 +1807,75 @@ function sanitizeGradientValue(value: string): string | null {
   const cleaned = value.replace(/\s+/g, ' ').trim()
   if (!cleaned.includes('gradient')) return null
   return cleaned
+}
+
+function parseGradientMetadata(value: string): GradientMetadata | null {
+  const match = /^(linear|radial|conic)-gradient\((.*)\)$/i.exec(value)
+  if (!match) return null
+
+  const type = match[1].toLowerCase() as GradientMetadata['type']
+  const args = splitCommaSeparated(match[2])
+  const metadata: GradientMetadata = {
+    type,
+    stops: []
+  }
+
+  let stopArgs = args
+
+  if (type === 'linear') {
+    const direction = args[0]?.trim()
+    if (direction && (/(deg|rad|turn)/i.test(direction) || direction.toLowerCase().startsWith('to '))) {
+      metadata.angle = direction
+      stopArgs = args.slice(1)
+    }
+  } else if (type === 'radial') {
+    let offset = 0
+    const shapeCandidate = args[0]?.trim()
+    if (shapeCandidate && /^(circle|ellipse|closest-side|closest-corner|farthest-side|farthest-corner|[a-z]+\s+[a-z]+)/i.test(shapeCandidate)) {
+      metadata.shape = shapeCandidate
+      offset += 1
+    }
+    const positionCandidate = args[offset]?.trim()
+    if (positionCandidate && positionCandidate.toLowerCase().startsWith('at ')) {
+      metadata.position = positionCandidate
+      offset += 1
+    }
+    stopArgs = args.slice(offset)
+  } else if (type === 'conic') {
+    let offset = 0
+    const angleCandidate = args[0]?.trim()
+    if (angleCandidate && (angleCandidate.toLowerCase().startsWith('from ') || /(deg|rad|turn)/i.test(angleCandidate))) {
+      metadata.angle = angleCandidate
+      offset += 1
+    }
+    const positionCandidate = args[offset]?.trim()
+    if (positionCandidate && positionCandidate.toLowerCase().startsWith('at ')) {
+      metadata.position = positionCandidate
+      offset += 1
+    }
+    stopArgs = args.slice(offset)
+  }
+
+  metadata.stops = stopArgs
+    .map((stop) => parseGradientStop(stop))
+    .filter((stop): stop is { color: string; position?: string } => Boolean(stop))
+
+  return metadata
+}
+
+function parseGradientStop(stop: string): { color: string; position?: string } | null {
+  const trimmed = stop.trim()
+  if (!trimmed) return null
+
+  const colorMatch = trimmed.match(
+    /var\(--[a-z0-9-]+\)|#[0-9a-f]{3,8}\b|rgba?\([^\)]+\)|hsla?\([^\)]+\)|oklch\([^\)]+\)|oklab\([^\)]+\)|color\([^\)]+\)|\b[a-z]+\b/i
+  )
+
+  if (!colorMatch) return null
+
+  const color = colorMatch[0]
+  const position = trimmed.replace(colorMatch[0], '').trim()
+  return position ? { color, position } : { color }
 }
 
 function parseBorderValue(value: string): { width?: string; style?: string; color?: string } | null {
