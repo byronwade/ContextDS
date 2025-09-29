@@ -47,60 +47,57 @@ export async function GET() {
       .orderBy(desc(sites.popularity))
       .limit(5)
 
-    // Calculate token statistics by extracting from JSON
-    const tokenStats = await db
-      .select({
-        tokensJson: tokenSets.tokensJson,
-        consensusScore: tokenSets.consensusScore
-      })
-      .from(tokenSets)
-      .where(eq(tokenSets.isPublic, true))
+    // Optimized token statistics using database aggregation
+    const tokenStatsQuery = await db.execute(sql`
+      WITH token_counts AS (
+        SELECT
+          ts.id,
+          COALESCE(jsonb_object_length(ts.tokens_json->'color'), 0) as color_count,
+          COALESCE(jsonb_object_length(ts.tokens_json->'typography'), 0) as typography_count,
+          COALESCE(jsonb_object_length(ts.tokens_json->'dimension'), 0) as spacing_count,
+          COALESCE(jsonb_object_length(ts.tokens_json->'shadow'), 0) as shadow_count,
+          COALESCE(jsonb_object_length(ts.tokens_json->'radius'), 0) as radius_count,
+          COALESCE(jsonb_object_length(ts.tokens_json->'motion'), 0) as motion_count,
+          CAST(ts.consensus_score AS NUMERIC) as consensus_score
+        FROM token_sets ts
+        WHERE ts.is_public = true
+          AND ts.tokens_json IS NOT NULL
+      )
+      SELECT
+        SUM(color_count)::int as total_colors,
+        SUM(typography_count)::int as total_typography,
+        SUM(spacing_count)::int as total_spacing,
+        SUM(shadow_count)::int as total_shadows,
+        SUM(radius_count)::int as total_radius,
+        SUM(motion_count)::int as total_motion,
+        (SUM(color_count) + SUM(typography_count) + SUM(spacing_count) +
+         SUM(shadow_count) + SUM(radius_count) + SUM(motion_count))::int as total_tokens,
+        ROUND(AVG(consensus_score))::int as average_confidence
+      FROM token_counts
+    `)
 
-    // Process token statistics
+    const tokenStats = tokenStatsQuery[0] || {
+      total_colors: 0,
+      total_typography: 0,
+      total_spacing: 0,
+      total_shadows: 0,
+      total_radius: 0,
+      total_motion: 0,
+      total_tokens: 0,
+      average_confidence: 0
+    }
+
     const categoryStats = {
-      colors: 0,
-      typography: 0,
-      spacing: 0,
-      shadows: 0,
-      radius: 0,
-      motion: 0
+      colors: toNumber(tokenStats.total_colors),
+      typography: toNumber(tokenStats.total_typography),
+      spacing: toNumber(tokenStats.total_spacing),
+      shadows: toNumber(tokenStats.total_shadows),
+      radius: toNumber(tokenStats.total_radius),
+      motion: toNumber(tokenStats.total_motion)
     }
 
-    let totalTokens = 0
-    let totalConfidence = 0
-    let confidenceCount = 0
-
-    type TokenStatsRow = {
-      tokensJson: unknown
-      consensusScore: string | number | null
-    }
-
-    ;(tokenStats as TokenStatsRow[]).forEach((tokenSet) => {
-      if (!isRecord(tokenSet.tokensJson)) {
-        return
-      }
-
-      const tokensRecord = tokenSet.tokensJson as Record<string, unknown>
-
-      const colorCount = countTokenGroup(tokensRecord['color'])
-      const typographyCount = countTokenGroup(tokensRecord['typography'])
-      const spacingCount = countTokenGroup(tokensRecord['dimension'])
-      const shadowCount = countTokenGroup(tokensRecord['shadow'])
-
-      categoryStats.colors += colorCount
-      categoryStats.typography += typographyCount
-      categoryStats.spacing += spacingCount
-      categoryStats.shadows += shadowCount
-
-      totalTokens += colorCount + typographyCount + spacingCount + shadowCount
-
-      if (tokenSet.consensusScore !== null && tokenSet.consensusScore !== undefined) {
-        totalConfidence += toNumber(tokenSet.consensusScore)
-        confidenceCount += 1
-      }
-    })
-
-    const averageConfidence = confidenceCount > 0 ? totalConfidence / confidenceCount : 0
+    const totalTokens = toNumber(tokenStats.total_tokens)
+    const averageConfidence = toNumber(tokenStats.average_confidence)
 
     const stats = {
       sites: toNumber(siteCount.count),
@@ -108,7 +105,7 @@ export async function GET() {
       scans: toNumber(scanCount.count),
       tokenSets: toNumber(tokenSetCount.count),
       categories: categoryStats,
-      averageConfidence: Math.round(averageConfidence * 100),
+      averageConfidence: averageConfidence,
       recentActivity: recentScans.map((scan) => ({
         domain: scan.domain,
         scannedAt: scan.finishedAt,

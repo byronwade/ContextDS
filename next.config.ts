@@ -7,9 +7,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true
   },
-  experimental: {
-    turbopack: false // Disable turbopack for production
-  }
+  // Production optimizations
 };
 
 export default nextConfig;
