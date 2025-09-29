@@ -782,10 +782,38 @@ function expandSpacingShorthand(prop: string, value: string): string[] {
   if (prop === 'gap' || prop === 'row-gap' || prop === 'column-gap') {
     return [value]
   }
-  if (prop === 'width' || prop === 'height' || prop === 'min-width' || prop === 'min-height' || prop === 'max-width' || prop === 'max-height') {
-    return [value]
-  }
   return [value]
+}
+
+function expandBorderShorthand(prop: string, value: string): Array<{ width?: string; style?: string; color?: string }> {
+  const result: Array<{ width?: string; style?: string; color?: string }> = []
+  const detail = parseBorderValue(value)
+  if (!detail) return result
+
+  if (prop === 'border') {
+    result.push(detail)
+    return result
+  }
+
+  if (prop === 'border-top' || prop === 'border-right' || prop === 'border-bottom' || prop === 'border-left') {
+    result.push(detail)
+    return result
+  }
+
+  if (prop === 'outline') {
+    result.push(detail)
+    return result
+  }
+
+  if (prop.endsWith('-width')) {
+    result.push({ width: detail.width })
+  } else if (prop.endsWith('-style')) {
+    result.push({ style: detail.style })
+  } else if (prop.endsWith('-color')) {
+    result.push({ color: detail.color })
+  }
+
+  return result
 }
 
 function normalizeShadowValue(value: string): string | null {
@@ -1118,6 +1146,10 @@ function parseBorderValue(value: string): { width?: string; style?: string; colo
       return
     }
   })
+
+  if (!width && !style && !color) {
+    return { width: value }
+  }
 
   return { width, style, color }
 }
