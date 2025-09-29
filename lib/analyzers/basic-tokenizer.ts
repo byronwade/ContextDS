@@ -75,11 +75,26 @@ export type TokenQualityInsights = {
     {
       totalUsage: number
       averageConfidence: number
+      coverageScore: number
+      selectorCoverage: number
+      keyComponentHits: number
+      alerts: {
+        lowUsage: string[]
+        missingAliases: string[]
+        qa: Array<{ name: string; flags: string[] }>
+      }
       topTokens: TokenSummary[]
     }
   >
   overall: {
     totalTokens: number
+    coverageScore: number
+    keyComponentHitRate: number
+    warnings: Array<{
+      category: keyof GeneratedTokenSet['tokenGroups']
+      name: string
+      flags: string[]
+    }>
     topTokens: Array<{
       category: keyof GeneratedTokenSet['tokenGroups']
       token: TokenSummary
@@ -1507,31 +1522,6 @@ function normalizeShadowValue(value: string): string | null {
   return value.replace(/;+$/, '').trim() || null
 }
 
-function normalizeMotionValue(type: 'transition' | 'animation', value: string): string | null {
-  const cleaned = value.replace(/;+$/, '').trim()
-  if (!cleaned) return null
-
-  if (type === 'transition') {
-    const segments = cleaned.split(',').map((segment) => segment.trim())
-    return segments
-      .map((segment) => {
-        const parts = segment.split(/\s+/).filter(Boolean)
-        const { property, duration, easing, delay } = parseTransitionParts(parts)
-        return [property, duration, easing, delay].filter(Boolean).join(' | ')
-      })
-      .join(', ')
-  }
-
-  const segments = cleaned.split(',').map((segment) => segment.trim())
-  return segments
-    .map((segment) => {
-      const parts = segment.split(/\s+/).filter(Boolean)
-      const { name, duration, easing, delay, iteration } = parseAnimationParts(parts)
-      return [name, duration, easing, delay, iteration].filter(Boolean).join(' | ')
-    })
-    .join(', ')
-}
-
 function parseTransitionParts(parts: string[]): {
   property?: string
   duration?: string
@@ -1731,50 +1721,140 @@ function rankTokenGroups(groups: GeneratedTokenSet['tokenGroups']): GeneratedTok
 }
 
 function computeQualityInsights(groups: GeneratedTokenSet['tokenGroups']): TokenQualityInsights {
-  const summarize = (tokens: TokenSummary[]) => {
+  const summarize = (
+    category: keyof GeneratedTokenSet['tokenGroups'],
+    tokens: TokenSummary[]
+  ): TokenQualityInsights['categories'][keyof GeneratedTokenSet['tokenGroups']] => {
+    if (tokens.length === 0) {
+      return {
+        totalUsage: 0,
+        averageConfidence: 0,
+        coverageScore: 0,
+        selectorCoverage: 0,
+        keyComponentHits: 0,
+        alerts: { lowUsage: [], missingAliases: [], qa: [] },
+        topTokens: []
+      }
+    }
+
+    const extractCoverage = (token: TokenSummary) => {
+      const coverage = (token.details as Record<string, unknown> | undefined)?.coverage as
+        | { selectorCount?: number; keyComponents?: string[] }
+        | undefined
+      return {
+        selectorCount: coverage?.selectorCount ?? 0,
+        keyComponents: coverage?.keyComponents ?? []
+      }
+    }
+
     const totalUsage = tokens.reduce((sum, token) => sum + token.usage, 0)
-    const averageConfidence = tokens.length
-      ? Math.round(tokens.reduce((sum, token) => sum + token.confidence, 0) / tokens.length)
-      : 0
+    const averageConfidence = Math.round(
+      tokens.reduce((sum, token) => sum + token.confidence, 0) / tokens.length
+    )
+    const selectorCoverage = tokens.reduce(
+      (sum, token) => sum + extractCoverage(token).selectorCount,
+      0
+    )
+    const coverageScore = Math.round(
+      (tokens.reduce((score, token) => {
+        const selectors = extractCoverage(token).selectorCount
+        return score + Math.min(1, selectors / 8)
+      }, 0) /
+        tokens.length) *
+        100
+    )
+    const keyComponentHits = tokens.filter(
+      (token) => extractCoverage(token).keyComponents.length > 0
+    ).length
+
+    const lowUsage = tokens
+      .filter((token) => token.flags.includes('low_usage'))
+      .slice(0, 5)
+      .map((token) => token.name)
+
+    const missingAliases = tokens
+      .filter((token) => token.flags.includes('missing_alias'))
+      .slice(0, 5)
+      .map((token) => token.name)
+
+    const qa = tokens
+      .map((token) => ({
+        name: token.name,
+        flags: token.flags.filter((flag) => flag.startsWith('qa_'))
+      }))
+      .filter((entry) => entry.flags.length > 0)
+      .slice(0, 5)
+
     return {
       totalUsage,
       averageConfidence,
+      coverageScore,
+      selectorCoverage,
+      keyComponentHits,
+      alerts: { lowUsage, missingAliases, qa },
       topTokens: tokens.slice(0, 5)
     }
   }
 
-  const categories: TokenQualityInsights['categories'] = {
-    colors: summarize(groups.colors),
-    typography: summarize(groups.typography),
-    spacing: summarize(groups.spacing),
-    radius: summarize(groups.radius),
-    shadows: summarize(groups.shadows),
-    motion: summarize(groups.motion),
-    gradients: summarize(groups.gradients),
-    borders: summarize(groups.borders)
-  }
+  const categories = Object.fromEntries(
+    (Object.entries(groups) as Array<[
+      keyof GeneratedTokenSet['tokenGroups'],
+      TokenSummary[]
+    ]>).map(([category, tokens]) => [category, summarize(category, tokens)])
+  ) as TokenQualityInsights['categories']
 
-  const overallTop = [
-    ...categories.colors.topTokens.map((token) => ({ category: 'colors' as const, token })),
-    ...categories.typography.topTokens.map((token) => ({ category: 'typography' as const, token })),
-    ...categories.spacing.topTokens.map((token) => ({ category: 'spacing' as const, token })),
-    ...categories.radius.topTokens.map((token) => ({ category: 'radius' as const, token })),
-    ...categories.shadows.topTokens.map((token) => ({ category: 'shadows' as const, token })),
-    ...categories.motion.topTokens.map((token) => ({ category: 'motion' as const, token })),
-    ...categories.gradients.topTokens.map((token) => ({ category: 'gradients' as const, token })),
-    ...categories.borders.topTokens.map((token) => ({ category: 'borders' as const, token }))
-  ]
+  const overallTop = (Object.entries(groups) as Array<[
+    keyof GeneratedTokenSet['tokenGroups'],
+    TokenSummary[]
+  ]>)
+    .flatMap(([category, tokens]) =>
+      tokens.slice(0, 5).map((token) => ({ category, token }))
+    )
+    .sort((a, b) => b.token.qualityScore - a.token.qualityScore)
+    .slice(0, 10)
 
   const totalTokens = Object.values(groups).reduce((sum, tokens) => sum + tokens.length, 0)
+  const weightedCoverageTotal = (Object.entries(groups) as Array<[
+    keyof GeneratedTokenSet['tokenGroups'],
+    TokenSummary[]
+  ]>).reduce((sum, [category, tokens]) => {
+    const weight = tokens.length
+    if (weight === 0) return sum
+    return sum + categories[category].coverageScore * weight
+  }, 0)
 
-  const overall = {
-    totalTokens,
-    topTokens: overallTop
-      .sort((a, b) => b.token.qualityScore - a.token.qualityScore)
-      .slice(0, 10)
+  const coverageScore = totalTokens > 0 ? Math.round(weightedCoverageTotal / totalTokens) : 0
+  const keyComponentHitsTotal = Object.values(categories).reduce(
+    (sum, info) => sum + info.keyComponentHits,
+    0
+  )
+  const keyComponentHitRate = totalTokens > 0 ? Math.round((keyComponentHitsTotal / totalTokens) * 100) : 0
+
+  const warnings: TokenQualityInsights['overall']['warnings'] = []
+  (Object.entries(groups) as Array<[
+    keyof GeneratedTokenSet['tokenGroups'],
+    TokenSummary[]
+  ]>).forEach(([category, tokens]) => {
+    tokens.forEach((token) => {
+      const relevantFlags = token.flags.filter(
+        (flag) => flag.startsWith('qa_') || flag === 'missing_alias' || flag === 'low_usage'
+      )
+      if (relevantFlags.length > 0) {
+        warnings.push({ category, name: token.name, flags: relevantFlags })
+      }
+    })
+  })
+
+  return {
+    categories,
+    overall: {
+      totalTokens,
+      coverageScore,
+      keyComponentHitRate,
+      warnings: warnings.slice(0, 20),
+      topTokens: overallTop
+    }
   }
-
-  return { categories, overall }
 }
 
 export function hashTokenSet(tokenSet: Record<string, unknown>): string {

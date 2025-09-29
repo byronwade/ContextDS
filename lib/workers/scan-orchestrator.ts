@@ -297,6 +297,18 @@ function augmentArchetypesWithWireframe(layoutDNA: ReturnType<typeof analyzeLayo
       archetypes.set('marketing-hero', 75)
     }
 
+    if (section.category === 'form' && !archetypes.has('form-experience')) {
+      archetypes.set('form-experience', 70)
+    }
+
+    if (section.category === 'table' && !archetypes.has('data-table')) {
+      archetypes.set('data-table', 65)
+    }
+
+    if (section.category === 'footer' && !archetypes.has('marketing-footer')) {
+      archetypes.set('marketing-footer', 60)
+    }
+
     if (description.includes('grid layout') && section.columns && section.columns >= 3 && !archetypes.has('feature-grid')) {
       archetypes.set('feature-grid', 70)
     }

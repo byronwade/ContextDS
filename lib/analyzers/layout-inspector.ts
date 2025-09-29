@@ -1,3 +1,5 @@
+import postcss, { type AtRule, type Node as PostcssNode, type Rule as PostcssRule } from 'postcss'
+import safeParser from 'postcss-safe-parser'
 import type { CssSource } from '@/lib/extractors/static-css'
 
 export type LayoutDNA = {
@@ -5,6 +7,7 @@ export type LayoutDNA = {
     maxWidth: string | null
     strategy: 'centered' | 'fluid' | 'fixed'
     responsive: boolean
+    snapshots: ContainerSnapshot[]
   }
   gridSystem: 'flexbox' | 'grid' | 'mixed' | 'classic'
   spacingBase: number | null
@@ -18,13 +21,26 @@ export type LayoutDNA = {
   }
 }
 
+type ContainerSnapshot = {
+  breakpoint: number | 'base'
+  selectors: string[]
+  maxWidth?: string
+  minWidth?: string
+  gridTemplateColumns?: string
+  gridTemplateRows?: string
+  gap?: string
+}
+
 export function analyzeLayout(sources: CssSource[]): LayoutDNA {
   const css = sources.map((source) => source.content).join('\n')
 
-  const containerWidths = extractContainerWidths(css)
+  const root = postcss.parse(css, { parser: safeParser })
+  const containerSnapshots = collectContainerSnapshots(root)
+
+  const containerWidths = deriveContainerWidths(css, containerSnapshots)
   const hasFlex = /display\s*:\s*flex/.test(css)
   const hasGrid = /display\s*:\s*grid/.test(css)
-  const breakpoints = extractBreakpoints(css)
+  const breakpoints = mergeBreakpoints(extractBreakpoints(css), containerSnapshots)
   const spacingBase = inferSpacingBase(css)
 
   const archetypes = buildArchetypeGuesses({ hasFlex, hasGrid, breakpoints })
@@ -33,7 +49,8 @@ export function analyzeLayout(sources: CssSource[]): LayoutDNA {
     containers: {
       maxWidth: containerWidths[0] ?? null,
       strategy: inferContainerStrategy(containerWidths, breakpoints),
-      responsive: breakpoints.length > 0
+      responsive: breakpoints.length > 0,
+      snapshots: containerSnapshots.slice(0, 50)
     },
     gridSystem: inferGridSystem(hasFlex, hasGrid),
     spacingBase,
@@ -42,7 +59,19 @@ export function analyzeLayout(sources: CssSource[]): LayoutDNA {
   }
 }
 
-function extractContainerWidths(css: string): string[] {
+function deriveContainerWidths(css: string, snapshots: ContainerSnapshot[]): string[] {
+  const snapshotWidths = snapshots
+    .map((snapshot) => snapshot.maxWidth)
+    .filter((width): width is string => Boolean(width))
+
+  if (snapshotWidths.length > 0) {
+    return Array.from(new Set(snapshotWidths))
+  }
+
+  return extractContainerWidthsFromCss(css)
+}
+
+function extractContainerWidthsFromCss(css: string): string[] {
   const widths = new Set<string>()
   const regex = /max-width\s*:\s*([^;]+);/gi
   let match: RegExpExecArray | null
@@ -63,6 +92,107 @@ function extractBreakpoints(css: string): number[] {
     }
   }
   return Array.from(new Set(values)).sort((a, b) => a - b)
+}
+
+function mergeBreakpoints(breakpoints: number[], snapshots: ContainerSnapshot[]): number[] {
+  const merged = new Set(breakpoints)
+  snapshots.forEach((snapshot) => {
+    if (typeof snapshot.breakpoint === 'number') {
+      merged.add(snapshot.breakpoint)
+    }
+  })
+  return Array.from(merged).sort((a, b) => a - b)
+}
+
+function collectContainerSnapshots(root: postcss.Root): ContainerSnapshot[] {
+  const snapshots = new Map<string, ContainerSnapshot>()
+
+  root.walkRules((rule: PostcssRule) => {
+    if (!rule.selector) return
+    const selectors = rule.selector
+      .split(',')
+      .map((selector) => selector.trim())
+      .filter(Boolean)
+      .slice(0, 4)
+
+    if (selectors.length === 0) return
+
+    const breakpoint = findBreakpoint(rule)
+
+    rule.walkDecls((decl) => {
+      const prop = decl.prop.toLowerCase()
+      if (
+        prop !== 'max-width' &&
+        prop !== 'min-width' &&
+        prop !== 'grid-template-columns' &&
+        prop !== 'grid-template-rows' &&
+        prop !== 'gap' &&
+        prop !== 'grid-gap'
+      ) {
+        return
+      }
+
+      const value = decl.value.trim()
+      selectors.forEach((selector) => {
+        const key = `${breakpoint}:${selector}`
+        const snapshot = snapshots.get(key) ?? {
+          breakpoint,
+          selectors: [selector]
+        }
+
+        switch (prop) {
+          case 'max-width':
+            snapshot.maxWidth = value
+            break
+          case 'min-width':
+            snapshot.minWidth = value
+            break
+          case 'grid-template-columns':
+            snapshot.gridTemplateColumns = value
+            break
+          case 'grid-template-rows':
+            snapshot.gridTemplateRows = value
+            break
+          case 'gap':
+          case 'grid-gap':
+            snapshot.gap = value
+            break
+        }
+
+        snapshots.set(key, snapshot)
+      })
+    })
+  })
+
+  return Array.from(snapshots.values()).filter((snapshot) =>
+    Boolean(
+      snapshot.maxWidth ||
+        snapshot.minWidth ||
+        snapshot.gridTemplateColumns ||
+        snapshot.gridTemplateRows ||
+        snapshot.gap
+    )
+  )
+}
+
+function findBreakpoint(rule: PostcssRule): number | 'base' {
+  let current: PostcssNode | undefined | null = rule.parent
+  while (current) {
+    if (current.type === 'atrule') {
+      const atRule = current as AtRule
+      if (atRule.name === 'media') {
+        const match = atRule.params.match(/min-width\s*:\s*(\d+)px/i)
+        if (match) {
+          const value = Number(match[1])
+          if (Number.isFinite(value)) {
+            return value
+          }
+        }
+      }
+    }
+    current = current.parent
+  }
+  return 'base'
 }
 
 function inferSpacingBase(css: string): number | null {

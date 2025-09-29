@@ -3,6 +3,7 @@ import { chromium, type Browser } from 'playwright'
 export type WireframeSection = {
   tag: string
   role: string | null
+  category: 'navigation' | 'form' | 'table' | 'footer' | 'hero' | 'sidebar' | 'card-grid' | 'content' | 'unknown'
   display: string
   columns: number | null
   rows: number | null
@@ -37,6 +38,48 @@ export async function collectLayoutWireframe(url: string, timeoutMs = 15000): Pr
     await page.goto(url, { waitUntil: 'networkidle', timeout: timeoutMs })
 
     const sections = await page.evaluate(() => {
+      const isVisible = (el: Element) => {
+        const style = window.getComputedStyle(el)
+        const rect = el.getBoundingClientRect()
+        return !(style.display === 'none' || style.visibility === 'hidden' || rect.width === 0 || rect.height === 0)
+      }
+
+      const classifySection = (
+        tag: string,
+        role: string | null,
+        classList: string[],
+        description: string,
+        childCount: number
+      ): WireframeSection['category'] => {
+        const classes = classList.map((cls) => cls.toLowerCase())
+        const descriptionLower = description.toLowerCase()
+        if (tag === 'nav' || role === 'navigation' || classes.some((cls) => cls.includes('nav'))) {
+          return 'navigation'
+        }
+        if (tag === 'form' || role === 'form' || classes.some((cls) => cls.includes('form') || cls.includes('signup') || cls.includes('subscribe'))) {
+          return 'form'
+        }
+        if (tag === 'table' || classes.some((cls) => cls.includes('table')) || descriptionLower.includes('table')) {
+          return 'table'
+        }
+        if (tag === 'footer' || role === 'contentinfo' || classes.some((cls) => cls.includes('footer'))) {
+          return 'footer'
+        }
+        if (tag === 'header' || classes.some((cls) => cls.includes('hero') || cls.includes('masthead'))) {
+          return 'hero'
+        }
+        if (tag === 'aside' || classes.some((cls) => cls.includes('sidebar') || cls.includes('aside'))) {
+          return 'sidebar'
+        }
+        if (classes.some((cls) => cls.includes('card'))) {
+          return 'card-grid'
+        }
+        if (descriptionLower.includes('grid layout') && childCount >= 4) {
+          return 'card-grid'
+        }
+        return 'content'
+      }
+
       const captureSection = (el: Element) => {
         const style = window.getComputedStyle(el)
         const display = style.display || 'block'
@@ -45,13 +88,12 @@ export async function collectLayoutWireframe(url: string, timeoutMs = 15000): Pr
         const gridTemplateRows = style.gridTemplateRows
 
         const childElements = Array.from(el.children).filter((child) => {
-          const childStyle = window.getComputedStyle(child as Element)
-          const rect = (child as Element).getBoundingClientRect()
-          return !(childStyle.display === 'none' || rect.width === 0 || rect.height === 0)
+          return isVisible(child as Element)
         })
 
         const tag = el.tagName.toLowerCase()
-        const role = (el.getAttribute('role') || null)
+        const role = el.getAttribute('role') || null
+        const classList = Array.from(el.classList)
 
         let columns: number | null = null
         let rows: number | null = null
@@ -99,15 +141,18 @@ export async function collectLayoutWireframe(url: string, timeoutMs = 15000): Pr
           }
         })
 
+        const category = classifySection(tag, role, classList, description, childElements.length)
+
         return {
           tag,
           role,
+          category,
           display,
           columns,
           rows,
           childCount: childElements.length,
           description,
-          classList: Array.from(el.classList),
+          classList,
           id: el.id || null,
           typography,
           colors,
@@ -119,12 +164,16 @@ export async function collectLayoutWireframe(url: string, timeoutMs = 15000): Pr
       }
 
       const topLevel = Array.from(document.body.children).filter((el) => {
-        const style = window.getComputedStyle(el)
-        const rect = el.getBoundingClientRect()
-        return !(style.display === 'none' || rect.width === 0 || rect.height === 0 || el.tagName === 'SCRIPT' || el.tagName === 'STYLE')
+        return isVisible(el) && el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE'
       })
 
-      return topLevel.slice(0, 20).map(captureSection)
+      const targeted = Array.from(document.querySelectorAll('form, table, footer, nav, header')).filter(
+        (el) => isVisible(el)
+      )
+
+      const uniqueElements = Array.from(new Set([...topLevel, ...targeted]))
+
+      return uniqueElements.slice(0, 30).map(captureSection)
     })
 
     return sections
