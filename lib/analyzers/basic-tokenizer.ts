@@ -528,7 +528,7 @@ function extractRadii(root: Root, variableMap: Map<string, string>): TokenSummar
     const resolved = resolveValue(decl.value, variableMap) ?? sanitizeTokenValue(decl.value)
     if (!resolved) return
     const normalized = normalizeRadiusValue(resolved)
-    if (!normalized) continue
+    if (!normalized) return
     values.set(normalized, (values.get(normalized) ?? 0) + 1)
   })
 
@@ -612,13 +612,13 @@ function extractMotion(css: string, variableMap: Map<string, string>): TokenSumm
 
   while ((match = TRANSITION_REGEX.exec(css)) !== null) {
     const normalized = normalizeMotionValue('transition', match[1])
-    if (!normalized) continue
+    if (!normalized) return
     values.set(normalized, (values.get(normalized) ?? 0) + 1)
   }
 
   while ((match = ANIMATION_REGEX.exec(css)) !== null) {
     const normalized = normalizeMotionValue('animation', match[1])
-    if (!normalized) continue
+    if (!normalized) return
     values.set(normalized, (values.get(normalized) ?? 0) + 1)
   }
 

@@ -1,0 +1,20 @@
+{
+  "buildCommand": "next build",
+  "devCommand": "next dev",
+  "installCommand": "bun install",
+  "framework": "nextjs",
+  "functions": {
+    "app/api/scan/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/mcp/*/route.ts": {
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    }
+  ]
+}
