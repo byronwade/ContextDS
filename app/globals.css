@@ -1,26 +1,785 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Enhanced semantic colors */
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+
+  /* Core color system */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  /* Surface colors */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  /* Interface elements */
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Chart colors for data visualization */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Sidebar system */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Border radius system */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --radius: 0.625rem;
+
+  /* Enhanced brand colors inspired by design tokens */
+  --background: oklch(0.99 0.002 240);
+  --foreground: oklch(0.15 0.01 240);
+
+  /* Card system with subtle depth */
+  --card: oklch(0.995 0.002 240);
+  --card-foreground: oklch(0.15 0.01 240);
+  --popover: oklch(0.995 0.002 240);
+  --popover-foreground: oklch(0.15 0.01 240);
+
+  /* Primary brand - vibrant blue representing digital design */
+  --primary: oklch(0.55 0.18 255);
+  --primary-foreground: oklch(0.98 0.005 240);
+
+  /* Secondary - complementary purple for design systems */
+  --secondary: oklch(0.95 0.01 280);
+  --secondary-foreground: oklch(0.45 0.15 280);
+
+  /* Muted backgrounds with subtle color temperature */
+  --muted: oklch(0.94 0.008 240);
+  --muted-foreground: oklch(0.5 0.02 240);
+
+  /* Accent - energetic cyan for highlighting tokens */
+  --accent: oklch(0.92 0.02 200);
+  --accent-foreground: oklch(0.25 0.08 200);
+
+  /* Enhanced semantic colors */
+  --destructive: oklch(0.65 0.25 15);
+  --destructive-foreground: oklch(0.98 0.01 15);
+  --warning: oklch(0.75 0.15 70);
+  --warning-foreground: oklch(0.2 0.05 70);
+  --success: oklch(0.6 0.18 140);
+  --success-foreground: oklch(0.98 0.01 140);
+
+  /* Border and input improvements */
+  --border: oklch(0.9 0.005 240);
+  --input: oklch(0.92 0.008 240);
+  --ring: oklch(0.55 0.18 255);
+
+  /* Enhanced chart colors for token visualization */
+  --chart-1: oklch(0.65 0.22 15);   /* Red for errors/critical */
+  --chart-2: oklch(0.7 0.15 200);   /* Cyan for tokens */
+  --chart-3: oklch(0.6 0.18 140);   /* Green for success */
+  --chart-4: oklch(0.75 0.15 70);   /* Yellow for warnings */
+  --chart-5: oklch(0.58 0.16 280);  /* Purple for design systems */
+
+  /* Sidebar refinements */
+  --sidebar: oklch(0.97 0.005 240);
+  --sidebar-foreground: oklch(0.2 0.01 240);
+  --sidebar-primary: oklch(0.55 0.18 255);
+  --sidebar-primary-foreground: oklch(0.98 0.005 240);
+  --sidebar-accent: oklch(0.92 0.02 200);
+  --sidebar-accent-foreground: oklch(0.25 0.08 200);
+  --sidebar-border: oklch(0.9 0.005 240);
+  --sidebar-ring: oklch(0.55 0.18 255);
+}
+
+.dark {
+  /* Enhanced dark mode with subtle color temperature */
+  --background: oklch(0.12 0.005 240);
+  --foreground: oklch(0.95 0.008 240);
+
+  /* Card system with enhanced depth */
+  --card: oklch(0.16 0.008 240);
+  --card-foreground: oklch(0.95 0.008 240);
+  --popover: oklch(0.16 0.008 240);
+  --popover-foreground: oklch(0.95 0.008 240);
+
+  /* Primary brand - brighter blue for dark mode */
+  --primary: oklch(0.7 0.2 255);
+  --primary-foreground: oklch(0.1 0.005 240);
+
+  /* Secondary - enhanced purple */
+  --secondary: oklch(0.22 0.02 280);
+  --secondary-foreground: oklch(0.8 0.1 280);
+
+  /* Muted with subtle warmth */
+  --muted: oklch(0.2 0.01 240);
+  --muted-foreground: oklch(0.65 0.015 240);
+
+  /* Accent - vivid cyan for tokens */
+  --accent: oklch(0.25 0.05 200);
+  --accent-foreground: oklch(0.85 0.08 200);
+
+  /* Enhanced semantic colors for dark mode */
+  --destructive: oklch(0.7 0.22 15);
+  --destructive-foreground: oklch(0.95 0.01 15);
+  --warning: oklch(0.8 0.18 70);
+  --warning-foreground: oklch(0.15 0.02 70);
+  --success: oklch(0.7 0.2 140);
+  --success-foreground: oklch(0.95 0.01 140);
+
+  /* Enhanced borders and inputs */
+  --border: oklch(0.25 0.01 240);
+  --input: oklch(0.18 0.008 240);
+  --ring: oklch(0.7 0.2 255);
+
+  /* Chart colors optimized for dark mode */
+  --chart-1: oklch(0.7 0.22 15);    /* Bright red */
+  --chart-2: oklch(0.75 0.18 200);  /* Bright cyan */
+  --chart-3: oklch(0.7 0.2 140);    /* Bright green */
+  --chart-4: oklch(0.8 0.18 70);    /* Bright yellow */
+  --chart-5: oklch(0.68 0.18 280);  /* Bright purple */
+
+  /* Sidebar refinements for dark mode */
+  --sidebar: oklch(0.14 0.005 240);
+  --sidebar-foreground: oklch(0.9 0.008 240);
+  --sidebar-primary: oklch(0.7 0.2 255);
+  --sidebar-primary-foreground: oklch(0.1 0.005 240);
+  --sidebar-accent: oklch(0.25 0.05 200);
+  --sidebar-accent-foreground: oklch(0.85 0.08 200);
+  --sidebar-border: oklch(0.25 0.01 240);
+  --sidebar-ring: oklch(0.7 0.2 255);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    font-optical-sizing: auto;
+  }
+
+  /* Enhanced focus management for accessibility */
+  :focus-visible {
+    @apply outline-2 outline-offset-2;
+    outline-color: oklch(0.55 0.18 255);
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    :focus-visible {
+      outline-width: 3px;
+      outline-offset: 3px;
+    }
+  }
+
+  /* Skip to main content link */
+  .skip-link {
+    @apply absolute -top-40 left-6 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-lg;
+    @apply focus:top-6 transition-all duration-200;
+  }
+
+  /* Screen reader only text */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Focus trap for modals */
+  .focus-trap {
+    position: relative;
+  }
+
+  .focus-trap::before,
+  .focus-trap::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Ultrathink: Improved text rendering */
+  h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance;
+    font-feature-settings: 'ss01', 'ss02';
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Ultrathink: Subtle motion preferences respect */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Ultrathink: Enhanced scroll behavior */
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 2rem;
+  }
+
+  /* Ultrathink: Better selection styling */
+  ::selection {
+    @apply bg-blue-500/20 text-blue-900 dark:text-blue-100;
+  }
+
+  /* Ultrathink: Enhanced code rendering */
+  code {
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'zero';
+    font-variant-ligatures: common-ligatures;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Ultrathink: Enhanced component styles */
+@layer components {
+  /* Subtle glass morphism effects */
+  .glass {
+    @apply backdrop-blur-xl bg-background/80 border border-border/50;
+  }
+
+  /* Enhanced button interactions with ripple effect */
+  .btn-enhanced {
+    @apply relative overflow-hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-enhanced::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.1;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+
+  .btn-enhanced:active::before {
+    width: 300px;
+    height: 300px;
+  }
+
+  .btn-enhanced:hover {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 10px 15px -3px oklch(0.55 0.18 255 / 0.15), 0 4px 6px -2px oklch(0 0 0 / 0.05);
+  }
+
+  .btn-enhanced:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  /* Staggered reveal animations */
+  .reveal {
+    @apply opacity-0 translate-y-8;
+    animation: reveal 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .reveal-delay-1 {
+    animation-delay: 0.1s;
+  }
+
+  .reveal-delay-2 {
+    animation-delay: 0.2s;
+  }
+
+  .reveal-delay-3 {
+    animation-delay: 0.3s;
+  }
+
+  @keyframes reveal {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Floating animation for decorative elements */
+  .float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  /* Pulse animation for interactive elements */
+  .pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 5px oklch(0.55 0.18 255 / 0.3);
+    }
+    50% {
+      box-shadow: 0 0 20px oklch(0.55 0.18 255 / 0.6);
+    }
+  }
+
+  /* Enhanced search input with brand-appropriate glow */
+  .search-enhanced {
+    @apply transition-all duration-300 ease-out;
+    box-shadow: 0 0 0 0 transparent;
+  }
+
+  .search-enhanced:focus {
+    box-shadow: 0 0 0 3px oklch(0.55 0.18 255 / 0.12),
+                0 0 25px oklch(0.55 0.18 255 / 0.08),
+                0 4px 12px oklch(0 0 0 / 0.1);
+    border-color: oklch(0.55 0.18 255);
+  }
+
+  .search-enhanced:focus-within {
+    box-shadow: 0 0 0 3px oklch(0.55 0.18 255 / 0.12),
+                0 0 25px oklch(0.55 0.18 255 / 0.08),
+                0 4px 12px oklch(0 0 0 / 0.1);
+  }
+
+  /* Micro-interactions for cards */
+  .card-interactive {
+    @apply transition-all duration-200 ease-out;
+    transform: translateZ(0); /* Hardware acceleration */
+  }
+
+  .card-interactive:hover {
+    @apply shadow-lg scale-[1.01];
+    transform: translateY(-2px) translateZ(0);
+  }
+
+  /* Enhanced loading states */
+  .loading-enhanced {
+    @apply relative overflow-hidden;
+  }
+
+  .loading-enhanced::after {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent;
+    animation: shimmer 2s infinite ease-in-out;
+    transform: translateX(-100%);
+  }
+
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  /* Enhanced typography scale with modern proportions */
+  .text-context-xs {
+    font-size: 0.75rem;
+    line-height: 1.5;
+    letter-spacing: 0.025em;
+    font-weight: 400;
+  }
+  .text-context-sm {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+    font-weight: 400;
+  }
+  .text-context-base {
+    font-size: 1rem;
+    line-height: 1.6;
+    letter-spacing: 0;
+    font-weight: 400;
+  }
+  .text-context-lg {
+    font-size: 1.125rem;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    font-weight: 450;
+  }
+  .text-context-xl {
+    font-size: 1.25rem;
+    line-height: 1.4;
+    letter-spacing: -0.015em;
+    font-weight: 500;
+  }
+  .text-context-2xl {
+    font-size: 1.5rem;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+    font-weight: 550;
+  }
+  .text-context-3xl {
+    font-size: 1.875rem;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    font-weight: 600;
+  }
+  .text-context-4xl {
+    font-size: 2.25rem;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    font-weight: 650;
+  }
+  .text-context-5xl {
+    font-size: 3rem;
+    line-height: 1;
+    letter-spacing: -0.035em;
+    font-weight: 700;
+  }
+
+  /* Typography semantic classes */
+  .text-display {
+    font-size: 2.25rem;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    font-weight: 650;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+  .text-headline {
+    font-size: 1.875rem;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+  .text-title {
+    font-size: 1.5rem;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+    font-weight: 550;
+    font-weight: 500;
+    text-wrap: balance;
+  }
+  .text-subtitle {
+    font-size: 1.125rem;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    font-weight: 450;
+    color: var(--muted-foreground);
+  }
+  .text-body {
+    font-size: 1rem;
+    line-height: 1.6;
+    letter-spacing: 0;
+    font-weight: 400;
+    text-wrap: pretty;
+  }
+  .text-caption {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+    font-weight: 400;
+    color: var(--muted-foreground);
+  }
+  .text-overline {
+    font-size: 0.75rem;
+    line-height: 1.5;
+    letter-spacing: 0.025em;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+    color: var(--muted-foreground);
+  }
+
+  /* Code typography improvements */
+  .text-code {
+    font-family: var(--font-geist-mono), 'Consolas', monospace;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+    font-weight: 400;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'zero';
+    font-variant-ligatures: common-ligatures;
+  }
+}
+
+/* ContextDS: Enhanced spacing and layout system */
+@layer utilities {
+  /* Precise spacing scale based on 8px grid */
+  .space-context-xs { gap: 0.25rem; }    /* 4px */
+  .space-context-sm { gap: 0.5rem; }     /* 8px */
+  .space-context-md { gap: 0.75rem; }    /* 12px */
+  .space-context-lg { gap: 1rem; }       /* 16px */
+  .space-context-xl { gap: 1.5rem; }     /* 24px */
+  .space-context-2xl { gap: 2rem; }      /* 32px */
+  .space-context-3xl { gap: 3rem; }      /* 48px */
+  .space-context-4xl { gap: 4rem; }      /* 64px */
+  .space-context-5xl { gap: 6rem; }      /* 96px */
+
+  /* Modern container system with max-width constraints */
+  .container-context {
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    max-width: min(100vw - 2rem, 75rem);
+  }
+  @media (min-width: 640px) {
+    .container-context {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .container-context {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+  .container-context-narrow {
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    max-width: min(100vw - 2rem, 42rem);
+  }
+  @media (min-width: 640px) {
+    .container-context-narrow {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .container-context-narrow {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+  .container-context-wide {
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    max-width: min(100vw - 2rem, 90rem);
+  }
+  @media (min-width: 640px) {
+    .container-context-wide {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .container-context-wide {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
+  /* Design token specific spacing */
+  .token-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+  .search-layout {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: 1fr;
+    max-width: 4xl;
+    margin: 0 auto;
+  }
+
+  /* ContextDS branded gradient backgrounds */
+  .bg-context-gradient {
+    background: linear-gradient(135deg,
+      oklch(0.99 0.003 255) 0%,
+      oklch(0.995 0.005 240) 25%,
+      oklch(0.99 0.003 200) 50%,
+      oklch(0.995 0.005 180) 75%,
+      oklch(0.99 0.003 280) 100%);
+  }
+
+  .dark .bg-context-gradient {
+    background: linear-gradient(135deg,
+      oklch(0.12 0.008 255) 0%,
+      oklch(0.14 0.01 240) 25%,
+      oklch(0.12 0.008 200) 50%,
+      oklch(0.14 0.01 180) 75%,
+      oklch(0.12 0.008 280) 100%);
+  }
+
+  /* Token-inspired gradient for highlighting */
+  .bg-token-gradient {
+    background: linear-gradient(90deg,
+      var(--chart-2) 0%,
+      var(--chart-5) 50%,
+      var(--chart-3) 100%);
+  }
+
+  /* Mesh gradient for hero sections */
+  .bg-mesh-gradient {
+    background:
+      radial-gradient(at 40% 20%, oklch(0.55 0.18 255 / 0.1) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, oklch(0.58 0.16 280 / 0.1) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, oklch(0.7 0.15 200 / 0.1) 0px, transparent 50%),
+      radial-gradient(at 80% 50%, oklch(0.6 0.18 140 / 0.1) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, oklch(0.65 0.22 15 / 0.1) 0px, transparent 50%),
+      radial-gradient(at 80% 100%, oklch(0.75 0.15 70 / 0.1) 0px, transparent 50%);
+  }
+
+  /* Enhanced shadow system with brand-appropriate depth */
+  .shadow-context-sm {
+    box-shadow: 0 1px 2px 0 oklch(0.55 0.18 255 / 0.08),
+                0 1px 3px 0 oklch(0 0 0 / 0.06);
+  }
+
+  .shadow-context-md {
+    box-shadow: 0 4px 6px -1px oklch(0.55 0.18 255 / 0.12),
+                0 2px 4px -1px oklch(0 0 0 / 0.06);
+  }
+
+  .shadow-context-lg {
+    box-shadow: 0 10px 15px -3px oklch(0.55 0.18 255 / 0.15),
+                0 4px 6px -2px oklch(0 0 0 / 0.05);
+  }
+
+  .shadow-context-xl {
+    box-shadow: 0 20px 25px -5px oklch(0.55 0.18 255 / 0.18),
+                0 10px 10px -5px oklch(0 0 0 / 0.04);
+  }
+
+  /* Token-specific shadows */
+  .shadow-token {
+    box-shadow: 0 4px 6px -1px oklch(0.7 0.15 200 / 0.15),
+                0 2px 4px -1px oklch(0 0 0 / 0.06);
+  }
+
+  /* Interactive shadows for hover states */
+  .shadow-interactive {
+    transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .shadow-interactive:hover {
+    box-shadow: 0 8px 25px -8px oklch(0.55 0.18 255 / 0.2),
+                0 4px 6px -2px oklch(0 0 0 / 0.05);
+  }
+
+  /* Accessibility utilities */
+  .focus-ring {
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+  }
+
+  .focus-ring-inset {
+    @apply focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary;
+  }
+
+  /* Reduced motion support for all interactive elements */
+  @media (prefers-reduced-motion: reduce) {
+    .card-interactive:hover {
+      transform: none;
+    }
+
+    .btn-enhanced:hover {
+      transform: none;
+    }
+
+    .search-enhanced:focus {
+      transition: none;
+    }
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .card-interactive {
+      border-width: 2px;
+    }
+
+    .shadow-context-sm,
+    .shadow-context-md,
+    .shadow-context-lg {
+      box-shadow: none;
+      border: 2px solid currentColor;
+    }
+  }
+
+  /* Performance optimizations */
+  .will-change-transform { will-change: transform; }
+  .will-change-opacity { will-change: opacity; }
+  .will-change-auto { will-change: auto; }
+
+  /* GPU acceleration for smooth animations */
+  .gpu-accelerate {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  /* Ultrathink: Smooth morphing transitions - prevent all flashing */
+  .morph-container {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+
+  /* Smooth view transitions */
+  .view-transition {
+    transition: opacity 0.3s ease-out, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Prevent layout shift during state changes */
+  .layout-stable {
+    min-height: 100vh;
+    transform: translateZ(0);
+  }
+
+  /* Ultra-smooth fade transitions */
+  .fade-morph {
+    transition: opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  /* Advanced animation easing for ultrathink */
+  .ease-ultrathink {
+    transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
 }
