@@ -130,7 +130,7 @@ export function generateTokenSet(
   const spacing = extractSpacing(root, variableMap)
   const radii = extractRadii(root, variableMap)
   const shadows = extractShadows(root, variableMap)
-  const motions = extractMotion(cssText, variableMap)
+  const motions = extractMotion(root, cssText, variableMap)
   const gradients = extractGradients(root, variableMap)
   const borders = extractBorders(root, variableMap)
 

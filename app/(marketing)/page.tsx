@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -114,7 +114,7 @@ type ViewMode = "search" | "scan"
 
 type ScanTokenCategory = "colors" | "typography" | "spacing" | "radius" | "shadows" | "motion"
 
-export default function HomePage() {
+function HomePageContent() {
   const searchParams = useSearchParams()
   const [viewMode, setViewMode] = useState<ViewMode>("search")
   const [query, setQuery] = useState("")
@@ -366,7 +366,7 @@ export default function HomePage() {
             {/* Integrated controls */}
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
               {/* Mode toggle */}
-              <div className="flex rounded-md border border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900">
+              <div className="flex rounded-md border border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900" role="tablist" aria-label="Application mode">
                 <button
                   onClick={() => setViewMode("search")}
                   className={`px-2 py-1 text-xs font-medium rounded-l-md transition-all duration-200 ${
@@ -374,6 +374,9 @@ export default function HomePage() {
                       ? "bg-white text-black shadow-sm dark:bg-black dark:text-white"
                       : "text-neutral-600 hover:text-black dark:text-neutral-400 dark:hover:text-white"
                   }`}
+                  role="tab"
+                  aria-selected={viewMode === "search"}
+                  aria-controls="search-panel"
                 >
                   Search
                 </button>
@@ -384,6 +387,9 @@ export default function HomePage() {
                       ? "bg-white text-black shadow-sm dark:bg-black dark:text-white"
                       : "text-neutral-600 hover:text-black dark:text-neutral-400 dark:hover:text-white"
                   }`}
+                  role="tab"
+                  aria-selected={viewMode === "scan"}
+                  aria-controls="scan-panel"
                 >
                   Scan
                 </button>
@@ -538,7 +544,7 @@ export default function HomePage() {
             </aside>
 
             {/* Main Search Results */}
-            <main className="flex-1 flex flex-col min-h-0">
+            <main id="main-content" className="flex-1 flex flex-col min-h-0" role="main" aria-label="Search results">
               {/* Results Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200/50 dark:border-neutral-800/50">
                 <div className="flex items-center gap-3">
@@ -975,4 +981,19 @@ function normalizeTokenValue(value?: string | number | string[]): string {
     return value.toString()
   }
   return value ?? ""
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-8 h-8 border-2 border-neutral-200 dark:border-neutral-800 border-t-blue-500 rounded-full animate-spin mx-auto" />
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">Loading ContextDS...</p>
+        </div>
+      </div>
+    }>
+      <HomePageContent />
+    </Suspense>
+  )
 }

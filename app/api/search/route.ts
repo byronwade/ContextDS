@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { sites, tokenSets, scans, layoutProfiles, cssSources } from '@/lib/db/schema'
 import { eq, and, or, like, ilike, sql, desc } from 'drizzle-orm'
 import { z } from 'zod'
+import { searchRatelimit } from '@/lib/ratelimit'
 
 const searchSchema = z.object({
   query: z.string().min(1),
@@ -76,6 +77,17 @@ type SearchResult = SiteSearchResult | TokenSearchResult | LayoutSearchResult | 
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limiting for search endpoint
+    const identifier = request.ip ?? '127.0.0.1'
+    const { success } = await searchRatelimit.limit(identifier)
+
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please slow down your searches.' },
+        { status: 429 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
 
     const params = searchSchema.parse({

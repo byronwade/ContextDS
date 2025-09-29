@@ -2,7 +2,7 @@ import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 
 // Create Redis instance with fallback for development
-const redis = process.env.REDIS_URL
+const redis = process.env.REDIS_URL && process.env.REDIS_URL.startsWith('https')
   ? new Redis({
       url: process.env.REDIS_URL,
       token: process.env.REDIS_TOKEN,
@@ -10,18 +10,18 @@ const redis = process.env.REDIS_URL
   : {
       // Fallback in-memory cache for development
       cache: new Map(),
-      async set(key: string, value: any, opts?: { ex?: number }) {
-        (this.cache as Map<string, { value: any; expires?: number }>).set(key, {
+      async set(key: string, value: unknown, opts?: { ex?: number }) {
+        (this.cache as Map<string, { value: unknown; expires?: number }>).set(key, {
           value,
           expires: opts?.ex ? Date.now() + opts.ex * 1000 : undefined,
         })
         return 'OK'
       },
       async get(key: string) {
-        const item = (this.cache as Map<string, { value: any; expires?: number }>).get(key)
+        const item = (this.cache as Map<string, { value: unknown; expires?: number }>).get(key)
         if (!item) return null
         if (item.expires && Date.now() > item.expires) {
-          (this.cache as Map<string, any>).delete(key)
+          (this.cache as Map<string, unknown>).delete(key)
           return null
         }
         return item.value

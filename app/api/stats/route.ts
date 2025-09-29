@@ -1,9 +1,31 @@
 import { NextResponse } from 'next/server'
 import { db, sites, tokenSets, scans } from '@/lib/db'
 import { count, sql, desc, eq } from 'drizzle-orm'
+import { statsCache, CACHE_KEYS } from '@/lib/performance'
 
 export async function GET() {
   try {
+    // Skip during build time
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({
+        sites: 0,
+        tokens: 0,
+        scans: 0,
+        tokenSets: 0,
+        categories: {},
+        averageConfidence: 0,
+        recentActivity: [],
+        popularSites: []
+      })
+    }
+
+    // Check cache first
+    const cached = statsCache.get(CACHE_KEYS.STATS)
+    if (cached) {
+      console.log('📊 Returning cached database statistics')
+      return NextResponse.json(cached)
+    }
+
     console.log('📊 Loading database statistics...')
 
     // Get basic counts
@@ -120,6 +142,9 @@ export async function GET() {
     }
 
     console.log(`✅ Database stats: ${stats.sites} sites, ${stats.tokens} tokens, ${stats.scans} scans`)
+
+    // Cache the results for 5 minutes
+    statsCache.set(CACHE_KEYS.STATS, stats, 5 * 60 * 1000)
 
     return NextResponse.json(stats)
 

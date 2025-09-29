@@ -4,6 +4,15 @@ import { checkDatabaseHealth, queryWithMetrics, db, sites, tokenSets, scans, sql
 export async function GET(request: NextRequest) {
   const startTime = Date.now()
 
+  // Skip during build time
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json({
+      status: 'build-time',
+      message: 'Health check skipped during build',
+      timestamp: new Date().toISOString()
+    })
+  }
+
   try {
     console.log('🏥 API health check initiated...')
 

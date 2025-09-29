@@ -3,15 +3,15 @@ import { sql } from 'drizzle-orm'
 import postgres from 'postgres'
 import * as schema from './schema'
 
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL environment variable is required')
-}
+// Database connection with build-time safety
+let client: postgres.Sql<{}> | null = null
 
-console.log('🔗 Connecting to Neon PostgreSQL with ultrathink optimization...')
+if (process.env.DATABASE_URL) {
+  console.log('🔗 Connecting to Neon PostgreSQL with ultrathink optimization...')
 
-// Ultrathink optimized connection to Neon database
-const client = postgres(process.env.DATABASE_URL, {
-  // Connection pooling optimization
+  // Ultrathink optimized connection to Neon database
+  client = postgres(process.env.DATABASE_URL, {
+    // Connection pooling optimization
   max: 20,                    // Maximum connections in pool
   idle_timeout: 20,           // Close idle connections after 20s
   connect_timeout: 10,        // Connection timeout in seconds
@@ -45,11 +45,14 @@ const client = postgres(process.env.DATABASE_URL, {
     }
   }
 })
+} else {
+  console.log('⚠️ Database connection skipped - DATABASE_URL not available (build time)')
+}
 
-export const db = drizzle(client, {
+export const db = client ? drizzle(client, {
   schema,
   logger: process.env.NODE_ENV === 'development'
-})
+}) : null as any
 
 // Connection health monitoring
 const connectionHealth = {
@@ -69,6 +72,10 @@ export async function checkDatabaseHealth(): Promise<{
   const start = Date.now()
 
   try {
+    if (!db) {
+      throw new Error('Database not initialized')
+    }
+
     // Simple health check query
     await db.execute(sql`SELECT 1`)
 
@@ -133,6 +140,11 @@ export async function queryWithMetrics<T>(
 // Initialize database optimization
 async function initializeOptimization() {
   try {
+    if (!db) {
+      console.log('⚠️ Database initialization skipped - no connection available')
+      return
+    }
+
     console.log('🚀 Initializing ContextDS database optimization...')
 
     // Check if optimization tables exist
@@ -164,8 +176,8 @@ async function initializeOptimization() {
   }
 }
 
-// Initialize on import
-if (typeof window === 'undefined') {
+// Initialize on import (server-side only)
+if (typeof window === 'undefined' && process.env.DATABASE_URL) {
   initializeOptimization()
 }
 
