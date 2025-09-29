@@ -72,6 +72,7 @@ type ExtractedToken = {
   value: string
   confidence?: number
   usage?: number
+  semantic?: string
 }
 
 type ExtractedTokenGroups = Partial<Record<ScanTokenCategory, ExtractedToken[]>>
@@ -111,13 +112,13 @@ type StatsResponse = {
   popularSites: Array<{ domain: string | null; popularity: number | null; tokens: number; lastScanned: string | null }>
 }
 
-type ViewMode = "home" | "search" | "scan"
+type ViewMode = "search" | "scan"
 
 type ScanTokenCategory = "colors" | "typography" | "spacing" | "radius" | "shadows" | "motion"
 
 export default function HomePage() {
   const searchParams = useSearchParams()
-  const [viewMode, setViewMode] = useState<ViewMode>("home")
+  const [viewMode, setViewMode] = useState<ViewMode>("search")
   const [query, setQuery] = useState("")
   const [caseInsensitive, setCaseInsensitive] = useState(true)
   const [wholeWords, setWholeWords] = useState(false)
@@ -145,7 +146,7 @@ export default function HomePage() {
 
   // Handle scroll reveal for home page content
   useEffect(() => {
-    if (viewMode !== "home" || query.trim()) return
+    if (viewMode !== "search" || query.trim()) return
 
     const handleScroll = () => {
       const scrolled = window.scrollY > 50
@@ -258,8 +259,8 @@ export default function HomePage() {
       setHasResults(true)
 
       // Smooth transition to search view only after results are ready
-      if (viewMode === "home") {
-        setTimeout(() => setViewMode("search"), 50) // Small delay for smooth morphing
+      if (viewMode === "search") {
+        // Already in search mode, no need to transition
       }
 
     } catch (error) {
@@ -366,24 +367,25 @@ export default function HomePage() {
   const selectedTokens = scanResult?.tokens?.[selectedTokenCategory] ?? []
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-between overflow-hidden antialiased bg-white text-black dark:bg-black dark:text-white layout-stable morph-container">
-      <header className="flex min-h-[64px] w-full shrink-0 flex-wrap items-center justify-between border-b border-neutral-200 dark:border-neutral-800 md:flex-nowrap">
-        {/* Left: Logo and branding */}
-        <div className="flex pl-4 md:pl-6">
-          <div className="flex items-center space-x-2 pr-3">
-            <Link href="/" className="flex items-center gap-2 outline-offset-4" onClick={() => { setViewMode("home"); setQuery(""); }}>
-              <div className="flex h-6 w-6 items-center justify-center rounded bg-black dark:bg-white">
-                <Palette className="h-4 w-4 text-white dark:text-black" />
-              </div>
-              <span className="text-sm font-semibold">ContextDS</span>
-            </Link>
-          </div>
+    <div className="flex h-full w-full flex-col bg-white dark:bg-black antialiased">
+      {/* Vercel-style Header - Clean and Minimal */}
+      <header className="flex min-h-[64px] w-full shrink-0 items-center justify-between border-b border-neutral-200/50 backdrop-blur-sm bg-white/80 dark:border-neutral-800/50 dark:bg-black/80 sticky top-0 z-50">
+        {/* Left: Brand */}
+        <div className="flex items-center pl-6">
+          <Link href="/" className="flex items-center gap-2 group" onClick={() => { setQuery(""); setHasResults(false); }}>
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 transition-transform duration-200 group-hover:scale-105">
+              <Palette className="h-4 w-4 text-white" />
+            </div>
+            <span className="text-lg font-semibold text-black dark:text-white">ContextDS</span>
+          </Link>
         </div>
 
-        {/* Center: Search bar (only when typing - ultrathink) */}
-        {(isSearchActive || query.trim()) && (
-          <div className="order-1 flex w-full items-center justify-center border-t border-neutral-200 px-4 py-3 md:order-none md:border-none md:px-3 md:py-0 animate-in fade-in-0 slide-in-from-top-2 duration-300" id="header-contents">
-          <div className="relative z-10 w-full flex-grow">
+        {/* Center: Always-visible search (grep.app style) */}
+        <div className="flex-1 max-w-2xl mx-8">
+          <div className="relative group">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <Search className="h-4 w-4 text-neutral-400 transition-colors duration-200 group-focus-within:text-blue-500" />
+            </div>
             <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
@@ -394,238 +396,348 @@ export default function HomePage() {
                   }
                 }
               }}
-              placeholder={
-                viewMode === "scan"
-                  ? "Enter website URL to scan..."
-                  : "Search design tokens..."
-              }
-              className="flex w-full min-w-0 shrink rounded-md border border-neutral-300 bg-white px-3 py-1 text-sm transition-colors focus-visible:border-black focus-visible:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-neutral-500 h-[42px] pr-24 md:h-9 max-md:max-w-none dark:border-neutral-700 dark:bg-black dark:focus-visible:border-white dark:focus-visible:ring-white/20"
-              style={{ paddingLeft: '12px' }}
-              id="search-input"
+              placeholder={viewMode === "scan" ? "Enter website URL to scan..." : "Search design tokens..."}
+              className="w-full h-10 pl-10 pr-32 text-sm bg-white border border-neutral-200 rounded-lg transition-all duration-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 hover:border-neutral-300 dark:bg-black dark:border-neutral-700 dark:focus:border-blue-500 dark:focus:ring-blue-900/20 dark:hover:border-neutral-600"
               spellCheck="false"
               autoCapitalize="off"
               autoComplete="off"
               autoCorrect="off"
-              type="text"
             />
-            <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
-              {(viewMode === "search" || isSearchActive) ? (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+
+            {/* Search mode toggle - integrated */}
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              <div className="flex rounded-md border border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900">
+                <button
+                  onClick={() => setViewMode("search")}
+                  className={`px-2 py-1 text-xs font-medium rounded-l-md transition-all duration-200 ${
+                    viewMode === "search"
+                      ? "bg-white text-black shadow-sm dark:bg-black dark:text-white"
+                      : "text-neutral-600 hover:text-black dark:text-neutral-400 dark:hover:text-white"
+                  }`}
+                >
+                  Search
+                </button>
+                <button
+                  onClick={() => setViewMode("scan")}
+                  className={`px-2 py-1 text-xs font-medium rounded-r-md transition-all duration-200 ${
+                    viewMode === "scan"
+                      ? "bg-white text-black shadow-sm dark:bg-black dark:text-white"
+                      : "text-neutral-600 hover:text-black dark:text-neutral-400 dark:hover:text-white"
+                  }`}
+                >
+                  Scan
+                </button>
+              </div>
+
+              {/* Action buttons */}
+              {viewMode === "search" && (
+                <div className="flex items-center gap-0.5 ml-1">
+                  <button
                     onClick={() => setCaseInsensitive(!caseInsensitive)}
-                    className={`border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-transparent h-6 px-1 min-w-6 ${caseInsensitive ? "bg-neutral-100 border-neutral-200 text-foreground dark:bg-neutral-800 dark:border-neutral-700 dark:text-foreground" : "text-neutral-500"}`}
+                    className={`h-6 w-6 flex items-center justify-center rounded-md transition-all duration-200 hover:scale-105 ${
+                      caseInsensitive
+                        ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                        : "text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    }`}
                     title="Match case"
-                    aria-label="Match case"
                   >
-                    <Type className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                    <Type className="h-3 w-3" />
+                  </button>
+                  <button
                     onClick={() => setWholeWords(!wholeWords)}
-                    className={`border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-transparent h-6 px-1 min-w-6 ${wholeWords ? "bg-neutral-100 border-neutral-200 text-foreground dark:bg-neutral-800 dark:border-neutral-700 dark:text-foreground" : "text-neutral-500"}`}
+                    className={`h-6 w-6 flex items-center justify-center rounded-md transition-all duration-200 hover:scale-105 ${
+                      wholeWords
+                        ? "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
+                        : "text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    }`}
                     title="Match whole words"
-                    aria-label="Match whole words"
                   >
-                    <Filter className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                    <Filter className="h-3 w-3" />
+                  </button>
+                  <button
                     onClick={() => setUseRegex(!useRegex)}
-                    className={`border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-transparent h-6 px-1 min-w-6 ${useRegex ? "bg-neutral-100 border-neutral-200 text-foreground dark:bg-neutral-800 dark:border-neutral-700 dark:text-foreground" : "text-neutral-500"}`}
+                    className={`h-6 w-6 flex items-center justify-center rounded-md transition-all duration-200 hover:scale-105 ${
+                      useRegex
+                        ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+                        : "text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    }`}
                     title="Use regular expression"
-                    aria-label="Use regular expression"
                   >
-                    <Regex className="h-4 w-4" />
-                  </Button>
-                </>
-              ) : viewMode === "scan" ? (
+                    <Regex className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
+
+              {viewMode === "scan" && (
                 <Button
                   onClick={handleScan}
                   disabled={!query.trim() || scanLoading}
                   size="sm"
-                  className="h-6 px-2 bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 disabled:opacity-50"
+                  className="h-7 px-3 ml-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-medium rounded-lg hover:scale-105 disabled:hover:scale-100 transition-all duration-200"
                 >
                   {scanLoading ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
                   ) : (
-                    <Sparkles className="h-3 w-3" />
+                    <>
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Scan
+                    </>
                   )}
                 </Button>
-              ) : null}
+              )}
             </div>
           </div>
         </div>
-        )}
 
-        {/* Right: Feedback and theme toggle */}
-        <div className="flex min-h-[64px] select-none items-center justify-end gap-3 pr-4 md:pr-6">
-          <Button variant="outline" size="sm" className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 rounded-md px-3 text-xs sm:h-9 sm:px-4 py-2 sm:text-sm shadow-none [@media(max-width:374px)]:hidden">
+        {/* Right: Controls */}
+        <div className="flex items-center gap-3 pr-6">
+          <Button variant="ghost" size="sm" className="text-xs text-neutral-600 hover:text-black dark:text-neutral-400 dark:hover:text-white">
             Feedback
           </Button>
           <ThemeToggle />
         </div>
       </header>
 
-      {/* Hero section - show when in home mode without active search/scan */}
-      {viewMode === "home" && !hasResults && (
-        <div className="h-[calc(100dvh-130px)] w-full md:h-[calc(100dvh-65px)] relative view-transition fade-morph">
-          {/* Loading overlay when typing - smooth morphing */}
-          {loading && query.trim() && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/90 backdrop-blur-md dark:bg-black/90 animate-in fade-in-0 duration-400 ease-ultrathink">
-              <div className="flex flex-col items-center space-y-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-600 delay-100 ease-ultrathink">
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <div className="animate-spin rounded-full h-7 w-7 border-2 border-neutral-200 dark:border-neutral-800"></div>
-                    <div className="absolute inset-0 animate-spin rounded-full h-7 w-7 border-2 border-t-black dark:border-t-white border-transparent"></div>
-                  </div>
-                  <span className="text-base font-medium text-black dark:text-white">
-                    {query.length === 1 ? 'Searching database' : `Searching for "${query}"`}
-                  </span>
-                </div>
-                <div className="flex items-center gap-4 text-sm text-neutral-500 dark:text-neutral-400">
-                  <span>{stats?.tokens.toLocaleString() || 0} tokens</span>
-                  <span>•</span>
-                  <span>{stats?.sites || 0} sites</span>
-                  <span>•</span>
-                  <span>{stats?.averageConfidence || 0}% avg confidence</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="flex min-h-full w-full shrink-0 select-none flex-col items-center justify-center space-y-2">
-            {/* Main heading */}
-            <div className="flex w-full flex-row items-center justify-center pt-8 text-center text-[2rem]/[2.5rem] font-semibold tracking-tight sm:text-5xl">
-              <span>Design tokens made</span>
-              <div className="px-[2px]"></div>
-              <span className="italic text-neutral-600 dark:text-neutral-400">fast</span>
-            </div>
-
-            {/* Subtitle */}
-            <div className="px-[8px] text-center text-sm text-neutral-500 sm:text-base">
-              Effortlessly search for tokens, sites, and patterns
-              <span className="whitespace-nowrap">across design systems.</span>
-            </div>
-
-            <div className="py-1"></div>
-
-            {/* Mode toggle and search input - connected with seamless borders */}
-            <div className="flex w-full flex-row items-center justify-center">
-              <div className="px-2"></div>
-              <div className="w-[625px] space-y-0">
-                {/* Toggle above search - left aligned and connected */}
-                <div className="flex justify-start mb-[-1px]">
-                  <div className="inline-flex items-center rounded-t-lg border border-b-0 border-neutral-300 bg-white p-1 dark:border-neutral-700 dark:bg-black">
-                    <button
-                      onClick={() => {
-                        if (viewMode === "scan") {
-                          setViewMode("home");
-                        }
-                      }}
-                      className={`relative rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
-                        viewMode !== "scan"
-                          ? "bg-neutral-100 text-black dark:bg-neutral-800 dark:text-white"
-                          : "text-neutral-600 hover:bg-neutral-100/50 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800/50 dark:hover:text-neutral-100"
-                      }`}
-                    >
-                      Search
-                    </button>
-                    <button
-                      onClick={() => setViewMode("scan")}
-                      className={`relative rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
-                        viewMode === "scan"
-                          ? "bg-neutral-100 text-black dark:bg-neutral-800 dark:text-white"
-                          : "text-neutral-600 hover:bg-neutral-100/50 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800/50 dark:hover:text-neutral-100"
-                      }`}
-                    >
-                      Scan
-                    </button>
+      {/* Main Interface - Grep.app style search-first layout */}
+      <div className="flex-1 flex flex-col min-h-0">
+        {/* Search Mode Interface */}
+        {viewMode === "search" && (
+          <div className="flex-1 flex">
+            {/* Left Sidebar - Filters (Vercel style) */}
+            <aside className="w-64 border-r border-neutral-200/50 bg-neutral-50/50 dark:border-neutral-800/50 dark:bg-neutral-950/50 p-6">
+              <div className="space-y-6">
+                {/* Categories */}
+                <div>
+                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3">Categories</h3>
+                  <div className="space-y-1">
+                    {tokenCategoryOptions.map(option => (
+                      option.key === "all" || categoryFacets.some(facet => facet.key === option.key) ? (
+                        <button
+                          key={option.key}
+                          onClick={() => setSelectedCategory(option.key)}
+                          className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
+                            selectedCategory === option.key
+                              ? "bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-100"
+                              : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+                          }`}
+                        >
+                          <span>{option.label}</span>
+                          {option.key !== "all" && (
+                            <Badge variant="secondary" className="text-xs bg-neutral-200 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-300">
+                              {categoryFacets.find(facet => facet.key === option.key)?.count ?? 0}
+                            </Badge>
+                          )}
+                        </button>
+                      ) : null
+                    ))}
                   </div>
                 </div>
 
-                {/* Search input connected below toggle */}
-                <div className="relative z-10 w-full flex-grow">
-                  <Input
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' && query.trim()) {
-                        if (viewMode === "scan") {
-                          handleScan()
-                        }
-                      }
-                    }}
-                    placeholder={viewMode === "scan" ? "Enter website URL to scan..." : "Search"}
-                    className="flex w-full min-w-0 shrink rounded-md rounded-tl-none border border-neutral-300 bg-white px-3 py-1 text-sm transition-colors focus-visible:border-black focus-visible:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-neutral-500 h-[42px] pr-24 dark:border-neutral-700 dark:bg-black dark:focus-visible:border-white dark:focus-visible:ring-white/20"
-                    style={{ paddingLeft: '12px' }}
-                    id="search-input-home"
-                    spellCheck="false"
-                    autoCapitalize="off"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    type="text"
-                  />
-                  <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
-                    {viewMode === "search" ? (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setCaseInsensitive(!caseInsensitive)}
-                          className={`border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-transparent h-6 px-1 min-w-6 ${caseInsensitive ? "bg-neutral-100 border-neutral-200 text-foreground dark:bg-neutral-800 dark:border-neutral-700 dark:text-foreground" : "text-neutral-500"}`}
-                          title="Match case"
-                          aria-label="Match case"
-                        >
-                          <Type className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setWholeWords(!wholeWords)}
-                          className={`border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-transparent h-6 px-1 min-w-6 ${wholeWords ? "bg-neutral-100 border-neutral-200 text-foreground dark:bg-neutral-800 dark:border-neutral-700 dark:text-foreground" : "text-neutral-500"}`}
-                          title="Match whole words"
-                          aria-label="Match whole words"
-                        >
-                          <Filter className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setUseRegex(!useRegex)}
-                          className={`border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-transparent h-6 px-1 min-w-6 ${useRegex ? "bg-neutral-100 border-neutral-200 text-foreground dark:bg-neutral-800 dark:border-neutral-700 dark:text-foreground" : "text-neutral-500"}`}
-                          title="Use regular expression"
-                          aria-label="Use regular expression"
-                        >
-                          <Regex className="h-4 w-4" />
-                        </Button>
-                      </>
-                    ) : viewMode === "scan" ? (
-                      <Button
-                        onClick={handleScan}
-                        disabled={!query.trim() || scanLoading}
-                        size="sm"
-                        className="h-6 px-2 bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 disabled:opacity-50"
+                {/* Popular Sites */}
+                <div>
+                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3 flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" />
+                    Popular Sites
+                  </h3>
+                  <div className="space-y-1">
+                    {popularSites.slice(0, 6).map(site => (
+                      <button
+                        key={site.domain!}
+                        onClick={() => setQuery(site.domain || '')}
+                        className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100 transition-all duration-200"
                       >
-                        {scanLoading ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Sparkles className="h-3 w-3" />
-                        )}
-                      </Button>
-                    ) : null}
+                        <span className="truncate">{site.domain}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {site.tokens}
+                        </Badge>
+                      </button>
+                    ))}
                   </div>
                 </div>
-                <div className="h-[min(25dvh,250px)] w-full"></div>
+
+                {/* Stats */}
+                {stats && (
+                  <div className="pt-4 border-t border-neutral-200 dark:border-neutral-800">
+                    <div className="space-y-3 text-xs text-neutral-500 dark:text-neutral-400">
+                      <div className="flex justify-between">
+                        <span>Sites indexed</span>
+                        <span className="font-semibold text-neutral-900 dark:text-neutral-100">{stats.sites}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Total tokens</span>
+                        <span className="font-semibold text-neutral-900 dark:text-neutral-100">{stats.tokens.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Avg confidence</span>
+                        <span className="font-semibold text-neutral-900 dark:text-neutral-100">{stats.averageConfidence}%</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="px-2"></div>
-            </div>
+            </aside>
+
+            {/* Main Content Area */}
+            <main className="flex-1 flex flex-col min-h-0">
+              {/* Results Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200/50 dark:border-neutral-800/50 bg-white/80 dark:bg-black/80 backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                      <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Searching...</span>
+                    </>
+                  ) : query.trim() ? (
+                    <>
+                      <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                        {resolvedResults.length.toLocaleString()} results
+                      </span>
+                      <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                        for "{query}"
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-sm text-neutral-500 dark:text-neutral-400">
+                      Start typing to search {stats?.tokens.toLocaleString() || 0} design tokens
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" className="text-xs text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300">
+                    Export
+                  </Button>
+                  <Button variant="ghost" size="sm" className="text-xs text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300">
+                    <ChevronDown className="h-3 w-3 ml-1" />
+                    View
+                  </Button>
+                </div>
+              </div>
+
+              {/* Results Area */}
+              <div className="flex-1 overflow-y-auto">
+                {/* Empty State */}
+                {!query.trim() && !loading && (
+                  <div className="flex-1 flex items-center justify-center p-12">
+                    <div className="text-center max-w-md space-y-6">
+                      <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center dark:from-blue-900/30 dark:to-purple-900/30">
+                        <Search className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div className="space-y-2">
+                        <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+                          Search Design Tokens
+                        </h2>
+                        <p className="text-neutral-600 dark:text-neutral-400">
+                          Search across {stats?.tokens.toLocaleString() || 0} design tokens from {stats?.sites || 0} websites
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {["primary", "Inter", "#635bff", "spacing"].map(example => (
+                          <button
+                            key={example}
+                            onClick={() => setQuery(example)}
+                            className="px-3 py-1 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded-md text-xs font-medium transition-all duration-200 hover:scale-105"
+                          >
+                            {example}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Loading State */}
+                {loading && (
+                  <div className="flex-1 flex items-center justify-center p-12">
+                    <div className="text-center space-y-4">
+                      <div className="relative">
+                        <div className="w-8 h-8 border-2 border-neutral-200 dark:border-neutral-800 rounded-full animate-spin"></div>
+                        <div className="absolute inset-0 w-8 h-8 border-2 border-t-blue-500 rounded-full animate-spin"></div>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                          Searching {query.length === 1 ? 'database' : `"${query}"`}
+                        </p>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                          {stats?.tokens.toLocaleString() || 0} tokens • {stats?.sites || 0} sites
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Results */}
+                {!loading && resolvedResults.length > 0 && (
+                  <div className="p-6 space-y-3">
+                    {resolvedResults.map((result, index) => (
+                      <div
+                        key={result.id}
+                        className="group p-4 border border-neutral-200 rounded-xl bg-white hover:border-neutral-300 hover:shadow-sm transition-all duration-200 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-neutral-700 animate-in fade-in-0 slide-in-from-bottom-2"
+                        style={{ animationDelay: `${index * 50}ms` }}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-semibold text-neutral-900 dark:text-neutral-100 truncate">
+                                {result.name}
+                              </span>
+                              <Badge variant="secondary" className="text-xs">
+                                {result.category}
+                              </Badge>
+                            </div>
+                            <code className="block text-sm font-mono text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2 py-1 rounded-md mt-2">
+                              {result.value}
+                            </code>
+                            {result.site && (
+                              <div className="flex items-center gap-1 mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+                                <span>from</span>
+                                <Link href={`/site/${result.site}`} className="font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+                                  {result.site}
+                                </Link>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            {typeof result.confidence === "number" && (
+                              <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                                {result.confidence}%
+                              </span>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleCopyToken(String(result.value))}
+                              className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200"
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* No Results */}
+                {!loading && query.trim() && resolvedResults.length === 0 && (
+                  <div className="flex-1 flex items-center justify-center p-12">
+                    <div className="text-center space-y-4">
+                      <div className="w-12 h-12 mx-auto rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                        <Search className="h-5 w-5 text-neutral-400" />
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="font-medium text-neutral-900 dark:text-neutral-100">No results found</h3>
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                          Try adjusting your search or browse popular tokens below
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </main>
           </div>
-        </div>
-      )}
+        )}
 
       {(viewMode === "search" && hasResults) && (
         <div className="flex flex-1 flex-col md:flex-row animate-in fade-in-0 slide-in-from-bottom-6 duration-700 ease-ultrathink view-transition">
@@ -790,7 +902,7 @@ export default function HomePage() {
       )}
 
       {/* Scroll-triggered content - Vercel style with rich database data */}
-      {viewMode === "home" && !hasResults && !query.trim() && stats && stats.sites > 0 && showScrollContent && (
+      {viewMode === "search" && !hasResults && !query.trim() && stats && stats.sites > 0 && showScrollContent && (
         <div className="flex w-full items-center justify-center px-6 py-16 animate-in fade-in-0 slide-in-from-bottom-6 duration-700">
           <div className="w-full max-w-2xl space-y-8">
             {/* Header with stats */}
@@ -898,7 +1010,7 @@ export default function HomePage() {
       )}
 
       {/* Footer - grep.app style */}
-      {viewMode === "home" && !hasResults && !query.trim() && (
+      {viewMode === "search" && !hasResults && !query.trim() && (
         <div className="w-full select-none border-t border-neutral-200 px-4 py-6 text-sm text-neutral-500 dark:border-neutral-800 dark:text-neutral-400 sm:px-12 sm:py-8">
           <div className="relative flex flex-col gap-6">
             <div className="flex min-h-8 w-full flex-wrap items-center gap-6">

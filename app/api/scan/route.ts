@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
         {
           status: 'failed',
           error: 'Invalid request parameters',
-          details: error.errors
+          details: error.issues
         },
         { status: 400 }
       )

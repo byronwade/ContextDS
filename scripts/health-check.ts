@@ -81,10 +81,10 @@ async function runHealthCheck() {
       })
 
       if (test.name === 'JSONB token search') {
-        const count = result.rows?.[0]?.token_count || 0
+        const count = (result as any)[0]?.token_count || 0
         console.log(`  ✅ ${test.name}: Found ${count} token sets with colors`)
       } else if (test.name === 'Complex token extraction') {
-        const results = result.rows || []
+        const results = (result as any) || []
         console.log(`  ✅ ${test.name}: Processed ${results.length} token sets`)
       } else {
         console.log(`  ✅ ${test.name}: Success`)
@@ -120,9 +120,9 @@ async function runHealthCheck() {
       LIMIT 10
     `)
 
-    if (indexStats.rows.length > 0) {
+    if ((indexStats as any).length > 0) {
       console.log('  📊 Top index usage:')
-      indexStats.rows.forEach((row: any) => {
+      (indexStats as any).forEach((row: any) => {
         console.log(`    ${row.tablename}.${row.indexname}: ${row.idx_scan} scans`)
       })
     } else {
@@ -149,7 +149,7 @@ async function runHealthCheck() {
       LIMIT 8
     `)
 
-    tableSizes.rows.forEach((row: any) => {
+    (tableSizes as any).forEach((row: any) => {
       console.log(`  📋 ${row.table_name}: ${row.size} (data: ${row.table_size}, indexes: ${row.index_size})`)
     })
 
@@ -171,9 +171,9 @@ async function runHealthCheck() {
       GROUP BY application_name, state
     `)
 
-    if (poolStats.rows.length > 0) {
+    if ((poolStats as any).length > 0) {
       console.log('  📊 Active connections:')
-      poolStats.rows.forEach((row: any) => {
+      (poolStats as any).forEach((row: any) => {
         console.log(`    ${row.application_name} (${row.state}): ${row.connection_count}`)
       })
     } else {

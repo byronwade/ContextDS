@@ -18,7 +18,8 @@ import {
   Globe,
   Hash,
   Code,
-  Filter
+  Filter,
+  Eye
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"

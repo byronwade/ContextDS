@@ -312,7 +312,7 @@ async function searchTokens(pattern: string, params: SearchParams): Promise<Toke
       source: string | null
     }
 
-    const tokenRows = tokenResults as TokenSearchRow[]
+    const tokenRows = tokenResults as unknown as TokenSearchRow[]
 
     const results = tokenRows.map<TokenSearchResult>((row) => {
       const confidence = toNumber(row.confidence, 80)

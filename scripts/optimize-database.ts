@@ -17,7 +17,7 @@ if (!DATABASE_URL) {
 console.log('🚀 Starting ContextDS database optimization...')
 
 async function main() {
-  const client = postgres(DATABASE_URL, {
+  const client = postgres(DATABASE_URL!, {
     ssl: 'require',
     prepare: false
   })

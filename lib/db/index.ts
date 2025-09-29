@@ -52,7 +52,7 @@ export const db = drizzle(client, {
 })
 
 // Connection health monitoring
-let connectionHealth = {
+const connectionHealth = {
   isHealthy: true,
   lastCheck: Date.now(),
   errorCount: 0,

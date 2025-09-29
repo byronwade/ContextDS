@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ColorCardGrid } from "./color-card-grid"
-import { Copy, Download, Share, Palette, Type, Ruler, Shadow, RotateCcw, Zap } from "lucide-react"
+import { Copy, Download, Share, Palette, Type, Ruler, Box, RotateCcw, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface TokenData {
@@ -84,7 +84,7 @@ const categoryConfig = {
     color: 'from-purple-500 to-violet-500'
   },
   shadows: {
-    icon: Shadow,
+    icon: Box,
     label: 'Shadows',
     description: 'Drop shadows and elevation',
     color: 'from-gray-500 to-slate-500'
@@ -220,7 +220,7 @@ export function TokenCategoryGrid({
                           <div className="flex-1">
                             <h3 className="text-body font-medium">{token.name}</h3>
                             <Badge variant="outline" className="text-caption mt-1">
-                              {token.property}
+                              {(token as any).property || 'value'}
                             </Badge>
                           </div>
                           <Badge variant="secondary" className="text-caption">
@@ -232,9 +232,9 @@ export function TokenCategoryGrid({
                           <div
                             className="text-body"
                             style={{
-                              fontFamily: token.property === 'font-family' ? token.value : 'inherit',
-                              fontSize: token.property === 'font-size' ? token.value : 'inherit',
-                              fontWeight: token.property === 'font-weight' ? token.value : 'inherit'
+                              fontFamily: (token as any).property === 'font-family' ? token.value : 'inherit',
+                              fontSize: (token as any).property === 'font-size' ? token.value : 'inherit',
+                              fontWeight: (token as any).property === 'font-weight' ? token.value : 'inherit'
                             }}
                           >
                             The quick brown fox jumps over the lazy dog
@@ -319,9 +319,9 @@ export function TokenCategoryGrid({
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <h3 className="text-body font-medium">{token.name}</h3>
-                            {token.property && (
+                            {(token as any).property && (
                               <Badge variant="outline" className="text-caption mt-1">
-                                {token.property}
+                                {(token as any).property}
                               </Badge>
                             )}
                           </div>

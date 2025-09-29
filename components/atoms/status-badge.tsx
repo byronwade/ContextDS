@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-type StatusType = "completed" | "pending" | "failed" | "scanning"
+type StatusType = "completed" | "pending" | "failed" | "scanning" | "queued"
 
 interface StatusBadgeProps {
   status: StatusType
@@ -35,6 +35,12 @@ const statusConfig = {
     icon: AlertCircle,
     variant: "outline" as const,
     className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+  },
+  queued: {
+    label: "Queued",
+    icon: Clock,
+    variant: "secondary" as const,
+    className: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
   }
 }
 

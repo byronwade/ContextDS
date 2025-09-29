@@ -381,7 +381,7 @@ async function seedDatabase() {
         (SELECT AVG(CAST(consensus_score AS DECIMAL)) FROM token_sets WHERE consensus_score IS NOT NULL) as avg_confidence
     `)
 
-    const dbStats = stats.rows[0]
+    const dbStats = (stats as any)[0]
     console.log(`  🏢 Sites: ${dbStats.total_sites}`)
     console.log(`  🔍 Completed Scans: ${dbStats.completed_scans}`)
     console.log(`  🎨 Public Token Sets: ${dbStats.public_token_sets}`)

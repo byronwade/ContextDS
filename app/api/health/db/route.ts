@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
           pg_size_pretty(pg_database_size(current_database())) as database_size
       `)
 
-      dbStats = statsQuery.rows[0] || {}
+      dbStats = statsQuery[0] || {}
 
     } catch (error) {
       console.warn('Statistics query failed:', error)

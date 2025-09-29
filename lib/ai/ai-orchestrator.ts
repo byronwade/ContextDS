@@ -822,7 +822,7 @@ export async function budgetAwareScan(
   const daysLeft = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() - new Date().getDate()
   const dailyBudget = remainingBudget / Math.max(1, daysLeft)
 
-  let scanBudget = Math.min(0.15, dailyBudget * 0.5) // Use 50% of daily budget per scan
+  const scanBudget = Math.min(0.15, dailyBudget * 0.5) // Use 50% of daily budget per scan
 
   // Adjust quality based on budget
   let quality: 'basic' | 'standard' | 'premium' = 'standard'

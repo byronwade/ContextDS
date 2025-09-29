@@ -467,43 +467,53 @@ function extractFonts(root: Root, variableMap: Map<string, string>): TokenSummar
 }
 
 function extractSpacing(root: Root, variableMap: Map<string, string>): TokenSummary[] {
-  const values = new Map<string, number>()
+  const valueMap = new Map<
+    string,
+    {
+      usage: number
+      detail: Record<string, unknown>
+    }
+  >()
 
   root.walkDecls((decl) => {
     const prop = decl.prop.toLowerCase()
     if (!SPACING_PROPS.has(prop)) return
     const resolved = resolveValue(decl.value, variableMap) ?? sanitizeTokenValue(decl.value)
     if (!resolved) return
-    const normalized = normalizeSpacingValue(resolved)
-    if (!normalized) return
-    values.set(normalized, (values.get(normalized) ?? 0) + 1)
+
+    const detail = toSpacingDetail(prop, resolved)
+    if (!detail) return
+    const current = valueMap.get(detail.normalized) ?? { usage: 0, detail: detail.detail }
+    current.usage += 1
+    valueMap.set(detail.normalized, current)
   })
 
   const aliases: TokenSummary[] = []
   variableMap.forEach((value, name) => {
     const resolved = resolveValue(value, variableMap)
     if (!resolved) return
-    const normalized = normalizeSpacingValue(resolved)
-    if (!normalized) return
+    const detail = toSpacingDetail('custom', resolved)
+    if (!detail) return
     const usage = countVariableUsage(root, name) || 1
     aliases.push({
       name: `spacing-${name.slice(2)}`,
-      value: normalized,
+      value: detail.normalized,
       confidence: 85,
       usage,
       qualityScore: 0,
       flags: [],
-      details: { alias: name }
+      details: { alias: name, ...detail.detail }
     })
   })
 
-  const generic = Array.from(values.entries()).map(([value, usage], index) => ({
+  const generic = Array.from(valueMap.entries()).map(([value, info], index) => ({
     name: `spacing-generic-${index + 1}`,
     value,
     confidence: 70,
-    usage,
+    usage: info.usage,
     qualityScore: 0,
-    flags: []
+    flags: [],
+    details: info.detail
   }))
 
   return dedupeTokens([...aliases, ...generic])
@@ -752,19 +762,30 @@ function sanitizeFontValue(value: string | undefined): string | null {
 }
 
 function normalizeSpacingValue(value: string): string | null {
-  const tokens = value.split(/\s+/)
+  const tokens = value.split(/\s+/).map((token) => token.replace(/;+$/, '').trim()).filter(Boolean)
   if (tokens.length === 0) return null
-
-  const normalized = tokens
-    .map((token) => token.replace(/;+$/, '').trim())
-    .filter(Boolean)
-    .join(' ')
-
-  return normalized || null
+  if (tokens.length === 1) return tokens[0]
+  if (tokens.length === 2) return `${tokens[0]} ${tokens[1]}`
+  if (tokens.length === 3) return `${tokens[0]} ${tokens[1]} ${tokens[2]}`
+  return `${tokens[0]} ${tokens[1]} ${tokens[2]} ${tokens[3] ?? tokens[1]}`
 }
 
 function normalizeRadiusValue(value: string): string | null {
   return normalizeSpacingValue(value)
+}
+
+function expandSpacingShorthand(prop: string, value: string): string[] {
+  if (prop === 'margin' || prop === 'padding') {
+    const { top, right, bottom, left } = expandBoxValues(value)
+    return [`${top} ${right} ${bottom} ${left}`]
+  }
+  if (prop === 'gap' || prop === 'row-gap' || prop === 'column-gap') {
+    return [value]
+  }
+  if (prop === 'width' || prop === 'height' || prop === 'min-width' || prop === 'min-height' || prop === 'max-width' || prop === 'max-height') {
+    return [value]
+  }
+  return [value]
 }
 
 function normalizeShadowValue(value: string): string | null {
@@ -1097,10 +1118,6 @@ function parseBorderValue(value: string): { width?: string; style?: string; colo
       return
     }
   })
-
-  if (!width && !style && !color) {
-    return { width: value }
-  }
 
   return { width, style, color }
 }
