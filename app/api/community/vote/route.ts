@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { sites } from "@/lib/db/schema"
 import { eq, sql } from "drizzle-orm"
+import { redis } from "@/lib/ratelimit"
+import { createHash } from "crypto"
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,8 +17,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // TODO: Check if user already voted (requires auth/session)
-    // For now, we'll allow multiple votes (MVP version)
+    // Create user fingerprint for vote deduplication
+    const identifier = request.headers.get('x-forwarded-for')?.split(',')[0] ??
+                      request.headers.get('x-real-ip') ??
+                      'unknown'
+    const userAgent = request.headers.get('user-agent') ?? ''
+    const fingerprint = createHash('sha256')
+      .update(`${identifier}:${userAgent}`)
+      .digest('hex')
+
+    // Check if already voted (24-hour window) - skip in development
+    if (redis) {
+      const voteKey = `vote:${siteId}:${fingerprint}`
+      const hasVoted = await redis.get(voteKey)
+
+      if (hasVoted) {
+        return NextResponse.json(
+          { error: "Already voted for this site. Please try again in 24 hours." },
+          { status: 429 }
+        )
+      }
+    }
 
     // Increment site popularity as vote counter
     const result = await db
@@ -37,6 +58,12 @@ export async function POST(request: NextRequest) {
         { error: "Site not found" },
         { status: 404 }
       )
+    }
+
+    // Record vote with 24-hour expiry - skip in development
+    if (redis) {
+      const voteKey = `vote:${siteId}:${fingerprint}`
+      await redis.set(voteKey, '1', { ex: 86400 })
     }
 
     return NextResponse.json({

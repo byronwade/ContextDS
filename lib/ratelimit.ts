@@ -5,7 +5,7 @@ import { Redis } from '@upstash/redis'
 const isDevelopment = !process.env.REDIS_URL || !process.env.REDIS_URL.startsWith('https')
 
 // Create Redis instance or mock for development
-const redis = isDevelopment
+export const redis = isDevelopment
   ? null
   : new Redis({
       url: process.env.REDIS_URL!,

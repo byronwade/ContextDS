@@ -82,9 +82,53 @@ export async function authenticateApiKey(request: NextRequest): Promise<string |
 
   const apiKey = authHeader.substring(7)
 
-  // TODO: Implement API key validation against database
-  // For now, return a dummy user ID
-  return 'api-user-id'
+  // Validate API key format
+  if (!apiKey.startsWith('ctx_') || apiKey.length < 32) {
+    return null
+  }
+
+  try {
+    // Import here to avoid circular dependencies
+    const { db } = await import('@/lib/db')
+    const { apiKeys } = await import('@/lib/db/schema')
+    const { eq, and, gt } = await import('drizzle-orm')
+
+    // Query database for API key
+    const [keyRecord] = await db
+      .select({
+        id: apiKeys.id,
+        userId: apiKeys.userId,
+        isActive: apiKeys.isActive,
+        expiresAt: apiKeys.expiresAt,
+      })
+      .from(apiKeys)
+      .where(
+        and(
+          eq(apiKeys.key, apiKey),
+          eq(apiKeys.isActive, true),
+          gt(apiKeys.expiresAt, new Date())
+        )
+      )
+      .limit(1)
+
+    if (!keyRecord) {
+      console.warn('[Auth] Invalid or expired API key attempt')
+      return null
+    }
+
+    // Update last used timestamp asynchronously (don't block)
+    db.update(apiKeys)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(apiKeys.id, keyRecord.id))
+      .catch((error) => {
+        console.error('[Auth] Failed to update API key lastUsedAt:', error)
+      })
+
+    return keyRecord.userId
+  } catch (error) {
+    console.error('[Auth] API key validation error:', error)
+    return null
+  }
 }
 
 // Rate limiting helper
