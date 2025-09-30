@@ -2,7 +2,10 @@ import { db, sites, scans, tokenSets, cssSources, layoutProfiles } from '@/lib/d
 import { eq } from 'drizzle-orm'
 import { collectStaticCss, type CssSource } from '@/lib/extractors/static-css'
 import { collectComputedCss } from '@/lib/extractors/computed-css'
-import { generateTokenSet, hashTokenSet } from '@/lib/analyzers/basic-tokenizer'
+import { generateTokenSet as generateTokenSetLegacy, hashTokenSet } from '@/lib/analyzers/basic-tokenizer'
+import { extractW3CTokens, hashTokenSet as hashW3CTokenSet } from '@/lib/analyzers/w3c-tokenizer'
+import { buildAiPromptPack } from '@/lib/analyzers/ai-prompt-pack'
+import { curateTokens } from '@/lib/analyzers/token-curator'
 import { analyzeLayout } from '@/lib/analyzers/layout-inspector'
 import { buildPromptPack } from '@/lib/analyzers/prompt-pack'
 import { collectLayoutWireframe } from '@/lib/analyzers/layout-wireframe'
@@ -92,7 +95,49 @@ export async function runScanJob({ url, prettify, includeComputed }: ScanJobInpu
   endPersistPhase()
 
   const endTokenPhase = metrics.startPhase('generate_tokens')
-  const generated = generateTokenSet(cssArtifacts, { domain, url: target.toString() })
+
+  // Use new W3C-compliant tokenizer
+  const w3cExtraction = extractW3CTokens(cssArtifacts, { domain, url: target.toString() })
+
+  // Curate tokens - return only the most important, most-used tokens
+  const curatedTokens = curateTokens(w3cExtraction.tokenSet, {
+    maxColors: 8,
+    maxFonts: 4,
+    maxSizes: 6,
+    maxSpacing: 8,
+    maxRadius: 4,
+    maxShadows: 4,
+    maxMotion: 4,
+    minUsage: 2,
+    minConfidence: 65
+  })
+
+  // Also generate legacy format for backward compatibility with existing code
+  const legacyGenerated = generateTokenSetLegacy(cssArtifacts, { domain, url: target.toString() })
+
+  // Create unified result that includes both formats
+  const generated = {
+    tokenSet: w3cExtraction.tokenSet,
+    curatedTokens, // Add curated tokens for UI display
+    tokenGroups: legacyGenerated.tokenGroups, // Keep legacy format for existing UI (deprecated)
+    summary: {
+      tokensExtracted: w3cExtraction.summary.totalTokens,
+      curatedCount: {
+        colors: curatedTokens.colors.length,
+        fonts: curatedTokens.typography.families.length,
+        sizes: curatedTokens.typography.sizes.length,
+        spacing: curatedTokens.spacing.length,
+        radius: curatedTokens.radius.length,
+        shadows: curatedTokens.shadows.length
+      },
+      confidence: w3cExtraction.summary.confidence,
+      completeness: legacyGenerated.summary.completeness,
+      reliability: legacyGenerated.summary.reliability
+    },
+    qualityInsights: legacyGenerated.qualityInsights,
+    w3cInsights: w3cExtraction.insights // Add new insights
+  }
+
   endTokenPhase()
 
   const endLayoutPhase = metrics.startPhase('analyze_layout')
@@ -109,7 +154,19 @@ export async function runScanJob({ url, prettify, includeComputed }: ScanJobInpu
     : []
 
   const endPromptPhase = metrics.startPhase('build_prompt_pack')
-  const promptPack = buildPromptPack(generated.tokenGroups, layoutDNA)
+
+  // Generate both legacy prompt pack and new AI-optimized pack
+  const legacyPromptPack = buildPromptPack(generated.tokenGroups, layoutDNA)
+  const aiPromptPack = buildAiPromptPack(w3cExtraction, { domain, url: target.toString() })
+
+  // Use AI prompt pack as primary
+  const promptPack = {
+    ...legacyPromptPack,
+    aiOptimized: aiPromptPack,
+    version: '2.0.0',
+    format: 'ai-lean-core'
+  }
+
   endPromptPhase()
 
   if (wireframeSections.length > 0) {
@@ -156,7 +213,7 @@ export async function runScanJob({ url, prettify, includeComputed }: ScanJobInpu
     .set({
       finishedAt: new Date(),
       cssSourceCount: cssArtifacts.length,
-      sha: hashTokenSet(generated.tokenSet),
+      sha: hashW3CTokenSet(generated.tokenSet),
       metricsJson: {
         ...metricsSummary,
         tokenQuality: generated.qualityInsights

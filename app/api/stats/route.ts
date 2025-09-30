@@ -74,12 +74,12 @@ export async function GET() {
       WITH token_counts AS (
         SELECT
           ts.id,
-          COALESCE(jsonb_object_length(ts.tokens_json->'color'), 0) as color_count,
-          COALESCE(jsonb_object_length(ts.tokens_json->'typography'), 0) as typography_count,
-          COALESCE(jsonb_object_length(ts.tokens_json->'dimension'), 0) as spacing_count,
-          COALESCE(jsonb_object_length(ts.tokens_json->'shadow'), 0) as shadow_count,
-          COALESCE(jsonb_object_length(ts.tokens_json->'radius'), 0) as radius_count,
-          COALESCE(jsonb_object_length(ts.tokens_json->'motion'), 0) as motion_count,
+          COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'color')), 0) as color_count,
+          COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'typography')), 0) as typography_count,
+          COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'dimension')), 0) as spacing_count,
+          COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'shadow')), 0) as shadow_count,
+          COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'radius')), 0) as radius_count,
+          COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'motion')), 0) as motion_count,
           CAST(ts.consensus_score AS NUMERIC) as consensus_score
         FROM token_sets ts
         WHERE ts.is_public = true

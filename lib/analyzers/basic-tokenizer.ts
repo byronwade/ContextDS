@@ -649,6 +649,23 @@ function extractFonts(root: Root, variableMap: Map<string, string>): TokenSummar
   return dedupeTokens(tokens)
 }
 
+function toSpacingDetail(prop: string, value: string): { normalized: string; detail: Record<string, unknown> } | null {
+  const sanitized = sanitizeTokenValue(value)
+  if (!sanitized) return null
+
+  // Normalize spacing values
+  const normalized = sanitized.trim()
+
+  return {
+    normalized,
+    detail: {
+      property: prop,
+      unit: normalized.match(/(\d+)(px|rem|em|%|vh|vw)$/)?.[2] || 'unknown',
+      rawValue: normalized
+    }
+  }
+}
+
 function extractSpacing(root: Root, variableMap: Map<string, string>): TokenSummary[] {
   const valueMap = new Map<
     string,
@@ -1830,20 +1847,31 @@ function computeQualityInsights(groups: GeneratedTokenSet['tokenGroups']): Token
   )
   const keyComponentHitRate = totalTokens > 0 ? Math.round((keyComponentHitsTotal / totalTokens) * 100) : 0
 
-  const warnings: TokenQualityInsights['overall']['warnings'] = []
-  (Object.entries(groups) as Array<[
-    keyof GeneratedTokenSet['tokenGroups'],
-    TokenSummary[]
-  ]>).forEach(([category, tokens]) => {
-    tokens.forEach((token) => {
-      const relevantFlags = token.flags.filter(
-        (flag) => flag.startsWith('qa_') || flag === 'missing_alias' || flag === 'low_usage'
-      )
-      if (relevantFlags.length > 0) {
-        warnings.push({ category, name: token.name, flags: relevantFlags })
-      }
+  const warnings: Array<{
+    category: keyof GeneratedTokenSet['tokenGroups']
+    name: string
+    flags: string[]
+  }> = []
+
+  try {
+    (Object.entries(groups) as Array<[
+      keyof GeneratedTokenSet['tokenGroups'],
+      TokenSummary[]
+    ]>).forEach(([category, tokens]) => {
+      if (!Array.isArray(tokens)) return
+      tokens.forEach((token) => {
+        if (!token || !Array.isArray(token.flags)) return
+        const relevantFlags = token.flags.filter(
+          (flag) => flag.startsWith('qa_') || flag === 'missing_alias' || flag === 'low_usage'
+        )
+        if (relevantFlags.length > 0) {
+          warnings.push({ category, name: token.name, flags: relevantFlags })
+        }
+      })
     })
-  })
+  } catch (error) {
+    console.error('Error collecting warnings:', error)
+  }
 
   return {
     categories,

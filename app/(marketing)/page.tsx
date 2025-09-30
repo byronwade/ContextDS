@@ -79,8 +79,31 @@ type StatsResponse = {
   popularSites: Array<{ domain: string | null; popularity: number | null; tokens: number; lastScanned: string | null }>
 }
 
+type ViewMode = "search" | "scan"
+
+type ScanResultPayload = {
+  status: "completed" | "failed"
+  domain?: string
+  summary?: {
+    tokensExtracted: number
+    confidence: number
+    completeness: number
+    reliability: number
+    processingTime: number
+  }
+  tokens?: Record<string, Array<{ name: string; value: string; confidence?: number; usage?: number; semantic?: string }>>
+  brandAnalysis?: {
+    style?: string
+    maturity?: string
+    consistency?: number
+  }
+  layoutDNA?: Record<string, unknown>
+  error?: string
+}
+
 function HomePageContent() {
   const searchParams = useSearchParams()
+  const [viewMode, setViewMode] = useState<ViewMode>("search")
   const [query, setQuery] = useState("")
   const [isSearchActive, setIsSearchActive] = useState(false)
   const [hasResults, setHasResults] = useState(false)
@@ -91,11 +114,14 @@ function HomePageContent() {
   const [loading, setLoading] = useState(false)
   const [searchError, setSearchError] = useState<string | null>(null)
   const [stats, setStats] = useState<StatsResponse | null>(null)
+  const [scanResult, setScanResult] = useState<ScanResultPayload | null>(null)
+  const [scanLoading, setScanLoading] = useState(false)
+  const [scanError, setScanError] = useState<string | null>(null)
 
   useEffect(() => {
     setIsSearchActive(query.trim().length > 0)
-    setHasResults(results.length > 0)
-  }, [query, results])
+    setHasResults(results.length > 0 || scanResult !== null)
+  }, [query, results, scanResult])
 
   useEffect(() => {
     const loadStats = async () => {
@@ -196,6 +222,52 @@ function HomePageContent() {
     navigator.clipboard.writeText(value)
   }
 
+  const handleScan = async () => {
+    const target = query.trim()
+    if (!target) return
+
+    setScanLoading(true)
+    setScanResult(null)
+    setScanError(null)
+    setResults([]) // Clear search results
+
+    try {
+      const response = await fetch("/api/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: target.startsWith("http") ? target : `https://${target}`,
+          prettify: false,
+          quality: "standard"
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Scan failed with status ${response.status}`)
+      }
+
+      const result = (await response.json()) as ScanResultPayload
+
+      if (result.status === "failed") {
+        throw new Error(result.error || "Scan failed")
+      }
+
+      setScanResult(result)
+
+      // Refresh stats
+      const statsResponse = await fetch("/api/stats")
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json()
+        setStats(statsData)
+      }
+
+    } catch (error) {
+      setScanError(error instanceof Error ? error.message : "Scan failed")
+    } finally {
+      setScanLoading(false)
+    }
+  }
+
   const categoryFacets = useMemo(() => {
     const base = tokenCategoryOptions.reduce<Record<string, number>>((acc, option) => {
       if (option.key === "all") return acc
@@ -243,81 +315,141 @@ function HomePageContent() {
           </div>
         </div>
 
-        {/* Center: Search (only when active) */}
-        {(isSearchActive || query.trim()) && (
-          <div className="order-1 flex w-full items-center justify-center border-t border-grep-2 px-4 py-3 md:order-none md:border-none md:px-3 md:py-0" id="header-contents">
-            <div className="relative z-10 w-full flex-grow">
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search"
-                id="search-input"
-                className="flex w-full min-w-0 shrink rounded-md border border-grep-4 bg-grep-0 px-3 py-1 text-sm transition-colors focus-visible:border-grep-12 focus-visible:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grep-4 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-grep-7 h-[42px] pr-24 md:h-9 max-md:max-w-none"
-                style={{paddingLeft: '12px'}}
-                spellCheck="false"
-                autoCapitalize="off"
-                autoComplete="off"
-                autoCorrect="off"
-              />
-              <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setCaseInsensitive(!caseInsensitive)}
-                  className={cn(
-                    "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-transparent h-6 px-1 min-w-6",
-                    caseInsensitive && "data-[state=on]:bg-grep-11 data-[state=on]:border-grep-6 data-[state=on]:text-foreground"
-                  )}
-                  aria-pressed={caseInsensitive}
-                  data-state={caseInsensitive ? "on" : "off"}
-                  aria-label="Match case"
+        {/* Center: Search/Scan Toggle + Input */}
+        <div className="order-1 flex w-full items-center justify-center border-t border-grep-2 px-4 py-3 md:order-none md:border-none md:px-3 md:py-0 gap-3" id="header-contents">
+          {/* Mode Toggle */}
+          <div className="flex rounded-md border border-grep-4 bg-grep-0 p-[2px] shrink-0">
+            <button
+              onClick={() => {
+                setViewMode("search")
+                setResults([])
+                setScanResult(null)
+              }}
+              className={cn(
+                "px-3 py-1.5 text-xs font-medium rounded transition-all duration-200 flex items-center gap-1.5",
+                viewMode === "search"
+                  ? "bg-white text-black shadow-sm dark:bg-black dark:text-white border border-grep-3"
+                  : "text-grep-9 hover:text-foreground"
+              )}
+            >
+              <Search className="h-3.5 w-3.5" />
+              Search
+            </button>
+            <button
+              onClick={() => {
+                setViewMode("scan")
+                setResults([])
+                setScanResult(null)
+              }}
+              className={cn(
+                "px-3 py-1.5 text-xs font-medium rounded transition-all duration-200 flex items-center gap-1.5",
+                viewMode === "scan"
+                  ? "bg-white text-black shadow-sm dark:bg-black dark:text-white border border-grep-3"
+                  : "text-grep-9 hover:text-foreground"
+              )}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Scan
+            </button>
+          </div>
+
+          {/* Search/Scan Input */}
+          <div className="relative z-10 w-full flex-grow max-w-2xl">
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && query.trim() && viewMode === "scan") {
+                  handleScan()
+                }
+              }}
+              placeholder={viewMode === "scan" ? "Enter website URL to scan..." : "Search design tokens..."}
+              id="search-input"
+              className="flex w-full min-w-0 shrink rounded-md border border-grep-4 bg-grep-0 px-3 py-1 text-sm transition-colors focus-visible:border-grep-12 focus-visible:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grep-4 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-grep-7 h-[42px] md:h-9 max-md:max-w-none"
+              style={{paddingLeft: '12px', paddingRight: viewMode === "search" ? '96px' : '72px'}}
+              spellCheck="false"
+              autoCapitalize="off"
+              autoComplete="off"
+              autoCorrect="off"
+            />
+            <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
+              {viewMode === "search" ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setCaseInsensitive(!caseInsensitive)}
+                    className={cn(
+                      "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-transparent h-6 px-1 min-w-6",
+                      caseInsensitive && "bg-grep-11 border-grep-6 text-foreground"
+                    )}
+                    aria-pressed={caseInsensitive}
+                    data-state={caseInsensitive ? "on" : "off"}
+                    aria-label="Match case"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
+                      <path d="M11.6667 11C12.7713 11 13.6667 10.1046 13.6667 9C13.6667 7.89543 12.7713 7 11.6667 7C10.5621 7 9.66669 7.89543 9.66669 9C9.66669 10.1046 10.5621 11 11.6667 11Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+                      <path d="M13.6667 7V11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
+                      <path fillRule="evenodd" clipRule="evenodd" d="M3.26242 10.0789L2.63419 11.8414L2.57767 12H0.985229L1.22126 11.3378L4.22128 2.92102L5.63421 2.92102L8.63419 11.3378L8.87023 12H7.27779L7.22126 11.8414L6.59305 10.0789H6.5777H3.2777H3.26242ZM3.79707 8.57885H6.0584L4.92774 5.40668L3.79707 8.57885Z" fill="currentColor"></path>
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWholeWords(!wholeWords)}
+                    className={cn(
+                      "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-transparent h-6 px-1 min-w-6",
+                      wholeWords && "bg-grep-11 border-grep-6 text-foreground"
+                    )}
+                    aria-pressed={wholeWords}
+                    data-state={wholeWords ? "on" : "off"}
+                    aria-label="Match whole words"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
+                      <path d="M4.66669 10C5.77126 10 6.66669 9.10457 6.66669 8C6.66669 6.89543 5.77126 6 4.66669 6C3.56212 6 2.66669 6.89543 2.66669 8C2.66669 9.10457 3.56212 10 4.66669 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+                      <path d="M6.66669 6V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
+                      <path d="M11.3333 10C12.4379 10 13.3333 9.10457 13.3333 8C13.3333 6.89543 12.4379 6 11.3333 6C10.2287 6 9.33331 6.89543 9.33331 8C9.33331 9.10457 10.2287 10 11.3333 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+                      <path d="M9.33331 4.66675V10.0001" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
+                      <path d="M1 11V13H15V11" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"></path>
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUseRegex(!useRegex)}
+                    className={cn(
+                      "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-transparent h-6 px-1 min-w-6",
+                      useRegex && "bg-grep-11 border-grep-6 text-foreground"
+                    )}
+                    aria-pressed={useRegex}
+                    data-state={useRegex ? "on" : "off"}
+                    aria-label="Use regular expression"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
+                      <path d="M10.8867 2V8.66667" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
+                      <path d="M8 3.66675L13.7733 7.00008" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
+                      <path d="M8 7.00008L13.7733 3.66675" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
+                      <rect x="2" y="9" width="4" height="4" fill="currentColor"></rect>
+                    </svg>
+                  </button>
+                </>
+              ) : (
+                <Button
+                  onClick={handleScan}
+                  disabled={!query.trim() || scanLoading}
+                  size="sm"
+                  className="h-7 px-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-medium rounded hover:scale-105 disabled:hover:scale-100 transition-all duration-200 shadow-none border-0"
                 >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
-                    <path d="M11.6667 11C12.7713 11 13.6667 10.1046 13.6667 9C13.6667 7.89543 12.7713 7 11.6667 7C10.5621 7 9.66669 7.89543 9.66669 9C9.66669 10.1046 10.5621 11 11.6667 11Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-                    <path d="M13.6667 7V11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
-                    <path fillRule="evenodd" clipRule="evenodd" d="M3.26242 10.0789L2.63419 11.8414L2.57767 12H0.985229L1.22126 11.3378L4.22128 2.92102L5.63421 2.92102L8.63419 11.3378L8.87023 12H7.27779L7.22126 11.8414L6.59305 10.0789H6.5777H3.2777H3.26242ZM3.79707 8.57885H6.0584L4.92774 5.40668L3.79707 8.57885Z" fill="currentColor"></path>
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWholeWords(!wholeWords)}
-                  className={cn(
-                    "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-transparent h-6 px-1 min-w-6",
-                    wholeWords && "data-[state=on]:bg-grep-11 data-[state=on]:border-grep-6 data-[state=on]:text-foreground"
+                  {scanLoading ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <>
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Scan
+                    </>
                   )}
-                  aria-pressed={wholeWords}
-                  data-state={wholeWords ? "on" : "off"}
-                  aria-label="Match whole words"
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
-                    <path d="M4.66669 10C5.77126 10 6.66669 9.10457 6.66669 8C6.66669 6.89543 5.77126 6 4.66669 6C3.56212 6 2.66669 6.89543 2.66669 8C2.66669 9.10457 3.56212 10 4.66669 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-                    <path d="M6.66669 6V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
-                    <path d="M11.3333 10C12.4379 10 13.3333 9.10457 13.3333 8C13.3333 6.89543 12.4379 6 11.3333 6C10.2287 6 9.33331 6.89543 9.33331 8C9.33331 9.10457 10.2287 10 11.3333 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-                    <path d="M9.33331 4.66675V10.0001" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
-                    <path d="M1 11V13H15V11" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"></path>
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUseRegex(!useRegex)}
-                  className={cn(
-                    "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-transparent h-6 px-1 min-w-6",
-                    useRegex && "data-[state=on]:bg-grep-11 data-[state=on]:border-grep-6 data-[state=on]:text-foreground"
-                  )}
-                  aria-pressed={useRegex}
-                  data-state={useRegex ? "on" : "off"}
-                  aria-label="Use regular expression"
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
-                    <path d="M10.8867 2V8.66667" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
-                    <path d="M8 3.66675L13.7733 7.00008" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
-                    <path d="M8 7.00008L13.7733 3.66675" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
-                    <rect x="2" y="9" width="4" height="4" fill="currentColor"></rect>
-                  </svg>
-                </button>
-              </div>
+                </Button>
+              )}
             </div>
           </div>
-        )}
+        </div>
 
         {/* Right: Controls */}
         <div className="flex min-h-[64px] select-none items-center justify-end gap-3 pr-4 md:pr-6">
@@ -332,7 +464,411 @@ function HomePageContent() {
       </div>
 
       {/* Main Content */}
-      {hasResults ? (
+      {viewMode === "scan" && scanError ? (
+        /* Scan Error */
+        <div className="flex-1 flex items-center justify-center p-12">
+          <div className="text-center space-y-4 max-w-md">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+              <svg className="h-8 w-8 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-foreground">Scan Failed</h3>
+              <p className="text-sm text-grep-9">{scanError}</p>
+            </div>
+            <Button
+              onClick={() => {
+                setScanError(null)
+                handleScan()
+              }}
+              className="mt-4"
+            >
+              Try Again
+            </Button>
+          </div>
+        </div>
+      ) : viewMode === "scan" && scanResult ? (
+        /* World-Class Scan Results */
+        <div className="flex-1 w-full overflow-y-auto bg-grep-0">
+          <div className="w-full max-w-7xl mx-auto px-4 py-8 md:px-8 md:py-12">
+            {/* Hero Header */}
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 p-8 md:p-12 text-white shadow-2xl mb-8">
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30"></div>
+              <div className="relative z-10">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                        <Sparkles className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-white/80 text-sm font-medium">Design System Analysis</p>
+                        <h1 className="text-3xl md:text-4xl font-bold text-white truncate">{scanResult.domain}</h1>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-6">
+                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Palette className="h-5 w-5 text-white/80" />
+                          <span className="text-white/70 text-sm">Tokens</span>
+                        </div>
+                        <p className="text-3xl font-bold text-white">{scanResult.summary?.tokensExtracted || 0}</p>
+                      </div>
+                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <TrendingUp className="h-5 w-5 text-white/80" />
+                          <span className="text-white/70 text-sm">Confidence</span>
+                        </div>
+                        <p className="text-3xl font-bold text-white">{scanResult.summary?.confidence || 0}%</p>
+                      </div>
+                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Monitor className="h-5 w-5 text-white/80" />
+                          <span className="text-white/70 text-sm">Completeness</span>
+                        </div>
+                        <p className="text-3xl font-bold text-white">{scanResult.summary?.completeness || 0}%</p>
+                      </div>
+                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <svg className="h-5 w-5 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                          <span className="text-white/70 text-sm">Reliability</span>
+                        </div>
+                        <p className="text-3xl font-bold text-white">{scanResult.summary?.reliability || 0}%</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleCopyToken(JSON.stringify(scanResult.tokens, null, 2))}
+                      className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copy All
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        const blob = new Blob([JSON.stringify(scanResult.tokens, null, 2)], { type: "application/json" })
+                        const url = URL.createObjectURL(blob)
+                        const anchor = document.createElement("a")
+                        anchor.href = url
+                        anchor.download = `${scanResult.domain}-tokens.json`
+                        document.body.appendChild(anchor)
+                        anchor.click()
+                        anchor.remove()
+                        URL.revokeObjectURL(url)
+                      }}
+                      className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Brand Analysis */}
+            {scanResult.brandAnalysis && (
+              <div className="bg-white dark:bg-neutral-900 rounded-xl border border-grep-2 p-6 mb-8">
+                <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-blue-500" />
+                  Brand Analysis
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {scanResult.brandAnalysis.style && (
+                    <div className="p-4 rounded-lg bg-grep-0 border border-grep-2">
+                      <p className="text-sm text-grep-9 mb-1">Style</p>
+                      <p className="text-lg font-semibold text-foreground capitalize">{scanResult.brandAnalysis.style}</p>
+                    </div>
+                  )}
+                  {scanResult.brandAnalysis.maturity && (
+                    <div className="p-4 rounded-lg bg-grep-0 border border-grep-2">
+                      <p className="text-sm text-grep-9 mb-1">Maturity</p>
+                      <p className="text-lg font-semibold text-foreground capitalize">{scanResult.brandAnalysis.maturity}</p>
+                    </div>
+                  )}
+                  {scanResult.brandAnalysis.consistency !== undefined && (
+                    <div className="p-4 rounded-lg bg-grep-0 border border-grep-2">
+                      <p className="text-sm text-grep-9 mb-1">Consistency</p>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-2 bg-grep-2 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500"
+                            style={{ width: `${scanResult.brandAnalysis.consistency * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-lg font-semibold text-foreground">{Math.round(scanResult.brandAnalysis.consistency * 100)}%</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Curated Design Tokens */}
+            {scanResult.curatedTokens && (
+              <div className="space-y-6">
+                {/* Top 8 Colors */}
+                {scanResult.curatedTokens.colors && scanResult.curatedTokens.colors.length > 0 && (
+                  <div className="bg-white dark:bg-neutral-900 rounded-xl border border-grep-2 overflow-hidden">
+                    <div className="bg-grep-0 border-b border-grep-2 px-6 py-4">
+                      <h3 className="text-xl font-bold text-foreground flex items-center gap-3">
+                        <Palette className="h-5 w-5 text-blue-500" />
+                        Top Colors
+                        <Badge variant="secondary" className="ml-2">{scanResult.curatedTokens.colors.length}</Badge>
+                      </h3>
+                      <p className="text-sm text-grep-9 mt-1">Most frequently used colors in the design system</p>
+                    </div>
+                    <div className="p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {scanResult.curatedTokens.colors.map((token, index) => (
+                          <div key={`color-${index}`} className="group relative p-4 rounded-lg border border-grep-2 bg-grep-0 hover:border-blue-400 hover:shadow-lg transition-all duration-200">
+                            <div className="flex flex-col gap-3">
+                              <div
+                                className="w-full h-24 rounded-lg border-2 border-grep-3 shadow-md"
+                                style={{ backgroundColor: String(token.value) }}
+                              />
+                              <div>
+                                <div className="flex items-center justify-between mb-1">
+                                  <code className="text-xs font-mono font-semibold text-foreground">{token.value}</code>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleCopyToken(String(token.value))}
+                                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                                {token.semantic && (
+                                  <p className="text-xs text-grep-9 mb-2">{token.semantic}</p>
+                                )}
+                                <div className="flex items-center gap-2 text-xs">
+                                  <div className="flex items-center gap-1">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                    <span className="text-grep-9">{token.percentage}% usage</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                                    <span className="text-grep-9">{token.confidence}% confident</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Top 4 Fonts */}
+                {scanResult.curatedTokens.typography?.families && scanResult.curatedTokens.typography.families.length > 0 && (
+                  <div className="bg-white dark:bg-neutral-900 rounded-xl border border-grep-2 overflow-hidden">
+                    <div className="bg-grep-0 border-b border-grep-2 px-6 py-4">
+                      <h3 className="text-xl font-bold text-foreground flex items-center gap-3">
+                        <Type className="h-5 w-5 text-purple-500" />
+                        Top Font Families
+                        <Badge variant="secondary" className="ml-2">{scanResult.curatedTokens.typography.families.length}</Badge>
+                      </h3>
+                      <p className="text-sm text-grep-9 mt-1">Most commonly used typefaces</p>
+                    </div>
+                    <div className="p-6">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {scanResult.curatedTokens.typography.families.map((token, index) => (
+                          <div key={`font-${index}`} className="group relative p-5 rounded-lg border border-grep-2 bg-grep-0 hover:border-purple-400 hover:shadow-lg transition-all duration-200">
+                            <div className="flex flex-col gap-3">
+                              <div className="p-4 bg-grep-1 dark:bg-grep-2 rounded-lg border border-grep-2" style={{ fontFamily: String(token.value) }}>
+                                <p className="text-3xl text-foreground mb-2">Aa Bb Cc 123</p>
+                                <p className="text-sm text-grep-9">The quick brown fox jumps over the lazy dog</p>
+                              </div>
+                              <div>
+                                <div className="flex items-center justify-between mb-1">
+                                  <code className="text-sm font-mono font-semibold text-foreground">{token.value}</code>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleCopyToken(String(token.value))}
+                                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                                {token.semantic && (
+                                  <p className="text-xs text-grep-9 mb-2">{token.semantic}</p>
+                                )}
+                                <div className="flex items-center gap-2 text-xs">
+                                  <div className="flex items-center gap-1">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                                    <span className="text-grep-9">{token.percentage}% usage</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Top Border Radii */}
+                {scanResult.curatedTokens.radius && scanResult.curatedTokens.radius.length > 0 && (
+                  <div className="bg-white dark:bg-neutral-900 rounded-xl border border-grep-2 overflow-hidden">
+                    <div className="bg-grep-0 border-b border-grep-2 px-6 py-4">
+                      <h3 className="text-xl font-bold text-foreground flex items-center gap-3">
+                        <svg className="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                        </svg>
+                        Top Border Radii
+                        <Badge variant="secondary" className="ml-2">{scanResult.curatedTokens.radius.length}</Badge>
+                      </h3>
+                      <p className="text-sm text-grep-9 mt-1">Most used corner roundness values</p>
+                    </div>
+                    <div className="p-6">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {scanResult.curatedTokens.radius.map((token, index) => (
+                          <div key={`radius-${index}`} className="group relative p-4 rounded-lg border border-grep-2 bg-grep-0 hover:border-orange-400 hover:shadow-lg transition-all duration-200">
+                            <div className="flex flex-col items-center gap-3">
+                              <div className="w-20 h-20 bg-gradient-to-br from-orange-400 to-orange-600 border-2 border-grep-3 shadow-md" style={{ borderRadius: String(token.value) }} />
+                              <div className="text-center w-full">
+                                <code className="text-sm font-mono font-semibold text-foreground">{token.value}</code>
+                                {token.semantic && (
+                                  <p className="text-xs text-grep-9 mt-1">{token.semantic}</p>
+                                )}
+                                <p className="text-xs text-grep-9 mt-1">{token.percentage}% usage</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Top Shadows */}
+                {scanResult.curatedTokens.shadows && scanResult.curatedTokens.shadows.length > 0 && (
+                  <div className="bg-white dark:bg-neutral-900 rounded-xl border border-grep-2 overflow-hidden">
+                    <div className="bg-grep-0 border-b border-grep-2 px-6 py-4">
+                      <h3 className="text-xl font-bold text-foreground flex items-center gap-3">
+                        <svg className="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                        Top Shadows
+                        <Badge variant="secondary" className="ml-2">{scanResult.curatedTokens.shadows.length}</Badge>
+                      </h3>
+                      <p className="text-sm text-grep-9 mt-1">Most used elevation effects</p>
+                    </div>
+                    <div className="p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {scanResult.curatedTokens.shadows.map((token, index) => (
+                          <div key={`shadow-${index}`} className="group relative p-5 rounded-lg border border-grep-2 bg-grep-0 hover:border-indigo-400 hover:shadow-lg transition-all duration-200">
+                            <div className="flex flex-col gap-3">
+                              <div className="p-8 bg-grep-1 dark:bg-grep-2 rounded-lg border border-grep-2 flex items-center justify-center">
+                                <div className="w-32 h-32 bg-white dark:bg-neutral-800 rounded-lg" style={{ boxShadow: String(token.value) }} />
+                              </div>
+                              <div>
+                                <code className="text-xs font-mono text-grep-9 block mb-2 break-all">{token.value}</code>
+                                {token.semantic && (
+                                  <p className="text-xs text-grep-9 mb-1">{token.semantic}</p>
+                                )}
+                                <p className="text-xs text-grep-9">{token.percentage}% usage</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Top Spacing Values */}
+                {scanResult.curatedTokens.spacing && scanResult.curatedTokens.spacing.length > 0 && (
+                  <div className="bg-white dark:bg-neutral-900 rounded-xl border border-grep-2 overflow-hidden">
+                    <div className="bg-grep-0 border-b border-grep-2 px-6 py-4">
+                      <h3 className="text-xl font-bold text-foreground flex items-center gap-3">
+                        <svg className="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                        </svg>
+                        Top Spacing Values
+                        <Badge variant="secondary" className="ml-2">{scanResult.curatedTokens.spacing.length}</Badge>
+                      </h3>
+                      <p className="text-sm text-grep-9 mt-1">Most used spacing and sizing values</p>
+                    </div>
+                    <div className="p-6">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {scanResult.curatedTokens.spacing.map((token, index) => (
+                          <div key={`spacing-${index}`} className="group relative p-4 rounded-lg border border-grep-2 bg-grep-0 hover:border-green-400 hover:shadow-lg transition-all duration-200">
+                            <div className="flex flex-col items-center gap-3">
+                              <div className="w-full p-4 bg-grep-1 dark:bg-grep-2 rounded-lg border border-grep-2 flex items-center justify-start">
+                                <div className="bg-gradient-to-r from-green-400 to-green-600 rounded" style={{ width: String(token.value), height: '32px', maxWidth: '100%' }} />
+                              </div>
+                              <div className="text-center w-full">
+                                <code className="text-sm font-mono font-semibold text-foreground">{token.value}</code>
+                                {token.semantic && (
+                                  <p className="text-xs text-grep-9 mt-1">{token.semantic}</p>
+                                )}
+                                <p className="text-xs text-grep-9 mt-1">{token.percentage}% usage</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : viewMode === "scan" && scanLoading ? (
+        /* Scan Loading */
+        <div className="flex-1 flex items-center justify-center p-12">
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center animate-pulse">
+              <Sparkles className="h-8 w-8 text-white" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-foreground">Scanning {query}...</h3>
+              <p className="text-sm text-grep-9">Extracting design tokens and analyzing layout</p>
+            </div>
+          </div>
+        </div>
+      ) : viewMode === "search" && searchError ? (
+        /* Search Error */
+        <div className="flex-1 flex items-center justify-center p-12">
+          <div className="text-center space-y-4 max-w-md">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+              <svg className="h-8 w-8 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-foreground">Search Error</h3>
+              <p className="text-sm text-grep-9">{searchError}</p>
+            </div>
+            <Button
+              onClick={() => {
+                setSearchError(null)
+                setQuery("")
+              }}
+              variant="outline"
+            >
+              Clear Search
+            </Button>
+          </div>
+        </div>
+      ) : viewMode === "search" && (loading || results.length > 0 || query.trim()) ? (
+        /* Search Results - Grep.app Style */
         <div className="h-[calc(100dvh-130px)] w-full md:h-[calc(100dvh-65px)]">
           <div className="group flex h-full w-full">
             {/* Left Sidebar - Filters */}
@@ -419,7 +955,7 @@ function HomePageContent() {
                 {!loading && results.map((result, index) => (
                   <div key={result.id} className="flex w-full min-w-32 shrink-0 flex-col overflow-hidden text-wrap rounded-md border border-grep-2">
                     <div className="flex min-h-10 w-full items-center justify-between border-b bg-grep-0 px-4">
-                      <div className="flex flex-col py-1 sm:flex-row sm:gap-2">
+                      <div className="flex flex-col py-1 sm:flex-row sm:gap-2 sm:items-center flex-1">
                         <div className="flex shrink-0 flex-row items-center gap-2">
                           <div className="w-4 h-4 rounded-sm bg-neutral-300 dark:bg-neutral-700" />
                           <span className="text-sm font-medium hover:underline">{result.site || 'unknown'}</span>
@@ -428,7 +964,24 @@ function HomePageContent() {
                           {result.category} / {result.name}
                         </span>
                       </div>
-                      <div className="hidden text-nowrap text-xs text-grep-9 md:block">1 match</div>
+                      <div className="flex items-center gap-2">
+                        {result.site && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setQuery(result.site || '')
+                              setViewMode("scan")
+                              setTimeout(() => handleScan(), 100)
+                            }}
+                            className="h-7 px-2 text-xs gap-1 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-teal-500 hover:text-white transition-all duration-200"
+                          >
+                            <Sparkles className="h-3 w-3" />
+                            Scan Site
+                          </Button>
+                        )}
+                        <div className="hidden text-nowrap text-xs text-grep-9 md:block">1 match</div>
+                      </div>
                     </div>
                     <div className="cursor-pointer p-4">
                       <div className="space-y-2">
@@ -519,86 +1072,32 @@ function HomePageContent() {
                 <span className="whitespace-nowrap">and build consistent interfaces.</span>
               </div>
 
-              <div className="py-1"></div>
+              <div className="py-6"></div>
 
-              {/* Main Search Input */}
-              <div className="flex w-full flex-row items-center justify-center">
-                <div className="px-2"></div>
-                <div className="w-[625px]">
-                  <div className="relative z-10 w-full flex-grow">
-                    <Input
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Search"
-                      id="search-input"
-                      className="flex w-full min-w-0 shrink rounded-md border border-grep-4 bg-grep-0 px-3 py-1 text-sm transition-colors focus-visible:border-grep-12 focus-visible:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grep-4 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-grep-7 h-[42px] pr-24"
-                      style={{paddingLeft: '12px'}}
-                      spellCheck="false"
-                      autoCapitalize="off"
-                      autoComplete="off"
-                      autoCorrect="off"
-                    />
-                    <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setCaseInsensitive(!caseInsensitive)}
-                        className={cn(
-                          "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-transparent h-6 px-1 min-w-6",
-                          caseInsensitive && "data-[state=on]:bg-grep-11 data-[state=on]:border-grep-6 data-[state=on]:text-foreground"
-                        )}
-                        aria-pressed={caseInsensitive}
-                        data-state={caseInsensitive ? "on" : "off"}
-                        aria-label="Match case"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
-                          <path d="M11.6667 11C12.7713 11 13.6667 10.1046 13.6667 9C13.6667 7.89543 12.7713 7 11.6667 7C10.5621 7 9.66669 7.89543 9.66669 9C9.66669 10.1046 10.5621 11 11.6667 11Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-                          <path d="M13.6667 7V11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
-                          <path fillRule="evenodd" clipRule="evenodd" d="M3.26242 10.0789L2.63419 11.8414L2.57767 12H0.985229L1.22126 11.3378L4.22128 2.92102L5.63421 2.92102L8.63419 11.3378L8.87023 12H7.27779L7.22126 11.8414L6.59305 10.0789H6.5777H3.2777H3.26242ZM3.79707 8.57885H6.0584L4.92774 5.40668L3.79707 8.57885Z" fill="currentColor"></path>
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setWholeWords(!wholeWords)}
-                        className={cn(
-                          "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-transparent h-6 px-1 min-w-6",
-                          wholeWords && "data-[state=on]:bg-grep-11 data-[state=on]:border-grep-6 data-[state=on]:text-foreground"
-                        )}
-                        aria-pressed={wholeWords}
-                        data-state={wholeWords ? "on" : "off"}
-                        aria-label="Match whole words"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
-                          <path d="M4.66669 10C5.77126 10 6.66669 9.10457 6.66669 8C6.66669 6.89543 5.77126 6 4.66669 6C3.56212 6 2.66669 6.89543 2.66669 8C2.66669 9.10457 3.56212 10 4.66669 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-                          <path d="M6.66669 6V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
-                          <path d="M11.3333 10C12.4379 10 13.3333 9.10457 13.3333 8C13.3333 6.89543 12.4379 6 11.3333 6C10.2287 6 9.33331 6.89543 9.33331 8C9.33331 9.10457 10.2287 10 11.3333 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-                          <path d="M9.33331 4.66675V10.0001" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
-                          <path d="M1 11V13H15V11" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"></path>
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setUseRegex(!useRegex)}
-                        className={cn(
-                          "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-transparent h-6 px-1 min-w-6",
-                          useRegex && "data-[state=on]:bg-grep-11 data-[state=on]:border-grep-6 data-[state=on]:text-foreground"
-                        )}
-                        aria-pressed={useRegex}
-                        data-state={useRegex ? "on" : "off"}
-                        aria-label="Use regular expression"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
-                          <path d="M10.8867 2V8.66667" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
-                          <path d="M8 3.66675L13.7733 7.00008" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
-                          <path d="M8 7.00008L13.7733 3.66675" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
-                          <rect x="2" y="9" width="4" height="4" fill="currentColor"></rect>
-                        </svg>
-                      </button>
-                    </div>
+              {/* Call to Action */}
+              <div className="flex flex-col items-center gap-4 text-center px-4">
+                <p className="text-sm text-grep-9 max-w-md">
+                  Use the header to {viewMode === "search" ? "search for design tokens" : "scan a website"} or switch between modes
+                </p>
+                {stats && (
+                  <div className="flex items-center gap-6 text-xs text-grep-9">
+                    <span className="flex items-center gap-1">
+                      <Palette className="h-3 w-3" />
+                      {stats.tokens.toLocaleString()} tokens
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Monitor className="h-3 w-3" />
+                      {stats.sites.toLocaleString()} sites
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <TrendingUp className="h-3 w-3" />
+                      {stats.scans.toLocaleString()} scans
+                    </span>
                   </div>
-                  <div className="h-[min(25dvh,250px)] w-full"></div>
-                </div>
-                <div className="px-2"></div>
+                )}
               </div>
+
+              <div className="h-[min(25dvh,250px)] w-full"></div>
             </div>
 
             {/* Footer with Theme Toggle */}

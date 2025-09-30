@@ -1,52 +1,55 @@
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 
-// Create Redis instance with fallback for development
-const redis = process.env.REDIS_URL && process.env.REDIS_URL.startsWith('https')
-  ? new Redis({
-      url: process.env.REDIS_URL,
-      token: process.env.REDIS_TOKEN,
+// Development mode - disable rate limiting
+const isDevelopment = !process.env.REDIS_URL || !process.env.REDIS_URL.startsWith('https')
+
+// Create Redis instance or mock for development
+const redis = isDevelopment
+  ? null
+  : new Redis({
+      url: process.env.REDIS_URL!,
+      token: process.env.REDIS_TOKEN!,
     })
-  : {
-      // Fallback in-memory cache for development
-      cache: new Map(),
-      async set(key: string, value: unknown, opts?: { ex?: number }) {
-        (this.cache as Map<string, { value: unknown; expires?: number }>).set(key, {
-          value,
-          expires: opts?.ex ? Date.now() + opts.ex * 1000 : undefined,
-        })
-        return 'OK'
-      },
-      async get(key: string) {
-        const item = (this.cache as Map<string, { value: unknown; expires?: number }>).get(key)
-        if (!item) return null
-        if (item.expires && Date.now() > item.expires) {
-          (this.cache as Map<string, unknown>).delete(key)
-          return null
-        }
-        return item.value
-      },
+
+// Simple mock rate limiter for development
+const mockRatelimit = {
+  async limit(_identifier: string) {
+    return {
+      success: true,
+      limit: 1000,
+      reset: Date.now() + 60000,
+      remaining: 999,
+      pending: Promise.resolve()
     }
+  }
+}
 
 // Configure rate limiting
-export const ratelimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(60, '1 m'), // 60 requests per minute
-  analytics: true,
-  prefix: 'contextds:ratelimit',
-})
+export const ratelimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(60, '1 m'),
+      analytics: true,
+      prefix: 'contextds:ratelimit',
+    })
+  : mockRatelimit
 
 // Specific rate limits for different endpoints
-export const scanRatelimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(5, '1 m'), // 5 scans per minute
-  analytics: true,
-  prefix: 'contextds:scan',
-})
+export const scanRatelimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(5, '1 m'),
+      analytics: true,
+      prefix: 'contextds:scan',
+    })
+  : mockRatelimit
 
-export const searchRatelimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(100, '1 m'), // 100 searches per minute
-  analytics: true,
-  prefix: 'contextds:search',
-})
+export const searchRatelimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(100, '1 m'),
+      analytics: true,
+      prefix: 'contextds:search',
+    })
+  : mockRatelimit
