@@ -350,6 +350,17 @@ function HomePageContent() {
     setHasResults(results.length > 0 || scanResult !== null)
   }, [query, results, scanResult])
 
+  // Debug: Log when scan completes
+  useEffect(() => {
+    if (scanResult) {
+      console.log('✅ Scan result received, should show results now', {
+        hasCuratedTokens: !!scanResult.curatedTokens,
+        hasComprehensiveAnalysis: !!scanResult.comprehensiveAnalysis,
+        domain: scanResult.domain
+      })
+    }
+  }, [scanResult])
+
   useEffect(() => {
     const loadStats = async () => {
       try {
@@ -489,11 +500,11 @@ function HomePageContent() {
 
       const result = (await response.json()) as ScanResultPayload
 
+      console.log('Scan completed:', result)
+
       if (result.status === "failed") {
         throw new Error(result.error || "Scan failed")
       }
-
-      setScanResult(result)
 
       // Preload fonts for preview (non-blocking)
       if (result.curatedTokens?.typography?.families) {
@@ -508,9 +519,13 @@ function HomePageContent() {
         setStats(statsData)
       }
 
+      // Set result and stop loading in one batch to avoid race conditions
+      setScanResult(result)
+      setScanLoading(false)
+      console.log('✅ Scan complete - result set, loading stopped')
+
     } catch (error) {
       setScanError(error instanceof Error ? error.message : "Scan failed")
-    } finally {
       setScanLoading(false)
     }
   }
