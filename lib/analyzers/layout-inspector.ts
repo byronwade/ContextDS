@@ -32,11 +32,47 @@ type ContainerSnapshot = {
 }
 
 export function analyzeLayout(sources: CssSource[]): LayoutDNA {
-  const css = sources.map((source) => source.content).join('\n')
+  // Parse each CSS source individually to handle errors gracefully
+  const parsedRoots: postcss.Root[] = []
 
-  const root = postcss.parse(css, { parser: safeParser })
+  for (const source of sources) {
+    try {
+      const root = postcss.parse(source.content, { parser: safeParser })
+      parsedRoots.push(root)
+    } catch (error) {
+      console.warn(`[layout-inspector] Failed to parse CSS from ${source.url || source.kind}:`, error instanceof Error ? error.message : error)
+      // Skip this source and continue with others
+    }
+  }
+
+  if (parsedRoots.length === 0) {
+    // Return minimal layout DNA if no CSS could be parsed
+    return {
+      containers: {
+        maxWidth: null,
+        strategy: 'unknown',
+        responsive: false,
+        snapshots: []
+      },
+      gridSystem: 'unknown',
+      spacingBase: null,
+      breakpoints: [],
+      archetypes: []
+    }
+  }
+
+  // Merge all parsed roots into one
+  const root = postcss.root()
+  parsedRoots.forEach(parsedRoot => {
+    parsedRoot.nodes.forEach(node => {
+      root.append(node.clone())
+    })
+  })
+
+  // Reconstruct CSS text from merged root
+  const css = root.toString()
+
   const containerSnapshots = collectContainerSnapshots(root)
-
   const containerWidths = deriveContainerWidths(css, containerSnapshots)
   const hasFlex = /display\s*:\s*flex/.test(css)
   const hasGrid = /display\s*:\s*grid/.test(css)

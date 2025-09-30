@@ -13,8 +13,23 @@
   }
 }
 
+@keyframes slide-in-from-left {
+  0% {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 .animate-scan-progress {
   animation: scan-progress 60s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.slide-in-from-left-2 {
+  animation: slide-in-from-left 0.3s ease-out;
 }
 
 .animation-delay-150 {

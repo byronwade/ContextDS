@@ -27,6 +27,8 @@ import {
 import { ColorCardGrid } from "@/components/organisms/color-card-grid"
 import { ThemeToggle } from "@/components/atoms/theme-toggle"
 import { RealtimeStat } from "@/components/atoms/realtime-stat"
+import { ScanProgressViewer } from "@/components/organisms/scan-progress-viewer"
+import { FontPreviewCard, preloadFonts } from "@/components/molecules/font-preview"
 import { cn } from "@/lib/utils"
 import { useRealtimeStats } from "@/hooks/use-realtime-stats"
 
@@ -392,6 +394,12 @@ function HomePageContent() {
 
       setScanResult(result)
 
+      // Preload fonts for preview (non-blocking)
+      if (result.curatedTokens?.typography?.families) {
+        const fontFamilies = result.curatedTokens.typography.families.map(f => f.value)
+        preloadFonts(fontFamilies)
+      }
+
       // Refresh stats
       const statsResponse = await fetch("/api/stats")
       if (statsResponse.ok) {
@@ -677,27 +685,96 @@ function HomePageContent() {
 
       {/* Main Content */}
       {viewMode === "scan" && scanError ? (
-        /* Scan Error */
-        <div className="flex-1 flex items-center justify-center p-12">
-          <div className="text-center space-y-4 max-w-md">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-              <svg className="h-8 w-8 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+        /* Scan Failed - Terminal Style */
+        <div className="flex-1 flex items-center justify-center p-4 md:p-12 bg-grep-0">
+          <div className="w-full max-w-3xl">
+
+            {/* Header */}
+            <div className="mb-6 flex items-center justify-between border-b border-grep-2 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-red-500" />
+                <h2 className="text-lg font-medium text-foreground font-mono">
+                  {query}
+                </h2>
+              </div>
+              <div className="text-sm text-red-600 dark:text-red-400 font-mono">
+                FAILED
+              </div>
             </div>
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-foreground">Scan Failed</h3>
-              <p className="text-sm text-grep-9">{scanError}</p>
+
+            {/* Error Log */}
+            <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
+              <div className="border-b border-grep-2 bg-background">
+                <div className="px-4 py-2.5 flex items-start gap-3">
+                  <span className="shrink-0 w-4 text-center text-red-600 dark:text-red-400">
+                    ✗
+                  </span>
+                  <div className="flex-1">
+                    <div className="text-foreground">scan-failed</div>
+                    <div className="mt-1 text-grep-9">
+                      {scanError}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Suggestions */}
+              <div className="border-t border-grep-2 bg-grep-0 px-4 py-3">
+                <div className="text-grep-9 space-y-2">
+                  <div className="text-xs text-grep-9 uppercase tracking-wide font-semibold mb-2">
+                    Common Issues
+                  </div>
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex items-start gap-2">
+                      <span className="text-grep-7">•</span>
+                      <span>Verify the URL is accessible and includes protocol (https://)</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-grep-7">•</span>
+                      <span>Some sites block automated scanners (check robots.txt)</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-grep-7">•</span>
+                      <span>Private/localhost URLs cannot be scanned</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="border-t border-grep-2 bg-background px-4 py-3 flex items-center gap-2">
+                <Button
+                  onClick={() => {
+                    setScanError(null)
+                    handleScan()
+                  }}
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-3 text-xs font-mono text-grep-9 hover:text-foreground"
+                >
+                  ↻ Retry
+                </Button>
+                <Button
+                  onClick={() => {
+                    setScanError(null)
+                    setQuery("")
+                    setViewMode("search")
+                  }}
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-3 text-xs font-mono text-grep-9 hover:text-foreground"
+                >
+                  ← Back to Search
+                </Button>
+              </div>
             </div>
-            <Button
-              onClick={() => {
-                setScanError(null)
-                handleScan()
-              }}
-              className="mt-4"
-            >
-              Try Again
-            </Button>
+
+            {/* Help text */}
+            <div className="mt-4 text-center">
+              <p className="text-xs text-grep-9">
+                Need help? Check our <button className="underline hover:text-foreground">scanning guide</button>
+              </p>
+            </div>
           </div>
         </div>
       ) : viewMode === "scan" && scanResult ? (
@@ -941,36 +1018,14 @@ function HomePageContent() {
                     <div className="p-6">
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         {scanResult.curatedTokens.typography.families.map((token, index) => (
-                          <div key={`font-${index}`} className="group relative p-5 rounded-lg border border-grep-2 bg-grep-0 hover:border-purple-400 hover:shadow-lg transition-all duration-200">
-                            <div className="flex flex-col gap-3">
-                              <div className="p-4 bg-grep-1 dark:bg-grep-2 rounded-lg border border-grep-2" style={{ fontFamily: String(token.value) }}>
-                                <p className="text-3xl text-foreground mb-2">Aa Bb Cc 123</p>
-                                <p className="text-sm text-grep-9">The quick brown fox jumps over the lazy dog</p>
-                              </div>
-                              <div>
-                                <div className="flex items-center justify-between mb-1">
-                                  <code className="text-sm font-mono font-semibold text-foreground">{token.value}</code>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleCopyToken(String(token.value))}
-                                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  >
-                                    <Copy className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                                {token.semantic && (
-                                  <p className="text-xs text-grep-9 mb-2">{token.semantic}</p>
-                                )}
-                                <div className="flex items-center gap-2 text-xs">
-                                  <div className="flex items-center gap-1">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-                                    <span className="text-grep-9">{token.percentage}% usage</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                          <FontPreviewCard
+                            key={`font-${index}`}
+                            fontFamily={token.value}
+                            semantic={token.semantic}
+                            usage={token.usage}
+                            percentage={token.percentage}
+                            onCopy={() => handleCopyToken(String(token.value))}
+                          />
                         ))}
                       </div>
                     </div>
@@ -1087,99 +1142,70 @@ function HomePageContent() {
           </div>
         </div>
       ) : viewMode === "scan" && scanLoading ? (
-        /* Scan Loading - Enhanced Visual Feedback */
-        <div className="flex-1 flex items-center justify-center p-4 md:p-12">
-          <div className="w-full max-w-2xl">
+        /* Scan Loading - Live Progress Viewer */
+        <div className="flex-1 flex items-center justify-center p-4 md:p-12 bg-grep-0">
+          <ScanProgressViewer domain={query} />
+        </div>
+      ) : viewMode === "search" && searchError ? (
+        /* Search Failed - Terminal Style */
+        <div className="flex-1 flex items-center justify-center p-4 md:p-12 bg-grep-0">
+          <div className="w-full max-w-3xl">
 
-            {/* Main Loading Card */}
-            <div className="relative overflow-hidden rounded-2xl border border-grep-2 bg-white dark:bg-neutral-900 p-8 md:p-12">
-
-              {/* Animated gradient background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-emerald-950/20 dark:via-teal-950/20 dark:to-cyan-950/20 animate-pulse" />
-
-              {/* Grid pattern overlay */}
-              <div className="absolute inset-0 opacity-30" style={{
-                backgroundImage: 'radial-gradient(circle at 1px 1px, rgb(0 0 0 / 0.05) 1px, transparent 0)',
-                backgroundSize: '24px 24px'
-              }} />
-
-              <div className="relative z-10 text-center space-y-6">
-
-                {/* Icon with pulse animation */}
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-xl">
-                  <Sparkles className="h-10 w-10 text-white animate-pulse" />
-                </div>
-
-                {/* Status Text */}
-                <div className="space-y-3">
-                  <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-                    Scanning {query}
-                  </h2>
-                  <p className="text-base text-grep-9">
-                    Extracting design tokens and analyzing layout
-                  </p>
-                </div>
-
-                {/* Processing Steps - Animated */}
-                <div className="pt-6 space-y-3 max-w-md mx-auto">
-                  <div className="flex items-center gap-3 text-sm">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-grep-9 text-left">Analyzing CSS and computed styles</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <div className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse animation-delay-150" />
-                    <span className="text-grep-9 text-left">Extracting color palette and typography</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse animation-delay-300" />
-                    <span className="text-grep-9 text-left">Generating W3C design tokens</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse animation-delay-450" />
-                    <span className="text-grep-9 text-left">Analyzing brand consistency</span>
-                  </div>
-                </div>
-
-                {/* Progress Indicator */}
-                <div className="pt-4">
-                  <div className="h-1 w-full bg-grep-2 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 animate-scan-progress origin-left" />
-                  </div>
-                  <p className="text-xs text-grep-9 mt-2">This usually takes 30-60 seconds</p>
-                </div>
+            {/* Header */}
+            <div className="mb-6 flex items-center justify-between border-b border-grep-2 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-red-500" />
+                <h2 className="text-lg font-medium text-foreground font-mono">
+                  search: {query}
+                </h2>
+              </div>
+              <div className="text-sm text-red-600 dark:text-red-400 font-mono">
+                ERROR
               </div>
             </div>
 
-            {/* Fun fact while waiting */}
-            <div className="mt-6 text-center">
-              <p className="text-xs text-grep-9 italic">
-                💡 Tip: ContextDS analyzes both static CSS and runtime computed styles for maximum accuracy
-              </p>
+            {/* Error Output */}
+            <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
+              <div className="bg-background px-4 py-2.5">
+                <div className="flex items-start gap-3">
+                  <span className="shrink-0 w-4 text-center text-red-600 dark:text-red-400">
+                    ✗
+                  </span>
+                  <div className="flex-1">
+                    <div className="text-foreground">search-error</div>
+                    <div className="mt-1 text-grep-9">
+                      {searchError}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="border-t border-grep-2 bg-grep-0 px-4 py-3 flex items-center gap-2">
+                <Button
+                  onClick={() => {
+                    setSearchError(null)
+                    setQuery("")
+                  }}
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-3 text-xs font-mono text-grep-9 hover:text-foreground"
+                >
+                  ✕ Clear
+                </Button>
+                <Button
+                  onClick={() => {
+                    setSearchError(null)
+                    setViewMode("scan")
+                  }}
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-3 text-xs font-mono text-grep-9 hover:text-foreground"
+                >
+                  → Try Scan Instead
+                </Button>
+              </div>
             </div>
-          </div>
-        </div>
-      ) : viewMode === "search" && searchError ? (
-        /* Search Error */
-        <div className="flex-1 flex items-center justify-center p-12">
-          <div className="text-center space-y-4 max-w-md">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-              <svg className="h-8 w-8 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-foreground">Search Error</h3>
-              <p className="text-sm text-grep-9">{searchError}</p>
-            </div>
-            <Button
-              onClick={() => {
-                setSearchError(null)
-                setQuery("")
-              }}
-              variant="outline"
-            >
-              Clear Search
-            </Button>
           </div>
         </div>
       ) : viewMode === "search" && (loading || results.length > 0 || query.trim()) ? (

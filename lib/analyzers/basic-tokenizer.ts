@@ -330,6 +330,9 @@ export function generateTokenSet(
 
   const variableMap = collectVariableMap(root)
 
+  // Reconstruct cssText from merged root for motion extraction
+  const cssText = root.toString()
+
   const colors = extractColors(root, variableMap)
   const fonts = extractFonts(root, variableMap)
   const spacing = extractSpacing(root, variableMap)
