@@ -316,21 +316,22 @@ function rgbToHex(components: number[]): string {
 }
 
 /**
- * Convert RGB to OKLCH (simplified approximation for now)
+ * Convert RGB to OKLCH using Culori (proper perceptual color space)
  */
 function rgbToOklch(components: number[]): [number, number, number] {
-  // This is a simplified conversion
-  // For production, use proper color space conversion library
-  const r = components[0]
-  const g = components[1]
-  const b = components[2]
+  const { rgbToOklch: properRgbToOklch } = require('./color-utils')
 
-  // Rough approximation of OKLCH
-  const l = Math.round((0.2126 * r + 0.7152 * g + 0.0722 * b) * 100)
-  const c = Math.round(Math.sqrt((r - 0.5) ** 2 + (g - 0.5) ** 2 + (b - 0.5) ** 2) * 40)
-  const h = Math.round(Math.atan2(b - 0.5, r - 0.5) * 180 / Math.PI + 180)
+  const oklch = properRgbToOklch({
+    r: Math.round(components[0] * 255),
+    g: Math.round(components[1] * 255),
+    b: Math.round(components[2] * 255)
+  })
 
-  return [l, c, h]
+  return [
+    Math.round(oklch.l * 100),
+    Math.round(oklch.c * 100),
+    Math.round(oklch.h)
+  ]
 }
 
 /**

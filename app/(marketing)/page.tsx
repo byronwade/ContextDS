@@ -546,7 +546,7 @@ function HomePageContent() {
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => handleCopyToken(JSON.stringify(scanResult.tokens, null, 2))}
+                      onClick={() => handleCopyToken(JSON.stringify(scanResult.curatedTokens, null, 2))}
                       className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
                     >
                       <Copy className="h-4 w-4 mr-2" />
@@ -556,11 +556,11 @@ function HomePageContent() {
                       variant="secondary"
                       size="sm"
                       onClick={() => {
-                        const blob = new Blob([JSON.stringify(scanResult.tokens, null, 2)], { type: "application/json" })
+                        const blob = new Blob([JSON.stringify(scanResult.curatedTokens, null, 2)], { type: "application/json" })
                         const url = URL.createObjectURL(blob)
                         const anchor = document.createElement("a")
                         anchor.href = url
-                        anchor.download = `${scanResult.domain}-tokens.json`
+                        anchor.download = `${scanResult.domain}-curated-tokens.json`
                         document.body.appendChild(anchor)
                         anchor.click()
                         anchor.remove()

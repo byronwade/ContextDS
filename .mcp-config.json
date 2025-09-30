@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "contextds": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-fetch"],
+      "env": {
+        "CONTEXTDS_API_URL": "http://localhost:3000/api/mcp",
+        "CONTEXTDS_API_KEY": "${CONTEXTDS_API_KEY}"
+      }
+    }
+  }
+}

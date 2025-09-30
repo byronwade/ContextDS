@@ -524,11 +524,10 @@ function inferDurationSemantic(value: string): string {
  * Utility functions
  */
 
+import { w3cToHex, rgbToOklch as properRgbToOklch, type RGBColor } from './color-utils'
+
 function rgbComponentsToHex(components: number[]): string {
-  const r = Math.round(components[0] * 255)
-  const g = Math.round(components[1] * 255)
-  const b = Math.round(components[2] * 255)
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`.toUpperCase()
+  return w3cToHex(components)
 }
 
 function componentsToRgb(components: number[]): { r: number; g: number; b: number } {
@@ -540,16 +539,19 @@ function componentsToRgb(components: number[]): { r: number; g: number; b: numbe
 }
 
 function rgbToOklch(components: number[]): [number, number, number] {
-  // Simplified OKLCH approximation
-  const r = components[0]
-  const g = components[1]
-  const b = components[2]
+  const rgb: RGBColor = {
+    r: Math.round(components[0] * 255),
+    g: Math.round(components[1] * 255),
+    b: Math.round(components[2] * 255)
+  }
 
-  const l = Math.round((0.2126 * r + 0.7152 * g + 0.0722 * b) * 100)
-  const c = Math.round(Math.sqrt((r - 0.5) ** 2 + (g - 0.5) ** 2 + (b - 0.5) ** 2) * 40)
-  const h = Math.round(Math.atan2(b - 0.5, r - 0.5) * 180 / Math.PI + 180)
+  const oklch = properRgbToOklch(rgb)
 
-  return [l, c, h]
+  return [
+    Math.round(oklch.l * 100),
+    Math.round(oklch.c * 100),
+    Math.round(oklch.h)
+  ]
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
