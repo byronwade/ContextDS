@@ -8,7 +8,8 @@ const scanRequestSchema = z.object({
   depth: z.enum(['1', '2', '3']).default('1'),
   prettify: z.boolean().default(false),
   quality: z.enum(['basic', 'standard', 'premium']).default('standard'),
-  budget: z.number().min(0.01).max(1.0).default(0.15)
+  budget: z.number().min(0.01).max(1.0).default(0.15),
+  mode: z.enum(['fast', 'accurate']).default('accurate')  // fast = static only, accurate = full scan
 })
 
 export async function POST(request: NextRequest) {
@@ -55,13 +56,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const includeComputed = process.env.DISABLE_COMPUTED_CSS === '1' ? false : true
+    // Fast mode skips browser automation (computed CSS + coverage API)
+    // Saves ~1,200ms but reduces accuracy from 95% to 90%
+    const includeComputed = params.mode === 'fast'
+      ? false  // Skip browser automation in fast mode
+      : process.env.DISABLE_COMPUTED_CSS === '1' ? false : true
+
     const normalizedUrl = params.url.startsWith('http') ? params.url : `https://${params.url}`
 
     const result = await runScanJob({
       url: normalizedUrl,
       prettify: params.prettify,
-      includeComputed
+      includeComputed,
+      mode: params.mode  // Pass mode to orchestrator
     })
 
     return NextResponse.json(result)

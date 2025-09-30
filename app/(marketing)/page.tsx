@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState, Suspense } from "react"
+import { useEffect, useMemo, useState, Suspense, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -22,7 +22,8 @@ import {
   TrendingUp,
   Monitor,
   Sun,
-  Moon
+  Moon,
+  Share2
 } from "lucide-react"
 import { ColorCardGrid } from "@/components/organisms/color-card-grid"
 import { ThemeToggle } from "@/components/atoms/theme-toggle"
@@ -326,6 +327,7 @@ function HomePageContent() {
   const [scanResult, setScanResult] = useState<ScanResultPayload | null>(null)
   const [scanLoading, setScanLoading] = useState(false)
   const [scanError, setScanError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   // Expandable sections state
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
@@ -354,12 +356,15 @@ function HomePageContent() {
   useEffect(() => {
     if (scanResult) {
       console.log('✅ Scan result received, should show results now', {
+        scanResult: scanResult,
+        scanLoading: scanLoading,
+        viewMode: viewMode,
         hasCuratedTokens: !!scanResult.curatedTokens,
         hasComprehensiveAnalysis: !!scanResult.comprehensiveAnalysis,
         domain: scanResult.domain
       })
     }
-  }, [scanResult])
+  }, [scanResult, scanLoading, viewMode])
 
   useEffect(() => {
     const loadStats = async () => {
@@ -474,6 +479,15 @@ function HomePageContent() {
     navigator.clipboard.writeText(value)
   }
 
+  const handleShareUrl = () => {
+    if (scanResult?.domain) {
+      const shareUrl = `${window.location.origin}/scan/${encodeURIComponent(scanResult.domain)}`
+      navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
   const handleScan = async () => {
     const target = query.trim()
     if (!target) return
@@ -500,7 +514,13 @@ function HomePageContent() {
 
       const result = (await response.json()) as ScanResultPayload
 
-      console.log('Scan completed:', result)
+      console.log('🔍 DEBUG: Scan API Response:', {
+        status: result.status,
+        domain: result.domain,
+        hasCuratedTokens: !!result.curatedTokens,
+        hasComprehensiveAnalysis: !!result.comprehensiveAnalysis,
+        fullResult: result
+      })
 
       if (result.status === "failed") {
         throw new Error(result.error || "Scan failed")
@@ -519,10 +539,25 @@ function HomePageContent() {
         setStats(statsData)
       }
 
-      // Set result and stop loading in one batch to avoid race conditions
-      setScanResult(result)
+      console.log('🔍 DEBUG: Before setting state - Current values:', {
+        currentScanResult: scanResult,
+        currentScanLoading: scanLoading,
+        currentViewMode: viewMode
+      })
+
+      // CRITICAL FIX: Set loading to false FIRST, then set result
+      // This ensures the loading state is cleared before the result is set
+      // preventing the loading screen from taking priority in the render conditions
       setScanLoading(false)
-      console.log('✅ Scan complete - result set, loading stopped')
+
+      // Use setTimeout to ensure loading state is flushed before setting result
+      // This breaks the automatic batching and forces a re-render sequence
+      setTimeout(() => {
+        setScanResult(result)
+        console.log('🔍 DEBUG: Result set after loading cleared')
+      }, 0)
+
+      console.log('🔍 DEBUG: State updates scheduled')
 
     } catch (error) {
       setScanError(error instanceof Error ? error.message : "Scan failed")
@@ -800,6 +835,19 @@ function HomePageContent() {
       </div>
 
       {/* Main Content */}
+      {(() => {
+        console.log('🎯 RENDER DECISION:', {
+          viewMode,
+          scanError: !!scanError,
+          scanResult: !!scanResult,
+          scanLoading,
+          willRenderError: viewMode === "scan" && !!scanError,
+          willRenderResults: viewMode === "scan" && !!scanResult,
+          willRenderLoading: viewMode === "scan" && scanLoading,
+          scanResultStructure: scanResult ? Object.keys(scanResult) : null
+        })
+        return null
+      })()}
       {viewMode === "scan" && scanError ? (
         /* Scan Failed - Terminal Style */
         <div className="flex-1 flex items-center justify-center p-4 md:p-12 bg-grep-0">
@@ -906,7 +954,25 @@ function HomePageContent() {
                   {scanResult.domain}
                 </h1>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleShareUrl}
+                  className="h-7 px-2 text-xs font-mono text-grep-9 hover:text-foreground"
+                >
+                  {copied ? (
+                    <>
+                      <Copy className="h-3.5 w-3.5 mr-1" />
+                      copied!
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="h-3.5 w-3.5 mr-1" />
+                      share
+                    </>
+                  )}
+                </Button>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -914,7 +980,7 @@ function HomePageContent() {
                   className="h-7 px-2 text-xs font-mono text-grep-9 hover:text-foreground"
                 >
                   <Copy className="h-3.5 w-3.5 mr-1" />
-                  copy
+                  copy json
                 </Button>
                 <Button
                   variant="ghost"

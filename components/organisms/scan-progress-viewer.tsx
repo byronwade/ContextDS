@@ -135,219 +135,102 @@ export function ScanProgressViewer({ domain }: ScanProgressViewerProps) {
 
   const completedCount = steps.filter(s => s.status === 'complete').length
   const progressPercent = Math.round((completedCount / steps.length) * 100)
+  const activeStep = steps.find(s => s.status === 'active')
 
   return (
-    <div className="w-full max-w-5xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto">
 
-      {/* Header - Fixed Height */}
-      <div className="mb-6 flex items-center justify-between border-b border-grep-2 pb-4 h-12">
+      {/* Ultra-Compact Single-Line Header */}
+      <div className="mb-4 flex items-center justify-between h-9 border-b border-grep-2 pb-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <h2 className="text-sm font-mono text-foreground">{domain}</h2>
+          <span className="text-xs text-grep-7">·</span>
+          <span className="text-xs text-grep-9 font-mono">{activeStep?.label || 'init'}</span>
+        </div>
         <div className="flex items-center gap-3">
-          <div className="relative w-3 h-3">
-            <div className="absolute inset-0 rounded-full bg-emerald-500 animate-pulse" />
-            <div className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-30" />
+          <span className="text-xs text-grep-9 font-mono tabular-nums">{completedCount}/{steps.length}</span>
+          <div className="w-24 h-1 bg-grep-2 rounded-full overflow-hidden">
+            <div className="h-full bg-foreground transition-all duration-300" style={{ width: `${progressPercent}%` }} />
           </div>
-          <h2 className="text-lg font-medium text-foreground font-mono">
-            {domain}
-          </h2>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-grep-9 font-mono">{currentPhase || 'Initializing...'}</span>
-          <span className="text-sm text-grep-9 font-mono tabular-nums">
-            {elapsed.toFixed(1)}s
-          </span>
+          <span className="text-xs text-grep-9 font-mono tabular-nums w-10 text-right">{elapsed.toFixed(1)}s</span>
         </div>
       </div>
 
-      {/* Progress Bar - Above Table */}
-      <div className="mb-4 flex items-center gap-3">
-        <div className="flex-1 h-1 bg-grep-2 rounded-full overflow-hidden">
+      {/* Compact Steps - Show Only Recent */}
+      <div className="rounded border border-grep-2 bg-grep-0 overflow-hidden mb-3">
+        {steps.filter(s => s.status !== 'pending' || steps.indexOf(s) === completedCount).slice(0, 5).map((step) => (
           <div
-            className="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-full transition-all duration-500 ease-out"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-        <span className="text-xs text-grep-9 tabular-nums font-mono w-10 text-right">
-          {progressPercent}%
-        </span>
-      </div>
+            key={step.id}
+            className={cn(
+              "border-b border-grep-2 last:border-b-0",
+              step.status === 'active' && "bg-background"
+            )}
+          >
+            <div className="h-8 px-3 flex items-center gap-2.5 font-mono text-[11px]">
+              <span className={cn(
+                "w-3 text-center shrink-0",
+                step.status === 'pending' && "text-grep-7",
+                step.status === 'active' && "text-emerald-600 dark:text-emerald-400",
+                step.status === 'complete' && "text-grep-9"
+              )}>
+                {step.status === 'pending' && '○'}
+                {step.status === 'active' && '⟳'}
+                {step.status === 'complete' && '✓'}
+              </span>
 
-      {/* Steps Table - Fixed Layout to Prevent Resize */}
-      <div className="rounded-md border border-grep-2 bg-grep-0 overflow-hidden">
-        <div className="divide-y divide-grep-2">
-          {steps.map((step, index) => (
-            <div
-              key={step.id}
-              className={cn(
-                "transition-all duration-300 ease-out",
-                step.status === 'active' && "bg-background"
-              )}
-            >
-              {/* Main Row - Fixed Height */}
-              <div className="h-12 px-4 flex items-center gap-4">
-                {/* Status Icon - Fixed Width */}
-                <span className={cn(
-                  "shrink-0 w-5 text-center font-mono transition-all duration-200",
-                  step.status === 'pending' && "text-grep-7 scale-90 opacity-40",
-                  step.status === 'active' && "text-emerald-600 dark:text-emerald-400 scale-110",
-                  step.status === 'complete' && "text-green-600 dark:text-green-400 scale-100"
-                )}>
-                  {step.status === 'pending' && '○'}
-                  {step.status === 'active' && (
-                    <span className="inline-block animate-spin">⟳</span>
-                  )}
-                  {step.status === 'complete' && '✓'}
+              <span className={cn(
+                "w-28 shrink-0 truncate",
+                step.status === 'active' && "text-foreground",
+                step.status === 'complete' && "text-grep-9",
+                step.status === 'pending' && "text-grep-7"
+              )}>
+                {step.label}
+              </span>
+
+              <span className="flex-1 text-grep-9 truncate text-[10px]">
+                {step.data}
+              </span>
+
+              {step.time && step.status === 'complete' && (
+                <span className="text-grep-7 tabular-nums w-8 text-right shrink-0 text-[10px]">
+                  {step.time}
                 </span>
-
-                {/* Label - Fixed Width */}
-                <div className="w-40 shrink-0">
-                  <span className={cn(
-                    "font-mono text-[13px] transition-colors duration-200",
-                    step.status === 'pending' && "text-grep-7",
-                    step.status === 'active' && "text-foreground font-semibold",
-                    step.status === 'complete' && "text-grep-9"
-                  )}>
-                    {step.label}
-                  </span>
-                </div>
-
-                {/* Time - Fixed Width with Fade */}
-                <div className="w-12 shrink-0 text-right">
-                  {step.time && (
-                    <span className={cn(
-                      "text-xs tabular-nums font-mono transition-all duration-300",
-                      step.status === 'complete' ? "text-grep-9 opacity-100" : "text-grep-7 opacity-0"
-                    )}>
-                      {step.time}
-                    </span>
-                  )}
-                </div>
-
-                {/* Data Output - Flexible but smooth */}
-                <div className="flex-1 min-w-0">
-                  {step.data && (
-                    <div className={cn(
-                      "font-mono text-xs transition-all duration-300 ease-out truncate",
-                      step.status === 'pending' && "opacity-0 translate-x-2",
-                      step.status === 'active' && "text-grep-9 opacity-100 translate-x-0",
-                      step.status === 'complete' && "text-grep-7 opacity-70 translate-x-0"
-                    )}>
-                      {step.data}
-                    </div>
-                  )}
-                </div>
-
-                {/* Active Spinner - Fixed Width */}
-                <div className="w-6 shrink-0 text-right">
-                  {step.status === 'active' && (
-                    <span className="inline-block text-grep-7 text-xs animate-pulse">
-                      •••
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Details Row - Collapsible with Fixed Max Height */}
-              {step.details && step.status !== 'pending' && (
-                <div className={cn(
-                  "overflow-hidden transition-all duration-500 ease-out",
-                  step.status === 'active' || step.status === 'complete'
-                    ? "max-h-20 opacity-100"
-                    : "max-h-0 opacity-0"
-                )}>
-                  <div className="px-4 pb-3 pl-[52px]">
-                    <div className="space-y-1">
-                      {step.details.map((detail, idx) => (
-                        <div
-                          key={idx}
-                          className={cn(
-                            "flex items-center gap-2 text-[11px] transition-all duration-300 ease-out",
-                            `animation-delay-${idx * 100}`
-                          )}
-                          style={{
-                            animationDelay: `${idx * 100}ms`,
-                            opacity: step.status === 'active' ? 1 : 0.5
-                          }}
-                        >
-                          <span className="text-grep-7">→</span>
-                          <span className={cn(
-                            "text-grep-9 transition-colors duration-200",
-                            step.status === 'active' && "text-grep-9"
-                          )}>
-                            {detail}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
               )}
             </div>
-          ))}
-        </div>
-
-        {/* Footer - Fixed Height */}
-        <div className="bg-background h-10 px-4 flex items-center justify-between text-xs border-t border-grep-2">
-          <span className="text-grep-9 font-mono">
-            Scanning <span className="text-foreground font-semibold">{domain}</span>
-          </span>
-          <div className="flex items-center gap-3">
-            <span className={cn(
-              "text-grep-9 font-mono tabular-nums transition-colors duration-300",
-              completedCount === steps.length && "text-green-600 dark:text-green-400 font-semibold"
-            )}>
-              {completedCount}/{steps.length} complete
-            </span>
           </div>
-        </div>
+        ))}
       </div>
 
-      {/* Live Stats - Additional Context */}
-      <div className="mt-4 grid grid-cols-3 gap-4 text-center">
-        <div className={cn(
-          "p-3 rounded border border-grep-2 bg-grep-0 transition-all duration-300",
-          completedCount >= 2 && "border-green-300 dark:border-green-900 bg-green-50/30 dark:bg-green-950/10"
-        )}>
-          <div className={cn(
-            "text-xl font-bold font-mono tabular-nums transition-all duration-300",
-            completedCount >= 2 ? "text-foreground" : "text-grep-7"
+      {/* Live Metrics - Ultra-Compact */}
+      <div className="grid grid-cols-3 gap-2.5">
+        <div className="rounded border border-grep-2 bg-grep-0 px-3 py-2 flex items-center justify-between">
+          <span className="text-[9px] text-grep-9 font-mono uppercase">Rules</span>
+          <span className={cn(
+            "font-mono text-sm font-bold tabular-nums",
+            completedCount >= 1 ? "text-foreground" : "text-grep-7"
           )}>
-            {completedCount >= 2 ? '1,847' : '—'}
-          </div>
-          <div className="text-[10px] text-grep-9 font-mono uppercase tracking-wide">CSS Rules</div>
+            {completedCount >= 1 ? '1,847' : '—'}
+          </span>
         </div>
-        <div className={cn(
-          "p-3 rounded border border-grep-2 bg-grep-0 transition-all duration-300",
-          completedCount >= 6 && "border-blue-300 dark:border-blue-900 bg-blue-50/30 dark:bg-blue-950/10"
-        )}>
-          <div className={cn(
-            "text-xl font-bold font-mono tabular-nums transition-all duration-300",
+        <div className="rounded border border-grep-2 bg-grep-0 px-3 py-2 flex items-center justify-between">
+          <span className="text-[9px] text-grep-9 font-mono uppercase">Tokens</span>
+          <span className={cn(
+            "font-mono text-sm font-bold tabular-nums",
             completedCount >= 6 ? "text-foreground" : "text-grep-7"
           )}>
             {completedCount >= 6 ? '247' : '—'}
-          </div>
-          <div className="text-[10px] text-grep-9 font-mono uppercase tracking-wide">Tokens</div>
+          </span>
         </div>
-        <div className={cn(
-          "p-3 rounded border border-grep-2 bg-grep-0 transition-all duration-300",
-          completedCount >= 7 && "border-purple-300 dark:border-purple-900 bg-purple-50/30 dark:bg-purple-950/10"
-        )}>
-          <div className={cn(
-            "text-xl font-bold font-mono tabular-nums transition-all duration-300",
+        <div className="rounded border border-grep-2 bg-grep-0 px-3 py-2 flex items-center justify-between">
+          <span className="text-[9px] text-grep-9 font-mono uppercase">Quality</span>
+          <span className={cn(
+            "font-mono text-sm font-bold tabular-nums",
             completedCount >= 7 ? "text-foreground" : "text-grep-7"
           )}>
             {completedCount >= 7 ? '92%' : '—'}
-          </div>
-          <div className="text-[10px] text-grep-9 font-mono uppercase tracking-wide">Confidence</div>
+          </span>
         </div>
-      </div>
-
-      {/* Subtle Help Text */}
-      <div className="mt-6 text-center">
-        <p className="text-xs text-grep-9 font-mono">
-          {completedCount === steps.length
-            ? '✓ Scan complete - redirecting to results...'
-            : 'Extracting design tokens and analyzing patterns...'}
-        </p>
       </div>
     </div>
   )

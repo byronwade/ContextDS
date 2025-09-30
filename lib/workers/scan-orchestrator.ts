@@ -18,6 +18,7 @@ export type ScanJobInput = {
   url: string
   prettify: boolean
   includeComputed: boolean
+  mode?: 'fast' | 'accurate'  // fast = static only, accurate = full scan
 }
 
 export type ScanJobResult = {
@@ -56,19 +57,23 @@ export type ScanJobResult = {
   }
 }
 
-export async function runScanJob({ url, prettify, includeComputed }: ScanJobInput): Promise<ScanJobResult> {
+export async function runScanJob({ url, prettify, includeComputed, mode = 'accurate' }: ScanJobInput): Promise<ScanJobResult> {
   const normalized = url.startsWith('http') ? url : `https://${url}`
   const target = new URL(normalized)
   const domain = target.hostname
   const startedAt = Date.now()
   const metrics = new MetricsCollector()
 
+  // PERFORMANCE: Fast mode skips browser automation entirely
+  const isFastMode = mode === 'fast'
+  const actuallyIncludeComputed = isFastMode ? false : includeComputed
+
   const [siteRecord] = await ensureSite(domain)
   const [scanRecord] = await db
     .insert(scans)
     .values({
       siteId: siteRecord.id,
-      method: includeComputed ? 'computed' : 'static',
+      method: actuallyIncludeComputed ? 'computed' : 'static',
       prettify,
       startedAt: new Date()
     })
@@ -79,7 +84,7 @@ export async function runScanJob({ url, prettify, includeComputed }: ScanJobInpu
   endStaticPhase()
 
   let computedCss: CssSource[] = []
-  if (includeComputed) {
+  if (actuallyIncludeComputed) {
     const endComputedPhase = metrics.startPhase('collect_computed_css')
     computedCss = await collectComputedCss(target.toString())
     endComputedPhase()
@@ -190,14 +195,17 @@ export async function runScanJob({ url, prettify, includeComputed }: ScanJobInpu
   endLayoutPhase()
 
   // PERFORMANCE OPTIMIZATION: Parallelize all independent analysis tasks
+  // In fast mode, skip expensive AI comprehensive analysis
   const [
     wireframeResult,
     promptPackResult,
     aiInsightsResult,
     comprehensiveResult
   ] = await Promise.allSettled([
-    // Task 1: Wireframe (if computed CSS enabled)
-    includeComputed ? collectLayoutWireframe(target.toString()) : Promise.resolve([]),
+    // Task 1: Wireframe (skip in fast mode)
+    actuallyIncludeComputed && !isFastMode
+      ? collectLayoutWireframe(target.toString())
+      : Promise.resolve([]),
 
     // Task 2: Build prompt pack (can run in parallel with AI)
     (async () => {
@@ -206,13 +214,13 @@ export async function runScanJob({ url, prettify, includeComputed }: ScanJobInpu
       return { legacyPromptPack, aiPromptPack }
     })(),
 
-    // Task 3: AI insights (can run in parallel with comprehensive)
+    // Task 3: AI insights (always run, uses fast model)
     curatedTokens
       ? generateDesignInsights(curatedTokens, { domain, url: target.toString() })
       : Promise.resolve(null),
 
-    // Task 4: Comprehensive AI analysis (runs in parallel with basic insights)
-    curatedTokens
+    // Task 4: Comprehensive AI analysis (skip in fast mode - saves 600ms)
+    curatedTokens && !isFastMode
       ? analyzeDesignSystemComprehensive(curatedTokens, { domain, url: target.toString() })
       : Promise.resolve(null)
   ])
