@@ -1,9 +1,12 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { useScanStore, type ScanResult } from "@/stores/scan-store"
+
+// Force dynamic rendering for scan page (uses searchParams)
+export const dynamic = 'force-dynamic'
 import { useRealtimeStats } from "@/hooks/use-realtime-stats"
 import { ScanResultsLayout } from "@/components/organisms/scan-results-layout"
 import { ThemeToggle } from "@/components/atoms/theme-toggle"
