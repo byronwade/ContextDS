@@ -139,6 +139,20 @@ function HomePageContent() {
     loadStats()
   }, [])
 
+  // Keyboard shortcut: ⌘K to focus search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        const searchInput = document.getElementById('search-input')
+        searchInput?.focus()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   useEffect(() => {
     if (!query.trim()) {
       setResults([])
@@ -293,68 +307,301 @@ function HomePageContent() {
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-between overflow-hidden antialiased">
-      {/* Grep.app Style Header */}
-      <div className="flex min-h-[64px] w-full shrink-0 flex-wrap items-center justify-between border-b border-grep-2 md:flex-nowrap">
-        {/* Left: Brand */}
-        <div className="flex pl-4 md:pl-6">
-          <div className="flex items-center space-x-2 pr-3">
-            <Link className="outline-offset-4" href="/">
-              <svg aria-label="Vercel Logo" className="fill-black dark:fill-white" viewBox="0 0 75 65" height="22">
+      {/* ULTRATHINK Header - Beautiful & Functional */}
+      <header className="sticky top-0 z-50 w-full border-b border-grep-2 bg-white/80 dark:bg-black/80 backdrop-blur-xl">
+        <div className="flex h-16 items-center justify-between px-4 md:px-6">
+
+          {/* Left: Brand + Stats */}
+          <div className="flex items-center gap-6">
+            <Link href="/" className="flex items-center gap-2 outline-offset-4 group">
+              <svg aria-label="ContextDS Logo" className="fill-black dark:fill-white transition-transform group-hover:scale-110" viewBox="0 0 75 65" height="24">
                 <path d="M37.59.25l36.95 64H.64l36.95-64z"></path>
               </svg>
-            </Link>
-            <svg fill="none" height="24" shapeRendering="geometricPrecision" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24" className="stroke-grep-4" style={{width: '22px', height: '22px'}}>
-              <path d="M16.88 3.549L7.12 20.451"></path>
-            </svg>
-            <Link className="outline-offset-4" href="/">
+              <svg fill="none" height="24" shapeRendering="geometricPrecision" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24" className="stroke-grep-4">
+                <path d="M16.88 3.549L7.12 20.451"></path>
+              </svg>
               <div className="flex items-center gap-2">
                 <Palette className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 <span className="text-lg font-semibold text-black dark:text-white">ContextDS</span>
               </div>
             </Link>
+
+            {/* Stats Pills - Hidden on mobile */}
+            {stats && (
+              <div className="hidden lg:flex items-center gap-2 text-xs">
+                <div className="px-2 py-1 rounded-full bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900">
+                  <span className="font-semibold">{stats.tokens.toLocaleString()}</span> tokens
+                </div>
+                <div className="px-2 py-1 rounded-full bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-900">
+                  <span className="font-semibold">{stats.sites}</span> sites
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Center: Ultra-Clear Search/Scan Interface */}
+          <div className="hidden md:flex flex-1 max-w-3xl mx-6">
+            {/* Mode Selector - Large & Clear */}
+            <div className="flex rounded-xl border-2 border-grep-3 bg-grep-0 p-1 mr-3 shadow-sm">
+              <button
+                onClick={() => {
+                  setViewMode("search")
+                  setResults([])
+                  setScanResult(null)
+                }}
+                className={cn(
+                  "px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 min-w-[100px] justify-center",
+                  viewMode === "search"
+                    ? "bg-blue-500 text-white shadow-lg scale-105"
+                    : "text-grep-9 hover:text-foreground hover:bg-grep-1"
+                )}
+              >
+                <Search className="h-4 w-4" />
+                Search
+              </button>
+              <button
+                onClick={() => {
+                  setViewMode("scan")
+                  setResults([])
+                  setScanResult(null)
+                }}
+                className={cn(
+                  "px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 min-w-[100px] justify-center",
+                  viewMode === "scan"
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg scale-105"
+                    : "text-grep-9 hover:text-foreground hover:bg-grep-1"
+                )}
+              >
+                <Sparkles className="h-4 w-4" />
+                Scan
+              </button>
+            </div>
+
+            {/* Search Bar with Color-Coded Mode */}
+            <div className="relative flex-1">
+              {/* Mode Indicator Badge */}
+              <div className="absolute -top-2 left-4 z-30">
+                <div className={cn(
+                  "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide shadow-sm border-2 border-white dark:border-black",
+                  viewMode === "search"
+                    ? "bg-blue-500 text-white"
+                    : "bg-gradient-to-r from-emerald-500 to-teal-500 text-white"
+                )}>
+                  {viewMode === "search" ? "Search Mode" : "Scan Mode"}
+                </div>
+              </div>
+
+              {/* Input with Mode-Specific Styling */}
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && query.trim()) {
+                    viewMode === "scan" ? handleScan() : null
+                  }
+                }}
+                placeholder={viewMode === "scan" ? "Enter URL: https://stripe.com" : "Search 17K+ design tokens..."}
+                id="search-input"
+                className={cn(
+                  "w-full h-11 pl-4 pr-36 rounded-xl border-2 transition-all duration-200 text-sm font-medium",
+                  viewMode === "search" && [
+                    "border-blue-200 dark:border-blue-900",
+                    "bg-blue-50/50 dark:bg-blue-950/20",
+                    "focus-visible:border-blue-400 focus-visible:ring-4 focus-visible:ring-blue-100 dark:focus-visible:ring-blue-950",
+                    "placeholder:text-blue-600/50 dark:placeholder:text-blue-400/50"
+                  ],
+                  viewMode === "scan" && [
+                    "border-emerald-200 dark:border-emerald-900",
+                    "bg-emerald-50/50 dark:bg-emerald-950/20",
+                    "focus-visible:border-emerald-400 focus-visible:ring-4 focus-visible:ring-emerald-100 dark:focus-visible:ring-emerald-950",
+                    "placeholder:text-emerald-600/50 dark:placeholder:text-emerald-400/50"
+                  ]
+                )}
+                spellCheck="false"
+                autoCapitalize="off"
+                autoComplete="off"
+                autoCorrect="off"
+              />
+
+              {/* Right Controls - Mode Specific */}
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                {viewMode === "search" ? (
+                  <>
+                    {/* Search Filter Toggles - Blue Theme */}
+                    <div className="flex items-center gap-1 bg-white dark:bg-black rounded-lg px-1 py-1 border border-blue-200 dark:border-blue-900 shadow-sm">
+                      <button
+                        type="button"
+                        onClick={() => setCaseInsensitive(!caseInsensitive)}
+                        className={cn(
+                          "h-7 w-7 rounded-md inline-flex items-center justify-center transition-all duration-200",
+                          caseInsensitive
+                            ? "bg-blue-500 text-white"
+                            : "text-grep-9 hover:bg-blue-50 dark:hover:bg-blue-950 hover:text-blue-600"
+                        )}
+                        aria-pressed={caseInsensitive}
+                        title="Match case (Aa)"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
+                          <path d="M11.6667 11C12.7713 11 13.6667 10.1046 13.6667 9C13.6667 7.89543 12.7713 7 11.6667 7C10.5621 7 9.66669 7.89543 9.66669 9C9.66669 10.1046 10.5621 11 11.6667 11Z" stroke="currentColor" strokeWidth="1.5"/>
+                          <path d="M13.6667 7V11" stroke="currentColor" strokeWidth="1.5"/>
+                          <path fillRule="evenodd" clipRule="evenodd" d="M3.26242 10.0789L2.63419 11.8414L2.57767 12H0.985229L1.22126 11.3378L4.22128 2.92102L5.63421 2.92102L8.63419 11.3378L8.87023 12H7.27779L7.22126 11.8414L6.59305 10.0789H6.5777H3.2777H3.26242ZM3.79707 8.57885H6.0584L4.92774 5.40668L3.79707 8.57885Z" fill="currentColor"/>
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setWholeWords(!wholeWords)}
+                        className={cn(
+                          "h-7 w-7 rounded-md inline-flex items-center justify-center transition-all duration-200",
+                          wholeWords
+                            ? "bg-blue-500 text-white"
+                            : "text-grep-9 hover:bg-blue-50 dark:hover:bg-blue-950 hover:text-blue-600"
+                        )}
+                        aria-pressed={wholeWords}
+                        title="Whole words"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
+                          <path d="M4.66669 10C5.77126 10 6.66669 9.10457 6.66669 8C6.66669 6.89543 5.77126 6 4.66669 6C3.56212 6 2.66669 6.89543 2.66669 8C2.66669 9.10457 3.56212 10 4.66669 10Z" stroke="currentColor" strokeWidth="1.5"/>
+                          <path d="M6.66669 6V10" stroke="currentColor" strokeWidth="1.5"/>
+                          <path d="M11.3333 10C12.4379 10 13.3333 9.10457 13.3333 8C13.3333 6.89543 12.4379 6 11.3333 6C10.2287 6 9.33331 6.89543 9.33331 8C9.33331 9.10457 10.2287 10 11.3333 10Z" stroke="currentColor" strokeWidth="1.5"/>
+                          <path d="M9.33331 4.66675V10.0001" stroke="currentColor" strokeWidth="1.5"/>
+                          <path d="M1 11V13H15V11" stroke="currentColor" strokeWidth="1.5"/>
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setUseRegex(!useRegex)}
+                        className={cn(
+                          "h-7 w-7 rounded-md inline-flex items-center justify-center transition-all duration-200",
+                          useRegex
+                            ? "bg-blue-500 text-white"
+                            : "text-grep-9 hover:bg-blue-50 dark:hover:bg-blue-950 hover:text-blue-600"
+                        )}
+                        aria-pressed={useRegex}
+                        title="Regex"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
+                          <path d="M10.8867 2V8.66667" stroke="currentColor" strokeWidth="1.5"/>
+                          <path d="M8 3.66675L13.7733 7.00008" stroke="currentColor" strokeWidth="1.5"/>
+                          <path d="M8 7.00008L13.7733 3.66675" stroke="currentColor" strokeWidth="1.5"/>
+                          <rect x="2" y="9" width="4" height="4" fill="currentColor"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Scan Button - Emerald Theme */}
+                    <Button
+                      onClick={handleScan}
+                      disabled={!query.trim() || scanLoading}
+                      size="sm"
+                      className="h-8 px-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg disabled:opacity-50 transition-all duration-200"
+                    >
+                      {scanLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Scanning...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Scan Now
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
+
+                {/* Keyboard Shortcut */}
+                <kbd className="hidden xl:inline-flex h-7 px-2 items-center gap-0.5 rounded-md bg-white dark:bg-black border border-grep-3 text-xs text-grep-9 font-mono shadow-sm">
+                  <span className="text-[11px] font-bold">⌘</span>
+                  <span className="font-semibold">K</span>
+                </kbd>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Actions + Theme */}
+          <div className="flex items-center gap-3">
+            {/* Quick Actions */}
+            <div className="hidden md:flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-3 text-xs font-medium text-grep-9 hover:text-foreground hover:bg-grep-1"
+              >
+                Docs
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-3 text-xs font-medium text-grep-9 hover:text-foreground hover:bg-grep-1"
+              >
+                API
+              </Button>
+            </div>
+
+            {/* Theme Toggle - Minimal */}
+            <div className="hidden sm:flex items-center">
+              <button
+                className="h-8 w-8 rounded-md flex items-center justify-center transition-colors hover:bg-grep-1 text-grep-9 hover:text-foreground"
+                title="Toggle theme"
+              >
+                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              </button>
+            </div>
+
+            {/* Sign In Button */}
+            <Button
+              size="sm"
+              className="h-8 px-4 bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90 font-medium rounded-md shadow-sm"
+            >
+              Sign In
+            </Button>
           </div>
         </div>
 
-        {/* Center: Search/Scan Toggle + Input */}
-        <div className="order-1 flex w-full items-center justify-center border-t border-grep-2 px-4 py-3 md:order-none md:border-none md:px-3 md:py-0 gap-3" id="header-contents">
-          {/* Mode Toggle */}
-          <div className="flex rounded-md border border-grep-4 bg-grep-0 p-[2px] shrink-0">
-            <button
-              onClick={() => {
-                setViewMode("search")
-                setResults([])
-                setScanResult(null)
-              }}
-              className={cn(
-                "px-3 py-1.5 text-xs font-medium rounded transition-all duration-200 flex items-center gap-1.5",
-                viewMode === "search"
-                  ? "bg-white text-black shadow-sm dark:bg-black dark:text-white border border-grep-3"
-                  : "text-grep-9 hover:text-foreground"
-              )}
-            >
-              <Search className="h-3.5 w-3.5" />
-              Search
-            </button>
-            <button
-              onClick={() => {
-                setViewMode("scan")
-                setResults([])
-                setScanResult(null)
-              }}
-              className={cn(
-                "px-3 py-1.5 text-xs font-medium rounded transition-all duration-200 flex items-center gap-1.5",
-                viewMode === "scan"
-                  ? "bg-white text-black shadow-sm dark:bg-black dark:text-white border border-grep-3"
-                  : "text-grep-9 hover:text-foreground"
-              )}
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              Scan
-            </button>
-          </div>
+        {/* Mobile Search Bar */}
+        <div className="md:hidden border-t border-grep-2 px-4 py-3">
+          <div className="relative w-full">
+            {/* Mobile Mode Toggle */}
+            <div className="flex gap-2 mb-3">
+              <button
+                onClick={() => {
+                  setViewMode("search")
+                  setResults([])
+                  setScanResult(null)
+                }}
+                className={cn(
+                  "flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2",
+                  viewMode === "search"
+                    ? "bg-blue-500 text-white shadow-md"
+                    : "bg-grep-0 text-grep-9 border border-grep-3 hover:border-grep-4"
+                )}
+              >
+                <Search className="h-4 w-4" />
+                Search
+              </button>
+              <button
+                onClick={() => {
+                  setViewMode("scan")
+                  setResults([])
+                  setScanResult(null)
+                }}
+                className={cn(
+                  "flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2",
+                  viewMode === "scan"
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md"
+                    : "bg-grep-0 text-grep-9 border border-grep-3 hover:border-grep-4"
+                )}
+              >
+                <Sparkles className="h-4 w-4" />
+                Scan
+              </button>
+            </div>
 
-          {/* Search/Scan Input */}
-          <div className="relative z-10 w-full flex-grow max-w-2xl">
+            {/* Mobile Input */}
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -363,105 +610,27 @@ function HomePageContent() {
                   handleScan()
                 }
               }}
-              placeholder={viewMode === "scan" ? "Enter website URL to scan..." : "Search design tokens..."}
-              id="search-input"
-              className="flex w-full min-w-0 shrink rounded-md border border-grep-4 bg-grep-0 px-3 py-1 text-sm transition-colors focus-visible:border-grep-12 focus-visible:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grep-4 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-grep-7 h-[42px] md:h-9 max-md:max-w-none"
-              style={{paddingLeft: '12px', paddingRight: viewMode === "search" ? '96px' : '72px'}}
-              spellCheck="false"
-              autoCapitalize="off"
-              autoComplete="off"
-              autoCorrect="off"
+              placeholder={viewMode === "scan" ? "https://stripe.com" : "Search tokens..."}
+              className="h-11 pl-4 pr-12 rounded-lg border-2 border-grep-3 focus-visible:border-blue-400 focus-visible:ring-4 focus-visible:ring-blue-100 dark:focus-visible:ring-blue-950"
             />
-            <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
-              {viewMode === "search" ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setCaseInsensitive(!caseInsensitive)}
-                    className={cn(
-                      "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-transparent h-6 px-1 min-w-6",
-                      caseInsensitive && "bg-grep-11 border-grep-6 text-foreground"
-                    )}
-                    aria-pressed={caseInsensitive}
-                    data-state={caseInsensitive ? "on" : "off"}
-                    aria-label="Match case"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
-                      <path d="M11.6667 11C12.7713 11 13.6667 10.1046 13.6667 9C13.6667 7.89543 12.7713 7 11.6667 7C10.5621 7 9.66669 7.89543 9.66669 9C9.66669 10.1046 10.5621 11 11.6667 11Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-                      <path d="M13.6667 7V11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
-                      <path fillRule="evenodd" clipRule="evenodd" d="M3.26242 10.0789L2.63419 11.8414L2.57767 12H0.985229L1.22126 11.3378L4.22128 2.92102L5.63421 2.92102L8.63419 11.3378L8.87023 12H7.27779L7.22126 11.8414L6.59305 10.0789H6.5777H3.2777H3.26242ZM3.79707 8.57885H6.0584L4.92774 5.40668L3.79707 8.57885Z" fill="currentColor"></path>
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setWholeWords(!wholeWords)}
-                    className={cn(
-                      "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-transparent h-6 px-1 min-w-6",
-                      wholeWords && "bg-grep-11 border-grep-6 text-foreground"
-                    )}
-                    aria-pressed={wholeWords}
-                    data-state={wholeWords ? "on" : "off"}
-                    aria-label="Match whole words"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
-                      <path d="M4.66669 10C5.77126 10 6.66669 9.10457 6.66669 8C6.66669 6.89543 5.77126 6 4.66669 6C3.56212 6 2.66669 6.89543 2.66669 8C2.66669 9.10457 3.56212 10 4.66669 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-                      <path d="M6.66669 6V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
-                      <path d="M11.3333 10C12.4379 10 13.3333 9.10457 13.3333 8C13.3333 6.89543 12.4379 6 11.3333 6C10.2287 6 9.33331 6.89543 9.33331 8C9.33331 9.10457 10.2287 10 11.3333 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-                      <path d="M9.33331 4.66675V10.0001" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
-                      <path d="M1 11V13H15V11" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"></path>
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setUseRegex(!useRegex)}
-                    className={cn(
-                      "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-transparent h-6 px-1 min-w-6",
-                      useRegex && "bg-grep-11 border-grep-6 text-foreground"
-                    )}
-                    aria-pressed={useRegex}
-                    data-state={useRegex ? "on" : "off"}
-                    aria-label="Use regular expression"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
-                      <path d="M10.8867 2V8.66667" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
-                      <path d="M8 3.66675L13.7733 7.00008" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
-                      <path d="M8 7.00008L13.7733 3.66675" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="round"></path>
-                      <rect x="2" y="9" width="4" height="4" fill="currentColor"></rect>
-                    </svg>
-                  </button>
-                </>
-              ) : (
-                <Button
-                  onClick={handleScan}
-                  disabled={!query.trim() || scanLoading}
-                  size="sm"
-                  className="h-7 px-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-medium rounded hover:scale-105 disabled:hover:scale-100 transition-all duration-200 shadow-none border-0"
-                >
-                  {scanLoading ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <>
-                      <Sparkles className="h-3 w-3 mr-1" />
-                      Scan
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
+
+            {viewMode === "scan" && (
+              <Button
+                onClick={handleScan}
+                disabled={!query.trim() || scanLoading}
+                size="sm"
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 px-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-md"
+              >
+                {scanLoading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  "Go"
+                )}
+              </Button>
+            )}
           </div>
         </div>
-
-        {/* Right: Controls */}
-        <div className="flex min-h-[64px] select-none items-center justify-end gap-3 pr-4 md:pr-6">
-          <Button
-            variant="outline"
-            size="sm"
-            className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 rounded-md px-3 text-xs sm:h-9 sm:px-4 py-2 sm:text-sm shadow-none [@media(max-width:374px)]:hidden"
-          >
-            Feedback
-          </Button>
-        </div>
-      </div>
+      </header>
 
       {/* Main Content */}
       {viewMode === "scan" && scanError ? (
@@ -576,41 +745,85 @@ function HomePageContent() {
               </div>
             </div>
 
-            {/* Brand Analysis */}
-            {scanResult.brandAnalysis && (
-              <div className="bg-white dark:bg-neutral-900 rounded-xl border border-grep-2 p-6 mb-8">
-                <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-blue-500" />
-                  Brand Analysis
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {scanResult.brandAnalysis.style && (
-                    <div className="p-4 rounded-lg bg-grep-0 border border-grep-2">
-                      <p className="text-sm text-grep-9 mb-1">Style</p>
-                      <p className="text-lg font-semibold text-foreground capitalize">{scanResult.brandAnalysis.style}</p>
-                    </div>
-                  )}
-                  {scanResult.brandAnalysis.maturity && (
-                    <div className="p-4 rounded-lg bg-grep-0 border border-grep-2">
-                      <p className="text-sm text-grep-9 mb-1">Maturity</p>
-                      <p className="text-lg font-semibold text-foreground capitalize">{scanResult.brandAnalysis.maturity}</p>
-                    </div>
-                  )}
-                  {scanResult.brandAnalysis.consistency !== undefined && (
-                    <div className="p-4 rounded-lg bg-grep-0 border border-grep-2">
-                      <p className="text-sm text-grep-9 mb-1">Consistency</p>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-grep-2 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500"
-                            style={{ width: `${scanResult.brandAnalysis.consistency * 100}%` }}
-                          />
-                        </div>
-                        <span className="text-lg font-semibold text-foreground">{Math.round(scanResult.brandAnalysis.consistency * 100)}%</span>
-                      </div>
-                    </div>
-                  )}
+            {/* AI-Powered Design Insights */}
+            {scanResult.aiInsights && (
+              <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 rounded-xl border-2 border-purple-200 dark:border-purple-900 p-6 mb-8 shadow-lg">
+                <div className="flex items-start justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
+                      <Sparkles className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                      AI Design Analysis
+                    </h2>
+                    <p className="text-sm text-grep-9">{scanResult.aiInsights.summary}</p>
+                  </div>
+                  <Badge variant="secondary" className="bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700">
+                    Powered by AI Gateway
+                  </Badge>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                  {/* Color Palette Analysis */}
+                  <div className="p-4 rounded-lg bg-white/80 dark:bg-black/40 border border-purple-200 dark:border-purple-800 backdrop-blur-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Palette className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      <p className="text-xs font-semibold text-grep-9 uppercase tracking-wide">Color Palette</p>
+                    </div>
+                    <p className="text-base font-bold text-foreground mb-1 capitalize">{scanResult.aiInsights.colorPalette.style}</p>
+                    <p className="text-sm text-grep-9 capitalize">{scanResult.aiInsights.colorPalette.mood}</p>
+                  </div>
+
+                  {/* Typography Analysis */}
+                  <div className="p-4 rounded-lg bg-white/80 dark:bg-black/40 border border-purple-200 dark:border-purple-800 backdrop-blur-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Type className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      <p className="text-xs font-semibold text-grep-9 uppercase tracking-wide">Typography</p>
+                    </div>
+                    <p className="text-base font-bold text-foreground mb-1">{scanResult.aiInsights.typography.style}</p>
+                    <p className="text-sm text-grep-9">{scanResult.aiInsights.typography.hierarchy}</p>
+                  </div>
+
+                  {/* Spacing System */}
+                  <div className="p-4 rounded-lg bg-white/80 dark:bg-black/40 border border-purple-200 dark:border-purple-800 backdrop-blur-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg className="h-4 w-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                      </svg>
+                      <p className="text-xs font-semibold text-grep-9 uppercase tracking-wide">Spacing</p>
+                    </div>
+                    <p className="text-base font-bold text-foreground mb-1">{scanResult.aiInsights.spacing.system}</p>
+                    <p className="text-sm text-grep-9">{scanResult.aiInsights.spacing.consistency}</p>
+                  </div>
+
+                  {/* Maturity Level */}
+                  <div className="p-4 rounded-lg bg-white/80 dark:bg-black/40 border border-purple-200 dark:border-purple-800 backdrop-blur-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <TrendingUp className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      <p className="text-xs font-semibold text-grep-9 uppercase tracking-wide">Maturity</p>
+                    </div>
+                    <p className="text-base font-bold text-foreground mb-1 capitalize">{scanResult.aiInsights.overall.maturity}</p>
+                    <p className="text-sm text-grep-9">{scanResult.aiInsights.overall.consistency}% consistent</p>
+                  </div>
+                </div>
+
+                {/* AI Recommendations */}
+                {scanResult.aiInsights.overall.aiRecommendations && scanResult.aiInsights.overall.aiRecommendations.length > 0 && (
+                  <div className="p-5 rounded-lg bg-white/80 dark:bg-black/40 border border-purple-200 dark:border-purple-800">
+                    <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                      <svg className="h-4 w-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                      AI Recommendations
+                    </h3>
+                    <ul className="space-y-2">
+                      {scanResult.aiInsights.overall.aiRecommendations.slice(0, 5).map((rec, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm text-grep-9">
+                          <span className="text-purple-500 dark:text-purple-400 mt-0.5">•</span>
+                          <span>{rec}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
 

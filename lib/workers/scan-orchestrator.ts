@@ -6,6 +6,7 @@ import { generateTokenSet as generateTokenSetLegacy, hashTokenSet } from '@/lib/
 import { extractW3CTokens, hashTokenSet as hashW3CTokenSet } from '@/lib/analyzers/w3c-tokenizer'
 import { buildAiPromptPack } from '@/lib/analyzers/ai-prompt-pack'
 import { curateTokens } from '@/lib/analyzers/token-curator'
+import { generateDesignInsights } from '@/lib/ai/design-insights'
 import { analyzeLayout } from '@/lib/analyzers/layout-inspector'
 import { buildPromptPack } from '@/lib/analyzers/prompt-pack'
 import { collectLayoutWireframe } from '@/lib/analyzers/layout-wireframe'
@@ -159,10 +160,21 @@ export async function runScanJob({ url, prettify, includeComputed }: ScanJobInpu
   const legacyPromptPack = buildPromptPack(generated.tokenGroups, layoutDNA)
   const aiPromptPack = buildAiPromptPack(w3cExtraction, { domain, url: target.toString() })
 
+  // Generate AI-powered design insights using Vercel AI Gateway
+  let aiInsights = null
+  try {
+    const insightsPhase = metrics.startPhase('generate_ai_insights')
+    aiInsights = await generateDesignInsights(curatedTokens, { domain, url: target.toString() })
+    insightsPhase()
+  } catch (error) {
+    console.warn('AI insights generation failed, using rule-based fallback', error)
+  }
+
   // Use AI prompt pack as primary
   const promptPack = {
     ...legacyPromptPack,
     aiOptimized: aiPromptPack,
+    aiInsights,
     version: '2.0.0',
     format: 'ai-lean-core'
   }
@@ -236,11 +248,14 @@ export async function runScanJob({ url, prettify, includeComputed }: ScanJobInpu
     url: target.toString(),
     summary: {
       tokensExtracted: generated.summary.tokensExtracted,
+      curatedCount: generated.summary.curatedCount,
       confidence: generated.summary.confidence,
       completeness: generated.summary.completeness,
       reliability: generated.summary.reliability,
       processingTime: Math.max(1, Math.round(durationMs / 1000))
     },
+    curatedTokens: generated.curatedTokens,
+    aiInsights: promptPack.aiInsights,
     tokens: generated.tokenGroups,
     layoutDNA,
     promptPack,

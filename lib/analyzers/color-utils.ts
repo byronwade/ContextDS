@@ -42,17 +42,27 @@ const colorDifference = differenceEuclidean('oklch')
  * Parse any CSS color string into RGB values using Culori
  */
 export function parseColor(color: string): RGBColor | null {
-  const parsed = parse(color)
-  if (!parsed) return null
+  // Safety checks
+  if (!color || typeof color !== 'string' || color.trim() === '') {
+    return null
+  }
 
-  const rgb = toRgb(parsed)
-  if (!rgb) return null
+  try {
+    const parsed = parse(color)
+    if (!parsed) return null
 
-  return {
-    r: Math.round((rgb.r || 0) * 255),
-    g: Math.round((rgb.g || 0) * 255),
-    b: Math.round((rgb.b || 0) * 255),
-    a: rgb.alpha
+    const rgb = toRgb(parsed)
+    if (!rgb) return null
+
+    return {
+      r: Math.round((rgb.r || 0) * 255),
+      g: Math.round((rgb.g || 0) * 255),
+      b: Math.round((rgb.b || 0) * 255),
+      a: rgb.alpha
+    }
+  } catch (error) {
+    // Culori can throw on invalid colors
+    return null
   }
 }
 
@@ -184,29 +194,39 @@ export function rgbToW3C(rgb: RGBColor): W3CColor {
  * Convert any color string to W3C Design Token format using Culori
  */
 export function toW3CColor(color: string): W3CColor | null {
-  const parsed = parse(color)
-  if (!parsed) return null
+  // Safety checks
+  if (!color || typeof color !== 'string' || color.trim() === '') {
+    return null
+  }
 
-  const rgb = toRgb(parsed)
-  if (!rgb) return null
+  try {
+    const parsed = parse(color)
+    if (!parsed) return null
 
-  const components: [number, number, number] | [number, number, number, number] =
-    rgb.alpha !== undefined && rgb.alpha !== 1
-      ? [
-          Math.round((rgb.r || 0) * 1000) / 1000,
-          Math.round((rgb.g || 0) * 1000) / 1000,
-          Math.round((rgb.b || 0) * 1000) / 1000,
-          Math.round(rgb.alpha * 1000) / 1000
-        ]
-      : [
-          Math.round((rgb.r || 0) * 1000) / 1000,
-          Math.round((rgb.g || 0) * 1000) / 1000,
-          Math.round((rgb.b || 0) * 1000) / 1000
-        ]
+    const rgb = toRgb(parsed)
+    if (!rgb) return null
 
-  return {
-    colorSpace: 'srgb',
-    components
+    const components: [number, number, number] | [number, number, number, number] =
+      rgb.alpha !== undefined && rgb.alpha !== 1
+        ? [
+            Math.round((rgb.r || 0) * 1000) / 1000,
+            Math.round((rgb.g || 0) * 1000) / 1000,
+            Math.round((rgb.b || 0) * 1000) / 1000,
+            Math.round(rgb.alpha * 1000) / 1000
+          ]
+        : [
+            Math.round((rgb.r || 0) * 1000) / 1000,
+            Math.round((rgb.g || 0) * 1000) / 1000,
+            Math.round((rgb.b || 0) * 1000) / 1000
+          ]
+
+    return {
+      colorSpace: 'srgb',
+      components
+    }
+  } catch (error) {
+    // Culori can throw on invalid colors
+    return null
   }
 }
 
