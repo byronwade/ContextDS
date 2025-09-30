@@ -60,16 +60,16 @@ export function TypographySection({ typography, onCopy }: TypographySectionProps
               <button
                 key={`font-${index}`}
                 onClick={() => handleCopy(String(font.value))}
-                className="w-full px-4 py-4 text-left hover:bg-background transition-colors group relative"
+                className="w-full px-3 sm:px-4 py-3 sm:py-4 text-left hover:bg-background transition-colors group relative"
               >
                 {copiedToken === String(font.value) && (
-                  <div className="absolute top-4 right-4 bg-green-500 text-white rounded-full p-1">
+                  <div className="absolute top-3 sm:top-4 right-3 sm:right-4 bg-green-500 text-white rounded-full p-1">
                     <Check className="h-3 w-3" />
                   </div>
                 )}
-                <div className="flex items-center justify-between gap-4 mb-3">
+                <div className="flex items-center justify-between gap-2 sm:gap-4 mb-3">
                   <code className="text-sm text-foreground truncate flex-1 font-mono">{font.value}</code>
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                     {font.percentage !== undefined && (
                       <span className="text-xs text-grep-9 font-mono tabular-nums">{font.percentage}%</span>
                     )}
@@ -77,11 +77,11 @@ export function TypographySection({ typography, onCopy }: TypographySectionProps
                   </div>
                 </div>
                 <FontPreview fontFamily={String(font.value)} className="relative">
-                  <div className="flex items-baseline gap-6 not-mono">
-                    <span className="text-3xl text-foreground">Aa</span>
-                    <span className="text-2xl text-grep-9">Bb Cc</span>
-                    <span className="text-xl text-grep-9">123</span>
-                    <span className="text-base text-grep-9">The quick brown fox jumps over the lazy dog</span>
+                  <div className="flex items-baseline gap-3 sm:gap-6 not-mono flex-wrap">
+                    <span className="text-2xl sm:text-3xl text-foreground">Aa</span>
+                    <span className="text-xl sm:text-2xl text-grep-9">Bb Cc</span>
+                    <span className="text-lg sm:text-xl text-grep-9">123</span>
+                    <span className="text-sm sm:text-base text-grep-9 hidden sm:inline">The quick brown fox jumps over the lazy dog</span>
                   </div>
                 </FontPreview>
                 {font.source && (
@@ -105,8 +105,8 @@ export function TypographySection({ typography, onCopy }: TypographySectionProps
               <span className="text-grep-9 font-normal">{typography.sizes.length} found</span>
             </h3>
           </div>
-          <div className="p-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <div className="p-3 sm:p-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
               {typography.sizes.map((size, index) => (
                 <button
                   key={`size-${index}`}
@@ -143,8 +143,8 @@ export function TypographySection({ typography, onCopy }: TypographySectionProps
               <span className="text-grep-9 font-normal">{typography.weights.length} found</span>
             </h3>
           </div>
-          <div className="p-4">
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+          <div className="p-3 sm:p-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3">
               {typography.weights.map((weight, index) => (
                 <button
                   key={`weight-${index}`}
@@ -177,8 +177,8 @@ export function TypographySection({ typography, onCopy }: TypographySectionProps
               <span className="text-grep-9 font-normal">{typography.lineHeights.length} found</span>
             </h3>
           </div>
-          <div className="p-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="p-3 sm:p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
               {typography.lineHeights.map((lineHeight, index) => (
                 <button
                   key={`lineHeight-${index}`}

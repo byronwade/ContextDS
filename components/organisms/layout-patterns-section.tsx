@@ -79,14 +79,14 @@ export function LayoutPatternsSection({ layoutDNA }: LayoutPatternsSectionProps)
             </h3>
           </div>
           <div className="p-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded border border-grep-2 bg-background">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="p-3 sm:p-4 rounded border border-grep-2 bg-background">
                 <div className="text-xs text-grep-9 font-mono uppercase mb-2">Columns</div>
                 <div className="text-2xl font-bold text-foreground font-mono tabular-nums">
                   {layoutDNA.gridSystem.columns}
                 </div>
               </div>
-              <div className="p-4 rounded border border-grep-2 bg-background">
+              <div className="p-3 sm:p-4 rounded border border-grep-2 bg-background">
                 <div className="text-xs text-grep-9 font-mono uppercase mb-2">Gap</div>
                 <code className="text-lg font-bold text-foreground font-mono">
                   {layoutDNA.gridSystem.gap}
@@ -121,7 +121,7 @@ export function LayoutPatternsSection({ layoutDNA }: LayoutPatternsSectionProps)
                 <code className="text-lg font-bold text-foreground font-mono">{layoutDNA.spacingBase}px</code>
               </div>
               {/* Common multipliers */}
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                 {[0.5, 1, 2, 4, 8].map((multiplier) => (
                   <div key={multiplier} className="p-2 rounded border border-grep-2 bg-background text-center">
                     <div className="text-xs text-grep-9 font-mono mb-1">{multiplier}x</div>
@@ -183,15 +183,15 @@ export function LayoutPatternsSection({ layoutDNA }: LayoutPatternsSectionProps)
               <span className="text-grep-9 font-normal">{Object.keys(layoutDNA.breakpoints).length} defined</span>
             </h3>
           </div>
-          <div className="p-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="p-3 sm:p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
               {Object.entries(layoutDNA.breakpoints).map(([name, value]) => (
                 <div
                   key={name}
                   className="p-3 rounded border border-grep-2 bg-background"
                 >
                   <div className="text-xs text-grep-9 font-mono uppercase mb-1">{name}</div>
-                  <code className="text-sm font-bold text-foreground font-mono">{value}</code>
+                  <code className="text-sm font-bold text-foreground font-mono break-all">{value}</code>
                 </div>
               ))}
             </div>

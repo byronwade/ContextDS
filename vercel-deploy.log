@@ -1,0 +1,271 @@
+Vercel CLI 44.7.0
+Retrieving project…
+Deploying wades-web-dev/designer
+Uploading [--------------------] (0.0B/2.3MB)
+Uploading [=====---------------] (592.2KB/2.3MB)
+Uploading [==========----------] (1.1MB/2.3MB)
+Uploading [===============-----] (1.7MB/2.3MB)
+Uploading [====================] (2.3MB/2.3MB)
+Inspect: https://vercel.com/wades-web-dev/designer/LrgnvBE3VEf3j74gvX4NaZvTpwt1 [7s]
+Production: https://designer-r3qcseghj-wades-web-dev.vercel.app [7s]
+https://designer-r3qcseghj-wades-web-dev.vercel.appBuilding
+2025-09-30T11:20:22.688Z  Running build in Washington, D.C., USA (East) – iad1
+2025-09-30T11:20:22.689Z  Build machine configuration: 4 cores, 8 GB
+2025-09-30T11:20:22.703Z  Retrieving list of deployment files...
+2025-09-30T11:20:23.267Z  Downloading 443 deployment files...
+2025-09-30T11:20:26.451Z  Restored build cache from previous deployment (C3WXqHLc8gUBJu9RqihWoo3Uy1z3)
+2025-09-30T11:20:27.382Z  Running "vercel build"
+2025-09-30T11:20:27.797Z  Vercel CLI 48.1.6
+2025-09-30T11:20:28.180Z  Running "install" command: `bun install`...
+2025-09-30T11:20:28.221Z  bun install v1.2.23 (cf136713)
+2025-09-30T11:20:28.829Z  
+2025-09-30T11:20:28.829Z  + @types/react@19.1.16
+2025-09-30T11:20:28.829Z  + @ai-sdk/openai@2.0.42
+2025-09-30T11:20:28.829Z  + esbuild@0.25.10
+2025-09-30T11:20:28.829Z  + openai@5.23.2
+2025-09-30T11:20:28.829Z  
+2025-09-30T11:20:28.829Z  7 packages installed [627.00ms]
+2025-09-30T11:20:28.833Z  Detected Next.js version: 15.5.4
+2025-09-30T11:20:28.834Z  Running "next build"
+2025-09-30T11:20:29.992Z     ▲ Next.js 15.5.4
+2025-09-30T11:20:29.993Z     - Experiments (use with caution):
+2025-09-30T11:20:29.993Z       ✓ optimizeCss
+2025-09-30T11:20:29.993Z       · optimizePackageImports
+2025-09-30T11:20:29.993Z  
+2025-09-30T11:20:30.091Z     Creating an optimized production build ...
+2025-09-30T11:20:42.097Z  <w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (128kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+2025-09-30T11:20:47.612Z   ✓ Compiled successfully in 14.6s
+2025-09-30T11:20:47.621Z     Skipping validation of types
+2025-09-30T11:20:47.621Z     Skipping linting
+2025-09-30T11:20:47.905Z     Collecting page data ...
+2025-09-30T11:20:48.657Z   ⚠ Using edge runtime on a page currently disables static generation for that page
+2025-09-30T11:20:52.351Z     Generating static pages (0/28) ...
+2025-09-30T11:20:53.056Z     Generating static pages (7/28) 
+2025-09-30T11:20:53.101Z  Error fetching sites for sitemap: TypeError: fetch failed
+2025-09-30T11:20:53.101Z      at async w (.next/server/app/sitemap.xml/route.js:16:752)
+2025-09-30T11:20:53.101Z      at async z (.next/server/app/sitemap.xml/route.js:16:2056) {
+2025-09-30T11:20:53.101Z    [cause]: [Error: getaddrinfo ENOTFOUND contextds.com] {
+2025-09-30T11:20:53.102Z      errno: -3008,
+2025-09-30T11:20:53.102Z      code: 'ENOTFOUND',
+2025-09-30T11:20:53.102Z      syscall: 'getaddrinfo',
+2025-09-30T11:20:53.102Z      hostname: 'contextds.com'
+2025-09-30T11:20:53.102Z    }
+2025-09-30T11:20:53.102Z  }
+2025-09-30T11:20:53.597Z     Generating static pages (14/28) 
+2025-09-30T11:20:53.598Z     Generating static pages (21/28) 
+2025-09-30T11:20:53.852Z   ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/scan". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+2025-09-30T11:20:53.852Z      at g (/vercel/path0/.next/server/chunks/5731.js:1:124005)
+2025-09-30T11:20:53.852Z      at m (/vercel/path0/.next/server/chunks/5731.js:9:15329)
+2025-09-30T11:20:53.852Z      at y (/vercel/path0/.next/server/app/(marketing)/scan/page.js:1:2698)
+2025-09-30T11:20:53.852Z      at n3 (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:82831)
+2025-09-30T11:20:53.852Z      at n6 (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:84601)
+2025-09-30T11:20:53.853Z      at n5 (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:104801)
+2025-09-30T11:20:53.853Z      at n7 (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:102219)
+2025-09-30T11:20:53.853Z      at n8 (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:83183)
+2025-09-30T11:20:53.853Z      at n6 (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:84647)
+2025-09-30T11:20:53.853Z      at n6 (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:101560)
+2025-09-30T11:20:53.853Z  Error occurred prerendering page "/scan". Read more: https://nextjs.org/docs/messages/prerender-error
+2025-09-30T11:20:53.853Z  Export encountered an error on /(marketing)/scan/page: /scan, exiting the build.
+2025-09-30T11:20:53.857Z   ⨯ Next.js build worker exited with code: 1 and signal: null
+2025-09-30T11:20:53.897Z  Error: Command "next build" exited with 1
+Error: Command "next build" exited with 1
+> 
+
+> To check build logs run: `vercel inspect designer-r3qcseghj-wades-web-dev.vercel.app --logs`
+> Or inspect them in your browser at https://designer-r3qcseghj-wades-web-dev.vercel.app/_logs
+Vercel CLI 44.7.0
+Retrieving project…
+Deploying wades-web-dev/designer
+Uploading [--------------------] (0.0B/23.7KB)
+Uploading [=================---] (21.2KB/23.7KB)
+Uploading [====================] (23.7KB/23.7KB)
+Inspect: https://vercel.com/wades-web-dev/designer/2e4ntV8Ld2MpeEUq52CT1WAgnNa4 [3s]
+Production: https://designer-mq9egwaro-wades-web-dev.vercel.app [3s]
+https://designer-mq9egwaro-wades-web-dev.vercel.appBuilding
+2025-09-30T11:22:17.155Z  Running build in Washington, D.C., USA (East) – iad1
+2025-09-30T11:22:17.155Z  Build machine configuration: 4 cores, 8 GB
+2025-09-30T11:22:17.171Z  Retrieving list of deployment files...
+2025-09-30T11:22:17.979Z  Downloading 443 deployment files...
+2025-09-30T11:22:21.444Z  Restored build cache from previous deployment (C3WXqHLc8gUBJu9RqihWoo3Uy1z3)
+2025-09-30T11:22:22.351Z  Running "vercel build"
+2025-09-30T11:22:23.944Z  Vercel CLI 48.1.6
+2025-09-30T11:22:24.302Z  Running "install" command: `bun install`...
+2025-09-30T11:22:24.339Z  bun install v1.2.23 (cf136713)
+2025-09-30T11:22:24.831Z  
+2025-09-30T11:22:24.831Z  + @types/react@19.1.16
+2025-09-30T11:22:24.831Z  + @ai-sdk/openai@2.0.42
+2025-09-30T11:22:24.831Z  + esbuild@0.25.10
+2025-09-30T11:22:24.831Z  + openai@5.23.2
+2025-09-30T11:22:24.831Z  
+2025-09-30T11:22:24.831Z  7 packages installed [506.00ms]
+2025-09-30T11:22:24.836Z  Detected Next.js version: 15.5.4
+2025-09-30T11:22:24.836Z  Running "next build"
+2025-09-30T11:22:26.137Z     ▲ Next.js 15.5.4
+2025-09-30T11:22:26.138Z     - Experiments (use with caution):
+2025-09-30T11:22:26.138Z       ✓ optimizeCss
+2025-09-30T11:22:26.138Z       · optimizePackageImports
+2025-09-30T11:22:26.138Z  
+2025-09-30T11:22:26.236Z     Creating an optimized production build ...
+2025-09-30T11:22:38.317Z  <w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (128kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+2025-09-30T11:22:43.928Z   ✓ Compiled successfully in 14.7s
+2025-09-30T11:22:43.938Z     Skipping validation of types
+2025-09-30T11:22:43.938Z     Skipping linting
+2025-09-30T11:22:44.219Z     Collecting page data ...
+2025-09-30T11:22:44.968Z   ⚠ Using edge runtime on a page currently disables static generation for that page
+2025-09-30T11:22:48.640Z     Generating static pages (0/28) ...
+2025-09-30T11:22:49.339Z     Generating static pages (7/28) 
+2025-09-30T11:22:49.374Z  Error fetching sites for sitemap: TypeError: fetch failed
+2025-09-30T11:22:49.375Z      at async w (.next/server/app/sitemap.xml/route.js:16:752)
+2025-09-30T11:22:49.375Z      at async z (.next/server/app/sitemap.xml/route.js:16:2056) {
+2025-09-30T11:22:49.375Z    [cause]: [Error: getaddrinfo ENOTFOUND contextds.com] {
+2025-09-30T11:22:49.375Z      errno: -3008,
+2025-09-30T11:22:49.376Z      code: 'ENOTFOUND',
+2025-09-30T11:22:49.376Z      syscall: 'getaddrinfo',
+2025-09-30T11:22:49.376Z      hostname: 'contextds.com'
+2025-09-30T11:22:49.376Z    }
+2025-09-30T11:22:49.377Z  }
+2025-09-30T11:22:49.925Z     Generating static pages (14/28) 
+2025-09-30T11:22:49.925Z     Generating static pages (21/28) 
+2025-09-30T11:22:50.208Z  🔍 RENDER CHECK: {
+2025-09-30T11:22:50.208Z    viewMode: 'search',
+2025-09-30T11:22:50.209Z    scanLoading: false,
+2025-09-30T11:22:50.209Z    scanError: false,
+2025-09-30T11:22:50.209Z    scanResult: false
+2025-09-30T11:22:50.209Z  }
+2025-09-30T11:22:50.209Z   ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/scan". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+2025-09-30T11:22:50.209Z      at g (/vercel/path0/.next/server/chunks/5731.js:1:124005)
+2025-09-30T11:22:50.209Z      at m (/vercel/path0/.next/server/chunks/5731.js:9:15329)
+2025-09-30T11:22:50.209Z      at z (/vercel/path0/.next/server/app/(marketing)/scan/page.js:1:3090)
+2025-09-30T11:22:50.209Z      at n3 (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:82831)
+2025-09-30T11:22:50.209Z      at n6 (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:84601)
+2025-09-30T11:22:50.210Z      at n5 (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:104801)
+2025-09-30T11:22:50.210Z      at n7 (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:102219)
+2025-09-30T11:22:50.210Z      at n8 (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:83183)
+2025-09-30T11:22:50.210Z      at n6 (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:84647)
+2025-09-30T11:22:50.210Z      at n6 (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:101560)
+2025-09-30T11:22:50.210Z  Error occurred prerendering page "/scan". Read more: https://nextjs.org/docs/messages/prerender-error
+2025-09-30T11:22:50.210Z  Export encountered an error on /(marketing)/scan/page: /scan, exiting the build.
+2025-09-30T11:22:50.213Z   ⨯ Next.js build worker exited with code: 1 and signal: null
+2025-09-30T11:22:50.255Z  Error: Command "next build" exited with 1
+Error: Command "next build" exited with 1
+> 
+
+> To check build logs run: `vercel inspect designer-mq9egwaro-wades-web-dev.vercel.app --logs`
+> Or inspect them in your browser at https://designer-mq9egwaro-wades-web-dev.vercel.app/_logs
+Vercel CLI 44.7.0
+Retrieving project…
+Deploying wades-web-dev/designer
+Uploading [--------------------] (0.0B/29.3KB)
+Uploading [=======-------------] (10.4KB/29.3KB)
+Uploading [==================--] (26.4KB/29.3KB)
+Uploading [====================] (29.3KB/29.3KB)
+Inspect: https://vercel.com/wades-web-dev/designer/8HWpgEpS8KaFjrxcbFCWVhHGjoXW [3s]
+Production: https://designer-jyfq4icg9-wades-web-dev.vercel.app [3s]
+https://designer-jyfq4icg9-wades-web-dev.vercel.appBuilding
+2025-09-30T11:24:21.694Z  Running build in Washington, D.C., USA (East) – iad1
+2025-09-30T11:24:21.695Z  Build machine configuration: 4 cores, 8 GB
+2025-09-30T11:24:21.711Z  Retrieving list of deployment files...
+2025-09-30T11:24:22.281Z  Downloading 443 deployment files...
+2025-09-30T11:24:24.929Z  Restored build cache from previous deployment (C3WXqHLc8gUBJu9RqihWoo3Uy1z3)
+2025-09-30T11:24:25.945Z  Running "vercel build"
+2025-09-30T11:24:26.400Z  Vercel CLI 48.1.6
+2025-09-30T11:24:26.791Z  Running "install" command: `bun install`...
+2025-09-30T11:24:26.833Z  bun install v1.2.23 (cf136713)
+2025-09-30T11:24:27.381Z  
+2025-09-30T11:24:27.382Z  + @types/react@19.1.16
+2025-09-30T11:24:27.382Z  + @ai-sdk/openai@2.0.42
+2025-09-30T11:24:27.382Z  + esbuild@0.25.10
+2025-09-30T11:24:27.382Z  + openai@5.23.2
+2025-09-30T11:24:27.382Z  
+2025-09-30T11:24:27.382Z  7 packages installed [566.00ms]
+2025-09-30T11:24:27.387Z  Detected Next.js version: 15.5.4
+2025-09-30T11:24:27.388Z  Running "next build"
+2025-09-30T11:24:28.572Z     ▲ Next.js 15.5.4
+2025-09-30T11:24:28.572Z     - Experiments (use with caution):
+2025-09-30T11:24:28.573Z       ✓ optimizeCss
+2025-09-30T11:24:28.573Z       · optimizePackageImports
+2025-09-30T11:24:28.573Z  
+2025-09-30T11:24:28.666Z     Creating an optimized production build ...
+2025-09-30T11:24:40.932Z  <w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (128kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+2025-09-30T11:24:46.527Z   ✓ Compiled successfully in 14.7s
+2025-09-30T11:24:46.537Z     Skipping validation of types
+2025-09-30T11:24:46.538Z     Skipping linting
+2025-09-30T11:24:46.825Z     Collecting page data ...
+2025-09-30T11:24:47.600Z   ⚠ Using edge runtime on a page currently disables static generation for that page
+2025-09-30T11:24:52.166Z     Generating static pages (0/28) ...
+2025-09-30T11:24:53.007Z     Generating static pages (7/28) 
+2025-09-30T11:24:53.042Z  Error fetching sites for sitemap: TypeError: fetch failed
+2025-09-30T11:24:53.043Z      at async w (.next/server/app/sitemap.xml/route.js:16:752)
+2025-09-30T11:24:53.043Z      at async z (.next/server/app/sitemap.xml/route.js:16:2056) {
+2025-09-30T11:24:53.043Z    [cause]: [Error: getaddrinfo ENOTFOUND contextds.com] {
+2025-09-30T11:24:53.044Z      errno: -3008,
+2025-09-30T11:24:53.044Z      code: 'ENOTFOUND',
+2025-09-30T11:24:53.044Z      syscall: 'getaddrinfo',
+2025-09-30T11:24:53.044Z      hostname: 'contextds.com'
+2025-09-30T11:24:53.044Z    }
+2025-09-30T11:24:53.044Z  }
+2025-09-30T11:24:53.698Z     Generating static pages (14/28) 
+2025-09-30T11:24:53.698Z     Generating static pages (21/28) 
+2025-09-30T11:24:53.849Z  🔍 RENDER CHECK: {
+2025-09-30T11:24:53.849Z    viewMode: 'search',
+2025-09-30T11:24:53.849Z    scanLoading: false,
+2025-09-30T11:24:53.849Z    scanError: false,
+2025-09-30T11:24:53.849Z    scanResult: false
+2025-09-30T11:24:53.849Z  }
+2025-09-30T11:24:53.989Z   ✓ Generating static pages (28/28)
+2025-09-30T11:24:54.588Z     Finalizing page optimization ...
+2025-09-30T11:24:54.588Z     Collecting build traces ...
+2025-09-30T11:25:10.367Z  
+2025-09-30T11:25:10.378Z  Route (app)                                 Size  First Load JS  Revalidate  Expire
+2025-09-30T11:25:10.378Z  ┌ ○ /                                    10.9 kB         181 kB
+2025-09-30T11:25:10.378Z  ├ ○ /_not-found                            999 B         103 kB
+2025-09-30T11:25:10.378Z  ├ ƒ /api/analytics/event                   203 B         102 kB
+2025-09-30T11:25:10.378Z  ├ ƒ /api/analytics/pageview                203 B         102 kB
+2025-09-30T11:25:10.378Z  ├ ƒ /api/analytics/search                  203 B         102 kB
+2025-09-30T11:25:10.378Z  ├ ƒ /api/community/sites                   203 B         102 kB
+2025-09-30T11:25:10.379Z  ├ ƒ /api/community/vote                    203 B         102 kB
+2025-09-30T11:25:10.379Z  ├ ƒ /api/cron/cleanup-css                  203 B         102 kB
+2025-09-30T11:25:10.379Z  ├ ƒ /api/export                            203 B         102 kB
+2025-09-30T11:25:10.379Z  ├ ƒ /api/health/db                         203 B         102 kB
+2025-09-30T11:25:10.379Z  ├ ƒ /api/mcp/get-tokens                    203 B         102 kB
+2025-09-30T11:25:10.379Z  ├ ƒ /api/mcp/layout-profile                203 B         102 kB
+2025-09-30T11:25:10.379Z  ├ ƒ /api/mcp/scan-tokens                   203 B         102 kB
+2025-09-30T11:25:10.379Z  ├ ƒ /api/metrics                           203 B         102 kB
+2025-09-30T11:25:10.379Z  ├ ƒ /api/metrics/scans                     203 B         102 kB
+2025-09-30T11:25:10.379Z  ├ ƒ /api/metrics/stream                    203 B         102 kB
+2025-09-30T11:25:10.379Z  ├ ƒ /api/metrics/track                     203 B         102 kB
+2025-09-30T11:25:10.379Z  ├ ƒ /api/scan                              203 B         102 kB
+2025-09-30T11:25:10.380Z  ├ ƒ /api/scan/export-llm                   203 B         102 kB
+2025-09-30T11:25:10.380Z  ├ ƒ /api/scan/progress                     203 B         102 kB
+2025-09-30T11:25:10.380Z  ├ ƒ /api/scans/[scanId]/screenshots        203 B         102 kB
+2025-09-30T11:25:10.380Z  ├ ƒ /api/screenshot                        203 B         102 kB
+2025-09-30T11:25:10.380Z  ├ ƒ /api/search                            203 B         102 kB
+2025-09-30T11:25:10.380Z  ├ ƒ /api/stats                             203 B         102 kB
+2025-09-30T11:25:10.380Z  ├ ƒ /api/stats/realtime                    203 B         102 kB
+2025-09-30T11:25:10.380Z  ├ ƒ /api/versions/[domain]                 203 B         102 kB
+2025-09-30T11:25:10.380Z  ├ ƒ /api/versions/compare                  203 B         102 kB
+2025-09-30T11:25:10.380Z  ├ ○ /community                           8.62 kB         123 kB
+2025-09-30T11:25:10.380Z  ├ ƒ /community/[domain]                  2.64 kB         128 kB
+2025-09-30T11:25:10.380Z  ├ ○ /metrics                             4.06 kB         118 kB
+2025-09-30T11:25:10.380Z  ├ ○ /robots.txt                            203 B         102 kB
+2025-09-30T11:25:10.380Z  ├ ○ /scan                                4.36 kB         174 kB
+2025-09-30T11:25:10.381Z  ├ ƒ /site/[domain]                       2.01 kB         128 kB
+2025-09-30T11:25:10.381Z  └ ○ /sitemap.xml                           203 B         102 kB          1h      1y
+2025-09-30T11:25:10.381Z  + First Load JS shared by all             102 kB
+2025-09-30T11:25:10.381Z    ├ chunks/1255-031f7b760117a455.js      45.7 kB
+2025-09-30T11:25:10.381Z    ├ chunks/4bd1b696-f6bedae49f0827a5.js  54.2 kB
+2025-09-30T11:25:10.381Z    └ other shared chunks (total)          1.92 kB
+2025-09-30T11:25:10.381Z  
+2025-09-30T11:25:10.381Z  
+2025-09-30T11:25:10.381Z  ƒ Middleware                             54.9 kB
+2025-09-30T11:25:10.381Z  
+2025-09-30T11:25:10.381Z  ○  (Static)   prerendered as static content
+2025-09-30T11:25:10.381Z  ƒ  (Dynamic)  server-rendered on demand
+2025-09-30T11:25:10.381Z  
+2025-09-30T11:25:10.573Z  Traced Next.js server files in: 101.067ms
+2025-09-30T11:25:11.788Z  Created all serverless functions in: 1.214s
+2025-09-30T11:25:12.020Z  Collected static files (public/, static/, .next/static): 8.936ms
+2025-09-30T11:25:12.134Z  Build Completed in /vercel/output [45s]
+2025-09-30T11:25:12.374Z  Deploying outputs...
+2025-09-30T11:25:35.327Z  Deployment completed
+2025-09-30T11:25:36.220Z  Creating build cache...

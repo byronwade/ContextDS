@@ -155,16 +155,16 @@ export function TokenResultsDisplay({ tokens, domain, onCopy, onExport }: TokenR
     <div className="space-y-6">
       {/* Results Header - grep.app style */}
       <div className="rounded-md border border-grep-2 bg-grep-0 overflow-hidden">
-        <div className="px-4 py-3 flex items-center justify-between border-b border-grep-2 bg-background">
-          <div className="flex items-center gap-3">
+        <div className="px-3 sm:px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-grep-2 bg-background">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <span className="text-sm font-mono text-foreground font-semibold">{stats.total}</span>
-              <span className="text-sm font-mono text-grep-9">design tokens</span>
+              <span className="text-sm font-mono text-grep-9">tokens</span>
             </div>
-            <span className="text-grep-7">·</span>
+            <span className="text-grep-7 hidden sm:inline">·</span>
             <span className="text-sm font-mono text-grep-9">{filteredCategories.length} categories</span>
-            <span className="text-grep-7">·</span>
-            <Badge variant="secondary" className="h-5 font-mono text-[10px]">
+            <span className="text-grep-7 hidden md:inline">·</span>
+            <Badge variant="secondary" className="h-5 font-mono text-[10px] hidden md:inline-flex">
               {stats.avgConfidence}% confidence
             </Badge>
           </div>
@@ -175,14 +175,14 @@ export function TokenResultsDisplay({ tokens, domain, onCopy, onExport }: TokenR
               onClick={() => handleCopy(JSON.stringify(tokens, null, 2))}
               className="h-7 px-2 text-xs font-mono text-grep-9 hover:text-foreground"
             >
-              <Copy className="h-3.5 w-3.5 mr-1" />
-              copy all
+              <Copy className="h-3.5 w-3.5 sm:mr-1" />
+              <span className="hidden sm:inline">copy all</span>
             </Button>
           </div>
         </div>
 
         {/* Search and Filter Bar */}
-        <div className="px-4 py-3 border-b border-grep-2 bg-grep-0 flex flex-col md:flex-row gap-3">
+        <div className="px-3 sm:px-4 py-3 border-b border-grep-2 bg-grep-0 flex flex-col md:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-grep-7" />
             <Input

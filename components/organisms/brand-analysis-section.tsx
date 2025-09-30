@@ -38,15 +38,15 @@ export function BrandAnalysisSection({ brandAnalysis }: BrandAnalysisSectionProp
               Primary Brand Color
             </h3>
           </div>
-          <div className="p-4">
-            <div className="flex items-center gap-4">
+          <div className="p-3 sm:p-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               <div
-                className="w-24 h-24 rounded-lg border-2 border-grep-3 shadow-sm"
+                className="w-16 h-16 sm:w-24 sm:h-24 rounded-lg border-2 border-grep-3 shadow-sm shrink-0"
                 style={{ backgroundColor: brandAnalysis.primaryColor }}
               />
-              <div className="flex-1">
-                <code className="text-xl font-bold text-foreground font-mono">{brandAnalysis.primaryColor}</code>
-                <p className="text-xs text-grep-9 mt-2">Most prominent color in the design system</p>
+              <div className="flex-1 min-w-0">
+                <code className="text-lg sm:text-xl font-bold text-foreground font-mono break-all">{brandAnalysis.primaryColor}</code>
+                <p className="text-xs text-grep-9 mt-2">Most prominent color</p>
               </div>
             </div>
           </div>
@@ -63,10 +63,10 @@ export function BrandAnalysisSection({ brandAnalysis }: BrandAnalysisSectionProp
               <span className="text-grep-9 font-normal">{brandAnalysis.secondaryColors.length} colors</span>
             </h3>
           </div>
-          <div className="p-4">
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+          <div className="p-3 sm:p-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 sm:gap-3">
               {brandAnalysis.secondaryColors.map((color, index) => (
-                <div key={`secondary-${index}`} className="flex flex-col gap-2">
+                <div key={`secondary-${index}`} className="flex flex-col gap-1.5 sm:gap-2">
                   <div
                     className="w-full aspect-square rounded border border-grep-3"
                     style={{ backgroundColor: color }}
@@ -80,7 +80,7 @@ export function BrandAnalysisSection({ brandAnalysis }: BrandAnalysisSectionProp
       )}
 
       {/* Brand Attributes */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {brandAnalysis.colorScheme && (
           <div className="rounded-md border border-grep-2 bg-grep-0 overflow-hidden">
             <div className="px-4 py-3 border-b border-grep-2 bg-background">

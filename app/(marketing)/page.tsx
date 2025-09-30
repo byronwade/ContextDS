@@ -995,8 +995,11 @@ function HomePageContent() {
                   : `Search ${realtimeStats.tokens > 0 ? realtimeStats.tokens.toLocaleString() + '+' : '17,000+'} design tokens`
               }
               id="search-input"
-              className="flex w-full min-w-0 shrink rounded-md border border-grep-4 bg-grep-0 px-3 py-1 text-sm transition-colors focus-visible:border-grep-12 focus-visible:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grep-4 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-grep-7 h-[42px] md:h-9 max-md:max-w-none"
-              style={{paddingLeft: '105px', paddingRight: viewMode === "search" ? '96px' : '72px'}}
+              className="flex w-full min-w-0 shrink rounded-md border border-grep-4 bg-grep-0 py-1 text-sm transition-colors focus-visible:border-grep-12 focus-visible:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grep-4 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-grep-7 h-[42px] md:h-9 max-md:max-w-none"
+              style={{
+                paddingLeft: 'clamp(95px, 100px, 105px)',
+                paddingRight: viewMode === "search" ? 'clamp(90px, 92px, 96px)' : 'clamp(68px, 70px, 72px)'
+              }}
               spellCheck="false"
               autoCapitalize="off"
               autoComplete="off"

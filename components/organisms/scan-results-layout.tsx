@@ -283,7 +283,7 @@ export function ScanResultsLayout({
 
       {/* Main Content Area */}
       <main ref={mainContentRef} className="flex-1 overflow-y-auto bg-background">
-        <div className="max-w-6xl mx-auto px-6 py-8 md:px-12 md:py-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 md:px-12 md:py-10">
 
 
           {/* Overview Section */}
@@ -293,8 +293,8 @@ export function ScanResultsLayout({
             className="mb-8"
           >
             {/* Minimal Header - Vercel style */}
-            <div className="mb-8 flex items-center justify-between pb-6">
-              <div className="flex items-center gap-3">
+            <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 gap-4">
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 {isLoading && !result ? (
                   <>
                     <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
@@ -302,28 +302,28 @@ export function ScanResultsLayout({
                   </>
                 ) : (
                   <>
-                    <div className="w-2 h-2 rounded-full bg-green-500" />
-                    <h1 className="text-xl font-medium text-foreground">
+                    <div className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                    <h1 className="text-xl font-medium text-foreground break-all">
                       {result?.domain}
                     </h1>
                   </>
                 )}
                 {result?.versionInfo && (
                   <>
-                    <span className="text-grep-7">·</span>
+                    <span className="text-grep-7 hidden sm:inline">·</span>
                     <Badge variant="secondary" className="h-6 font-mono text-xs">
                       v{result.versionInfo.versionNumber}
                     </Badge>
                     {result.versionInfo.isNewVersion && result.versionInfo.changeCount > 0 && (
                       <Badge variant="outline" className="h-6 font-mono text-xs border-blue-300 dark:border-blue-900 text-blue-700 dark:text-blue-400">
-                        {result.versionInfo.changeCount} changes from v{result.versionInfo.previousVersionNumber}
+                        {result.versionInfo.changeCount} changes
                       </Badge>
                     )}
                   </>
                 )}
               </div>
               {result && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                   {result?.versionInfo?.diff && result.versionInfo.changeCount > 0 && onToggleDiff && (
                     <Button
                       variant="ghost"
@@ -331,8 +331,8 @@ export function ScanResultsLayout({
                       onClick={onToggleDiff}
                       className="h-8 px-3 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                     >
-                      <History className="h-3.5 w-3.5 mr-1.5" />
-                      {showDiff ? 'Hide Changes' : 'View Changes'}
+                      <History className="h-3.5 w-3.5 sm:mr-1.5" />
+                      <span className="hidden sm:inline">{showDiff ? 'Hide Changes' : 'View Changes'}</span>
                     </Button>
                   )}
                   <Button
@@ -341,14 +341,14 @@ export function ScanResultsLayout({
                     onClick={() => onCopy(JSON.stringify(result?.curatedTokens, null, 2))}
                     className="h-8 px-3 text-xs font-medium border-grep-3 hover:border-grep-4 hover:bg-grep-1"
                   >
-                    <Copy className="h-3.5 w-3.5 mr-1.5" />
-                    Copy Tokens
+                    <Copy className="h-3.5 w-3.5 sm:mr-1.5" />
+                    <span className="hidden sm:inline">Copy</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={onShare}
-                    className="h-8 px-3 text-xs font-medium border-grep-3 hover:border-grep-4 hover:bg-grep-1"
+                    className="hidden md:inline-flex h-8 px-3 text-xs font-medium border-grep-3 hover:border-grep-4 hover:bg-grep-1"
                   >
                     <Share2 className="h-3.5 w-3.5 mr-1.5" />
                     Share
@@ -360,9 +360,9 @@ export function ScanResultsLayout({
                         size="sm"
                         className="h-8 px-3 text-xs font-medium border-grep-3 hover:border-grep-4 hover:bg-grep-1"
                       >
-                        <Download className="h-3.5 w-3.5 mr-1.5" />
-                        Export
-                        <ChevronDown className="h-3 w-3 ml-1.5 opacity-60" />
+                        <Download className="h-3.5 w-3.5 sm:mr-1.5" />
+                        <span className="hidden sm:inline">Export</span>
+                        <ChevronDown className="h-3 w-3 sm:ml-1.5 opacity-60" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
@@ -425,9 +425,9 @@ export function ScanResultsLayout({
 
 
             {/* Enhanced Stats Grid with Visual Indicators */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8">
               {/* Tokens Count */}
-              <div className="group relative p-5 rounded-lg border border-grep-3 bg-gradient-to-br from-grep-0 to-grep-1 hover:border-blue-400 hover:shadow-lg transition-all duration-300">
+              <div className="group relative p-3 sm:p-5 rounded-lg border border-grep-3 bg-gradient-to-br from-grep-0 to-grep-1 hover:border-blue-400 hover:shadow-lg transition-all duration-300">
                 <div className="flex items-start justify-between mb-3">
                   <div className="text-3xl font-bold tabular-nums text-foreground">
                     {isLoading ? (
@@ -447,7 +447,7 @@ export function ScanResultsLayout({
               </div>
 
               {/* Confidence Score */}
-              <div className="group relative p-5 rounded-lg border border-grep-3 bg-gradient-to-br from-grep-0 to-grep-1 hover:border-green-400 hover:shadow-lg transition-all duration-300">
+              <div className="group relative p-3 sm:p-5 rounded-lg border border-grep-3 bg-gradient-to-br from-grep-0 to-grep-1 hover:border-green-400 hover:shadow-lg transition-all duration-300">
                 <div className="flex items-start justify-between mb-3">
                   <div className={cn(
                     "text-3xl font-bold tabular-nums transition-colors",
@@ -487,7 +487,7 @@ export function ScanResultsLayout({
               </div>
 
               {/* Completeness */}
-              <div className="group relative p-5 rounded-lg border border-grep-3 bg-gradient-to-br from-grep-0 to-grep-1 hover:border-purple-400 hover:shadow-lg transition-all duration-300">
+              <div className="group relative p-3 sm:p-5 rounded-lg border border-grep-3 bg-gradient-to-br from-grep-0 to-grep-1 hover:border-purple-400 hover:shadow-lg transition-all duration-300">
                 <div className="flex items-start justify-between mb-3">
                   <div className={cn(
                     "text-3xl font-bold tabular-nums transition-colors",
@@ -527,7 +527,7 @@ export function ScanResultsLayout({
               </div>
 
               {/* Reliability */}
-              <div className="group relative p-5 rounded-lg border border-grep-3 bg-gradient-to-br from-grep-0 to-grep-1 hover:border-cyan-400 hover:shadow-lg transition-all duration-300">
+              <div className="group relative p-3 sm:p-5 rounded-lg border border-grep-3 bg-gradient-to-br from-grep-0 to-grep-1 hover:border-cyan-400 hover:shadow-lg transition-all duration-300">
                 <div className="flex items-start justify-between mb-3">
                   <div className={cn(
                     "text-3xl font-bold tabular-nums transition-colors",

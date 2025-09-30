@@ -260,14 +260,14 @@ function ScanPageContent() {
             }} />
           </div>
           {progress && (
-            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 bg-background/95 backdrop-blur-sm border border-grep-2 rounded-lg shadow-lg px-4 py-3 min-w-[320px]">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-foreground">{progress.phase}</div>
-                  <div className="text-xs text-grep-9 mt-0.5">{progress.message}</div>
+            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 bg-background/95 backdrop-blur-sm border border-grep-2 rounded-lg shadow-lg px-3 sm:px-4 py-3 min-w-[280px] sm:min-w-[320px] max-w-[calc(100vw-2rem)]">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-foreground truncate">{progress.phase}</div>
+                  <div className="text-xs text-grep-9 mt-0.5 truncate">{progress.message}</div>
                 </div>
-                <div className="text-xs font-mono text-grep-9 tabular-nums">
+                <div className="text-xs font-mono text-grep-9 tabular-nums shrink-0">
                   {progress.step}/{progress.totalSteps}
                 </div>
               </div>
@@ -275,8 +275,8 @@ function ScanPageContent() {
                 <div className="mt-2 space-y-1 border-t border-grep-2 pt-2">
                   {progress.details.slice(-3).map((detail, i) => (
                     <div key={i} className="text-xs text-grep-9 font-mono flex items-center gap-2">
-                      <div className="w-1 h-1 rounded-full bg-grep-7" />
-                      {detail}
+                      <div className="w-1 h-1 rounded-full bg-grep-7 shrink-0" />
+                      <span className="truncate">{detail}</span>
                     </div>
                   ))}
                 </div>
@@ -349,8 +349,7 @@ function ScanPageContent() {
                   ? "Scan another site..."
                   : `Search ${realtimeStats.tokens > 0 ? realtimeStats.tokens.toLocaleString() + '+' : '17,000+'} tokens`
               }
-              className="flex w-full min-w-0 shrink rounded-md border border-grep-4 bg-grep-0 px-3 py-1 text-sm transition-colors focus-visible:border-grep-12 focus-visible:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grep-4 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-grep-7 h-[42px] md:h-9 max-md:max-w-none"
-              style={{paddingLeft: '105px', paddingRight: '72px'}}
+              className="flex w-full min-w-0 shrink rounded-md border border-grep-4 bg-grep-0 px-3 py-1 text-sm transition-colors focus-visible:border-grep-12 focus-visible:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grep-4 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-grep-7 h-[42px] md:h-9 max-md:max-w-none pl-[100px] sm:pl-[105px] pr-[68px] sm:pr-[72px]"
               spellCheck="false"
               autoCapitalize="off"
               autoComplete="off"
@@ -378,7 +377,7 @@ function ScanPageContent() {
         <div className="flex min-h-[64px] select-none items-center justify-end gap-2 pr-4 md:pr-6">
           {/* Cache age indicator */}
           {cacheTimestamp && !isRevalidating && (
-            <div className="flex items-center gap-2 px-2 py-1 rounded border border-grep-2 bg-grep-0">
+            <div className="hidden sm:flex items-center gap-2 px-2 py-1 rounded border border-grep-2 bg-grep-0">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
               <span className="text-xs text-grep-9 font-mono">{getCacheAge(cacheTimestamp)}</span>
             </div>
@@ -386,7 +385,7 @@ function ScanPageContent() {
 
           {/* Revalidating indicator */}
           {isRevalidating && (
-            <div className="flex items-center gap-2 px-2 py-1 rounded border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/30">
+            <div className="hidden sm:flex items-center gap-2 px-2 py-1 rounded border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/30">
               <Loader2 className="w-3 h-3 text-blue-500 animate-spin" />
               <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">Updating...</span>
             </div>
@@ -398,7 +397,7 @@ function ScanPageContent() {
               onClick={handleForceRefresh}
               variant="ghost"
               size="sm"
-              className="h-8 px-3 text-xs font-medium text-grep-9 hover:text-foreground"
+              className="hidden sm:inline-flex h-8 px-3 text-xs font-medium text-grep-9 hover:text-foreground"
               title="Force refresh scan"
             >
               <Loader2 className="h-3.5 w-3.5 mr-1.5" />

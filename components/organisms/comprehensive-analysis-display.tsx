@@ -137,8 +137,8 @@ export function ComprehensiveAnalysisDisplay({ analysis }: { analysis: Comprehen
         </div>
 
         {/* Overall Scores */}
-        <div className="p-4 space-y-4 md:space-y-0 md:grid md:grid-cols-[minmax(0,280px),1fr] md:gap-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="p-3 sm:p-4 space-y-4 md:space-y-0 md:grid md:grid-cols-[minmax(0,280px),1fr] md:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div className="text-center">
               <div className={cn(
                 "text-3xl font-bold font-mono tabular-nums mb-1",
