@@ -573,11 +573,12 @@ function extractTypography(root: Root, variables: Map<string, string>): Array<{ 
 
     if (prop === 'font-family') {
       const families = resolved.split(',').map(f => f.trim().replace(/['"]/g, ''))
-      const key = families[0]
+      const cleanedFamilies = families.map(cleanFontFamilyName).filter(f => f !== 'Generic')
+      const key = cleanedFamilies[0] || families[0]
 
       if (!fontFamilies.has(key)) {
         fontFamilies.set(key, {
-          value: resolved,
+          value: cleanedFamilies.join(', ') || resolved,
           w3c: { value: 0, unit: 'px' }, // Not used for font family
           usage: 0,
           property: prop,
@@ -816,6 +817,43 @@ function extractMotion(root: Root, variables: Map<string, string>): Array<{ name
 /**
  * Helper functions
  */
+
+/**
+ * Clean font family names - remove Next.js hashes and generic fallbacks
+ */
+function cleanFontFamilyName(fontName: string): string {
+  if (!fontName) return fontName
+
+  // Remove Next.js font optimization hashes: __Inter_e8ce0c → Inter
+  fontName = fontName.replace(/^__([A-Za-z0-9\s]+)_[a-f0-9]+$/, '$1')
+
+  // Remove CSS custom font patterns: __customFont_hash → (skip, use next in stack)
+  if (/^__customFont_[a-f0-9]+$/.test(fontName)) {
+    return 'Generic'
+  }
+
+  // Skip generic CSS font families
+  const genericFonts = ['sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui']
+  if (genericFonts.includes(fontName.toLowerCase())) {
+    return 'Generic'
+  }
+
+  // Skip UI fallbacks
+  const uiFallbacks = ['ui-sans-serif', 'ui-serif', 'ui-monospace', 'ui-rounded']
+  if (uiFallbacks.includes(fontName.toLowerCase())) {
+    return 'Generic'
+  }
+
+  // Clean system font stacks
+  if (fontName === '-apple-system' || fontName === 'BlinkMacSystemFont') {
+    return 'System Font'
+  }
+
+  // Remove quotes
+  fontName = fontName.replace(/^['"]|['"]$/g, '')
+
+  return fontName
+}
 
 function getSelector(decl: postcss.Declaration): string | null {
   let node: postcss.Node | undefined = decl.parent

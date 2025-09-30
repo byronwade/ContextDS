@@ -101,12 +101,13 @@ function curateColors(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTok
 
     const w3cColor = token.$value as { colorSpace: string; components: number[] }
     const hex = rgbComponentsToHex(w3cColor.components)
+    const enhancedConfidence = calculateColorConfidence(usage, hex, name)
 
     tokens.push({
       name,
       value: hex,
       usage,
-      confidence,
+      confidence: enhancedConfidence,
       percentage: 0, // Will calculate after
       category: 'color',
       semantic: inferColorSemantic(name, hex),
@@ -126,13 +127,102 @@ function curateColors(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTok
     token.percentage = totalUsage > 0 ? Math.round((token.usage / totalUsage) * 100) : 0
   })
 
-  // Sort by usage
-  const sorted = tokens.sort((a, b) => b.usage - a.usage)
+  // Deduplicate colors by hex value, combining usage counts
+  const colorMap = new Map<string, CuratedToken>()
+  tokens.forEach(token => {
+    const hex = String(token.value).toLowerCase()
+    const existing = colorMap.get(hex)
+    if (!existing) {
+      colorMap.set(hex, token)
+    } else {
+      // Merge usage for duplicate colors
+      existing.usage += token.usage
+    }
+  })
 
-  // Return all or slice to max
+  // Recalculate percentages after deduplication
+  const dedupedTokens = Array.from(colorMap.values())
+  const dedupedTotal = dedupedTokens.reduce((sum, t) => sum + t.usage, 0)
+  dedupedTokens.forEach(t => t.percentage = dedupedTotal > 0 ? Math.round((t.usage / dedupedTotal) * 100) : 0)
+
+  const maxUsage = dedupedTokens.reduce((max, token) => Math.max(max, token.usage), 1)
+  const profiles = dedupedTokens
+    .map(token => createColorProfile(token, maxUsage))
+    .filter((profile): profile is ColorProfile => profile !== null)
+
+  if (profiles.length === 0) {
+    return []
+  }
+
+  const chromaticProfiles = profiles.filter(profile => !profile.isNeutral && profile.bucket >= 0)
+  const neutralProfiles = profiles.filter(profile => profile.isNeutral || profile.bucket < 0)
+
+  // Boost distinctiveness for unique hues
+  const hueList = chromaticProfiles.map(profile => profile.hue)
+  chromaticProfiles.forEach(profile => {
+    const nearestHueDistance = hueList
+      .filter(hue => hue !== profile.hue)
+      .reduce((min, hue) => Math.min(min, hueDistance(profile.hue, hue)), Infinity)
+
+    const distinctiveness = nearestHueDistance === Infinity ? 1 : Math.min(nearestHueDistance / 120, 1)
+    profile.brandScore += distinctiveness * 20
+    profile.bucketWeight += distinctiveness * 6
+  })
+
+  const hueBuckets = new Map<number, { weight: number; tokens: ColorProfile[] }>()
+  chromaticProfiles.forEach(profile => {
+    const entry = hueBuckets.get(profile.bucket) ?? { weight: 0, tokens: [] }
+    entry.weight += profile.bucketWeight
+    entry.tokens.push(profile)
+    hueBuckets.set(profile.bucket, entry)
+  })
+
+  const sortedBuckets = Array.from(hueBuckets.entries())
+    .sort((a, b) => b[1].weight - a[1].weight)
+
+  const orderedProfiles: ColorProfile[] = []
+  const seenTokens = new Set<CuratedToken>()
+
+  sortedBuckets.forEach(([, entry]) => {
+    entry.tokens
+      .sort((a, b) => b.brandScore - a.brandScore)
+      .forEach(profile => {
+        if (!seenTokens.has(profile.token)) {
+          orderedProfiles.push(profile)
+          seenTokens.add(profile.token)
+        }
+      })
+  })
+
+  chromaticProfiles
+    .filter(profile => !seenTokens.has(profile.token))
+    .sort((a, b) => b.brandScore - a.brandScore)
+    .forEach(profile => {
+      orderedProfiles.push(profile)
+      seenTokens.add(profile.token)
+    })
+
+  neutralProfiles
+    .sort((a, b) => b.brandScore - a.brandScore)
+    .forEach(profile => {
+      if (!seenTokens.has(profile.token)) {
+        orderedProfiles.push(profile)
+        seenTokens.add(profile.token)
+      }
+    })
+
+  const sortedTokens = orderedProfiles.map(profile => profile.token)
+
+  if (sortedTokens.length > 0) {
+    console.log('🎨 Color Ranking (by brand importance):')
+    orderedProfiles.slice(0, 10).forEach((profile, index) => {
+      console.log(`  ${index + 1}. ${profile.token.value} - Score: ${profile.brandScore.toFixed(1)} (${profile.token.usage} uses, ${profile.token.percentage}%)`)
+    })
+  }
+
   return config.maxColors && !config.returnAllFiltered
-    ? sorted.slice(0, config.maxColors)
-    : sorted
+    ? sortedTokens.slice(0, config.maxColors)
+    : sortedTokens
 }
 
 /**
@@ -165,7 +255,7 @@ function curateTypography(tokenSet: W3CTokenSet, config: CurationConfig): Curate
     if (type === 'fontFamily') {
       totalFamilyUsage += usage
       const familyArray = Array.isArray(token.$value) ? token.$value : [token.$value]
-      const primaryFamily = familyArray[0]
+      const primaryFamily = cleanFontName(familyArray[0])
 
       families.push({
         name,
@@ -246,6 +336,103 @@ function curateTypography(tokenSet: W3CTokenSet, config: CurationConfig): Curate
 /**
  * Curate spacing tokens
  */
+
+/**
+ * Check if shadow value is valid for design systems
+ * Filters out browser defaults like "none" and invalid syntax
+ */
+function isValidDesignSystemShadow(value: string): boolean {
+  // Skip "none" shadows
+  if (value === 'none' || value === 'initial' || value === 'inherit') return false
+
+  // Skip empty or invalid values
+  if (!value || value.trim() === '') return false
+
+  // Must contain offset and blur values
+  // Valid: "0 1px 3px rgba(0,0,0,0.1)"
+  // Invalid: "0 0 0 black" (no blur)
+  const hasBlur = /\d+px\s+\d+px\s+\d+px/.test(value) || /\d+rem\s+\d+rem\s+\d+rem/.test(value)
+  if (!hasBlur) return false
+
+  return true
+}
+
+/**
+ * Check if radius value is valid for design systems
+ */
+function isValidDesignSystemRadius(value: number, unit: string): boolean {
+  // Convert to pixels
+  let pixels = value
+  if (unit === 'rem' || unit === 'em') pixels = value * 16
+
+  // Skip 0 radius (no rounding)
+  if (pixels === 0) return false
+
+  // Skip tiny values (1px, 2px - likely artifacts)
+  if (pixels < 2 && unit === 'px') return false
+
+  // Skip percentage > 50% (circle tokens are valid at exactly 50%)
+  if (unit === '%' && value > 50) return false
+
+  // Skip extremely large pixel values (likely errors)
+  if (unit === 'px' && pixels > 100) return false
+
+  return true
+}
+
+/**
+ * Check if spacing value is valid for design systems
+ * Filters out 1px borders, 2px outlines, and other non-spacing values
+ */
+function isValidDesignSystemSpacing(value: number, unit: string): boolean {
+  // Convert to pixels for validation
+  let pixels = value
+  if (unit === 'rem' || unit === 'em') pixels = value * 16
+
+  // Filter rules:
+  // 1. Skip 0px (not useful for spacing scale)
+  if (pixels === 0) return false
+
+  // 2. Skip tiny values (1px, 2px, 3px - likely borders/outlines, not spacing)
+  if (pixels < 4) return false
+
+  // 3. Skip percentage-based spacing (100%, 50% are layout, not spacing tokens)
+  if (unit === '%') return false
+
+  // 4. Skip viewport units (not design system tokens)
+  if (unit === 'vh' || unit === 'vw' || unit === 'vmin' || unit === 'vmax') return false
+
+  // 5. Skip extremely large values (likely layout widths, not spacing)
+  // Design system spacing rarely exceeds 128px (8rem)
+  if (pixels > 200) return false
+
+  // 6. Skip odd decimal values that aren't part of a scale
+  // e.g., 1.714em, 0.857em are likely font-size related, not spacing
+  const isOddDecimal = pixels % 1 !== 0 && (pixels % 0.5 !== 0)
+  if (isOddDecimal && pixels < 16) return false
+
+  return true
+}
+
+/**
+ * Normalize spacing values to consistent scale
+ */
+function normalizeSpacing(value: string): { value: string; pixels: number } {
+  const match = value.match(/^([\d.]+)(px|rem|em)$/)
+  if (!match) return { value, pixels: 0 }
+
+  const num = parseFloat(match[1])
+  const unit = match[2]
+
+  let pixels = num
+  if (unit === 'rem' || unit === 'em') pixels = num * 16
+
+  // Round to nearest 0.5px for consistency
+  pixels = Math.round(pixels * 2) / 2
+
+  return { value, pixels }
+}
+
 function curateSpacing(tokenSet: W3CTokenSet, config: CurationConfig): CuratedToken[] {
   if (!tokenSet.dimension) return []
 
@@ -262,9 +449,13 @@ function curateSpacing(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTo
 
     if (usage < config.minUsage || confidence < config.minConfidence) return
 
+    const dim = token.$value as { value: number; unit: string }
+
+    // Filter out non-design-system spacing values
+    if (!isValidDesignSystemSpacing(dim.value, dim.unit)) return
+
     totalUsage += usage
 
-    const dim = token.$value as { value: number; unit: string }
     const displayValue = `${dim.value}${dim.unit}`
 
     tokens.push({
@@ -286,7 +477,28 @@ function curateSpacing(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTo
 
   tokens.forEach(t => t.percentage = totalUsage > 0 ? Math.round((t.usage / totalUsage) * 100) : 0)
 
-  const sorted = tokens.sort((a, b) => b.usage - a.usage)
+  // Deduplicate by pixel value (merge 1rem and 16px)
+  const spacingMap = new Map<number, CuratedToken>()
+  tokens.forEach(token => {
+    const normalized = normalizeSpacing(String(token.value))
+    const existing = spacingMap.get(normalized.pixels)
+    if (!existing) {
+      spacingMap.set(normalized.pixels, token)
+    } else {
+      // Keep the more common unit (rem preferred)
+      if (String(token.value).includes('rem') && !String(existing.value).includes('rem')) {
+        spacingMap.set(normalized.pixels, token)
+      }
+      existing.usage += token.usage
+    }
+  })
+
+  // Recalculate percentages
+  const dedupedTokens = Array.from(spacingMap.values())
+  const dedupedTotal = dedupedTokens.reduce((sum, t) => sum + t.usage, 0)
+  dedupedTokens.forEach(t => t.percentage = dedupedTotal > 0 ? Math.round((t.usage / dedupedTotal) * 100) : 0)
+
+  const sorted = dedupedTokens.sort((a, b) => b.usage - a.usage)
   return config.maxSpacing && !config.returnAllFiltered ? sorted.slice(0, config.maxSpacing) : sorted
 }
 
@@ -314,10 +526,13 @@ function curateRadius(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTok
 
     if (usage < config.minUsage || confidence < config.minConfidence) return
 
-    totalUsage += usage
-
     const dim = token.$value as { value: number; unit: string }
     const displayValue = `${dim.value}${dim.unit}`
+
+    // Filter out invalid radius values
+    if (!isValidDesignSystemRadius(dim.value, dim.unit)) return
+
+    totalUsage += usage
 
     tokens.push({
       name,
@@ -361,6 +576,10 @@ function curateShadows(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTo
 
     if (usage < config.minUsage || confidence < config.minConfidence) return
 
+    // Filter out invalid shadow values
+    const shadowValue = original || String(token.$value)
+    if (!isValidDesignSystemShadow(shadowValue)) return
+
     totalUsage += usage
 
     tokens.push({
@@ -382,7 +601,24 @@ function curateShadows(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTo
 
   tokens.forEach(t => t.percentage = totalUsage > 0 ? Math.round((t.usage / totalUsage) * 100) : 0)
 
-  const sorted = tokens.sort((a, b) => b.usage - a.usage)
+  // Deduplicate shadows by normalized value
+  const shadowMap = new Map<string, CuratedToken>()
+  tokens.forEach(token => {
+    const normalized = String(token.value).toLowerCase().replace(/\s+/g, ' ').trim()
+    const existing = shadowMap.get(normalized)
+    if (!existing) {
+      shadowMap.set(normalized, token)
+    } else {
+      existing.usage += token.usage
+    }
+  })
+
+  // Recalculate percentages
+  const dedupedTokens = Array.from(shadowMap.values())
+  const dedupedTotal = dedupedTokens.reduce((sum, t) => sum + t.usage, 0)
+  dedupedTokens.forEach(t => t.percentage = dedupedTotal > 0 ? Math.round((t.usage / dedupedTotal) * 100) : 0)
+
+  const sorted = dedupedTokens.sort((a, b) => b.usage - a.usage)
   return config.maxShadows && !config.returnAllFiltered ? sorted.slice(0, config.maxShadows) : sorted
 }
 
@@ -423,6 +659,196 @@ function curateMotion(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTok
   return config.maxMotion && !config.returnAllFiltered ? sorted.slice(0, config.maxMotion) : sorted
 }
 
+interface ColorProfile {
+  token: CuratedToken
+  hue: number
+  saturation: number
+  lightness: number
+  chroma: number
+  usageWeight: number
+  semanticBoost: number
+  brandScore: number
+  bucket: number
+  bucketWeight: number
+  isNeutral: boolean
+}
+
+const HUE_BUCKET_SIZE = 18
+
+function createColorProfile(token: CuratedToken, maxUsage: number): ColorProfile | null {
+  const hex = String(token.value).toLowerCase()
+  const rgb = hexToRgb(hex)
+  if (!rgb) return null
+
+  const { h, s, l } = rgbToHslNormalized(rgb)
+  const chroma = computeChroma(rgb)
+  const usageWeight = maxUsage > 0 ? Math.log(token.usage + 1) / Math.log(maxUsage + 1) : 0
+  let semanticBoost = computeSemanticBoost(token)
+  const isNeutral = s < 0.08 || semanticBoost < -0.2
+
+  if (isNeutral) {
+    semanticBoost = Math.min(0, semanticBoost)
+  }
+
+  const lightnessScore = Math.max(0, 1 - Math.abs(l - 0.45) * 2)
+  const brandBase = (s * 55) + (chroma * 45) + (lightnessScore * 25) + (usageWeight * 35)
+  let brandScore = brandBase + (semanticBoost * 40) + computePureHueBoost(rgb)
+
+  if (isNeutral) {
+    brandScore *= 0.25
+  }
+
+  brandScore = Math.max(0, brandScore)
+
+  const bucket = isNeutral || Number.isNaN(h)
+    ? -1
+    : normalizeHue(Math.round(h / HUE_BUCKET_SIZE) * HUE_BUCKET_SIZE)
+
+  const bucketWeight = brandScore * (isNeutral ? 0.2 : 0.8 + usageWeight * 0.4 + Math.max(0, semanticBoost))
+
+  return {
+    token,
+    hue: Number.isNaN(h) ? 0 : normalizeHue(h),
+    saturation: s,
+    lightness: l,
+    chroma,
+    usageWeight,
+    semanticBoost,
+    brandScore,
+    bucket,
+    bucketWeight,
+    isNeutral
+  }
+}
+
+function hueDistance(a: number, b: number): number {
+  const diff = Math.abs(a - b) % 360
+  return diff > 180 ? 360 - diff : diff
+}
+
+function normalizeHue(value: number): number {
+  const hue = value % 360
+  return hue < 0 ? hue + 360 : hue
+}
+
+function computeChroma(rgb: { r: number; g: number; b: number }): number {
+  const r = rgb.r / 255
+  const g = rgb.g / 255
+  const b = rgb.b / 255
+  return Math.max(r, g, b) - Math.min(r, g, b)
+}
+
+function computeSemanticBoost(token: CuratedToken): number {
+  const semantic = (token.semantic || '').toLowerCase()
+  const name = token.name.toLowerCase()
+
+  let boost = 0
+
+  if (semantic.includes('primary') || name.includes('primary')) boost += 0.6
+  if (semantic.includes('brand') || name.includes('brand') || name.includes('logo')) boost += 0.55
+  if (semantic.includes('accent') || name.includes('accent') || name.includes('highlight') || name.includes('cta')) boost += 0.4
+  if (semantic.includes('interactive') || name.includes('button') || name.includes('link')) boost += 0.2
+
+  if (semantic.includes('background') || semantic.includes('text') || semantic.includes('muted') || semantic.includes('gray')) boost -= 0.45
+  if (name.includes('background') || name.includes('text') || name.includes('grey') || name.includes('gray') || name.includes('neutral')) boost -= 0.45
+
+  return Math.max(-0.6, Math.min(1.2, boost))
+}
+
+function rgbToHslNormalized(rgb: { r: number; g: number; b: number }): { h: number; s: number; l: number } {
+  const r = rgb.r / 255
+  const g = rgb.g / 255
+  const b = rgb.b / 255
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const l = (max + min) / 2
+
+  if (max === min) {
+    return { h: 0, s: 0, l }
+  }
+
+  const d = max - min
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+
+  let h: number
+  switch (max) {
+    case r:
+      h = (g - b) / d + (g < b ? 6 : 0)
+      break
+    case g:
+      h = (b - r) / d + 2
+      break
+    default:
+      h = (r - g) / d + 4
+      break
+  }
+
+  h *= 60
+
+  return { h, s, l }
+}
+
+function computePureHueBoost(rgb: { r: number; g: number; b: number }): number {
+  const { r, g, b } = rgb
+
+  if (r > 210 && g < 110 && b < 110) return 12 // vivid red
+  if (r < 110 && g > 210 && b < 110) return 10 // vivid green
+  if (r < 110 && g < 120 && b > 205) return 10 // vivid blue
+  if (r > 215 && g > 160 && b < 110) return 9 // orange/gold
+  if (r > 190 && b > 150 && g < 140) return 12 // magenta/pink
+  if (r > 170 && g < 120 && b > 170) return 10 // violet
+
+  return 0
+}
+
+/**
+ * Calculate enhanced confidence score for colors based on usage and patterns
+ */
+function calculateColorConfidence(usage: number, hex: string, name: string): number {
+  let confidence = Math.min(100, 60 + usage * 2) // Base confidence from usage
+
+  // Boost confidence for common design system patterns
+  const lower = name.toLowerCase()
+  if (lower.includes('primary') || lower.includes('brand')) confidence += 10
+  if (lower.includes('background') || lower.includes('text')) confidence += 5
+
+  // Boost confidence for grayscale (commonly used)
+  const rgb = hexToRgb(hex)
+  if (rgb) {
+    const isGrayscale = Math.abs(rgb.r - rgb.g) < 10 && Math.abs(rgb.g - rgb.b) < 10
+    if (isGrayscale) confidence += 5
+  }
+
+  // Reduce confidence for very specific/rare colors
+  if (usage === 1) confidence -= 15
+  if (usage === 2) confidence -= 10
+
+  return Math.min(100, Math.max(40, confidence))
+}
+
+/**
+ * Clean font names - remove Next.js hashes and CSS variable artifacts
+ */
+function cleanFontName(fontName: string): string {
+  if (!fontName) return fontName
+
+  // Remove Next.js font optimization hashes: __Inter_e8ce0c → Inter
+  fontName = fontName.replace(/^__([A-Za-z]+)_[a-f0-9]+$/, '$1')
+
+  // Remove CSS custom font patterns: __customFont_hash → Custom Font
+  fontName = fontName.replace(/^__customFont_[a-f0-9]+$/, 'Custom Font')
+
+  // Remove leading/trailing quotes
+  fontName = fontName.replace(/^['"]|['"]$/g, '')
+
+  // Clean up common generic fallbacks
+  if (fontName === 'inherit' || fontName === 'initial' || fontName === 'unset') {
+    return 'System Default'
+  }
+
+  return fontName
+}
+
 /**
  * Semantic inference helpers
  */
@@ -430,22 +856,55 @@ function curateMotion(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTok
 function inferColorSemantic(name: string, hex: string): string {
   const lower = name.toLowerCase()
 
-  if (lower.includes('primary') || lower.includes('accent')) return 'Primary/Accent'
+  // Keyword-based semantic detection
+  if (lower.includes('primary') || lower.includes('accent') || lower.includes('brand')) return 'Primary/Brand'
+  if (lower.includes('secondary')) return 'Secondary'
   if (lower.includes('background') || lower.includes('bg')) return 'Background'
   if (lower.includes('foreground') || lower.includes('fg') || lower.includes('text')) return 'Text'
-  if (lower.includes('border')) return 'Border'
-  if (lower.includes('error') || lower.includes('danger') || lower.includes('red')) return 'Error/Danger'
-  if (lower.includes('success') || lower.includes('green')) return 'Success'
-  if (lower.includes('warning') || lower.includes('yellow')) return 'Warning'
-  if (lower.includes('info') || lower.includes('blue')) return 'Info'
+  if (lower.includes('border') || lower.includes('outline')) return 'Border'
+  if (lower.includes('error') || lower.includes('danger') || lower.includes('destructive')) return 'Error/Danger'
+  if (lower.includes('success') || lower.includes('positive')) return 'Success'
+  if (lower.includes('warning') || lower.includes('caution')) return 'Warning'
+  if (lower.includes('info') || lower.includes('informative')) return 'Info'
+  if (lower.includes('muted') || lower.includes('subtle')) return 'Muted/Subtle'
+  if (lower.includes('hover') || lower.includes('active')) return 'Interactive State'
+  if (lower.includes('disabled')) return 'Disabled'
+  if (lower.includes('focus')) return 'Focus'
 
-  // Infer from hex lightness
+  // Infer from hex value characteristics
   const rgb = hexToRgb(hex)
   if (!rgb) return 'Color'
 
+  // Pure grayscale detection
+  const isGrayscale = Math.abs(rgb.r - rgb.g) < 10 && Math.abs(rgb.g - rgb.b) < 10 && Math.abs(rgb.r - rgb.b) < 10
   const lightness = (rgb.r * 0.299 + rgb.g * 0.587 + rgb.b * 0.114)
-  if (lightness < 50) return 'Dark'
-  if (lightness > 200) return 'Light'
+
+  if (isGrayscale) {
+    if (lightness < 30) return 'Grayscale/Dark'
+    if (lightness > 225) return 'Grayscale/Light'
+    return 'Grayscale/Mid'
+  }
+
+  // Color hue detection
+  const max = Math.max(rgb.r, rgb.g, rgb.b)
+  const min = Math.min(rgb.r, rgb.g, rgb.b)
+  const delta = max - min
+
+  if (delta < 15) return 'Neutral'
+
+  // Determine dominant hue
+  if (rgb.r > rgb.g && rgb.r > rgb.b) {
+    if (rgb.g > rgb.b * 1.5) return 'Orange/Warm'
+    return 'Red'
+  }
+  if (rgb.g > rgb.r && rgb.g > rgb.b) {
+    if (rgb.b > rgb.r * 1.3) return 'Cyan/Teal'
+    return 'Green'
+  }
+  if (rgb.b > rgb.r && rgb.b > rgb.g) {
+    if (rgb.r > rgb.g * 1.2) return 'Purple/Violet'
+    return 'Blue'
+  }
 
   return 'Color'
 }

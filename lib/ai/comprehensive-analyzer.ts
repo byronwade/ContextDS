@@ -8,10 +8,9 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { z } from 'zod'
 import type { CuratedTokenSet } from '@/lib/analyzers/token-curator'
 
-// Configure AI Gateway with GPT-4o for advanced reasoning
+// Configure Vercel AI Gateway with GPT-4o for advanced reasoning
 const openai = createOpenAI({
-  apiKey: process.env.AI_GATEWAY_API_KEY || process.env.OPENAI_API_KEY,
-  baseURL: process.env.AI_GATEWAY_API_KEY ? 'https://gateway.ai.cloudflare.com/v1/contextds/openai' : undefined
+  apiKey: process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_AI_API_KEY || process.env.OPENAI_API_KEY,
 })
 
 // Comprehensive analysis schema

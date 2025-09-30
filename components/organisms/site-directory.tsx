@@ -8,7 +8,7 @@ import { SearchForm } from "@/components/molecules/search-form"
 import { StatusBadge } from "@/components/atoms/status-badge"
 import { ExternalLink, Eye, Download, Code, GitCompare, X } from "lucide-react"
 import Image from "next/image"
-import Link from "next/link"
+import { SmartLink } from "@/components/atoms/smart-link"
 import { cn } from "@/lib/utils"
 import { Checkbox } from "@/components/ui/checkbox"
 
@@ -38,7 +38,7 @@ interface SiteDirectoryProps {
   sites: Site[]
   loading?: boolean
   onSearch: (query: string) => void
-  onFilter: (filters: any) => void
+  onFilter: (filters: Record<string, unknown>) => void
   onCompare?: (siteA: Site, siteB: Site) => void
   className?: string
 }
@@ -130,7 +130,7 @@ export function SiteDirectory({
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-background border rounded-lg shadow-lg p-4 min-w-[500px]">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 flex-1">
-              {selectedSites.map((site, index) => (
+              {selectedSites.map((site) => (
                 <div key={site.id} className="flex items-center gap-2 px-3 py-2 bg-muted rounded-md">
                   {site.favicon && (
                     <Image src={site.favicon} alt="" width={16} height={16} className="rounded" />
@@ -262,10 +262,10 @@ export function SiteDirectory({
               {/* Actions */}
               <div className="flex gap-2 pt-2">
                 <Button variant="outline" size="sm" asChild className="flex-1">
-                  <Link href={`/directory/${site.domain}`}>
+                  <SmartLink href={`/directory/${site.domain}`}>
                     <Eye className="w-4 h-4 mr-1" />
                     View
-                  </Link>
+                  </SmartLink>
                 </Button>
                 <Button variant="outline" size="sm">
                   <Download className="w-4 h-4" />

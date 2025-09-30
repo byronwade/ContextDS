@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { promises as dns } from 'dns'
 import { runScanJob } from '@/lib/workers/scan-orchestrator'
 import { scanRatelimit } from '@/lib/ratelimit'
 
@@ -11,6 +12,57 @@ const scanRequestSchema = z.object({
   budget: z.number().min(0.01).max(1.0).default(0.15),
   mode: z.enum(['fast', 'accurate']).default('accurate')  // fast = static only, accurate = full scan
 })
+
+/**
+ * Check if an IP address is in a private range
+ */
+function isPrivateIP(ip: string): boolean {
+  const parts = ip.split('.').map(Number)
+  if (parts.length !== 4 || parts.some(p => isNaN(p) || p < 0 || p > 255)) {
+    return true // Invalid IP, treat as private
+  }
+
+  return (
+    parts[0] === 10 ||
+    parts[0] === 127 ||
+    (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) ||
+    (parts[0] === 192 && parts[1] === 168) ||
+    parts[0] === 0 ||
+    parts[0] === 169 && parts[1] === 254 // Link-local
+  )
+}
+
+/**
+ * Validate URL is not targeting private/internal resources
+ */
+async function validateSSRF(url: URL): Promise<string | null> {
+  const hostname = url.hostname
+
+  // Block localhost and loopback
+  if (hostname === 'localhost' || hostname.startsWith('127.')) {
+    return 'Cannot scan localhost or loopback addresses'
+  }
+
+  // Block private IP ranges in hostname
+  if (isPrivateIP(hostname)) {
+    return 'Cannot scan private IP addresses'
+  }
+
+  // Resolve DNS to check if it points to private IPs
+  try {
+    const addresses = await dns.resolve4(hostname)
+    for (const ip of addresses) {
+      if (isPrivateIP(ip)) {
+        return 'Domain resolves to private IP address'
+      }
+    }
+  } catch (error) {
+    // If DNS resolution fails, let it through (might be valid but DNS issue)
+    console.warn('DNS resolution failed for', hostname, error)
+  }
+
+  return null // Valid
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,17 +93,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Block private IP ranges
-    const hostname = url.hostname
-    if (
-      hostname === 'localhost' ||
-      hostname.startsWith('127.') ||
-      hostname.startsWith('10.') ||
-      hostname.startsWith('192.168.') ||
-      /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname)
-    ) {
+    // Comprehensive SSRF protection with DNS resolution
+    const ssrfError = await validateSSRF(url)
+    if (ssrfError) {
       return NextResponse.json(
-        { status: 'failed', error: 'Cannot scan private or local URLs' },
+        { status: 'failed', error: ssrfError },
         { status: 400 }
       )
     }

@@ -12,7 +12,7 @@ import { Search, Sparkles, ChevronDown, Loader2, Palette } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import Link from "next/link"
+import { SmartLink } from "@/components/atoms/smart-link"
 
 type ViewMode = "search" | "scan"
 
@@ -55,20 +55,20 @@ export function MinimalHeader({
       {/* Left: Brand */}
       <div className="flex pl-4 md:pl-6">
         <div className="flex items-center space-x-2 pr-3">
-          <Link className="outline-offset-4" href="/">
+          <SmartLink className="outline-offset-4" href="/">
             <svg aria-label="ContextDS" className="fill-black dark:fill-white" viewBox="0 0 75 65" height="22">
               <path d="M37.59.25l36.95 64H.64l36.95-64z"></path>
             </svg>
-          </Link>
+          </SmartLink>
           <svg fill="none" height="24" shapeRendering="geometricPrecision" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24" className="stroke-grep-4" style={{width: '22px', height: '22px'}}>
             <path d="M16.88 3.549L7.12 20.451"></path>
           </svg>
-          <Link className="outline-offset-4" href="/">
+          <SmartLink className="outline-offset-4" href="/">
             <div className="flex items-center gap-2">
               <Palette className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               <span className="text-lg font-semibold text-black dark:text-white">ContextDS</span>
             </div>
-          </Link>
+          </SmartLink>
         </div>
       </div>
 

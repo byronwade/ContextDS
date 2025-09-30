@@ -4,7 +4,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   Search,
   Plus,
@@ -13,22 +13,23 @@ import {
   Download,
   Copy,
   Loader2,
-  CheckCircle,
-  AlertCircle,
   Globe,
-  Hash,
-  Code,
-  Filter,
   Eye
 } from "lucide-react"
 import { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
 import { scanStorage, convertApiResultToStoredResult, getTokensForSearch, getSitesForSearch } from "@/lib/storage/scan-storage"
 
+interface SearchResult {
+  id: string
+  domain?: string
+  url?: string
+  type?: 'token' | 'site'
+  [key: string]: unknown
+}
+
 export default function HomePage() {
-  const searchParams = useSearchParams()
   const [query, setQuery] = useState("")
-  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)
   const [searchMode, setSearchMode] = useState<'tokens' | 'sites'>('tokens')
 
@@ -87,10 +88,13 @@ export default function HomePage() {
   // Debounced search
   useEffect(() => {
     const delayedSearch = setTimeout(() => {
-      handleSearch(query)
+      if (query.trim()) {
+        handleSearch(query)
+      }
     }, 200)
 
     return () => clearTimeout(delayedSearch)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, searchMode])
 
   // Handle new site scanning
@@ -361,7 +365,7 @@ export default function HomePage() {
                   </div>
                 ) : query ? (
                   <div className="space-y-2">
-                    <p>No {searchMode} found for "{query}"</p>
+                    <p>No {searchMode} found for &quot;{query}&quot;</p>
                     <p className="text-sm">
                       Try a different search term or{' '}
                       <Button

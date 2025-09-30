@@ -19,6 +19,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Build**: `bun build` (production build with Turbopack)
 - **Start**: `bun start` (start production server)
 - **Lint**: `bun lint` (ESLint with Next.js TypeScript config)
+- **Test**: `bun run test` (Playwright E2E tests - IMPORTANT: use "bun run test", not "bun test")
+- **Test UI**: `bun run test:ui` (interactive Playwright UI for debugging)
 
 ## Project Architecture
 

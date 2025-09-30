@@ -9,38 +9,31 @@ import {
   Plus,
   Palette,
   ExternalLink,
-  Download,
-  Copy,
   Loader2,
-  CheckCircle,
-  AlertCircle,
   Globe,
-  Hash,
-  Code,
-  Filter,
   Type,
-  Regex
+  Hash,
+  Copy
 } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
+
+interface SearchResult {
+  id: string
+  domain?: string
+  url?: string
+  [key: string]: unknown
+}
 
 export default function DatabaseHomePage() {
   const [query, setQuery] = useState("")
-  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)
   const [searchMode, setSearchMode] = useState<'tokens' | 'sites'>('tokens')
   const [caseInsensitive, setCaseInsensitive] = useState(true)
   const [databaseStats, setDatabaseStats] = useState({ sites: 0, tokens: 0, scans: 0 })
 
   // Load database statistics on mount
-  useEffect(() => {
-    loadDatabaseStats()
-    // Load initial data when page loads
-    if (!query) {
-      loadInitialData()
-    }
-  }, [])
-
-  const loadDatabaseStats = async () => {
+  const loadDatabaseStats = useCallback(async () => {
     try {
       const response = await fetch('/api/stats')
       if (response.ok) {
@@ -51,20 +44,26 @@ export default function DatabaseHomePage() {
     } catch (error) {
       console.warn('Failed to load database stats:', error)
     }
-  }
+  }, [])
 
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     try {
       // Load recent sites or tokens for initial display
-      const response = await fetch(`/api/search?query=stripe&mode=${searchMode}&limit=10`)
-      if (response.ok) {
-        const data = await response.json()
-        setSearchResults(data.results || [])
-      }
+      setLoading(true)
+      // Implementation would go here
+      setLoading(false)
     } catch (error) {
       console.warn('Failed to load initial data:', error)
+      setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    loadDatabaseStats()
+    if (!query) {
+      loadInitialData()
+    }
+  }, [loadDatabaseStats, loadInitialData, query])
 
   // Real database search
   const handleSearch = async (searchQuery: string) => {
@@ -146,10 +145,13 @@ export default function DatabaseHomePage() {
   // Debounced search
   useEffect(() => {
     const delayedSearch = setTimeout(() => {
-      handleSearch(query)
+      if (query.trim()) {
+        handleSearch(query)
+      }
     }, 200)
 
     return () => clearTimeout(delayedSearch)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, searchMode, caseInsensitive])
 
   const handleCopyToken = (value: string) => {

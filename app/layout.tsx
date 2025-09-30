@@ -2,16 +2,21 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SkipLinks } from "@/components/atoms/skip-links";
 import { ErrorBoundary } from "@/components/atoms/error-boundary";
+import { WebVitalsReporter } from "@/components/atoms/web-vitals-reporter";
 import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap", // Non-blocking font loading
+  preload: true,   // Preload critical font
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
+  preload: false,  // Don't preload monospace (used less)
 });
 
 export const metadata: Metadata = {
@@ -34,6 +39,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Resource hints for faster loading */}
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+        <link rel="preconnect" href="https://ep-delicate-breeze-adofco8i-pooler.c-2.us-east-1.aws.neon.tech" crossOrigin="anonymous" />
+
+        {/* Prefetch critical API routes */}
+        <link rel="prefetch" href="/api/stats" as="fetch" crossOrigin="anonymous" />
+
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -63,6 +76,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SkipLinks />
+        <WebVitalsReporter />
         <ErrorBoundary>
           {children}
         </ErrorBoundary>

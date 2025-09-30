@@ -203,14 +203,15 @@ export function FontPreviewCard({
  * Preload font without blocking render
  */
 export function preloadFont(fontFamily: string): void {
-  const primaryFont = fontFamily.split(',')[0].trim().replace(/['"]/g, '')
+  if (typeof window === 'undefined') return
 
-  if (!WEB_FONTS.has(primaryFont) || checkFontAvailable(fontFamily)) {
-    return // Already available or not a web font
+  // Check if font is already rendering
+  if (detectFontRendering(fontFamily)) {
+    return // Already available
   }
 
   // Non-blocking font load
-  loadWebFont(fontFamily).catch(() => {
+  loadGoogleFont(fontFamily).catch(() => {
     // Silent fail - will use fallback
   })
 }

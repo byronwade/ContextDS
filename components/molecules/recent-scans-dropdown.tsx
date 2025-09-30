@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRecentScans } from '@/stores/recent-scans-store'
 import { Button } from '@/components/ui/button'
@@ -18,9 +18,16 @@ import { cn } from '@/lib/utils'
 export function RecentScansDropdown() {
   const { scans, removeScan, clearScans, getRecentScans } = useRecentScans()
   const [open, setOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const recentScans = getRecentScans(10)
 
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const formatTime = (timestamp: number) => {
+    if (!mounted) return ''
+
     const now = Date.now()
     const diff = now - timestamp
     const minutes = Math.floor(diff / 60000)
@@ -33,7 +40,7 @@ export function RecentScansDropdown() {
     return `${days}d ago`
   }
 
-  if (recentScans.length === 0) {
+  if (recentScans.length === 0 || !mounted) {
     return null
   }
 
@@ -74,7 +81,7 @@ export function RecentScansDropdown() {
                     <span>·</span>
                     <span>{scan.confidence}% conf.</span>
                     <span>·</span>
-                    <span>{formatTime(scan.scannedAt)}</span>
+                    <span suppressHydrationWarning>{formatTime(scan.scannedAt)}</span>
                   </div>
                 </div>
                 <button

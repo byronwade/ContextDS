@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db, sites, tokenSets, scans } from '@/lib/db'
-import { count, sql, desc, eq } from 'drizzle-orm'
-import { statsCache, CACHE_KEYS } from '@/lib/performance'
+import { sql, desc, eq } from 'drizzle-orm'
+import { createHash } from 'crypto'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     // Skip during build time
     if (!process.env.DATABASE_URL) {
@@ -19,134 +19,115 @@ export async function GET() {
       })
     }
 
-    // Check cache first
-    const cached = statsCache.get(CACHE_KEYS.STATS)
-    if (cached) {
-      console.log('📊 Returning cached database statistics')
-      return NextResponse.json(cached)
-    }
+    console.log('📊 Loading instant stats using optimized functions...')
 
-    console.log('📊 Loading database statistics...')
+    // Execute all 3 optimized functions in parallel (cached execution plans!)
+    const [cachedStatsQuery, recentScansQuery, popularSitesQuery] = await Promise.all([
+      // Optimized function 1: Pre-compiled stats query
+      db.execute(sql`SELECT * FROM get_instant_stats()`),
 
-    // Get basic counts
-    const [siteCount] = await db.select({ count: count() }).from(sites)
-    const [tokenSetCount] = await db.select({ count: count() }).from(tokenSets)
-    const [scanCount] = await db.select({ count: count() }).from(scans)
+      // Optimized function 2: Pre-compiled recent activity query
+      db.execute(sql`SELECT * FROM get_recent_activity()`),
 
-    // Get recent activity
-    const recentScans = await db
-      .select({
-        id: scans.id,
-        domain: sites.domain,
-        finishedAt: scans.finishedAt,
-        tokenCount: sql<number>`
-          COALESCE(
-            (SELECT COUNT(*) FROM ${tokenSets} WHERE ${tokenSets.scanId} = ${scans.id}),
-            0
-          )
-        `
+      // Optimized function 3: Pre-compiled popular sites query
+      db.execute(sql`SELECT * FROM get_popular_sites()`)
+    ])
+
+    const cachedStats = cachedStatsQuery[0]
+
+    if (!cachedStats) {
+      // First time - return empty and trigger background update
+      console.log('⚠️ No cached stats found, returning empty')
+      return NextResponse.json({
+        sites: 0,
+        tokens: 0,
+        scans: 0,
+        tokenSets: 0,
+        categories: { colors: 0, typography: 0, spacing: 0, shadows: 0, radius: 0, motion: 0 },
+        averageConfidence: 0,
+        recentActivity: [],
+        popularSites: []
       })
-      .from(scans)
-      .leftJoin(sites, eq(scans.siteId, sites.id))
-      .where(sql`${scans.finishedAt} IS NOT NULL`)
-      .orderBy(desc(scans.finishedAt))
-      .limit(10)
-
-    // Get popular sites
-    const popularSites = await db
-      .select({
-        domain: sites.domain,
-        popularity: sites.popularity,
-        lastScanned: sites.lastScanned,
-        tokenCount: sql<number>`
-          COALESCE(
-            (SELECT COUNT(*) FROM ${tokenSets} WHERE ${tokenSets.siteId} = ${sites.id}),
-            0
-          )
-        `
-      })
-      .from(sites)
-      .orderBy(desc(sites.popularity))
-      .limit(5)
-
-    // Optimized token statistics using database aggregation
-    const tokenStatsQuery = await db.execute(sql`
-      WITH token_counts AS (
-        SELECT
-          ts.id,
-          COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'color')), 0) as color_count,
-          COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'typography')), 0) as typography_count,
-          COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'dimension')), 0) as spacing_count,
-          COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'shadow')), 0) as shadow_count,
-          COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'radius')), 0) as radius_count,
-          COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'motion')), 0) as motion_count,
-          CAST(ts.consensus_score AS NUMERIC) as consensus_score
-        FROM token_sets ts
-        WHERE ts.is_public = true
-          AND ts.tokens_json IS NOT NULL
-      )
-      SELECT
-        SUM(color_count)::int as total_colors,
-        SUM(typography_count)::int as total_typography,
-        SUM(spacing_count)::int as total_spacing,
-        SUM(shadow_count)::int as total_shadows,
-        SUM(radius_count)::int as total_radius,
-        SUM(motion_count)::int as total_motion,
-        (SUM(color_count) + SUM(typography_count) + SUM(spacing_count) +
-         SUM(shadow_count) + SUM(radius_count) + SUM(motion_count))::int as total_tokens,
-        ROUND(AVG(consensus_score))::int as average_confidence
-      FROM token_counts
-    `)
-
-    const tokenStats = tokenStatsQuery[0] || {
-      total_colors: 0,
-      total_typography: 0,
-      total_spacing: 0,
-      total_shadows: 0,
-      total_radius: 0,
-      total_motion: 0,
-      total_tokens: 0,
-      average_confidence: 0
     }
 
-    const categoryStats = {
-      colors: toNumber(tokenStats.total_colors),
-      typography: toNumber(tokenStats.total_typography),
-      spacing: toNumber(tokenStats.total_spacing),
-      shadows: toNumber(tokenStats.total_shadows),
-      radius: toNumber(tokenStats.total_radius),
-      motion: toNumber(tokenStats.total_motion)
-    }
+    // Map results from parallel queries
+    const recentScans = recentScansQuery.map((row: any) => ({
+      domain: row.domain,
+      finishedAt: row.finished_at,
+      tokenCount: row.token_count
+    }))
 
-    const totalTokens = toNumber(tokenStats.total_tokens)
-    const averageConfidence = toNumber(tokenStats.average_confidence)
+    const popularSites = popularSitesQuery.map((row: any) => ({
+      domain: row.domain,
+      popularity: row.popularity ?? 0,
+      lastScanned: row.last_scanned,
+      tokenCount: row.token_count
+    }))
 
     const stats = {
-      sites: toNumber(siteCount.count),
-      tokens: totalTokens,
-      scans: toNumber(scanCount.count),
-      tokenSets: toNumber(tokenSetCount.count),
-      categories: categoryStats,
-      averageConfidence: averageConfidence,
-      recentActivity: recentScans.map((scan) => ({
+      sites: toNumber(cachedStats.total_sites),
+      tokens: toNumber(cachedStats.total_tokens),
+      scans: toNumber(cachedStats.total_scans),
+      tokenSets: toNumber(cachedStats.total_token_sets),
+      categories: {
+        colors: toNumber(cachedStats.color_count),
+        typography: toNumber(cachedStats.typography_count),
+        spacing: toNumber(cachedStats.spacing_count),
+        shadows: toNumber(cachedStats.shadow_count),
+        radius: toNumber(cachedStats.radius_count),
+        motion: toNumber(cachedStats.motion_count)
+      },
+      averageConfidence: toNumber(cachedStats.average_confidence),
+      recentActivity: recentScans.map((scan: any) => ({
         domain: scan.domain,
         scannedAt: scan.finishedAt,
         tokens: toNumber(scan.tokenCount)
       })),
-      popularSites: popularSites.map((site) => ({
+      popularSites: popularSites.map((site: any) => ({
         domain: site.domain,
-        popularity: site.popularity ?? 0,
+        popularity: toNumber(site.popularity),
         tokens: toNumber(site.tokenCount),
         lastScanned: site.lastScanned
       }))
     }
 
-    console.log(`✅ Database stats: ${stats.sites} sites, ${stats.tokens} tokens, ${stats.scans} scans`)
+    console.log(`✅ Instant stats: ${stats.sites} sites, ${stats.tokens} tokens, ${stats.scans} scans`)
 
-    // Cache the results for 5 minutes
-    statsCache.set(CACHE_KEYS.STATS, stats, 5 * 60 * 1000)
+    // Generate ETag from updated_at timestamp for efficient client-side validation
+    const etag = `"${createHash('md5').update(cachedStats.updated_at?.toString() || '').digest('hex')}"`
+    const clientEtag = request.headers.get('if-none-match')
 
-    return NextResponse.json(stats)
+    // If client has fresh data, return 304 Not Modified (no body transfer!)
+    if (clientEtag === etag) {
+      return new NextResponse(null, {
+        status: 304,
+        headers: {
+          'ETag': etag,
+          'Cache-Control': 'no-cache',
+          'Vary': 'Accept-Encoding'
+        }
+      })
+    }
+
+    // Optimize response with aggressive headers
+    return NextResponse.json(stats, {
+      headers: {
+        // Enable browser to start parsing immediately
+        'Content-Type': 'application/json; charset=utf-8',
+
+        // ETag for client-side freshness validation
+        'ETag': etag,
+
+        // Hint browser about JSON structure for faster parsing
+        'X-Content-Type-Options': 'nosniff',
+
+        // Allow client to validate with ETag
+        'Cache-Control': 'no-cache, must-revalidate',
+
+        // Enable compression at edge
+        'Vary': 'Accept-Encoding'
+      }
+    })
 
   } catch (error) {
     console.error('❌ Failed to load database statistics:', error)

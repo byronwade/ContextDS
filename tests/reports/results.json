@@ -1,0 +1,265 @@
+{
+  "config": {
+    "configFile": "/Users/byronwade/designer/playwright.config.ts",
+    "rootDir": "/Users/byronwade/designer/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "failures-only",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "tests/reports/html"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "tests/reports/results.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "tests/reports/junit.xml"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/byronwade/designer/tests/reports/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/byronwade/designer/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 120000
+      },
+      {
+        "outputDir": "/Users/byronwade/designer/tests/reports/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/Users/byronwade/designer/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 120000
+      },
+      {
+        "outputDir": "/Users/byronwade/designer/tests/reports/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/Users/byronwade/designer/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 120000
+      },
+      {
+        "outputDir": "/Users/byronwade/designer/tests/reports/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "mobile-chrome",
+        "name": "mobile-chrome",
+        "testDir": "/Users/byronwade/designer/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 120000
+      },
+      {
+        "outputDir": "/Users/byronwade/designer/tests/reports/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "mobile-safari",
+        "name": "mobile-safari",
+        "testDir": "/Users/byronwade/designer/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 120000
+      },
+      {
+        "outputDir": "/Users/byronwade/designer/tests/reports/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "stress-test",
+        "name": "stress-test",
+        "testDir": "/Users/byronwade/designer/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*stress.*\\.spec\\.ts|.*performance.*\\.spec\\.ts/"
+        ],
+        "timeout": 1800000
+      },
+      {
+        "outputDir": "/Users/byronwade/designer/tests/reports/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "api",
+        "name": "api",
+        "testDir": "/Users/byronwade/designer/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*api\\.spec\\.ts/"
+        ],
+        "timeout": 120000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.55.1",
+    "workers": 6,
+    "webServer": {
+      "command": "bun dev",
+      "url": "http://localhost:3000",
+      "reuseExistingServer": true,
+      "timeout": 120000,
+      "env": {
+        "NODE_ENV": "test"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "stress-advanced.spec.ts",
+      "file": "stress-advanced.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Soak Testing - Long-Running Stability",
+          "file": "stress-advanced.spec.ts",
+          "line": 98,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should maintain stability over extended period",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 1800000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "stress-test",
+                  "projectName": "stress-test",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "interrupted",
+                      "duration": 324513,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n⏱️  Starting soak test: 10 minutes\n"
+                        },
+                        {
+                          "text": "  [0.8m] Iteration 10, Recent Success: 0.0%\n"
+                        },
+                        {
+                          "text": "  [1.6m] Iteration 20, Recent Success: 0.0%\n"
+                        },
+                        {
+                          "text": "  [2.4m] Iteration 30, Recent Success: 0.0%\n"
+                        },
+                        {
+                          "text": "  [3.3m] Iteration 40, Recent Success: 0.0%\n"
+                        },
+                        {
+                          "text": "  [4.1m] Iteration 50, Recent Success: 0.0%\n"
+                        },
+                        {
+                          "text": "  [5.0m] Iteration 60, Recent Success: 0.0%\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-30T04:55:33.904Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/byronwade/designer/tests/reports/artifacts/stress-advanced-Soak-Testi-05ce2-bility-over-extended-period-stress-test/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c7ddece00cb0bea3d22-7e7a644bf1dd05f3b581",
+              "file": "stress-advanced.spec.ts",
+              "line": 99,
+              "column": 6
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-09-30T04:55:33.099Z",
+    "duration": 325395.608,
+    "expected": 0,
+    "skipped": 1,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

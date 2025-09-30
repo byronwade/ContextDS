@@ -23,19 +23,26 @@ import {
   Monitor,
   Sun,
   Moon,
-  Share2
+  Share2,
+  History
 } from "lucide-react"
 import { ColorCardGrid } from "@/components/organisms/color-card-grid"
 import { ThemeToggle } from "@/components/atoms/theme-toggle"
 import { RealtimeStat } from "@/components/atoms/realtime-stat"
-import { ScanProgressViewer } from "@/components/organisms/scan-progress-viewer"
-import { FontPreviewCard, preloadFonts } from "@/components/molecules/font-preview"
+import { FontPreview, FontPreviewCard, preloadFonts } from "@/components/molecules/font-preview"
 import { ComprehensiveAnalysisDisplay } from "@/components/organisms/comprehensive-analysis-display"
 import { RecentScansDropdown } from "@/components/molecules/recent-scans-dropdown"
 import { TokenDiffViewer } from "@/components/organisms/token-diff-viewer"
+import { TokenResultsDisplay } from "@/components/organisms/token-results-display"
+import { SearchResultsView } from "@/components/organisms/search-results-view"
+import { ScreenshotGallery } from "@/components/molecules/screenshot-gallery"
 import { cn } from "@/lib/utils"
 import { useRealtimeStats } from "@/hooks/use-realtime-stats"
 import { useRecentScans } from "@/stores/recent-scans-store"
+import { useScanStore } from "@/stores/scan-store"
+import { useSearchStore } from "@/stores/search-store"
+import { useUIStore } from "@/stores/ui-store"
+import { useStatsStore } from "@/stores/stats-store"
 
 const tokenCategoryOptions = [
   { key: "all", label: "All categories" },
@@ -317,84 +324,71 @@ type ScanResultPayload = {
     maturity?: string
     consistency?: number
   }
+  liveMetrics?: {
+    cssRules: number
+    variables: number
+    colors: number
+    tokens: number
+    qualityScore: number
+  }
   layoutDNA?: Record<string, unknown>
   error?: string
 }
 
 function HomePageContent() {
-  const searchParams = useSearchParams()
-  const [viewMode, setViewMode] = useState<ViewMode>("search")
-  const [query, setQuery] = useState("")
-  const [isSearchActive, setIsSearchActive] = useState(false)
-  const [hasResults, setHasResults] = useState(false)
-  const [caseInsensitive, setCaseInsensitive] = useState(false)
-  const [wholeWords, setWholeWords] = useState(false)
-  const [useRegex, setUseRegex] = useState(false)
-  const [results, setResults] = useState<TokenSearchResult[]>([])
-  const [loading, setLoading] = useState(false)
-  const [searchError, setSearchError] = useState<string | null>(null)
-  const [stats, setStats] = useState<StatsResponse | null>(null)
-  const [scanResult, setScanResult] = useState<ScanResultPayload | null>(null)
-  const [scanLoading, setScanLoading] = useState(false)
-  const [scanError, setScanError] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
-  const [showDiff, setShowDiff] = useState(false)
+  // Zustand stores
+  const {
+    viewMode,
+    setViewMode,
+    showDiff,
+    setShowDiff,
+    toggleSection,
+    expandedSections,
+    copied,
+    setCopied
+  } = useUIStore()
 
-  // Expandable sections state
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
+  const {
+    query,
+    results,
+    isLoading: loading,
+    error: searchError,
+    preferences,
+    setQuery,
+    updatePreferences,
+    performSearch,
+    clearSearch
+  } = useSearchStore()
 
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => {
-      const next = new Set(prev)
-      if (next.has(section)) {
-        next.delete(section)
-      } else {
-        next.add(section)
-      }
-      return next
-    })
-  }
+  const {
+    isScanning: scanLoading,
+    result: scanResult,
+    error: scanError,
+    metrics: scanMetrics,
+    progress: scanProgress,
+    scanId,
+    startScan,
+    resetScan
+  } = useScanStore()
+
+  const {
+    stats,
+    loadStats
+  } = useStatsStore()
 
   // Real-time stats from Neon database
-  const realtimeStats = useRealtimeStats(5000) // Updates every 5 seconds
+  const realtimeStats = useRealtimeStats(5000)
 
   // Recent scans store
   const { addScan } = useRecentScans()
 
-  useEffect(() => {
-    setIsSearchActive(query.trim().length > 0)
-    setHasResults(results.length > 0 || scanResult !== null)
-  }, [query, results, scanResult])
+  // Destructure search preferences
+  const { caseInsensitive, wholeWords, useRegex } = preferences
 
-  // Debug: Log when scan completes
+  // Load stats on mount
   useEffect(() => {
-    if (scanResult) {
-      console.log('✅ Scan result received, should show results now', {
-        scanResult: scanResult,
-        scanLoading: scanLoading,
-        viewMode: viewMode,
-        hasCuratedTokens: !!scanResult.curatedTokens,
-        hasComprehensiveAnalysis: !!scanResult.comprehensiveAnalysis,
-        domain: scanResult.domain
-      })
-    }
-  }, [scanResult, scanLoading, viewMode])
-
-  useEffect(() => {
-    const loadStats = async () => {
-      try {
-        const response = await fetch("/api/stats")
-        if (!response.ok) throw new Error(`HTTP ${response.status}`)
-        const data = await response.json()
-        setStats(data)
-      } catch (error) {
-        console.error("Failed to load stats", error)
-        setStats(null)
-      }
-    }
-
     loadStats()
-  }, [])
+  }, [loadStats])
 
   // Keyboard shortcut: ⌘K to focus search
   useEffect(() => {
@@ -410,84 +404,23 @@ function HomePageContent() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
+  // Auto-search when query changes
   useEffect(() => {
     if (!query.trim()) {
-      setResults([])
-      setSearchError(null)
-      setLoading(false)
+      clearSearch()
       return
     }
 
     const controller = new AbortController()
     const searchTimeout = setTimeout(() => {
-      handleSearch(query, controller.signal)
+      performSearch(query, controller.signal)
     }, 150)
 
     return () => {
       controller.abort()
       clearTimeout(searchTimeout)
     }
-  }, [query, caseInsensitive, wholeWords, useRegex])
-
-  const handleSearch = async (searchQuery: string, signal?: AbortSignal) => {
-    const trimmed = searchQuery.trim()
-    if (!trimmed) return
-
-    setLoading(true)
-    setSearchError(null)
-
-    try {
-      const params = new URLSearchParams({
-        query: trimmed,
-        mode: "tokens",
-        caseInsensitive: caseInsensitive ? "true" : "false",
-        limit: "150"
-      })
-
-      const response = await fetch(`/api/search?${params.toString()}`, { signal })
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
-
-      const data = (await response.json()) as TokenSearchApiResponse
-      let items: TokenSearchResult[] = (data.results ?? []).map((item) => ({
-        id: item.id,
-        type: item.type,
-        name: item.name,
-        value: normalizeTokenValue(item.value),
-        category: item.category,
-        site: item.site,
-        confidence: item.confidence,
-        usage: item.usage,
-        source: item.source
-      }))
-
-      if (useRegex) {
-        try {
-          const regex = new RegExp(trimmed, caseInsensitive ? "i" : undefined)
-          items = items.filter(result => regex.test(result.name) || regex.test(String(result.value)))
-        } catch (error) {
-          setSearchError("Invalid regular expression")
-          items = []
-        }
-      } else if (wholeWords) {
-        const searchTerm = caseInsensitive ? trimmed.toLowerCase() : trimmed
-        items = items.filter(result => {
-          const tokenName = caseInsensitive ? result.name.toLowerCase() : result.name
-          const tokenValue = caseInsensitive ? String(result.value).toLowerCase() : String(result.value)
-          const wordBoundary = new RegExp(`\\b${escapeRegex(searchTerm)}\\b`, caseInsensitive ? "i" : undefined)
-          return wordBoundary.test(tokenName) || wordBoundary.test(tokenValue)
-        })
-      }
-
-      setResults(items)
-
-    } catch (error) {
-      if ((error as Error).name === "AbortError") return
-      setSearchError(error instanceof Error ? error.message : "Search failed")
-      setResults([])
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [query, performSearch, clearSearch])
 
   const handleCopyToken = (value: string) => {
     navigator.clipboard.writeText(value)
@@ -502,98 +435,367 @@ function HomePageContent() {
     }
   }
 
+  const handleExport = (format: 'json' | 'css' | 'scss' | 'js' | 'figma' | 'xd' | 'swift' | 'android' | 'tailwind') => {
+    if (!scanResult?.curatedTokens) return
+
+    let content = ''
+    let mimeType = 'text/plain'
+    let extension = format
+
+    switch (format) {
+      case 'json':
+        content = JSON.stringify(scanResult.curatedTokens, null, 2)
+        mimeType = 'application/json'
+        break
+
+      case 'css':
+        content = generateCSS(scanResult.curatedTokens)
+        mimeType = 'text/css'
+        break
+
+      case 'scss':
+        content = generateSCSS(scanResult.curatedTokens)
+        mimeType = 'text/x-scss'
+        break
+
+      case 'js':
+        content = generateJS(scanResult.curatedTokens)
+        mimeType = 'text/javascript'
+        break
+
+      case 'tailwind':
+        content = generateTailwind(scanResult.curatedTokens)
+        mimeType = 'text/javascript'
+        extension = 'js'
+        break
+
+      case 'figma':
+        content = generateFigma(scanResult.curatedTokens)
+        mimeType = 'application/json'
+        extension = 'json'
+        break
+
+      case 'xd':
+        content = generateXD(scanResult.curatedTokens)
+        mimeType = 'application/json'
+        extension = 'json'
+        break
+
+      case 'swift':
+        content = generateSwift(scanResult.curatedTokens)
+        mimeType = 'text/x-swift'
+        break
+
+      case 'android':
+        content = generateAndroid(scanResult.curatedTokens)
+        mimeType = 'text/xml'
+        extension = 'xml'
+        break
+    }
+
+    const blob = new Blob([content], { type: mimeType })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `${scanResult.domain}-tokens.${extension}`
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  const generateCSS = (tokens: any) => {
+    let css = ':root {\n'
+    if (tokens.colors) {
+      css += '  /* Colors */\n'
+      tokens.colors.forEach((token: any, i: number) => {
+        css += `  --color-${i + 1}: ${token.value};\n`
+      })
+      css += '\n'
+    }
+    if (tokens.typography?.families) {
+      css += '  /* Fonts */\n'
+      tokens.typography.families.forEach((token: any, i: number) => {
+        css += `  --font-${i + 1}: ${token.value};\n`
+      })
+      css += '\n'
+    }
+    if (tokens.spacing) {
+      css += '  /* Spacing */\n'
+      tokens.spacing.forEach((token: any, i: number) => {
+        css += `  --spacing-${i + 1}: ${token.value};\n`
+      })
+      css += '\n'
+    }
+    if (tokens.radius) {
+      css += '  /* Radius */\n'
+      tokens.radius.forEach((token: any, i: number) => {
+        css += `  --radius-${i + 1}: ${token.value};\n`
+      })
+      css += '\n'
+    }
+    if (tokens.shadows) {
+      css += '  /* Shadows */\n'
+      tokens.shadows.forEach((token: any, i: number) => {
+        css += `  --shadow-${i + 1}: ${token.value};\n`
+      })
+    }
+    css += '}\n'
+    return css
+  }
+
+  const generateSCSS = (tokens: any) => {
+    let scss = ''
+    if (tokens.colors) {
+      scss += '// Colors\n'
+      tokens.colors.forEach((token: any, i: number) => {
+        scss += `$color-${i + 1}: ${token.value};\n`
+      })
+      scss += '\n'
+    }
+    if (tokens.typography?.families) {
+      scss += '// Fonts\n'
+      tokens.typography.families.forEach((token: any, i: number) => {
+        scss += `$font-${i + 1}: ${token.value};\n`
+      })
+      scss += '\n'
+    }
+    if (tokens.spacing) {
+      scss += '// Spacing\n'
+      tokens.spacing.forEach((token: any, i: number) => {
+        scss += `$spacing-${i + 1}: ${token.value};\n`
+      })
+      scss += '\n'
+    }
+    if (tokens.radius) {
+      scss += '// Radius\n'
+      tokens.radius.forEach((token: any, i: number) => {
+        scss += `$radius-${i + 1}: ${token.value};\n`
+      })
+      scss += '\n'
+    }
+    if (tokens.shadows) {
+      scss += '// Shadows\n'
+      tokens.shadows.forEach((token: any, i: number) => {
+        scss += `$shadow-${i + 1}: ${token.value};\n`
+      })
+    }
+    return scss
+  }
+
+  const generateJS = (tokens: any) => {
+    return `export const tokens = ${JSON.stringify(tokens, null, 2)};\n`
+  }
+
+  const generateTailwind = (tokens: any) => {
+    let config = '/** @type {import(\'tailwindcss\').Config} */\n'
+    config += 'module.exports = {\n'
+    config += '  theme: {\n'
+    config += '    extend: {\n'
+
+    // Colors
+    if (tokens.colors) {
+      config += '      colors: {\n'
+      tokens.colors.forEach((token: any, i: number) => {
+        const colorName = `color-${i + 1}`
+        config += `        '${colorName}': '${token.value}',\n`
+      })
+      config += '      },\n'
+    }
+
+    // Font families
+    if (tokens.typography?.families) {
+      config += '      fontFamily: {\n'
+      tokens.typography.families.forEach((token: any, i: number) => {
+        const fontName = `font-${i + 1}`
+        config += `        '${fontName}': ${JSON.stringify(token.value.split(',').map((f: string) => f.trim()))},\n`
+      })
+      config += '      },\n'
+    }
+
+    // Spacing
+    if (tokens.spacing) {
+      config += '      spacing: {\n'
+      tokens.spacing.forEach((token: any, i: number) => {
+        const spacingName = `spacing-${i + 1}`
+        config += `        '${spacingName}': '${token.value}',\n`
+      })
+      config += '      },\n'
+    }
+
+    // Border radius
+    if (tokens.radius) {
+      config += '      borderRadius: {\n'
+      tokens.radius.forEach((token: any, i: number) => {
+        const radiusName = `radius-${i + 1}`
+        config += `        '${radiusName}': '${token.value}',\n`
+      })
+      config += '      },\n'
+    }
+
+    // Box shadow
+    if (tokens.shadows) {
+      config += '      boxShadow: {\n'
+      tokens.shadows.forEach((token: any, i: number) => {
+        const shadowName = `shadow-${i + 1}`
+        config += `        '${shadowName}': '${token.value}',\n`
+      })
+      config += '      },\n'
+    }
+
+    config += '    },\n'
+    config += '  },\n'
+    config += '}\n'
+    return config
+  }
+
+  const generateFigma = (tokens: any) => {
+    const figmaTokens: any = {}
+    if (tokens.colors) {
+      figmaTokens.colors = tokens.colors.map((token: any, i: number) => ({
+        name: `color-${i + 1}`,
+        value: token.value,
+        type: 'color'
+      }))
+    }
+    if (tokens.typography?.families) {
+      figmaTokens.typography = tokens.typography.families.map((token: any, i: number) => ({
+        name: `font-${i + 1}`,
+        value: token.value,
+        type: 'fontFamily'
+      }))
+    }
+    if (tokens.spacing) {
+      figmaTokens.spacing = tokens.spacing.map((token: any, i: number) => ({
+        name: `spacing-${i + 1}`,
+        value: token.value,
+        type: 'spacing'
+      }))
+    }
+    if (tokens.radius) {
+      figmaTokens.radius = tokens.radius.map((token: any, i: number) => ({
+        name: `radius-${i + 1}`,
+        value: token.value,
+        type: 'borderRadius'
+      }))
+    }
+    if (tokens.shadows) {
+      figmaTokens.shadows = tokens.shadows.map((token: any, i: number) => ({
+        name: `shadow-${i + 1}`,
+        value: token.value,
+        type: 'boxShadow'
+      }))
+    }
+    return JSON.stringify(figmaTokens, null, 2)
+  }
+
+  const generateXD = (tokens: any) => {
+    return generateFigma(tokens)
+  }
+
+  const generateSwift = (tokens: any) => {
+    let swift = 'import UIKit\n\nenum DesignTokens {\n'
+    if (tokens.colors) {
+      swift += '    enum Colors {\n'
+      tokens.colors.forEach((token: any, i: number) => {
+        const hex = token.value.replace('#', '')
+        swift += `        static let color${i + 1} = UIColor(hex: "${hex}")\n`
+      })
+      swift += '    }\n\n'
+    }
+    if (tokens.typography?.families) {
+      swift += '    enum Fonts {\n'
+      tokens.typography.families.forEach((token: any, i: number) => {
+        const fontName = token.value.split(',')[0].trim().replace(/['"]/g, '')
+        swift += `        static let font${i + 1} = "${fontName}"\n`
+      })
+      swift += '    }\n\n'
+    }
+    if (tokens.spacing) {
+      swift += '    enum Spacing {\n'
+      tokens.spacing.forEach((token: any, i: number) => {
+        const value = parseFloat(token.value)
+        swift += `        static let spacing${i + 1}: CGFloat = ${value}\n`
+      })
+      swift += '    }\n\n'
+    }
+    if (tokens.radius) {
+      swift += '    enum Radius {\n'
+      tokens.radius.forEach((token: any, i: number) => {
+        const value = parseFloat(token.value)
+        swift += `        static let radius${i + 1}: CGFloat = ${value}\n`
+      })
+      swift += '    }\n'
+    }
+    swift += '}\n'
+    return swift
+  }
+
+  const generateAndroid = (tokens: any) => {
+    let xml = '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
+    if (tokens.colors) {
+      xml += '    <!-- Colors -->\n'
+      tokens.colors.forEach((token: any, i: number) => {
+        xml += `    <color name="color_${i + 1}">${token.value}</color>\n`
+      })
+      xml += '\n'
+    }
+    if (tokens.spacing) {
+      xml += '    <!-- Spacing -->\n'
+      tokens.spacing.forEach((token: any, i: number) => {
+        const value = token.value.replace('px', 'dp')
+        xml += `    <dimen name="spacing_${i + 1}">${value}</dimen>\n`
+      })
+      xml += '\n'
+    }
+    if (tokens.radius) {
+      xml += '    <!-- Radius -->\n'
+      tokens.radius.forEach((token: any, i: number) => {
+        const value = token.value.replace('px', 'dp')
+        xml += `    <dimen name="radius_${i + 1}">${value}</dimen>\n`
+      })
+    }
+    xml += '</resources>\n'
+    return xml
+  }
+
   const handleScan = async () => {
     const target = query.trim()
     if (!target) return
 
-    setScanLoading(true)
-    setScanResult(null)
-    setScanError(null)
-    setResults([]) // Clear search results
-
-    try {
-      const response = await fetch("/api/scan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url: target.startsWith("http") ? target : `https://${target}`,
-          prettify: false,
-          quality: "standard"
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error(`Scan failed with status ${response.status}`)
-      }
-
-      const result = (await response.json()) as ScanResultPayload
-
-      console.log('🔍 DEBUG: Scan API Response:', {
-        status: result.status,
-        domain: result.domain,
-        hasCuratedTokens: !!result.curatedTokens,
-        hasComprehensiveAnalysis: !!result.comprehensiveAnalysis,
-        fullResult: result
-      })
-
-      if (result.status === "failed") {
-        // Still show partial results if available
-        if (result.curatedTokens || result.tokens) {
-          console.log('Scan failed but has partial data - showing results anyway')
-          // Continue to show results
-        } else {
-          throw new Error(result.error || "Scan failed")
-        }
-      }
-
-      // Preload fonts for preview (non-blocking)
-      if (result.curatedTokens?.typography?.families) {
-        const fontFamilies = result.curatedTokens.typography.families.map(f => f.value)
-        preloadFonts(fontFamilies)
-      }
-
-      // Refresh stats
-      const statsResponse = await fetch("/api/stats")
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json()
-        setStats(statsData)
-      }
-
-      console.log('🔍 DEBUG: Before setting state - Current values:', {
-        currentScanResult: scanResult,
-        currentScanLoading: scanLoading,
-        currentViewMode: viewMode
-      })
-
-      // CRITICAL FIX: Set loading to false FIRST, then set result
-      // This ensures the loading state is cleared before the result is set
-      // preventing the loading screen from taking priority in the render conditions
-      setScanLoading(false)
-
-      // Use setTimeout to ensure loading state is flushed before setting result
-      // This breaks the automatic batching and forces a re-render sequence
-      setTimeout(() => {
-        setScanResult(result)
-        console.log('🔍 DEBUG: Result set after loading cleared')
-
-        // Save to recent scans
-        if (result.domain && result.summary) {
-          addScan({
-            domain: result.domain,
-            tokensExtracted: result.summary.tokensExtracted,
-            confidence: result.summary.confidence,
-            url: `/scan/${encodeURIComponent(result.domain)}`
-          })
-        }
-      }, 0)
-
-      console.log('🔍 DEBUG: State updates scheduled')
-
-    } catch (error) {
-      setScanError(error instanceof Error ? error.message : "Scan failed")
-      setScanLoading(false)
-    }
+    clearSearch() // Clear search results
+    await startScan(target) // Zustand handles all state updates
   }
+
+  // Watch for scan completion
+  useEffect(() => {
+    if (!scanResult) return
+
+    console.log('🎯 SCAN COMPLETE - Should show results now!', {
+      domain: scanResult.domain,
+      scanLoading,
+      viewMode,
+      hasTokens: !!scanResult.curatedTokens,
+      tokensCount: scanResult.summary?.tokensExtracted
+    })
+
+    // Preload fonts for preview
+    if (scanResult.curatedTokens?.typography?.families) {
+      const fontFamilies = scanResult.curatedTokens.typography.families.map(f => f.value)
+      preloadFonts(fontFamilies)
+    }
+
+    // Refresh stats and add to recent scans
+    if (scanResult.domain && scanResult.summary) {
+      loadStats()
+      addScan({
+        domain: scanResult.domain,
+        tokensExtracted: scanResult.summary.tokensExtracted,
+        confidence: scanResult.summary.confidence,
+        url: `/scan/${encodeURIComponent(scanResult.domain)}`
+      })
+    }
+  }, [scanResult, loadStats, addScan, scanLoading, viewMode])
 
   const categoryFacets = useMemo(() => {
     const base = tokenCategoryOptions.reduce<Record<string, number>>((acc, option) => {
@@ -625,20 +827,11 @@ function HomePageContent() {
 
         {/* Left: Brand + Live Stats */}
         <div className="flex items-center pl-4 md:pl-6 gap-4">
-          <div className="flex items-center space-x-2 pr-3">
-            <Link className="outline-offset-4" href="/">
-              <svg aria-label="ContextDS" className="fill-black dark:fill-white" viewBox="0 0 75 65" height="22">
-                <path d="M37.59.25l36.95 64H.64l36.95-64z"></path>
-              </svg>
-            </Link>
-            <svg fill="none" height="24" shapeRendering="geometricPrecision" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24" className="stroke-grep-4" style={{width: '22px', height: '22px'}}>
-              <path d="M16.88 3.549L7.12 20.451"></path>
-            </svg>
-            <Link className="outline-offset-4" href="/">
-              <div className="flex items-center gap-2">
-                <Palette className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                <span className="text-lg font-semibold text-black dark:text-white">ContextDS</span>
-              </div>
+          <div className="flex items-center gap-2 pr-3">
+            <Link className="outline-offset-4 flex items-center gap-2" href="/">
+              <Palette className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <span className="text-lg font-semibold text-black dark:text-white">ContextDS</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900">Beta</span>
             </Link>
           </div>
 
@@ -667,8 +860,8 @@ function HomePageContent() {
               <button
                 onClick={() => {
                   setViewMode(viewMode === "search" ? "scan" : "search")
-                  setResults([])
-                  setScanResult(null)
+                  clearSearch()
+                  resetScan()
                 }}
                 className="flex items-center gap-1.5 text-[13px] font-medium text-foreground hover:text-grep-9 transition-colors"
                 title={`Mode: ${viewMode} (click to switch)`}
@@ -713,7 +906,7 @@ function HomePageContent() {
                 <>
                   <button
                     type="button"
-                    onClick={() => setCaseInsensitive(!caseInsensitive)}
+                    onClick={() => updatePreferences({ caseInsensitive: !caseInsensitive })}
                     className={cn(
                       "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors h-6 px-1 min-w-6",
                       caseInsensitive && "bg-grep-11 border-grep-6 text-foreground"
@@ -729,7 +922,7 @@ function HomePageContent() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setWholeWords(!wholeWords)}
+                    onClick={() => updatePreferences({ wholeWords: !wholeWords })}
                     className={cn(
                       "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors h-6 px-1 min-w-6",
                       wholeWords && "bg-grep-11 border-grep-6 text-foreground"
@@ -747,7 +940,7 @@ function HomePageContent() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setUseRegex(!useRegex)}
+                    onClick={() => updatePreferences({ useRegex: !useRegex })}
                     className={cn(
                       "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors h-6 px-1 min-w-6",
                       useRegex && "bg-grep-11 border-grep-6 text-foreground"
@@ -787,6 +980,11 @@ function HomePageContent() {
         {/* Right: Minimal Actions */}
         <div className="flex min-h-[64px] select-none items-center justify-end gap-2 pr-4 md:pr-6">
           <RecentScansDropdown />
+          <Link href="/community">
+            <Button variant="ghost" size="sm" className="h-8 px-3 text-xs font-medium text-grep-9 hover:text-foreground">
+              Community
+            </Button>
+          </Link>
           <Button variant="ghost" size="sm" className="hidden sm:inline-flex h-8 px-3 text-xs font-medium text-grep-9 hover:text-foreground">
             Docs
           </Button>
@@ -804,8 +1002,8 @@ function HomePageContent() {
             <button
               onClick={() => {
                 setViewMode("search")
-                setResults([])
-                setScanResult(null)
+                clearSearch()
+                resetScan()
               }}
               className={cn(
                 "flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2",
@@ -820,8 +1018,8 @@ function HomePageContent() {
             <button
               onClick={() => {
                 setViewMode("scan")
-                setResults([])
-                setScanResult(null)
+                clearSearch()
+                resetScan()
               }}
               className={cn(
                 "flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2",
@@ -866,12 +1064,8 @@ function HomePageContent() {
       </div>
 
       {/* Main Content - Fixed Conditional Priority */}
-      {viewMode === "scan" && scanLoading ? (
-        /* Scan Loading - Show First */
-        <div className="flex-1 flex items-center justify-center p-4 md:p-12 bg-grep-0">
-          <ScanProgressViewer domain={query} />
-        </div>
-      ) : viewMode === "scan" && scanError ? (
+      {console.log('🔍 RENDER CHECK:', { viewMode, scanLoading, scanError: !!scanError, scanResult: !!scanResult })}
+      {viewMode === "scan" && scanError ? (
         /* Scan Failed - Terminal Style */
         <div className="flex-1 flex items-center justify-center p-4 md:p-12 bg-grep-0">
           <div className="w-full max-w-3xl">
@@ -932,7 +1126,7 @@ function HomePageContent() {
               <div className="border-t border-grep-2 bg-background px-4 py-3 flex items-center gap-2">
                 <Button
                   onClick={() => {
-                    setScanError(null)
+                    resetScan()
                     handleScan()
                   }}
                   variant="ghost"
@@ -943,7 +1137,7 @@ function HomePageContent() {
                 </Button>
                 <Button
                   onClick={() => {
-                    setScanError(null)
+                    resetScan()
                     setQuery("")
                     setViewMode("search")
                   }}
@@ -964,19 +1158,27 @@ function HomePageContent() {
             </div>
           </div>
         </div>
-      ) : viewMode === "scan" && scanResult ? (
-        /* Scan Results - Grep Terminal Style */
+      ) : viewMode === "scan" && (scanResult || scanLoading) ? (
+        /* Scan Results - Grep Terminal Style with Streaming */
         <div className="flex-1 w-full overflow-y-auto bg-grep-0">
           <div className="w-full max-w-6xl mx-auto px-4 py-6 md:px-8 md:py-8">
 
             {/* Minimal Header with Version Info */}
             <div className="mb-6 flex items-center justify-between border-b border-grep-2 pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-green-500" />
+                <div className={`w-2 h-2 rounded-full ${scanLoading ? 'bg-emerald-500 animate-pulse' : 'bg-green-500'}`} />
                 <h1 className="text-xl font-medium text-foreground font-mono">
-                  {scanResult.domain}
+                  {scanResult?.domain || query}
                 </h1>
-                {scanResult.versionInfo && (
+                {scanLoading && (
+                  <>
+                    <span className="text-grep-7">·</span>
+                    <Badge variant="secondary" className="h-6 font-mono text-xs">
+                      {scanProgress?.message || scanProgress?.phase || 'scanning...'}
+                    </Badge>
+                  </>
+                )}
+                {scanResult?.versionInfo && (
                   <>
                     <span className="text-grep-7">·</span>
                     <Badge variant="secondary" className="h-6 font-mono text-xs">
@@ -991,7 +1193,7 @@ function HomePageContent() {
                 )}
               </div>
               <div className="flex items-center gap-2">
-                {scanResult.versionInfo?.diff && scanResult.versionInfo.changeCount > 0 && (
+                {scanResult?.versionInfo?.diff && scanResult.versionInfo.changeCount > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -1002,36 +1204,115 @@ function HomePageContent() {
                     {showDiff ? 'hide changes' : 'view changes'}
                   </Button>
                 )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleCopyToken(JSON.stringify(scanResult.curatedTokens, null, 2))}
-                  className="h-7 px-2 text-xs font-mono text-grep-9 hover:text-foreground"
-                >
-                  <Copy className="h-3.5 w-3.5 mr-1" />
-                  copy json
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    const blob = new Blob([JSON.stringify(scanResult.curatedTokens, null, 2)], { type: "application/json" })
-                    const url = URL.createObjectURL(blob)
-                    const anchor = document.createElement("a")
-                    anchor.href = url
-                    anchor.download = `${scanResult.domain}-tokens.json`
-                    document.body.appendChild(anchor)
-                    anchor.click()
-                    anchor.remove()
-                    URL.revokeObjectURL(url)
-                  }}
-                  className="h-7 px-2 text-xs font-mono text-grep-9 hover:text-foreground"
-                >
-                  <Download className="h-3.5 w-3.5 mr-1" />
-                  export
-                </Button>
+                {scanResult && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleCopyToken(JSON.stringify(scanResult.curatedTokens, null, 2))}
+                    className="h-7 px-2 text-xs font-mono text-grep-9 hover:text-foreground"
+                  >
+                    <Copy className="h-3.5 w-3.5 mr-1" />
+                    copy json
+                  </Button>
+                )}
+                <div className="relative group">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs font-mono text-grep-9 hover:text-foreground"
+                  >
+                    <Download className="h-3.5 w-3.5 mr-1" />
+                    export
+                  </Button>
+                  <div className="absolute right-0 top-full mt-1 w-40 bg-background border border-grep-2 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                    <div className="py-1">
+                      <button
+                        onClick={() => handleExport('json')}
+                        className="w-full px-3 py-2 text-left text-xs font-mono text-grep-9 hover:text-foreground hover:bg-grep-1 transition-colors"
+                      >
+                        JSON
+                      </button>
+                      <button
+                        onClick={() => handleExport('css')}
+                        className="w-full px-3 py-2 text-left text-xs font-mono text-grep-9 hover:text-foreground hover:bg-grep-1 transition-colors"
+                      >
+                        CSS
+                      </button>
+                      <button
+                        onClick={() => handleExport('scss')}
+                        className="w-full px-3 py-2 text-left text-xs font-mono text-grep-9 hover:text-foreground hover:bg-grep-1 transition-colors"
+                      >
+                        SCSS
+                      </button>
+                      <button
+                        onClick={() => handleExport('js')}
+                        className="w-full px-3 py-2 text-left text-xs font-mono text-grep-9 hover:text-foreground hover:bg-grep-1 transition-colors"
+                      >
+                        JavaScript
+                      </button>
+                      <button
+                        onClick={() => handleExport('tailwind')}
+                        className="w-full px-3 py-2 text-left text-xs font-mono text-grep-9 hover:text-foreground hover:bg-grep-1 transition-colors"
+                      >
+                        Tailwind Config
+                      </button>
+                      <button
+                        onClick={() => handleExport('figma')}
+                        className="w-full px-3 py-2 text-left text-xs font-mono text-grep-9 hover:text-foreground hover:bg-grep-1 transition-colors"
+                      >
+                        Figma
+                      </button>
+                      <button
+                        onClick={() => handleExport('xd')}
+                        className="w-full px-3 py-2 text-left text-xs font-mono text-grep-9 hover:text-foreground hover:bg-grep-1 transition-colors"
+                      >
+                        Adobe XD
+                      </button>
+                      <button
+                        onClick={() => handleExport('swift')}
+                        className="w-full px-3 py-2 text-left text-xs font-mono text-grep-9 hover:text-foreground hover:bg-grep-1 transition-colors"
+                      >
+                        Swift
+                      </button>
+                      <button
+                        onClick={() => handleExport('android')}
+                        className="w-full px-3 py-2 text-left text-xs font-mono text-grep-9 hover:text-foreground hover:bg-grep-1 transition-colors"
+                      >
+                        Android
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
+
+            {/* Live Progress Messages - Show during scan */}
+            {scanLoading && scanProgress && (
+              <div className="mb-6 rounded-md border border-grep-2 bg-grep-0 overflow-hidden">
+                <div className="px-4 py-3 flex items-start gap-3">
+                  <div className="flex gap-1 mt-1">
+                    <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                    <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse [animation-delay:150ms]" />
+                    <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse [animation-delay:300ms]" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <div className="font-mono text-sm text-foreground">
+                      {scanProgress.message}
+                    </div>
+                    {scanProgress.details && scanProgress.details.length > 0 && (
+                      <div className="text-xs text-grep-9 font-mono space-y-0.5">
+                        {scanProgress.details.slice(-3).map((detail, i) => (
+                          <div key={i}>→ {detail}</div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-xs text-grep-7 font-mono tabular-nums">
+                    {scanProgress.step}/{scanProgress.totalSteps}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Summary Stats - Terminal Style */}
             <div className="mb-6 rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
@@ -1039,32 +1320,48 @@ function HomePageContent() {
                 <div className="px-4 py-3 border-b border-grep-2 md:border-b-0">
                   <div className="text-grep-9 text-xs mb-1">tokens</div>
                   <div className="text-2xl font-bold text-foreground tabular-nums">
-                    {scanResult.summary?.tokensExtracted || 0}
+                    {scanLoading ? (
+                      <div className="h-8 w-16 bg-grep-2 animate-pulse rounded" />
+                    ) : (
+                      scanResult?.summary?.tokensExtracted || 0
+                    )}
                   </div>
                 </div>
                 <div className="px-4 py-3 border-b border-grep-2 md:border-b-0">
                   <div className="text-grep-9 text-xs mb-1">confidence</div>
                   <div className="text-2xl font-bold text-foreground tabular-nums">
-                    {scanResult.summary?.confidence || 0}%
+                    {scanLoading ? (
+                      <div className="h-8 w-16 bg-grep-2 animate-pulse rounded" />
+                    ) : (
+                      `${scanResult?.summary?.confidence || 0}%`
+                    )}
                   </div>
                 </div>
                 <div className="px-4 py-3">
                   <div className="text-grep-9 text-xs mb-1">complete</div>
                   <div className="text-2xl font-bold text-foreground tabular-nums">
-                    {scanResult.summary?.completeness || 0}%
+                    {scanLoading ? (
+                      <div className="h-8 w-16 bg-grep-2 animate-pulse rounded" />
+                    ) : (
+                      `${scanResult?.summary?.completeness || 0}%`
+                    )}
                   </div>
                 </div>
                 <div className="px-4 py-3">
                   <div className="text-grep-9 text-xs mb-1">quality</div>
                   <div className="text-2xl font-bold text-foreground tabular-nums">
-                    {scanResult.summary?.reliability || 0}%
+                    {scanLoading ? (
+                      <div className="h-8 w-16 bg-grep-2 animate-pulse rounded" />
+                    ) : (
+                      `${scanResult?.summary?.reliability || 0}%`
+                    )}
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Version Diff - Show if there are changes */}
-            {showDiff && scanResult.versionInfo?.diff && (
+            {showDiff && scanResult?.versionInfo?.diff && (
               <div className="mb-6">
                 <TokenDiffViewer
                   diff={scanResult.versionInfo.diff}
@@ -1088,71 +1385,103 @@ function HomePageContent() {
             )}
 
             {/* Comprehensive AI Analysis - Feature Showcase */}
-            {scanResult.comprehensiveAnalysis && (
+            {scanResult?.comprehensiveAnalysis && (
               <ComprehensiveAnalysisDisplay analysis={scanResult.comprehensiveAnalysis} />
             )}
 
-            {/* Token Categories - Minimal Grep Style */}
-            {scanResult.curatedTokens && (
+            {/* Loading State - Show skeleton loaders while scanning */}
+            {scanLoading && !scanResult && (
+              <div className="space-y-4">
+                {/* Helpful message */}
+                <div className="text-center py-4">
+                  <p className="text-sm text-grep-9 font-mono">
+                    Extracting design tokens... This usually takes 30-60 seconds
+                  </p>
+                </div>
+
+                {/* Skeleton for Colors */}
+                <div className="rounded-md border border-grep-2 bg-grep-0 overflow-hidden">
+                  <div className="border-b border-grep-2 bg-background px-4 py-2.5">
+                    <span className="text-xs text-grep-9 font-mono uppercase tracking-wide">Colors</span>
+                  </div>
+                  <div className="p-4 grid grid-cols-4 md:grid-cols-8 gap-2">
+                    {Array.from({ length: 16 }).map((_, i) => (
+                      <div key={i} className="h-12 bg-grep-2 animate-pulse rounded" />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Skeleton for Typography */}
+                <div className="rounded-md border border-grep-2 bg-grep-0 overflow-hidden">
+                  <div className="border-b border-grep-2 bg-background px-4 py-2.5">
+                    <span className="text-xs text-grep-9 font-mono uppercase tracking-wide">Typography</span>
+                  </div>
+                  <div className="p-4 space-y-2">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="h-8 bg-grep-2 animate-pulse rounded" />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Skeleton for Spacing */}
+                <div className="rounded-md border border-grep-2 bg-grep-0 overflow-hidden">
+                  <div className="border-b border-grep-2 bg-background px-4 py-2.5">
+                    <span className="text-xs text-grep-9 font-mono uppercase tracking-wide">Spacing</span>
+                  </div>
+                  <div className="p-4 space-y-2">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <div key={i} className="h-6 bg-grep-2 animate-pulse rounded" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Token Categories - Grep.app Style with Enhanced Features */}
+            {scanResult?.curatedTokens && (
               <div className="space-y-4">
 
-                {/* Colors - Compact Grid */}
-                {scanResult.curatedTokens.colors && scanResult.curatedTokens.colors.length > 0 && (
-                  <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
-                    <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
-                      <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">
-                        Colors ({scanResult.curatedTokens.colors.length})
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCopyToken(JSON.stringify(scanResult.curatedTokens.colors, null, 2))}
-                        className="h-6 px-2 text-xs text-grep-9 hover:text-foreground"
-                      >
-                        copy
-                      </Button>
-                    </div>
-                    <div className="p-4">
-                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                        {scanResult.curatedTokens.colors.map((token, index) => (
-                          <button
-                            key={`color-${index}`}
-                            onClick={() => handleCopyToken(String(token.value))}
-                            className="group flex flex-col gap-2 p-2 rounded border border-grep-2 bg-background hover:border-foreground transition-colors"
-                            title={`${token.value} · ${token.usage} uses (${token.percentage}% of colors)`}
-                          >
-                            <div
-                              className="w-full h-16 rounded border border-grep-3"
-                              style={{ backgroundColor: String(token.value) }}
-                            />
-                            <div className="text-left w-full">
-                              <code className="text-xs text-foreground block truncate">{token.value}</code>
-                              <div className="flex items-center justify-between mt-1">
-                                <span className="text-[10px] text-grep-9">{token.usage} uses</span>
-                                <div className="flex items-center gap-1">
-                                  <div className="w-8 h-0.5 bg-grep-3 rounded-full overflow-hidden">
-                                    <div
-                                      className="h-full bg-blue-500 rounded-full transition-all"
-                                      style={{ width: `${token.percentage}%` }}
-                                    />
-                                  </div>
-                                  <span className="text-[9px] text-grep-9 tabular-nums">{token.percentage}%</span>
-                                </div>
-                              </div>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                {/* Component Screenshots */}
+                {scanResult && scanId && (
+                  <ScreenshotGallery scanId={scanId} />
                 )}
 
-                {/* Typography - Accurate Preview */}
-                {scanResult.curatedTokens.typography?.families && scanResult.curatedTokens.typography.families.length > 0 && (
+                {/* Enhanced Token Results Display */}
+                <TokenResultsDisplay
+                  tokens={scanResult.curatedTokens}
+                  domain={scanResult.domain || query}
+                  onCopy={handleCopyToken}
+                  onExport={(category) => {
+                    const categoryData = category === 'typography'
+                      ? scanResult.curatedTokens.typography?.families
+                      : scanResult.curatedTokens[category as keyof typeof scanResult.curatedTokens]
+                    if (categoryData) {
+                      const blob = new Blob([JSON.stringify(categoryData, null, 2)], { type: "application/json" })
+                      const url = URL.createObjectURL(blob)
+                      const anchor = document.createElement("a")
+                      anchor.href = url
+                      anchor.download = `${scanResult.domain || query}-${category}.json`
+                      document.body.appendChild(anchor)
+                      anchor.click()
+                      anchor.remove()
+                      URL.revokeObjectURL(url)
+                    }
+                  }}
+                />
+
+                </div>
+            )}
+
+            {/* Components - Extracted from site */}
+            {scanResult && (
+              <div className="space-y-4">
+
+                {/* Components - Buttons */}
+                {scanResult.components?.buttons && scanResult.components.buttons.length > 0 && (
                   <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
                     <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
                       <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">
-                        Typography ({scanResult.curatedTokens.typography.families.length})
+                        Components - Buttons ({scanResult.components.buttons.length})
                       </span>
                       <Button
                         variant="ghost"
@@ -1296,6 +1625,311 @@ function HomePageContent() {
                     </div>
                   </div>
                 )}
+
+                {/* Components - Buttons */}
+                {scanResult.components?.buttons && scanResult.components.buttons.length > 0 && (
+                  <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
+                      <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">
+                        Components - Buttons ({scanResult.components.buttons.length})
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCopyToken(JSON.stringify(scanResult.components.buttons, null, 2))}
+                        className="h-6 px-2 text-xs text-grep-9 hover:text-foreground"
+                      >
+                        copy
+                      </Button>
+                    </div>
+                    <div className="divide-y divide-grep-2">
+                      {scanResult.components.buttons.map((button, index) => (
+                        <div key={`button-${index}`} className="p-4 hover:bg-background transition-colors">
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <div className="text-sm font-semibold text-foreground mb-1">{button.variant}</div>
+                              <div className="text-[10px] text-grep-9">Used {button.usage} times • {button.confidence}% confidence</div>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
+                            <div>
+                              <div className="text-grep-9 mb-1">Typography</div>
+                              <div className="space-y-0.5 text-grep-11">
+                                <div>Font Size: <code className="text-foreground">{button.properties.fontSize}</code></div>
+                                <div>Font Weight: <code className="text-foreground">{button.properties.fontWeight}</code></div>
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-grep-9 mb-1">Spacing</div>
+                              <div className="space-y-0.5 text-grep-11">
+                                <div>Padding X: <code className="text-foreground">{button.properties.paddingX}</code></div>
+                                <div>Padding Y: <code className="text-foreground">{button.properties.paddingY}</code></div>
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-grep-9 mb-1">Colors</div>
+                              <div className="space-y-0.5 text-grep-11">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-3 h-3 rounded border border-grep-3" style={{ backgroundColor: button.properties.backgroundColor }} />
+                                  Background: <code className="text-foreground">{button.properties.backgroundColor}</code>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-3 h-3 rounded border border-grep-3" style={{ backgroundColor: button.properties.textColor }} />
+                                  Text: <code className="text-foreground">{button.properties.textColor}</code>
+                                </div>
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-grep-9 mb-1">Effects</div>
+                              <div className="space-y-0.5 text-grep-11">
+                                <div>Border Radius: <code className="text-foreground">{button.properties.borderRadius}</code></div>
+                                {button.properties.boxShadow && (
+                                  <div>Shadow: <code className="text-foreground text-[10px]">{button.properties.boxShadow}</code></div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          {button.properties.hover && (
+                            <div className="mt-3 pt-3 border-t border-grep-2">
+                              <div className="text-grep-9 mb-1 text-[11px]">Hover State</div>
+                              <div className="grid grid-cols-2 gap-2 text-[11px]">
+                                {button.properties.hover.backgroundColor && (
+                                  <div className="text-grep-11">
+                                    BG: <code className="text-foreground">{button.properties.hover.backgroundColor}</code>
+                                  </div>
+                                )}
+                                {button.properties.hover.boxShadow && (
+                                  <div className="text-grep-11">
+                                    Shadow: <code className="text-foreground text-[10px]">{button.properties.hover.boxShadow}</code>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Layout Patterns */}
+                {scanResult.layoutPatterns && (
+                  <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
+                      <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">
+                        Layout Patterns
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCopyToken(JSON.stringify(scanResult.layoutPatterns, null, 2))}
+                        className="h-6 px-2 text-xs text-grep-9 hover:text-foreground"
+                      >
+                        copy
+                      </Button>
+                    </div>
+                    <div className="p-4 space-y-4">
+                      {/* Containers */}
+                      {scanResult.layoutPatterns.containers?.maxWidths && scanResult.layoutPatterns.containers.maxWidths.length > 0 && (
+                        <div>
+                          <div className="text-grep-9 text-xs mb-2">Container Max Widths</div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {scanResult.layoutPatterns.containers.maxWidths.slice(0, 8).map((width, index) => (
+                              <button
+                                key={`width-${index}`}
+                                onClick={() => handleCopyToken(width.value)}
+                                className="px-3 py-2 rounded border border-grep-2 bg-background hover:border-foreground transition-colors text-left"
+                              >
+                                <code className="text-xs text-foreground block">{width.value}</code>
+                                <div className="text-[10px] text-grep-9 mt-0.5">{width.usage} uses</div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Grid System */}
+                      {scanResult.layoutPatterns.grids?.columnCounts && scanResult.layoutPatterns.grids.columnCounts.length > 0 && (
+                        <div className="pt-4 border-t border-grep-2">
+                          <div className="text-grep-9 text-xs mb-2">Grid Columns</div>
+                          <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                            {scanResult.layoutPatterns.grids.columnCounts.map((grid, index) => (
+                              <div
+                                key={`grid-${index}`}
+                                className="px-3 py-2 rounded border border-grep-2 bg-background text-center"
+                              >
+                                <div className="text-sm font-semibold text-foreground">{grid.columns}</div>
+                                <div className="text-[10px] text-grep-9">cols • {grid.usage} uses</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Spacing Scale */}
+                      {scanResult.layoutPatterns.spacing?.scale && scanResult.layoutPatterns.spacing.scale.length > 0 && (
+                        <div className="pt-4 border-t border-grep-2">
+                          <div className="text-grep-9 text-xs mb-2">
+                            Spacing Scale ({scanResult.layoutPatterns.spacing.type}) • Base Unit: {scanResult.layoutPatterns.spacing.baseUnit}px
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {scanResult.layoutPatterns.spacing.scale.slice(0, 12).map((value, index) => (
+                              <button
+                                key={`spacing-scale-${index}`}
+                                onClick={() => handleCopyToken(value)}
+                                className="px-2 py-1 rounded border border-grep-2 bg-background hover:border-foreground transition-colors"
+                              >
+                                <code className="text-xs text-foreground">{value}</code>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Z-Index System */}
+                {scanResult.zIndexSystem?.layers && scanResult.zIndexSystem.layers.length > 0 && (
+                  <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
+                      <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">
+                        Z-Index Layers ({scanResult.zIndexSystem.layers.length})
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCopyToken(JSON.stringify(scanResult.zIndexSystem, null, 2))}
+                        className="h-6 px-2 text-xs text-grep-9 hover:text-foreground"
+                      >
+                        copy
+                      </Button>
+                    </div>
+                    <div className="p-4">
+                      <div className="mb-4 text-[11px] text-grep-11">
+                        Scale: <span className="text-foreground font-semibold">{scanResult.zIndexSystem.scale}</span>
+                        {' • '}
+                        Base: <span className="text-foreground">{scanResult.zIndexSystem.baseValue}</span>
+                        {' • '}
+                        Max: <span className="text-foreground">{scanResult.zIndexSystem.maxValue}</span>
+                      </div>
+                      <div className="space-y-2">
+                        {scanResult.zIndexSystem.layers.slice(0, 10).map((layer, index) => (
+                          <div
+                            key={`layer-${index}`}
+                            className="px-3 py-2 rounded border border-grep-2 bg-background hover:border-foreground transition-colors"
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                <code className="text-sm font-semibold text-foreground">{layer.value}</code>
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-grep-2 text-grep-11">
+                                  {layer.semanticLayer}
+                                </span>
+                              </div>
+                              <div className="text-[10px] text-grep-9">{layer.usage} uses</div>
+                            </div>
+                            {layer.selectors.length > 0 && (
+                              <div className="text-[10px] text-grep-9">
+                                {layer.selectors.slice(0, 2).join(', ')}
+                                {layer.selectors.length > 2 && ` +${layer.selectors.length - 2} more`}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Animation System */}
+                {scanResult.animationSystem && (
+                  <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
+                      <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">
+                        Animation & Transitions
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCopyToken(JSON.stringify(scanResult.animationSystem, null, 2))}
+                        className="h-6 px-2 text-xs text-grep-9 hover:text-foreground"
+                      >
+                        copy
+                      </Button>
+                    </div>
+                    <div className="p-4 space-y-4">
+                      {/* Durations */}
+                      {scanResult.animationSystem.durations && scanResult.animationSystem.durations.length > 0 && (
+                        <div>
+                          <div className="text-grep-9 text-xs mb-2">Durations</div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {scanResult.animationSystem.durations.slice(0, 8).map((duration, index) => (
+                              <button
+                                key={`duration-${index}`}
+                                onClick={() => handleCopyToken(duration.value)}
+                                className="px-3 py-2 rounded border border-grep-2 bg-background hover:border-foreground transition-colors text-left"
+                              >
+                                <code className="text-xs text-foreground block">{duration.value}</code>
+                                <div className="text-[10px] text-grep-9">{duration.semantic} • {duration.usage} uses</div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Timing Functions */}
+                      {scanResult.animationSystem.timingFunctions && scanResult.animationSystem.timingFunctions.length > 0 && (
+                        <div className="pt-4 border-t border-grep-2">
+                          <div className="text-grep-9 text-xs mb-2">Timing Functions</div>
+                          <div className="space-y-2">
+                            {scanResult.animationSystem.timingFunctions.slice(0, 6).map((timing, index) => (
+                              <button
+                                key={`timing-${index}`}
+                                onClick={() => handleCopyToken(timing.value)}
+                                className="w-full px-3 py-2 rounded border border-grep-2 bg-background hover:border-foreground transition-colors text-left"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <code className="text-xs text-foreground block">{timing.value}</code>
+                                    <div className="text-[10px] text-grep-9 mt-0.5">{timing.semantic}</div>
+                                  </div>
+                                  <div className="text-[10px] text-grep-9">{timing.usage} uses</div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Common Transitions */}
+                      {scanResult.animationSystem.commonTransitions && scanResult.animationSystem.commonTransitions.length > 0 && (
+                        <div className="pt-4 border-t border-grep-2">
+                          <div className="text-grep-9 text-xs mb-2">Common Transitions</div>
+                          <div className="space-y-2">
+                            {scanResult.animationSystem.commonTransitions.slice(0, 5).map((transition, index) => (
+                              <div
+                                key={`transition-${index}`}
+                                className="px-3 py-2 rounded border border-grep-2 bg-background"
+                              >
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-grep-2 text-grep-11">
+                                    {transition.semantic}
+                                  </span>
+                                  <div className="text-[10px] text-grep-9">{transition.usage} uses</div>
+                                </div>
+                                <div className="text-[11px] text-grep-11 space-y-0.5">
+                                  <div>Properties: <code className="text-foreground">{transition.properties.join(', ')}</code></div>
+                                  <div>Duration: <code className="text-foreground">{transition.duration}</code></div>
+                                  <div>Timing: <code className="text-foreground">{transition.timing}</code></div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1421,86 +2055,19 @@ function HomePageContent() {
 
             {/* Main Content Area */}
             <div className="flex w-full flex-1 flex-col border-grep-2 md:border-l">
-              {/* Results Header */}
-              <div className="flex min-h-[48px] w-full flex-row items-center justify-between border-b border-grep-2 px-4 text-[13px]/[13px] md:pr-0 [@media(max-height:480px)]:hidden">
-                <div className="flex flex-row items-center gap-1">
-                  <span className="font-medium text-grep-9">{results.length.toLocaleString()} results found</span>
-                </div>
-                <div className="hidden md:flex">
-                  <Button variant="ghost" size="sm" className="h-7 w-32 select-none justify-end gap-1 border-none text-[13px] shadow-none">
-                    <span style={{pointerEvents: 'none'}}>Compact</span>
-                    <ChevronDown className="h-4 w-4 opacity-50" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Results List */}
-              <div className="flex max-h-full w-full flex-1 flex-col items-center space-y-4 overflow-y-auto px-4 py-4">
-                {loading && (
-                  <div className="w-full space-y-4">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="flex w-full min-w-32 shrink-0 flex-col overflow-hidden rounded-md border border-grep-2 animate-pulse">
-                        <div className="h-12 bg-grep-1"></div>
-                        <div className="h-24 bg-grep-0"></div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {!loading && results.map((result, index) => (
-                  <div key={result.id} className="flex w-full min-w-32 shrink-0 flex-col overflow-hidden text-wrap rounded-md border border-grep-2">
-                    <div className="flex min-h-10 w-full items-center justify-between border-b bg-grep-0 px-4">
-                      <div className="flex flex-col py-1 sm:flex-row sm:gap-2 sm:items-center flex-1">
-                        <div className="flex shrink-0 flex-row items-center gap-2">
-                          <div className="w-4 h-4 rounded-sm bg-neutral-300 dark:bg-neutral-700" />
-                          <span className="text-sm font-medium hover:underline">{result.site || 'unknown'}</span>
-                        </div>
-                        <span className="text-sm text-grep-9 hover:underline">
-                          {result.category} / {result.name}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {result.site && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setQuery(result.site || '')
-                              setViewMode("scan")
-                              setTimeout(() => handleScan(), 100)
-                            }}
-                            className="h-7 px-2 text-xs gap-1 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-teal-500 hover:text-white transition-all duration-200"
-                          >
-                            <Sparkles className="h-3 w-3" />
-                            Scan Site
-                          </Button>
-                        )}
-                        <div className="hidden text-nowrap text-xs text-grep-9 md:block">1 match</div>
-                      </div>
-                    </div>
-                    <div className="cursor-pointer p-4">
-                      <div className="space-y-2">
-                        <div className="font-semibold text-sm">{result.name}</div>
-                        <code className="block text-sm font-mono bg-grep-1 dark:bg-grep-1 px-3 py-2 rounded">
-                          {result.value}
-                        </code>
-                        {result.confidence && (
-                          <div className="text-xs text-grep-9">
-                            Confidence: {result.confidence}%
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                {!loading && results.length > 0 && (
-                  <Button className="w-full shadow-none">
-                    Load More Results
-                  </Button>
-                )}
-                <div className="min-h-3"></div>
-              </div>
+              <SearchResultsView
+                results={results}
+                loading={loading}
+                onScanSite={(site) => {
+                  setQuery(site)
+                  setViewMode("scan")
+                  setTimeout(() => handleScan(), 100)
+                }}
+                onLoadMore={() => {
+                  // TODO: Implement pagination
+                  console.log('Load more results')
+                }}
+              />
             </div>
           </div>
         </div>
@@ -1641,7 +2208,7 @@ function HomePageContent() {
                     <Link className="text-grep-9 hover:text-foreground" href="/api">API</Link>
                   </div>
                   <div className="max-sm:w-36">
-                    <Link className="text-grep-9 hover:text-foreground" href="/directory">Directory</Link>
+                    <Link className="text-grep-9 hover:text-foreground" href="/community">Community</Link>
                   </div>
                   <div className="max-sm:w-36">
                     <Link className="text-grep-9 hover:text-foreground" href="/pricing">Pricing</Link>

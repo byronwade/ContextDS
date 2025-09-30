@@ -8,10 +8,11 @@ import { eq, desc } from 'drizzle-orm'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { domain: string } }
+  { params }: { params: Promise<{ domain: string }> }
 ) {
   try {
-    const domain = decodeURIComponent(params.domain)
+    const { domain: rawDomain } = await params
+    const domain = decodeURIComponent(rawDomain)
 
     // Find site
     const [site] = await db

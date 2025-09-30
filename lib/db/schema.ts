@@ -66,6 +66,20 @@ export const pages = pgTable('pages', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 
+// CSS Content table - deduplicated CSS storage by SHA hash
+// Multiple sites using same framework (Tailwind, Bootstrap, etc) share CSS
+export const cssContent = pgTable('css_content', {
+  sha: varchar('sha', { length: 64 }).primaryKey(), // Content hash (SHA-256)
+  content: text('content').notNull(), // Raw CSS content (gzip compressed as base64)
+  contentCompressed: boolean('content_compressed').notNull().default(true),
+  bytes: integer('bytes').notNull().default(0), // Original uncompressed size
+  compressedBytes: integer('compressed_bytes').notNull().default(0), // Compressed size
+  referenceCount: integer('reference_count').notNull().default(0), // How many scans reference this
+  ttlDays: integer('ttl_days').notNull().default(30), // Delete CSS after N days
+  firstSeen: timestamp('first_seen').notNull().defaultNow(),
+  lastAccessed: timestamp('last_accessed').notNull().defaultNow(),
+})
+
 // CSS Sources table - tracks individual CSS files/sources
 export const cssSources = pgTable('css_sources', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -73,9 +87,22 @@ export const cssSources = pgTable('css_sources', {
   url: text('url'),
   kind: cssSourceKindEnum('kind').notNull(),
   bytes: integer('bytes').notNull().default(0),
-  sha: varchar('sha', { length: 64 }).notNull(), // Content hash
-  content: text('content'), // Raw CSS content
+  sha: varchar('sha', { length: 64 }).notNull().references(() => cssContent.sha, { onDelete: 'set null' }), // Reference to deduplicated content
   createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+// Screenshots table - multi-viewport component screenshots
+export const screenshots = pgTable('screenshots', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  scanId: uuid('scan_id').notNull().references(() => scans.id, { onDelete: 'cascade' }),
+  url: text('url').notNull(), // Screenshot URL in Supabase Storage
+  viewport: varchar('viewport', { length: 50 }).notNull(), // mobile, tablet, desktop
+  width: integer('width').notNull(),
+  height: integer('height').notNull(),
+  fileSize: integer('file_size').notNull(), // bytes
+  capturedAt: timestamp('captured_at').notNull().defaultNow(),
+  selector: text('selector'), // Optional: specific component selector
+  label: varchar('label', { length: 100 }), // e.g., "Hero Section", "Navigation"
 })
 
 // Token Sets table - W3C design tokens with metadata
@@ -266,6 +293,9 @@ export const selectSiteSchema = createSelectSchema(sites)
 export const insertScanSchema = createInsertSchema(scans)
 export const selectScanSchema = createSelectSchema(scans)
 
+export const insertScreenshotSchema = createInsertSchema(screenshots)
+export const selectScreenshotSchema = createSelectSchema(screenshots)
+
 export const insertTokenSetSchema = createInsertSchema(tokenSets)
 export const selectTokenSetSchema = createSelectSchema(tokenSets)
 
@@ -296,3 +326,6 @@ export type NewUser = typeof users.$inferInsert
 
 export type Submission = typeof submissions.$inferSelect
 export type NewSubmission = typeof submissions.$inferInsert
+
+export type Screenshot = typeof screenshots.$inferSelect
+export type NewScreenshot = typeof screenshots.$inferInsert

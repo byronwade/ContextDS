@@ -10,7 +10,7 @@ export type CssSource = {
 }
 
 const USER_AGENT =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 ContextDS/1.0 (+https://contextds.com/bot)'
 
 // Concurrency limit for parallel stylesheet fetching
 // Prevents overwhelming the target server
@@ -18,15 +18,20 @@ const fetchLimit = pLimit(6)  // Max 6 concurrent requests
 
 export async function collectStaticCss(targetUrl: string): Promise<CssSource[]> {
   const response = await fetch(targetUrl, {
-    headers: {
-      'User-Agent': USER_AGENT,
-      Accept: 'text/html,application/xhtml+xml'
-    },
+    headers: buildPrimaryRequestHeaders(targetUrl),
     redirect: 'follow'
   })
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch HTML: ${response.status}`)
+    const statusMessages: Record<number, string> = {
+      403: 'Site blocks automated scanners (check robots.txt or contact site owner)',
+      404: 'Page not found',
+      429: 'Rate limited - please try again later',
+      500: 'Site server error',
+      503: 'Site temporarily unavailable'
+    }
+    const message = statusMessages[response.status] || `HTTP ${response.status}`
+    throw new Error(message)
   }
 
   const html = await response.text()
@@ -46,7 +51,7 @@ export async function collectStaticCss(targetUrl: string): Promise<CssSource[]> 
   const stylesheetPromises = stylesheetUrls.map((stylesheetUrl) =>
     fetchLimit(async () => {
       try {
-        const cssText = await fetchStylesheet(stylesheetUrl)
+        const cssText = await fetchStylesheet(stylesheetUrl, response.url)
         return createCssSource('link', cssText, stylesheetUrl)
       } catch (error) {
         console.warn(`Failed to fetch stylesheet ${stylesheetUrl}:`, error)
@@ -106,12 +111,9 @@ function extractStylesheetLinks(html: string, baseUrl: URL): string[] {
   return links
 }
 
-async function fetchStylesheet(url: string): Promise<string> {
+async function fetchStylesheet(url: string, referer?: string): Promise<string> {
   const response = await fetch(url, {
-    headers: {
-      'User-Agent': USER_AGENT,
-      Accept: 'text/css,*/*;q=0.1'
-    },
+    headers: buildStylesheetRequestHeaders(url, referer),
     redirect: 'follow'
   })
 
@@ -120,6 +122,40 @@ async function fetchStylesheet(url: string): Promise<string> {
   }
 
   return await response.text()
+}
+
+function buildPrimaryRequestHeaders(targetUrl: string) {
+  const origin = new URL(targetUrl).origin
+  return {
+    'User-Agent': USER_AGENT,
+    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Cache-Control': 'no-cache',
+    Pragma: 'no-cache',
+    'Upgrade-Insecure-Requests': '1',
+    'Accept-Encoding': 'gzip, deflate, br',
+    Connection: 'keep-alive',
+    Referer: origin,
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'none',
+    'Sec-Fetch-User': '?1'
+  }
+}
+
+function buildStylesheetRequestHeaders(url: string, referer?: string) {
+  const origin = new URL(url).origin
+  return {
+    'User-Agent': USER_AGENT,
+    Accept: 'text/css,*/*;q=0.1',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+    Connection: 'keep-alive',
+    Referer: referer || origin,
+    'Sec-Fetch-Dest': 'style',
+    'Sec-Fetch-Mode': 'no-cors',
+    'Sec-Fetch-Site': referer ? new URL(referer).origin === origin ? 'same-site' : 'cross-site' : 'cross-site'
+  }
 }
 
 function createCssSource(kind: 'inline' | 'link', content: string, url?: string): CssSource {

@@ -31,6 +31,10 @@ export function useRealtimeStats(updateInterval = 5000) {
       })
 
       if (!response.ok) {
+        // Silently skip 404s (Turbopack hot reload issue)
+        if (response.status === 404) {
+          return
+        }
         throw new Error(`HTTP ${response.status}`)
       }
 
@@ -45,7 +49,7 @@ export function useRealtimeStats(updateInterval = 5000) {
         lastUpdate: new Date()
       })
     } catch (error) {
-      console.error('Failed to fetch realtime stats:', error)
+      // Silently handle errors - don't spam console during dev
       setStats(prev => ({
         ...prev,
         loading: false,

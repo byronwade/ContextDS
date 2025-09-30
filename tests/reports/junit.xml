@@ -1,0 +1,8 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="1" errors="0" time="325.395608">
+<testsuite name="stress-advanced.spec.ts" timestamp="2025-09-30T04:55:33.579Z" hostname="stress-test" tests="1" failures="0" skipped="1" time="324.513" errors="0">
+<testcase name="Soak Testing - Long-Running Stability › should maintain stability over extended period" classname="stress-advanced.spec.ts" time="324.513">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+</testsuites>

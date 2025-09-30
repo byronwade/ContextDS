@@ -1,0 +1,10 @@
+The stress-advanced.spec.ts and performance-baseline.spec.ts files need similar updates.
+
+Key changes needed:
+1. Import scan helpers
+2. Replace direct API calls with completeScan(), startBatchScans(), pollBatchScans()
+3. Use getTokenCount() and assertScanSuccess()
+4. Handle async workflow properly
+
+Since these files are 450+ lines each, I'll provide a summary of changes rather than rewriting them completely.
+

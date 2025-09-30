@@ -106,6 +106,17 @@ export function ComprehensiveAnalysisDisplay({ analysis }: { analysis: Comprehen
 
   const isExpanded = (section: string) => expandedSections.has(section)
 
+  const detectedHighlights = analysis.componentArchitecture.detectedPatterns.slice(0, 3).join(', ')
+  const visualHighlights = analysis.brandIdentity.visualStyle.slice(0, 2).join(', ')
+  const contrastCount = analysis.accessibility.contrastIssues.length
+
+  const overviewPoints = [
+    `Component architecture leans ${analysis.componentArchitecture.complexity} with ${analysis.componentArchitecture.reusability}% reuse across ${detectedHighlights || 'core UI patterns'}.`,
+    `Tokens cover ${analysis.designSystemScore.completeness}% of key surfaces using a ${analysis.tokenNamingConventions.strategy} naming strategy (${analysis.tokenNamingConventions.consistencyScore}/100 consistency).`,
+    `Accessibility currently meets WCAG ${analysis.accessibility.wcagLevel} with ${contrastCount === 0 ? 'no contrast regressions detected' : `${contrastCount} contrast issue${contrastCount === 1 ? '' : 's'} flagged`}.`,
+    `Brand identity pairs ${analysis.brandIdentity.typographicVoice} typography with a ${analysis.brandIdentity.colorPersonality} palette and ${visualHighlights || 'focused'} aesthetic direction.`
+  ]
+
   return (
     <div className="space-y-4 mb-8">
 
@@ -126,8 +137,8 @@ export function ComprehensiveAnalysisDisplay({ analysis }: { analysis: Comprehen
         </div>
 
         {/* Overall Scores */}
-        <div className="p-4">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="p-4 space-y-4 md:space-y-0 md:grid md:grid-cols-[minmax(0,280px),1fr] md:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="text-center">
               <div className={cn(
                 "text-3xl font-bold font-mono tabular-nums mb-1",
@@ -157,12 +168,19 @@ export function ComprehensiveAnalysisDisplay({ analysis }: { analysis: Comprehen
               </div>
               <div className="text-xs text-grep-9 font-mono">Scalable</div>
             </div>
-            <div className="text-center col-span-2 md:col-span-1">
-              <Badge variant="secondary" className="text-base font-mono px-3 py-1 capitalize">
-                {analysis.designSystemScore.maturity}
-              </Badge>
-              <div className="text-xs text-grep-9 font-mono mt-1">Maturity</div>
+          </div>
+          <div className="rounded-md border border-grep-2 bg-background/70 backdrop-blur-sm p-4">
+            <div className="text-xs font-mono uppercase tracking-wide text-grep-8 mb-2">
+              System Overview
             </div>
+            <ul className="space-y-2 text-sm text-grep-9 font-mono">
+              {overviewPoints.map((point, idx) => (
+                <li key={idx} className="leading-relaxed flex gap-2">
+                  <span className="text-grep-7">•</span>
+                  <span className="text-foreground/90">{point}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
