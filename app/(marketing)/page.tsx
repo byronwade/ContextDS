@@ -537,7 +537,13 @@ function HomePageContent() {
       })
 
       if (result.status === "failed") {
-        throw new Error(result.error || "Scan failed")
+        // Still show partial results if available
+        if (result.curatedTokens || result.tokens) {
+          console.log('Scan failed but has partial data - showing results anyway')
+          // Continue to show results
+        } else {
+          throw new Error(result.error || "Scan failed")
+        }
       }
 
       // Preload fonts for preview (non-blocking)
@@ -1293,11 +1299,6 @@ function HomePageContent() {
               </div>
             )}
           </div>
-        </div>
-      ) : viewMode === "scan" && scanLoading ? (
-        /* Scan Loading - Live Progress Viewer */
-        <div className="flex-1 flex items-center justify-center p-4 md:p-12 bg-grep-0">
-          <ScanProgressViewer domain={query} />
         </div>
       ) : viewMode === "search" && searchError ? (
         /* Search Failed - Terminal Style */

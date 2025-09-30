@@ -8,8 +8,6 @@ import { buildAiPromptPack } from '@/lib/analyzers/ai-prompt-pack'
 import { curateTokens } from '@/lib/analyzers/token-curator'
 import { generateDesignInsights } from '@/lib/ai/design-insights'
 import { analyzeDesignSystemComprehensive } from '@/lib/ai/comprehensive-analyzer'
-import { generateContext7EnhancedInsights } from '@/lib/ai/context7-enhanced-insights'
-import { validateTokensWithContext7 } from '@/lib/validators/context7-validator'
 import { analyzeLayout } from '@/lib/analyzers/layout-inspector'
 import { buildPromptPack } from '@/lib/analyzers/prompt-pack'
 import { compareTokenSets } from '@/lib/analyzers/version-diff'
@@ -203,8 +201,7 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
     wireframeResult,
     promptPackResult,
     aiInsightsResult,
-    comprehensiveResult,
-    validationResult
+    comprehensiveResult
   ] = await Promise.allSettled([
     // Task 1: Wireframe (skip in fast mode)
     actuallyIncludeComputed && !isFastMode
@@ -218,21 +215,14 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
       return { legacyPromptPack, aiPromptPack }
     })(),
 
-    // Task 3: Context7-enhanced AI insights (uses official design system docs for validation)
-    curatedTokens && w3cExtraction
-      ? generateContext7EnhancedInsights(curatedTokens, { domain, url: target.toString() })
-      : curatedTokens
-        ? generateDesignInsights(curatedTokens, { domain, url: target.toString() })
-        : Promise.resolve(null),
+    // Task 3: AI insights (always run, uses fast model)
+    curatedTokens
+      ? generateDesignInsights(curatedTokens, { domain, url: target.toString() })
+      : Promise.resolve(null),
 
     // Task 4: Comprehensive AI analysis (skip in fast mode - saves 600ms)
     curatedTokens && !isFastMode
       ? analyzeDesignSystemComprehensive(curatedTokens, { domain, url: target.toString() })
-      : Promise.resolve(null),
-
-    // Task 5: Context7 validation (parallel with AI analysis)
-    curatedTokens && w3cExtraction
-      ? validateTokensWithContext7(curatedTokens, w3cExtraction, { domain, url: target.toString() })
       : Promise.resolve(null)
   ])
 
@@ -241,7 +231,6 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
   const { legacyPromptPack, aiPromptPack } = promptPackResult.status === 'fulfilled' ? promptPackResult.value : { legacyPromptPack: {}, aiPromptPack: null }
   const aiInsights = aiInsightsResult.status === 'fulfilled' ? aiInsightsResult.value : null
   const comprehensiveAnalysis = comprehensiveResult.status === 'fulfilled' ? comprehensiveResult.value : null
-  const context7Validation = validationResult.status === 'fulfilled' ? validationResult.value : null
 
   // Augment layout with wireframe (if available)
   if (wireframeSections.length > 0 && layoutAnalysis) {
@@ -249,15 +238,14 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
     augmentArchetypesWithWireframe(layoutAnalysis, wireframeSections)
   }
 
-  // Assemble prompt pack with Context7 validation
+  // Assemble prompt pack
   const promptPack = {
     ...legacyPromptPack,
     aiOptimized: aiPromptPack,
     aiInsights,
     comprehensiveAnalysis,
-    context7Validation,  // Add validation results
-    version: '2.2.0',
-    format: 'ai-lean-core-plus-validated'
+    version: '2.1.0',
+    format: 'ai-lean-core-plus'
   }
 
   // PERFORMANCE OPTIMIZATION: Batch all final database writes into single transaction
