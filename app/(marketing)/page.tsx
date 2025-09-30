@@ -926,15 +926,15 @@ function HomePageContent() {
   return (
     <div className="flex h-full w-full flex-col items-center justify-between overflow-hidden antialiased">
       {/* Minimal Grep-Style Header */}
-      <header className="flex min-h-[64px] w-full shrink-0 flex-wrap items-center justify-between border-b border-grep-2 md:flex-nowrap">
+      <header className="flex min-h-[56px] sm:min-h-[64px] w-full shrink-0 flex-wrap items-center justify-between border-b border-grep-2 md:flex-nowrap">
 
         {/* Left: Brand + Live Stats */}
-        <div className="flex items-center pl-4 md:pl-6 gap-4">
-          <div className="flex items-center gap-2 pr-3">
-            <Link className="outline-offset-4 flex items-center gap-2" href="/">
-              <Palette className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              <span className="text-lg font-semibold text-black dark:text-white">ContextDS</span>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900">Beta</span>
+        <div className="flex items-center pl-3 sm:pl-4 md:pl-6 gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 pr-2 sm:pr-3">
+            <Link className="outline-offset-4 flex items-center gap-1.5 sm:gap-2" href="/">
+              <Palette className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 dark:text-blue-400" />
+              <span className="text-base sm:text-lg font-semibold text-black dark:text-white">ContextDS</span>
+              <span className="hidden xs:inline text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900">Beta</span>
             </Link>
           </div>
 
@@ -955,18 +955,18 @@ function HomePageContent() {
         </div>
 
         {/* Center: Grep-minimal input with smart mode dropdown */}
-        <div className="order-1 flex w-full items-center justify-center border-t border-grep-2 px-4 py-3 md:order-none md:border-none md:px-3 md:py-0" id="header-contents">
+        <div className="order-1 flex w-full items-center justify-center border-t border-grep-2 px-3 sm:px-4 py-2.5 sm:py-3 md:order-none md:border-none md:px-3 md:py-0" id="header-contents">
           <div className="relative z-10 w-full flex-grow max-w-2xl">
 
             {/* Mode Dropdown Selector (like grep.app repo selector) */}
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 z-20">
+            <div className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 sm:gap-2 z-20">
               <button
                 onClick={() => {
                   setViewMode(viewMode === "search" ? "scan" : "search")
                   clearSearch()
                   resetScan()
                 }}
-                className="flex items-center gap-1.5 text-[13px] font-medium text-foreground hover:text-grep-9 transition-colors"
+                className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-[13px] font-medium text-foreground hover:text-grep-9 transition-colors"
                 title={`Mode: ${viewMode} (click to switch)`}
               >
                 {viewMode === "search" ? (
@@ -974,10 +974,10 @@ function HomePageContent() {
                 ) : (
                   <Sparkles className="h-3.5 w-3.5" />
                 )}
-                <span className="capitalize">{viewMode}</span>
-                <ChevronDown className="h-3 w-3" />
+                <span className="capitalize hidden xs:inline">{viewMode}</span>
+                <ChevronDown className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               </button>
-              <div className="w-px h-4 bg-grep-3" />
+              <div className="w-px h-3 sm:h-4 bg-grep-3" />
             </div>
 
             {/* Input - placeholder is key to understanding mode */}
@@ -991,15 +991,11 @@ function HomePageContent() {
               }}
               placeholder={
                 viewMode === "scan"
-                  ? "Paste URL (stripe.com, github.com, linear.app...)"
-                  : `Search ${realtimeStats.tokens > 0 ? realtimeStats.tokens.toLocaleString() + '+' : '17,000+'} design tokens`
+                  ? "Paste URL..."
+                  : `Search tokens...`
               }
               id="search-input"
-              className="flex w-full min-w-0 shrink rounded-md border border-grep-4 bg-grep-0 py-1 text-sm transition-colors focus-visible:border-grep-12 focus-visible:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grep-4 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-grep-7 h-[42px] md:h-9 max-md:max-w-none"
-              style={{
-                paddingLeft: 'clamp(95px, 100px, 105px)',
-                paddingRight: viewMode === "search" ? 'clamp(90px, 92px, 96px)' : 'clamp(68px, 70px, 72px)'
-              }}
+              className="flex w-full min-w-0 shrink rounded-md border border-grep-4 bg-grep-0 py-1 text-xs sm:text-sm transition-colors focus-visible:border-grep-12 focus-visible:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grep-4 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-grep-7 h-9 sm:h-[42px] md:h-9 max-md:max-w-none pl-[55px] xs:pl-[85px] sm:pl-[105px] pr-[90px] xs:pr-[96px] sm:pr-[104px]"
               spellCheck="false"
               autoCapitalize="off"
               autoComplete="off"
@@ -1007,20 +1003,20 @@ function HomePageContent() {
             />
 
             {/* Right Controls - Contextual */}
-            <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
+            <div className="absolute right-1.5 sm:right-2 top-1/2 flex -translate-y-1/2 items-center gap-0.5 sm:gap-1">
               {viewMode === "search" ? (
                 <>
                   <button
                     type="button"
                     onClick={() => updatePreferences({ caseInsensitive: !caseInsensitive })}
                     className={cn(
-                      "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors h-6 px-1 min-w-6",
+                      "border border-transparent inline-flex items-center justify-center rounded-md text-sm text-grep-9 font-medium transition-colors h-6 sm:h-6 px-1 min-w-6",
                       caseInsensitive && "bg-grep-11 border-grep-6 text-foreground"
                     )}
                     aria-pressed={caseInsensitive}
                     title="Match case"
                   >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="h-4 w-4">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 sm:h-4 sm:w-4">
                       <path d="M11.6667 11C12.7713 11 13.6667 10.1046 13.6667 9C13.6667 7.89543 12.7713 7 11.6667 7C10.5621 7 9.66669 7.89543 9.66669 9C9.66669 10.1046 10.5621 11 11.6667 11Z" stroke="currentColor" strokeWidth="1.5"/>
                       <path d="M13.6667 7V11" stroke="currentColor" strokeWidth="1.5"/>
                       <path fillRule="evenodd" clipRule="evenodd" d="M3.26242 10.0789L2.63419 11.8414L2.57767 12H0.985229L1.22126 11.3378L4.22128 2.92102L5.63421 2.92102L8.63419 11.3378L8.87023 12H7.27779L7.22126 11.8414L6.59305 10.0789H6.5777H3.2777H3.26242ZM3.79707 8.57885H6.0584L4.92774 5.40668L3.79707 8.57885Z" fill="currentColor"/>
@@ -1030,13 +1026,13 @@ function HomePageContent() {
                     type="button"
                     onClick={() => updatePreferences({ wholeWords: !wholeWords })}
                     className={cn(
-                      "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors h-6 px-1 min-w-6",
+                      "border border-transparent inline-flex items-center justify-center rounded-md text-sm text-grep-9 font-medium transition-colors h-6 sm:h-6 px-1 min-w-6",
                       wholeWords && "bg-grep-11 border-grep-6 text-foreground"
                     )}
                     aria-pressed={wholeWords}
                     title="Match whole words"
                   >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="h-4 w-4">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 sm:h-4 sm:w-4">
                       <path d="M4.66669 10C5.77126 10 6.66669 9.10457 6.66669 8C6.66669 6.89543 5.77126 6 4.66669 6C3.56212 6 2.66669 6.89543 2.66669 8C2.66669 9.10457 3.56212 10 4.66669 10Z" stroke="currentColor" strokeWidth="1.5"/>
                       <path d="M6.66669 6V10" stroke="currentColor" strokeWidth="1.5"/>
                       <path d="M11.3333 10C12.4379 10 13.3333 9.10457 13.3333 8C13.3333 6.89543 12.4379 6 11.3333 6C10.2287 6 9.33331 6.89543 9.33331 8C9.33331 9.10457 10.2287 10 11.3333 10Z" stroke="currentColor" strokeWidth="1.5"/>
@@ -1048,13 +1044,13 @@ function HomePageContent() {
                     type="button"
                     onClick={() => updatePreferences({ useRegex: !useRegex })}
                     className={cn(
-                      "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors h-6 px-1 min-w-6",
+                      "border border-transparent inline-flex items-center justify-center rounded-md text-sm text-grep-9 font-medium transition-colors h-6 sm:h-6 px-1 min-w-6",
                       useRegex && "bg-grep-11 border-grep-6 text-foreground"
                     )}
                     aria-pressed={useRegex}
                     title="Use regular expression"
                   >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="h-4 w-4">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 sm:h-4 sm:w-4">
                       <path d="M10.8867 2V8.66667" stroke="currentColor" strokeWidth="1.5"/>
                       <path d="M8 3.66675L13.7733 7.00008" stroke="currentColor" strokeWidth="1.5"/>
                       <path d="M8 7.00008L13.7733 3.66675" stroke="currentColor" strokeWidth="1.5"/>
@@ -1067,14 +1063,14 @@ function HomePageContent() {
                   onClick={handleScan}
                   disabled={!query.trim() || scanLoading}
                   size="sm"
-                  className="h-7 px-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-medium rounded hover:from-emerald-600 hover:to-teal-600 transition-all duration-200 shadow-none border-0"
+                  className="h-7 px-2 xs:px-2.5 sm:px-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[11px] xs:text-xs font-medium rounded hover:from-emerald-600 hover:to-teal-600 transition-all duration-200 shadow-none border-0"
                 >
                   {scanLoading ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
                   ) : (
                     <>
-                      <Sparkles className="h-3 w-3 mr-1" />
-                      Scan
+                      <Sparkles className="h-3 w-3 xs:mr-1" />
+                      <span className="hidden xs:inline">Scan</span>
                     </>
                   )}
                 </Button>
@@ -1084,19 +1080,20 @@ function HomePageContent() {
         </div>
 
         {/* Right: Minimal Actions */}
-        <div className="flex min-h-[64px] select-none items-center justify-end gap-2 pr-4 md:pr-6">
+        <div className="flex min-h-[56px] sm:min-h-[64px] select-none items-center justify-end gap-1.5 sm:gap-2 pr-2 sm:pr-4 md:pr-6">
           <RecentScansDropdown />
-          <Link href="/community">
-            <Button variant="ghost" size="sm" className="h-8 px-3 text-xs font-medium text-grep-9 hover:text-foreground">
+          <Link href="/community" className="hidden sm:inline-flex">
+            <Button variant="ghost" size="sm" className="h-7 sm:h-8 px-2 sm:px-3 text-xs font-medium text-grep-9 hover:text-foreground">
               Community
             </Button>
           </Link>
-          <Button variant="ghost" size="sm" className="hidden sm:inline-flex h-8 px-3 text-xs font-medium text-grep-9 hover:text-foreground">
+          <Button variant="ghost" size="sm" className="hidden lg:inline-flex h-7 sm:h-8 px-2 sm:px-3 text-xs font-medium text-grep-9 hover:text-foreground">
             Docs
           </Button>
-          <Button variant="ghost" size="sm" className="hidden md:inline-flex h-8 px-3 text-xs font-medium text-grep-9 hover:text-foreground [@media(max-width:374px)]:hidden">
+          <Button variant="ghost" size="sm" className="hidden lg:inline-flex h-7 sm:h-8 px-2 sm:px-3 text-xs font-medium text-grep-9 hover:text-foreground">
             API
           </Button>
+          <ThemeToggle />
         </div>
       </header>
 
