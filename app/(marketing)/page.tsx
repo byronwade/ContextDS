@@ -214,6 +214,91 @@ type ScanResultPayload = {
       aiRecommendations: string[]
     }
   }
+  comprehensiveAnalysis?: {
+    designSystemScore: {
+      overall: number
+      maturity: string
+      completeness: number
+      consistency: number
+      scalability: number
+    }
+    componentArchitecture: {
+      detectedPatterns: string[]
+      buttonVariants: string[]
+      formComponents: string[]
+      cardPatterns: string[]
+      navigationPatterns: string[]
+      complexity: string
+      reusability: number
+    }
+    accessibility: {
+      wcagLevel: string
+      contrastIssues: Array<{
+        background: string
+        foreground: string
+        ratio: number
+        recommendation: string
+      }>
+      colorBlindness: {
+        safeForProtanopia: boolean
+        safeForDeuteranopia: boolean
+        safeForTritanopia: boolean
+        recommendations: string[]
+      }
+      focusIndicators: {
+        present: boolean
+        quality: string
+      }
+      overallScore: number
+    }
+    tokenNamingConventions: {
+      strategy: string
+      examples: Array<{
+        token: string
+        rating: string
+        suggestion?: string
+      }>
+      consistencyScore: number
+      recommendations: string[]
+    }
+    designPatterns: {
+      identified: Array<{
+        pattern: string
+        confidence: number
+        examples: string[]
+      }>
+      antiPatterns: Array<{
+        issue: string
+        severity: string
+        recommendation: string
+      }>
+    }
+    brandIdentity: {
+      primaryColors: string[]
+      colorPersonality: string
+      typographicVoice: string
+      visualStyle: string[]
+      industryAlignment: string
+    }
+    recommendations: {
+      quick_wins: Array<{
+        title: string
+        description: string
+        impact: string
+        effort: string
+      }>
+      long_term: Array<{
+        title: string
+        description: string
+        impact: string
+        effort: string
+      }>
+      critical: Array<{
+        issue: string
+        solution: string
+      }>
+    }
+  }
   tokens?: Record<string, Array<{ name: string; value: string; confidence?: number; usage?: number; semantic?: string }>>
   brandAnalysis?: {
     style?: string
@@ -240,6 +325,21 @@ function HomePageContent() {
   const [scanResult, setScanResult] = useState<ScanResultPayload | null>(null)
   const [scanLoading, setScanLoading] = useState(false)
   const [scanError, setScanError] = useState<string | null>(null)
+
+  // Expandable sections state
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => {
+      const next = new Set(prev)
+      if (next.has(section)) {
+        next.delete(section)
+      } else {
+        next.add(section)
+      }
+      return next
+    })
+  }
 
   // Real-time stats from Neon database
   const realtimeStats = useRealtimeStats(5000) // Updates every 5 seconds
@@ -852,31 +952,35 @@ function HomePageContent() {
               </div>
             </div>
 
-            {/* Brand Analysis - Minimal */}
+            {/* Brand Analysis - Expanded Data */}
             {scanResult.brandAnalysis && (
               <div className="mb-6 rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
                 <div className="px-4 py-2.5 border-b border-grep-2 bg-background">
                   <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">Brand Analysis</span>
                 </div>
-                <div className="divide-y divide-grep-2">
-                  {scanResult.brandAnalysis.style && (
-                    <div className="px-4 py-2.5 flex items-center justify-between">
-                      <span className="text-grep-9">style</span>
-                      <span className="text-foreground capitalize">{scanResult.brandAnalysis.style}</span>
+                <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-grep-2">
+                  <div className="px-4 py-3">
+                    <div className="text-grep-9 text-xs mb-1">Style</div>
+                    <div className="text-foreground capitalize">{scanResult.brandAnalysis.style || 'unknown'}</div>
+                  </div>
+                  <div className="px-4 py-3">
+                    <div className="text-grep-9 text-xs mb-1">Maturity</div>
+                    <div className="text-foreground capitalize">{scanResult.brandAnalysis.maturity || 'unknown'}</div>
+                  </div>
+                  <div className="px-4 py-3">
+                    <div className="text-grep-9 text-xs mb-1">Consistency</div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 bg-grep-2 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-foreground rounded-full transition-all"
+                          style={{ width: `${typeof scanResult.brandAnalysis.consistency === 'number' ? scanResult.brandAnalysis.consistency : 0}%` }}
+                        />
+                      </div>
+                      <span className="text-foreground tabular-nums text-sm">
+                        {typeof scanResult.brandAnalysis.consistency === 'number' ? Math.round(scanResult.brandAnalysis.consistency) : 0}%
+                      </span>
                     </div>
-                  )}
-                  {scanResult.brandAnalysis.maturity && (
-                    <div className="px-4 py-2.5 flex items-center justify-between">
-                      <span className="text-grep-9">maturity</span>
-                      <span className="text-foreground capitalize">{scanResult.brandAnalysis.maturity}</span>
-                    </div>
-                  )}
-                  {scanResult.brandAnalysis.consistency !== undefined && (
-                    <div className="px-4 py-2.5 flex items-center justify-between">
-                      <span className="text-grep-9">consistency</span>
-                      <span className="text-foreground tabular-nums">{Math.round(scanResult.brandAnalysis.consistency * 100)}%</span>
-                    </div>
-                  )}
+                  </div>
                 </div>
               </div>
             )}

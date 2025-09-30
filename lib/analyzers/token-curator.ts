@@ -33,27 +33,29 @@ export interface CuratedToken {
 }
 
 export interface CurationConfig {
-  maxColors: number
-  maxFonts: number
-  maxSizes: number
-  maxSpacing: number
-  maxRadius: number
-  maxShadows: number
-  maxMotion: number
+  maxColors?: number  // undefined = return all
+  maxFonts?: number
+  maxSizes?: number
+  maxSpacing?: number
+  maxRadius?: number
+  maxShadows?: number
+  maxMotion?: number
   minUsage: number
   minConfidence: number
+  returnAllFiltered?: boolean  // If true, return all tokens that pass filters
 }
 
 const DEFAULT_CONFIG: CurationConfig = {
-  maxColors: 8,
-  maxFonts: 4,
-  maxSizes: 6,
-  maxSpacing: 8,
-  maxRadius: 4,
-  maxShadows: 4,
-  maxMotion: 4,
+  maxColors: undefined,  // Return all by default
+  maxFonts: undefined,
+  maxSizes: undefined,
+  maxSpacing: undefined,
+  maxRadius: undefined,
+  maxShadows: undefined,
+  maxMotion: undefined,
   minUsage: 2,
-  minConfidence: 60
+  minConfidence: 60,
+  returnAllFiltered: true  // Return all filtered tokens
 }
 
 /**
@@ -124,10 +126,13 @@ function curateColors(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTok
     token.percentage = totalUsage > 0 ? Math.round((token.usage / totalUsage) * 100) : 0
   })
 
-  // Sort by usage and return top N
-  return tokens
-    .sort((a, b) => b.usage - a.usage)
-    .slice(0, config.maxColors)
+  // Sort by usage
+  const sorted = tokens.sort((a, b) => b.usage - a.usage)
+
+  // Return all or slice to max
+  return config.maxColors && !config.returnAllFiltered
+    ? sorted.slice(0, config.maxColors)
+    : sorted
 }
 
 /**
@@ -227,10 +232,14 @@ function curateTypography(tokenSet: W3CTokenSet, config: CurationConfig): Curate
   sizes.forEach(t => t.percentage = totalSizeUsage > 0 ? Math.round((t.usage / totalSizeUsage) * 100) : 0)
   weights.forEach(t => t.percentage = totalWeightUsage > 0 ? Math.round((t.usage / totalWeightUsage) * 100) : 0)
 
+  const sortedFamilies = families.sort((a, b) => b.usage - a.usage)
+  const sortedSizes = sizes.sort((a, b) => b.usage - a.usage)
+  const sortedWeights = weights.sort((a, b) => b.usage - a.usage)
+
   return {
-    families: families.sort((a, b) => b.usage - a.usage).slice(0, config.maxFonts),
-    sizes: sizes.sort((a, b) => b.usage - a.usage).slice(0, config.maxSizes),
-    weights: weights.sort((a, b) => b.usage - a.usage).slice(0, 4)
+    families: config.maxFonts && !config.returnAllFiltered ? sortedFamilies.slice(0, config.maxFonts) : sortedFamilies,
+    sizes: config.maxSizes && !config.returnAllFiltered ? sortedSizes.slice(0, config.maxSizes) : sortedSizes,
+    weights: config.returnAllFiltered ? sortedWeights : sortedWeights.slice(0, 4)
   }
 }
 
@@ -277,9 +286,8 @@ function curateSpacing(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTo
 
   tokens.forEach(t => t.percentage = totalUsage > 0 ? Math.round((t.usage / totalUsage) * 100) : 0)
 
-  return tokens
-    .sort((a, b) => b.usage - a.usage)
-    .slice(0, config.maxSpacing)
+  const sorted = tokens.sort((a, b) => b.usage - a.usage)
+  return config.maxSpacing && !config.returnAllFiltered ? sorted.slice(0, config.maxSpacing) : sorted
 }
 
 /**
@@ -330,9 +338,8 @@ function curateRadius(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTok
 
   tokens.forEach(t => t.percentage = totalUsage > 0 ? Math.round((t.usage / totalUsage) * 100) : 0)
 
-  return tokens
-    .sort((a, b) => b.usage - a.usage)
-    .slice(0, config.maxRadius)
+  const sorted = tokens.sort((a, b) => b.usage - a.usage)
+  return config.maxRadius && !config.returnAllFiltered ? sorted.slice(0, config.maxRadius) : sorted
 }
 
 /**
@@ -375,9 +382,8 @@ function curateShadows(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTo
 
   tokens.forEach(t => t.percentage = totalUsage > 0 ? Math.round((t.usage / totalUsage) * 100) : 0)
 
-  return tokens
-    .sort((a, b) => b.usage - a.usage)
-    .slice(0, config.maxShadows)
+  const sorted = tokens.sort((a, b) => b.usage - a.usage)
+  return config.maxShadows && !config.returnAllFiltered ? sorted.slice(0, config.maxShadows) : sorted
 }
 
 /**
@@ -413,9 +419,8 @@ function curateMotion(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTok
 
   tokens.forEach(t => t.percentage = totalUsage > 0 ? Math.round((t.usage / totalUsage) * 100) : 0)
 
-  return tokens
-    .sort((a, b) => b.usage - a.usage)
-    .slice(0, config.maxMotion)
+  const sorted = tokens.sort((a, b) => b.usage - a.usage)
+  return config.maxMotion && !config.returnAllFiltered ? sorted.slice(0, config.maxMotion) : sorted
 }
 
 /**

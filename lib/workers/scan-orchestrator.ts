@@ -12,6 +12,7 @@ import { analyzeLayout } from '@/lib/analyzers/layout-inspector'
 import { buildPromptPack } from '@/lib/analyzers/prompt-pack'
 import { collectLayoutWireframe } from '@/lib/analyzers/layout-wireframe'
 import { MetricsCollector } from '@/lib/observability/metrics'
+import { analyzeBrand } from '@/lib/analyzers/brand-analyzer'
 
 export type ScanJobInput = {
   url: string
@@ -293,10 +294,11 @@ export async function runScanJob({ url, prettify, includeComputed }: ScanJobInpu
     },
     curatedTokens: generated.curatedTokens,
     aiInsights: promptPack.aiInsights,
+    comprehensiveAnalysis: promptPack.comprehensiveAnalysis, // Add comprehensive analysis
     tokens: generated.tokenGroups,
     layoutDNA,
     promptPack,
-    brandAnalysis: buildBrandAnalysis(generated.tokenGroups.colors),
+    brandAnalysis: analyzeBrand(legacyGenerated),
     metadata: {
       cssSources: cssArtifacts.length,
       staticCssSources: staticCss.length,
