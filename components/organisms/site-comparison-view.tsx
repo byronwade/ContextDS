@@ -183,7 +183,7 @@ export function SiteComparisonView({ siteA, siteB, onBack }: SiteComparisonViewP
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="mx-auto px-6 py-8 max-w-[1800px]">
         <div className="grid grid-cols-12 gap-6">
           {/* Category Sidebar */}
           <div className="col-span-2">

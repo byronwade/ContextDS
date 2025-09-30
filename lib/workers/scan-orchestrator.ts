@@ -1,5 +1,5 @@
-import { db, sites, scans, tokenSets, cssSources, layoutProfiles } from '@/lib/db'
-import { eq } from 'drizzle-orm'
+import { db, sites, scans, tokenSets, cssSources, layoutProfiles, tokenVersions, tokenChanges } from '@/lib/db'
+import { eq, desc } from 'drizzle-orm'
 import { collectStaticCss, type CssSource } from '@/lib/extractors/static-css'
 import { collectComputedCss } from '@/lib/extractors/computed-css'
 import { generateTokenSet as generateTokenSetLegacy, hashTokenSet } from '@/lib/analyzers/basic-tokenizer'
@@ -10,6 +10,7 @@ import { generateDesignInsights } from '@/lib/ai/design-insights'
 import { analyzeDesignSystemComprehensive } from '@/lib/ai/comprehensive-analyzer'
 import { analyzeLayout } from '@/lib/analyzers/layout-inspector'
 import { buildPromptPack } from '@/lib/analyzers/prompt-pack'
+import { compareTokenSets } from '@/lib/analyzers/version-diff'
 import { collectLayoutWireframe } from '@/lib/analyzers/layout-wireframe'
 import { MetricsCollector } from '@/lib/observability/metrics'
 import { analyzeBrand } from '@/lib/analyzers/brand-analyzer'
@@ -256,14 +257,36 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
   })
   const metricsSummary = metrics.summary()
 
+  // VERSION TRACKING: Get previous token set for this site (outside transaction)
+  const previousTokenSets = await db
+    .select()
+    .from(tokenSets)
+    .where(eq(tokenSets.siteId, siteRecord.id))
+    .orderBy(desc(tokenSets.versionNumber))
+    .limit(1)
+
+  const previousVersion = previousTokenSets[0] || null
+  const newVersionNumber = previousVersion ? previousVersion.versionNumber + 1 : 1
+
+  // Calculate diff if there's a previous version
+  let tokenDiff = null
+  if (previousVersion && generated.tokenSet) {
+    try {
+      tokenDiff = compareTokenSets(previousVersion.tokensJson, generated.tokenSet)
+    } catch (error) {
+      console.warn('Failed to generate token diff:', error)
+    }
+  }
+
   // Single transaction for all final writes (50ms vs 200ms)
   const [tokenSetRecord] = await db.transaction(async (tx) => {
-    // 1. Insert token set
+    // 1. Insert token set with version number
     const [tokenSet] = await tx
       .insert(tokenSets)
       .values({
         siteId: siteRecord.id,
         scanId: scanRecord.id,
+        versionNumber: newVersionNumber,
         tokensJson: generated.tokenSet,
         packJson: promptPack,
         consensusScore: (generated.summary.confidence / 100).toFixed(2),
@@ -271,7 +294,57 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
       })
       .returning()
 
-    // 2. Insert layout profile (in same transaction)
+    // 2. Create version record if there's a diff
+    if (tokenDiff && previousVersion) {
+      const [versionRecord] = await tx
+        .insert(tokenVersions)
+        .values({
+          siteId: siteRecord.id,
+          tokenSetId: tokenSet.id,
+          versionNumber: newVersionNumber,
+          previousVersionId: previousVersion.id,
+          changelogJson: { raw: tokenDiff },
+          diffSummary: tokenDiff.summary
+        })
+        .returning()
+
+      // 3. Insert individual token changes
+      if (versionRecord && tokenDiff.summary.totalChanges > 0) {
+        const changes = [
+          ...tokenDiff.added.map(c => ({
+            versionId: versionRecord.id,
+            tokenPath: c.path,
+            changeType: 'added' as const,
+            oldValue: null,
+            newValue: c.newValue,
+            category: c.category
+          })),
+          ...tokenDiff.removed.map(c => ({
+            versionId: versionRecord.id,
+            tokenPath: c.path,
+            changeType: 'removed' as const,
+            oldValue: c.oldValue,
+            newValue: null,
+            category: c.category
+          })),
+          ...tokenDiff.modified.map(c => ({
+            versionId: versionRecord.id,
+            tokenPath: c.path,
+            changeType: 'modified' as const,
+            oldValue: c.oldValue,
+            newValue: c.newValue,
+            category: c.category
+          }))
+        ]
+
+        // Batch insert changes (limit to 1000 for performance)
+        if (changes.length > 0) {
+          await tx.insert(tokenChanges).values(changes.slice(0, 1000))
+        }
+      }
+    }
+
+    // 4. Insert layout profile (in same transaction)
     await tx
       .insert(layoutProfiles)
       .values({
@@ -287,7 +360,7 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
       })
       .onConflictDoNothing()
 
-    // 3. Update scan record (in same transaction)
+    // 5. Update scan record (in same transaction)
     await tx
       .update(scans)
       .set({
@@ -301,7 +374,7 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
       })
       .where(eq(scans.id, scanRecord.id))
 
-    // 4. Update site record (in same transaction)
+    // 6. Update site record (in same transaction)
     await tx
       .update(sites)
       .set({
@@ -333,6 +406,13 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
     layoutDNA: layoutAnalysis || {},
     promptPack,
     brandAnalysis,
+    versionInfo: {
+      versionNumber: newVersionNumber,
+      isNewVersion: !!previousVersion,
+      previousVersionNumber: previousVersion?.versionNumber,
+      changeCount: tokenDiff?.summary.totalChanges || 0,
+      diff: tokenDiff
+    },
     metadata: {
       cssSources: cssArtifacts.length,
       staticCssSources: staticCss.length,

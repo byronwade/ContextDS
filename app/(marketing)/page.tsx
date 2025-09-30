@@ -107,6 +107,13 @@ type ScanResultPayload = {
     reliability: number
     processingTime: number
   }
+  versionInfo?: {
+    versionNumber: number
+    isNewVersion: boolean
+    previousVersionNumber?: number
+    changeCount: number
+    diff?: any
+  }
   curatedTokens?: {
     colors: Array<{
       name: string
