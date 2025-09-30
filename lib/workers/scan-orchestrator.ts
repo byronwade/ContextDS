@@ -7,6 +7,7 @@ import { extractW3CTokens, hashTokenSet as hashW3CTokenSet } from '@/lib/analyze
 import { buildAiPromptPack } from '@/lib/analyzers/ai-prompt-pack'
 import { curateTokens } from '@/lib/analyzers/token-curator'
 import { generateDesignInsights } from '@/lib/ai/design-insights'
+import { analyzeDesignSystemComprehensive } from '@/lib/ai/comprehensive-analyzer'
 import { analyzeLayout } from '@/lib/analyzers/layout-inspector'
 import { buildPromptPack } from '@/lib/analyzers/prompt-pack'
 import { collectLayoutWireframe } from '@/lib/analyzers/layout-wireframe'
@@ -195,13 +196,24 @@ export async function runScanJob({ url, prettify, includeComputed }: ScanJobInpu
     console.warn('AI insights generation failed, using rule-based fallback', error)
   }
 
+  // Generate comprehensive AI analysis (deep, multi-layer insights)
+  let comprehensiveAnalysis = null
+  try {
+    const analysisPhase = metrics.startPhase('comprehensive_ai_analysis')
+    comprehensiveAnalysis = await analyzeDesignSystemComprehensive(curatedTokens, { domain, url: target.toString() })
+    analysisPhase()
+  } catch (error) {
+    console.warn('Comprehensive AI analysis failed, will use basic insights only', error)
+  }
+
   // Use AI prompt pack as primary
   const promptPack = {
     ...legacyPromptPack,
     aiOptimized: aiPromptPack,
     aiInsights,
-    version: '2.0.0',
-    format: 'ai-lean-core'
+    comprehensiveAnalysis, // Add comprehensive analysis
+    version: '2.1.0',
+    format: 'ai-lean-core-plus'
   }
 
   endPromptPhase()

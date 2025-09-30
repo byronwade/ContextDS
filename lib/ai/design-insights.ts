@@ -4,8 +4,14 @@
  */
 
 import { generateText } from 'ai'
-import { openai } from '@ai-sdk/openai'
+import { createOpenAI } from '@ai-sdk/openai'
 import type { CuratedTokenSet } from '@/lib/analyzers/token-curator'
+
+// Configure AI Gateway
+const openai = createOpenAI({
+  apiKey: process.env.AI_GATEWAY_API_KEY || process.env.OPENAI_API_KEY,
+  baseURL: process.env.AI_GATEWAY_API_KEY ? 'https://gateway.ai.cloudflare.com/v1/contextds/openai' : undefined
+})
 
 export interface DesignInsights {
   summary: string

@@ -778,362 +778,304 @@ function HomePageContent() {
           </div>
         </div>
       ) : viewMode === "scan" && scanResult ? (
-        /* World-Class Scan Results */
+        /* Scan Results - Grep Terminal Style */
         <div className="flex-1 w-full overflow-y-auto bg-grep-0">
-          <div className="w-full max-w-7xl mx-auto px-4 py-8 md:px-8 md:py-12">
-            {/* Hero Header */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 p-8 md:p-12 text-white shadow-2xl mb-8">
-              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30"></div>
-              <div className="relative z-10">
-                <div className="flex items-start justify-between gap-4 flex-wrap">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                        <Sparkles className="h-6 w-6 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-white/80 text-sm font-medium">Design System Analysis</p>
-                        <h1 className="text-3xl md:text-4xl font-bold text-white truncate">{scanResult.domain}</h1>
-                      </div>
-                    </div>
+          <div className="w-full max-w-6xl mx-auto px-4 py-6 md:px-8 md:py-8">
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-6">
-                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Palette className="h-5 w-5 text-white/80" />
-                          <span className="text-white/70 text-sm">Tokens</span>
-                        </div>
-                        <p className="text-3xl font-bold text-white">{scanResult.summary?.tokensExtracted || 0}</p>
-                      </div>
-                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <TrendingUp className="h-5 w-5 text-white/80" />
-                          <span className="text-white/70 text-sm">Confidence</span>
-                        </div>
-                        <p className="text-3xl font-bold text-white">{scanResult.summary?.confidence || 0}%</p>
-                      </div>
-                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Monitor className="h-5 w-5 text-white/80" />
-                          <span className="text-white/70 text-sm">Completeness</span>
-                        </div>
-                        <p className="text-3xl font-bold text-white">{scanResult.summary?.completeness || 0}%</p>
-                      </div>
-                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <svg className="h-5 w-5 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                          <span className="text-white/70 text-sm">Reliability</span>
-                        </div>
-                        <p className="text-3xl font-bold text-white">{scanResult.summary?.reliability || 0}%</p>
-                      </div>
-                    </div>
+            {/* Minimal Header */}
+            <div className="mb-6 flex items-center justify-between border-b border-grep-2 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+                <h1 className="text-xl font-medium text-foreground font-mono">
+                  {scanResult.domain}
+                </h1>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleCopyToken(JSON.stringify(scanResult.curatedTokens, null, 2))}
+                  className="h-7 px-2 text-xs font-mono text-grep-9 hover:text-foreground"
+                >
+                  <Copy className="h-3.5 w-3.5 mr-1" />
+                  copy
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const blob = new Blob([JSON.stringify(scanResult.curatedTokens, null, 2)], { type: "application/json" })
+                    const url = URL.createObjectURL(blob)
+                    const anchor = document.createElement("a")
+                    anchor.href = url
+                    anchor.download = `${scanResult.domain}-tokens.json`
+                    document.body.appendChild(anchor)
+                    anchor.click()
+                    anchor.remove()
+                    URL.revokeObjectURL(url)
+                  }}
+                  className="h-7 px-2 text-xs font-mono text-grep-9 hover:text-foreground"
+                >
+                  <Download className="h-3.5 w-3.5 mr-1" />
+                  export
+                </Button>
+              </div>
+            </div>
+
+            {/* Summary Stats - Terminal Style */}
+            <div className="mb-6 rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
+              <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-grep-2">
+                <div className="px-4 py-3 border-b border-grep-2 md:border-b-0">
+                  <div className="text-grep-9 text-xs mb-1">tokens</div>
+                  <div className="text-2xl font-bold text-foreground tabular-nums">
+                    {scanResult.summary?.tokensExtracted || 0}
                   </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleCopyToken(JSON.stringify(scanResult.curatedTokens, null, 2))}
-                      className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
-                    >
-                      <Copy className="h-4 w-4 mr-2" />
-                      Copy All
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        const blob = new Blob([JSON.stringify(scanResult.curatedTokens, null, 2)], { type: "application/json" })
-                        const url = URL.createObjectURL(blob)
-                        const anchor = document.createElement("a")
-                        anchor.href = url
-                        anchor.download = `${scanResult.domain}-curated-tokens.json`
-                        document.body.appendChild(anchor)
-                        anchor.click()
-                        anchor.remove()
-                        URL.revokeObjectURL(url)
-                      }}
-                      className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Export
-                    </Button>
+                </div>
+                <div className="px-4 py-3 border-b border-grep-2 md:border-b-0">
+                  <div className="text-grep-9 text-xs mb-1">confidence</div>
+                  <div className="text-2xl font-bold text-foreground tabular-nums">
+                    {scanResult.summary?.confidence || 0}%
+                  </div>
+                </div>
+                <div className="px-4 py-3">
+                  <div className="text-grep-9 text-xs mb-1">complete</div>
+                  <div className="text-2xl font-bold text-foreground tabular-nums">
+                    {scanResult.summary?.completeness || 0}%
+                  </div>
+                </div>
+                <div className="px-4 py-3">
+                  <div className="text-grep-9 text-xs mb-1">quality</div>
+                  <div className="text-2xl font-bold text-foreground tabular-nums">
+                    {scanResult.summary?.reliability || 0}%
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* AI-Powered Design Insights */}
-            {scanResult.aiInsights && (
-              <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 rounded-xl border-2 border-purple-200 dark:border-purple-900 p-6 mb-8 shadow-lg">
-                <div className="flex items-start justify-between mb-6">
-                  <div>
-                    <h2 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
-                      <Sparkles className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                      AI Design Analysis
-                    </h2>
-                    <p className="text-sm text-grep-9">{scanResult.aiInsights.summary}</p>
-                  </div>
-                  <Badge variant="secondary" className="bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700">
-                    Powered by AI Gateway
-                  </Badge>
+            {/* Brand Analysis - Minimal */}
+            {scanResult.brandAnalysis && (
+              <div className="mb-6 rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-grep-2 bg-background">
+                  <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">Brand Analysis</span>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                  {/* Color Palette Analysis */}
-                  <div className="p-4 rounded-lg bg-white/80 dark:bg-black/40 border border-purple-200 dark:border-purple-800 backdrop-blur-sm">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Palette className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                      <p className="text-xs font-semibold text-grep-9 uppercase tracking-wide">Color Palette</p>
+                <div className="divide-y divide-grep-2">
+                  {scanResult.brandAnalysis.style && (
+                    <div className="px-4 py-2.5 flex items-center justify-between">
+                      <span className="text-grep-9">style</span>
+                      <span className="text-foreground capitalize">{scanResult.brandAnalysis.style}</span>
                     </div>
-                    <p className="text-base font-bold text-foreground mb-1 capitalize">{scanResult.aiInsights.colorPalette.style}</p>
-                    <p className="text-sm text-grep-9 capitalize">{scanResult.aiInsights.colorPalette.mood}</p>
-                  </div>
-
-                  {/* Typography Analysis */}
-                  <div className="p-4 rounded-lg bg-white/80 dark:bg-black/40 border border-purple-200 dark:border-purple-800 backdrop-blur-sm">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Type className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                      <p className="text-xs font-semibold text-grep-9 uppercase tracking-wide">Typography</p>
+                  )}
+                  {scanResult.brandAnalysis.maturity && (
+                    <div className="px-4 py-2.5 flex items-center justify-between">
+                      <span className="text-grep-9">maturity</span>
+                      <span className="text-foreground capitalize">{scanResult.brandAnalysis.maturity}</span>
                     </div>
-                    <p className="text-base font-bold text-foreground mb-1">{scanResult.aiInsights.typography.style}</p>
-                    <p className="text-sm text-grep-9">{scanResult.aiInsights.typography.hierarchy}</p>
-                  </div>
-
-                  {/* Spacing System */}
-                  <div className="p-4 rounded-lg bg-white/80 dark:bg-black/40 border border-purple-200 dark:border-purple-800 backdrop-blur-sm">
-                    <div className="flex items-center gap-2 mb-2">
-                      <svg className="h-4 w-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-                      </svg>
-                      <p className="text-xs font-semibold text-grep-9 uppercase tracking-wide">Spacing</p>
+                  )}
+                  {scanResult.brandAnalysis.consistency !== undefined && (
+                    <div className="px-4 py-2.5 flex items-center justify-between">
+                      <span className="text-grep-9">consistency</span>
+                      <span className="text-foreground tabular-nums">{Math.round(scanResult.brandAnalysis.consistency * 100)}%</span>
                     </div>
-                    <p className="text-base font-bold text-foreground mb-1">{scanResult.aiInsights.spacing.system}</p>
-                    <p className="text-sm text-grep-9">{scanResult.aiInsights.spacing.consistency}</p>
-                  </div>
-
-                  {/* Maturity Level */}
-                  <div className="p-4 rounded-lg bg-white/80 dark:bg-black/40 border border-purple-200 dark:border-purple-800 backdrop-blur-sm">
-                    <div className="flex items-center gap-2 mb-2">
-                      <TrendingUp className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                      <p className="text-xs font-semibold text-grep-9 uppercase tracking-wide">Maturity</p>
-                    </div>
-                    <p className="text-base font-bold text-foreground mb-1 capitalize">{scanResult.aiInsights.overall.maturity}</p>
-                    <p className="text-sm text-grep-9">{scanResult.aiInsights.overall.consistency}% consistent</p>
-                  </div>
+                  )}
                 </div>
-
-                {/* AI Recommendations */}
-                {scanResult.aiInsights.overall.aiRecommendations && scanResult.aiInsights.overall.aiRecommendations.length > 0 && (
-                  <div className="p-5 rounded-lg bg-white/80 dark:bg-black/40 border border-purple-200 dark:border-purple-800">
-                    <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-                      <svg className="h-4 w-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                      </svg>
-                      AI Recommendations
-                    </h3>
-                    <ul className="space-y-2">
-                      {scanResult.aiInsights.overall.aiRecommendations.slice(0, 5).map((rec, index) => (
-                        <li key={index} className="flex items-start gap-2 text-sm text-grep-9">
-                          <span className="text-purple-500 dark:text-purple-400 mt-0.5">•</span>
-                          <span>{rec}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
             )}
 
-            {/* Curated Design Tokens */}
+            {/* Token Categories - Minimal Grep Style */}
             {scanResult.curatedTokens && (
-              <div className="space-y-6">
-                {/* Top 8 Colors */}
+              <div className="space-y-4">
+
+                {/* Colors - Compact Grid */}
                 {scanResult.curatedTokens.colors && scanResult.curatedTokens.colors.length > 0 && (
-                  <div className="bg-white dark:bg-neutral-900 rounded-xl border border-grep-2 overflow-hidden">
-                    <div className="bg-grep-0 border-b border-grep-2 px-6 py-4">
-                      <h3 className="text-xl font-bold text-foreground flex items-center gap-3">
-                        <Palette className="h-5 w-5 text-blue-500" />
-                        Top Colors
-                        <Badge variant="secondary" className="ml-2">{scanResult.curatedTokens.colors.length}</Badge>
-                      </h3>
-                      <p className="text-sm text-grep-9 mt-1">Most frequently used colors in the design system</p>
+                  <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
+                      <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">
+                        Colors ({scanResult.curatedTokens.colors.length})
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCopyToken(JSON.stringify(scanResult.curatedTokens.colors, null, 2))}
+                        className="h-6 px-2 text-xs text-grep-9 hover:text-foreground"
+                      >
+                        copy
+                      </Button>
                     </div>
-                    <div className="p-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="p-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
                         {scanResult.curatedTokens.colors.map((token, index) => (
-                          <div key={`color-${index}`} className="group relative p-4 rounded-lg border border-grep-2 bg-grep-0 hover:border-blue-400 hover:shadow-lg transition-all duration-200">
-                            <div className="flex flex-col gap-3">
-                              <div
-                                className="w-full h-24 rounded-lg border-2 border-grep-3 shadow-md"
-                                style={{ backgroundColor: String(token.value) }}
-                              />
-                              <div>
-                                <div className="flex items-center justify-between mb-1">
-                                  <code className="text-xs font-mono font-semibold text-foreground">{token.value}</code>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleCopyToken(String(token.value))}
-                                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  >
-                                    <Copy className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                                {token.semantic && (
-                                  <p className="text-xs text-grep-9 mb-2">{token.semantic}</p>
-                                )}
-                                <div className="flex items-center gap-2 text-xs">
-                                  <div className="flex items-center gap-1">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                                    <span className="text-grep-9">{token.percentage}% usage</span>
+                          <button
+                            key={`color-${index}`}
+                            onClick={() => handleCopyToken(String(token.value))}
+                            className="group flex flex-col gap-2 p-2 rounded border border-grep-2 bg-background hover:border-foreground transition-colors"
+                            title={`${token.value} · ${token.usage} uses (${token.percentage}% of colors)`}
+                          >
+                            <div
+                              className="w-full h-16 rounded border border-grep-3"
+                              style={{ backgroundColor: String(token.value) }}
+                            />
+                            <div className="text-left w-full">
+                              <code className="text-xs text-foreground block truncate">{token.value}</code>
+                              <div className="flex items-center justify-between mt-1">
+                                <span className="text-[10px] text-grep-9">{token.usage} uses</span>
+                                <div className="flex items-center gap-1">
+                                  <div className="w-8 h-0.5 bg-grep-3 rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full bg-blue-500 rounded-full transition-all"
+                                      style={{ width: `${token.percentage}%` }}
+                                    />
                                   </div>
-                                  <div className="flex items-center gap-1">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                    <span className="text-grep-9">{token.confidence}% confident</span>
-                                  </div>
+                                  <span className="text-[9px] text-grep-9 tabular-nums">{token.percentage}%</span>
                                 </div>
                               </div>
                             </div>
-                          </div>
+                          </button>
                         ))}
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Top 4 Fonts */}
+                {/* Typography - List Style */}
                 {scanResult.curatedTokens.typography?.families && scanResult.curatedTokens.typography.families.length > 0 && (
-                  <div className="bg-white dark:bg-neutral-900 rounded-xl border border-grep-2 overflow-hidden">
-                    <div className="bg-grep-0 border-b border-grep-2 px-6 py-4">
-                      <h3 className="text-xl font-bold text-foreground flex items-center gap-3">
-                        <Type className="h-5 w-5 text-purple-500" />
-                        Top Font Families
-                        <Badge variant="secondary" className="ml-2">{scanResult.curatedTokens.typography.families.length}</Badge>
-                      </h3>
-                      <p className="text-sm text-grep-9 mt-1">Most commonly used typefaces</p>
+                  <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
+                      <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">
+                        Typography ({scanResult.curatedTokens.typography.families.length})
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCopyToken(JSON.stringify(scanResult.curatedTokens.typography.families, null, 2))}
+                        className="h-6 px-2 text-xs text-grep-9 hover:text-foreground"
+                      >
+                        copy
+                      </Button>
                     </div>
-                    <div className="p-6">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {scanResult.curatedTokens.typography.families.map((token, index) => (
-                          <FontPreviewCard
-                            key={`font-${index}`}
-                            fontFamily={token.value}
-                            semantic={token.semantic}
-                            usage={token.usage}
-                            percentage={token.percentage}
-                            onCopy={() => handleCopyToken(String(token.value))}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Top Border Radii */}
-                {scanResult.curatedTokens.radius && scanResult.curatedTokens.radius.length > 0 && (
-                  <div className="bg-white dark:bg-neutral-900 rounded-xl border border-grep-2 overflow-hidden">
-                    <div className="bg-grep-0 border-b border-grep-2 px-6 py-4">
-                      <h3 className="text-xl font-bold text-foreground flex items-center gap-3">
-                        <svg className="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                        </svg>
-                        Top Border Radii
-                        <Badge variant="secondary" className="ml-2">{scanResult.curatedTokens.radius.length}</Badge>
-                      </h3>
-                      <p className="text-sm text-grep-9 mt-1">Most used corner roundness values</p>
-                    </div>
-                    <div className="p-6">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {scanResult.curatedTokens.radius.map((token, index) => (
-                          <div key={`radius-${index}`} className="group relative p-4 rounded-lg border border-grep-2 bg-grep-0 hover:border-orange-400 hover:shadow-lg transition-all duration-200">
-                            <div className="flex flex-col items-center gap-3">
-                              <div className="w-20 h-20 bg-gradient-to-br from-orange-400 to-orange-600 border-2 border-grep-3 shadow-md" style={{ borderRadius: String(token.value) }} />
-                              <div className="text-center w-full">
-                                <code className="text-sm font-mono font-semibold text-foreground">{token.value}</code>
-                                {token.semantic && (
-                                  <p className="text-xs text-grep-9 mt-1">{token.semantic}</p>
-                                )}
-                                <p className="text-xs text-grep-9 mt-1">{token.percentage}% usage</p>
-                              </div>
+                    <div className="divide-y divide-grep-2">
+                      {scanResult.curatedTokens.typography.families.map((token, index) => (
+                        <button
+                          key={`font-${index}`}
+                          onClick={() => handleCopyToken(String(token.value))}
+                          className="w-full px-4 py-3 text-left hover:bg-background transition-colors flex items-center justify-between gap-4 group"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <code className="text-sm text-foreground truncate">{token.value}</code>
+                              <span className="text-[10px] text-grep-9">{token.percentage}%</span>
+                            </div>
+                            <div className="text-base text-grep-9" style={{ fontFamily: String(token.value) }}>
+                              Aa Bb Cc 123
                             </div>
                           </div>
-                        ))}
-                      </div>
+                          <Copy className="h-3.5 w-3.5 text-grep-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}
 
-                {/* Top Shadows */}
-                {scanResult.curatedTokens.shadows && scanResult.curatedTokens.shadows.length > 0 && (
-                  <div className="bg-white dark:bg-neutral-900 rounded-xl border border-grep-2 overflow-hidden">
-                    <div className="bg-grep-0 border-b border-grep-2 px-6 py-4">
-                      <h3 className="text-xl font-bold text-foreground flex items-center gap-3">
-                        <svg className="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                        </svg>
-                        Top Shadows
-                        <Badge variant="secondary" className="ml-2">{scanResult.curatedTokens.shadows.length}</Badge>
-                      </h3>
-                      <p className="text-sm text-grep-9 mt-1">Most used elevation effects</p>
-                    </div>
-                    <div className="p-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {scanResult.curatedTokens.shadows.map((token, index) => (
-                          <div key={`shadow-${index}`} className="group relative p-5 rounded-lg border border-grep-2 bg-grep-0 hover:border-indigo-400 hover:shadow-lg transition-all duration-200">
-                            <div className="flex flex-col gap-3">
-                              <div className="p-8 bg-grep-1 dark:bg-grep-2 rounded-lg border border-grep-2 flex items-center justify-center">
-                                <div className="w-32 h-32 bg-white dark:bg-neutral-800 rounded-lg" style={{ boxShadow: String(token.value) }} />
-                              </div>
-                              <div>
-                                <code className="text-xs font-mono text-grep-9 block mb-2 break-all">{token.value}</code>
-                                {token.semantic && (
-                                  <p className="text-xs text-grep-9 mb-1">{token.semantic}</p>
-                                )}
-                                <p className="text-xs text-grep-9">{token.percentage}% usage</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Top Spacing Values */}
+                {/* Spacing - Compact List */}
                 {scanResult.curatedTokens.spacing && scanResult.curatedTokens.spacing.length > 0 && (
-                  <div className="bg-white dark:bg-neutral-900 rounded-xl border border-grep-2 overflow-hidden">
-                    <div className="bg-grep-0 border-b border-grep-2 px-6 py-4">
-                      <h3 className="text-xl font-bold text-foreground flex items-center gap-3">
-                        <svg className="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-                        </svg>
-                        Top Spacing Values
-                        <Badge variant="secondary" className="ml-2">{scanResult.curatedTokens.spacing.length}</Badge>
-                      </h3>
-                      <p className="text-sm text-grep-9 mt-1">Most used spacing and sizing values</p>
+                  <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
+                      <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">
+                        Spacing ({scanResult.curatedTokens.spacing.length})
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCopyToken(JSON.stringify(scanResult.curatedTokens.spacing, null, 2))}
+                        className="h-6 px-2 text-xs text-grep-9 hover:text-foreground"
+                      >
+                        copy
+                      </Button>
                     </div>
-                    <div className="p-6">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="p-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
                         {scanResult.curatedTokens.spacing.map((token, index) => (
-                          <div key={`spacing-${index}`} className="group relative p-4 rounded-lg border border-grep-2 bg-grep-0 hover:border-green-400 hover:shadow-lg transition-all duration-200">
-                            <div className="flex flex-col items-center gap-3">
-                              <div className="w-full p-4 bg-grep-1 dark:bg-grep-2 rounded-lg border border-grep-2 flex items-center justify-start">
-                                <div className="bg-gradient-to-r from-green-400 to-green-600 rounded" style={{ width: String(token.value), height: '32px', maxWidth: '100%' }} />
-                              </div>
-                              <div className="text-center w-full">
-                                <code className="text-sm font-mono font-semibold text-foreground">{token.value}</code>
-                                {token.semantic && (
-                                  <p className="text-xs text-grep-9 mt-1">{token.semantic}</p>
-                                )}
-                                <p className="text-xs text-grep-9 mt-1">{token.percentage}% usage</p>
-                              </div>
-                            </div>
-                          </div>
+                          <button
+                            key={`spacing-${index}`}
+                            onClick={() => handleCopyToken(String(token.value))}
+                            className="flex items-center gap-2 px-3 py-2 rounded border border-grep-2 bg-background hover:border-foreground transition-colors group"
+                            title={`${token.percentage}% usage`}
+                          >
+                            <div className="w-1 h-4 bg-foreground rounded-sm" style={{ width: `${Math.min(parseInt(token.value) / 2, 24)}px` }} />
+                            <code className="text-xs text-foreground">{token.value}</code>
+                          </button>
                         ))}
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Radius - Inline Display */}
+                {scanResult.curatedTokens.radius && scanResult.curatedTokens.radius.length > 0 && (
+                  <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
+                      <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">
+                        Radius ({scanResult.curatedTokens.radius.length})
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCopyToken(JSON.stringify(scanResult.curatedTokens.radius, null, 2))}
+                        className="h-6 px-2 text-xs text-grep-9 hover:text-foreground"
+                      >
+                        copy
+                      </Button>
+                    </div>
+                    <div className="p-4">
+                      <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+                        {scanResult.curatedTokens.radius.map((token, index) => (
+                          <button
+                            key={`radius-${index}`}
+                            onClick={() => handleCopyToken(String(token.value))}
+                            className="flex flex-col items-center gap-2 p-3 rounded border border-grep-2 bg-background hover:border-foreground transition-colors"
+                            title={`${token.percentage}% usage`}
+                          >
+                            <div className="w-12 h-12 bg-foreground" style={{ borderRadius: String(token.value) }} />
+                            <code className="text-xs text-foreground">{token.value}</code>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Shadows - Table Style */}
+                {scanResult.curatedTokens.shadows && scanResult.curatedTokens.shadows.length > 0 && (
+                  <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
+                      <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">
+                        Shadows ({scanResult.curatedTokens.shadows.length})
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCopyToken(JSON.stringify(scanResult.curatedTokens.shadows, null, 2))}
+                        className="h-6 px-2 text-xs text-grep-9 hover:text-foreground"
+                      >
+                        copy
+                      </Button>
+                    </div>
+                    <div className="divide-y divide-grep-2">
+                      {scanResult.curatedTokens.shadows.map((token, index) => (
+                        <button
+                          key={`shadow-${index}`}
+                          onClick={() => handleCopyToken(String(token.value))}
+                          className="w-full px-4 py-3 text-left hover:bg-background transition-colors group flex items-center gap-4"
+                        >
+                          <div className="w-16 h-16 shrink-0 bg-background rounded border border-grep-3 flex items-center justify-center">
+                            <div className="w-10 h-10 bg-grep-0 rounded" style={{ boxShadow: String(token.value) }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <code className="text-xs text-foreground block truncate">{token.value}</code>
+                            <div className="text-[10px] text-grep-9 mt-1">{token.percentage}% usage</div>
+                          </div>
+                          <Copy className="h-3.5 w-3.5 text-grep-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}
