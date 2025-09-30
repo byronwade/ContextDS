@@ -97,30 +97,41 @@ export async function runScanJob({ url, prettify, includeComputed }: ScanJobInpu
 
   const endTokenPhase = metrics.startPhase('generate_tokens')
 
-  // Use new W3C-compliant tokenizer
-  const w3cExtraction = extractW3CTokens(cssArtifacts, { domain, url: target.toString() })
+  let w3cExtraction
+  let curatedTokens
+  let legacyGenerated
 
-  // Curate tokens - return only the most important, most-used tokens
-  const curatedTokens = curateTokens(w3cExtraction.tokenSet, {
-    maxColors: 8,
-    maxFonts: 4,
-    maxSizes: 6,
-    maxSpacing: 8,
-    maxRadius: 4,
-    maxShadows: 4,
-    maxMotion: 4,
-    minUsage: 2,
-    minConfidence: 65
-  })
+  try {
+    // Use new W3C-compliant tokenizer
+    w3cExtraction = extractW3CTokens(cssArtifacts, { domain, url: target.toString() })
 
-  // Also generate legacy format for backward compatibility with existing code
-  const legacyGenerated = generateTokenSetLegacy(cssArtifacts, { domain, url: target.toString() })
+    // Curate tokens - return only the most important, most-used tokens
+    curatedTokens = curateTokens(w3cExtraction.tokenSet, {
+      maxColors: 8,
+      maxFonts: 4,
+      maxSizes: 6,
+      maxSpacing: 8,
+      maxRadius: 4,
+      maxShadows: 4,
+      maxMotion: 4,
+      minUsage: 2,
+      minConfidence: 65
+    })
+  } catch (error) {
+    console.error('W3C token extraction failed, using legacy fallback:', error)
+    // W3C extraction failed, skip it
+    w3cExtraction = null
+    curatedTokens = null
+  }
 
-  // Create unified result that includes both formats
-  const generated = {
+  // Always generate legacy format as fallback
+  legacyGenerated = generateTokenSetLegacy(cssArtifacts, { domain, url: target.toString() })
+
+  // Create unified result
+  const generated = w3cExtraction && curatedTokens ? {
     tokenSet: w3cExtraction.tokenSet,
-    curatedTokens, // Add curated tokens for UI display
-    tokenGroups: legacyGenerated.tokenGroups, // Keep legacy format for existing UI (deprecated)
+    curatedTokens,
+    tokenGroups: legacyGenerated.tokenGroups,
     summary: {
       tokensExtracted: w3cExtraction.summary.totalTokens,
       curatedCount: {
@@ -136,7 +147,21 @@ export async function runScanJob({ url, prettify, includeComputed }: ScanJobInpu
       reliability: legacyGenerated.summary.reliability
     },
     qualityInsights: legacyGenerated.qualityInsights,
-    w3cInsights: w3cExtraction.insights // Add new insights
+    w3cInsights: w3cExtraction.insights
+  } : {
+    // Fallback to legacy only
+    tokenSet: legacyGenerated.tokenSet,
+    curatedTokens: null,
+    tokenGroups: legacyGenerated.tokenGroups,
+    summary: {
+      tokensExtracted: legacyGenerated.summary.tokensExtracted,
+      curatedCount: null,
+      confidence: legacyGenerated.summary.confidence,
+      completeness: legacyGenerated.summary.completeness,
+      reliability: legacyGenerated.summary.reliability
+    },
+    qualityInsights: legacyGenerated.qualityInsights,
+    w3cInsights: null
   }
 
   endTokenPhase()

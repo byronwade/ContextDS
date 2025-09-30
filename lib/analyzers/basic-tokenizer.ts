@@ -303,9 +303,31 @@ export function generateTokenSet(
   sources: CssSource[],
   origin: { domain: string; url: string }
 ): GeneratedTokenSet {
-  const cssText = sources.map((source) => source.content).join('\n')
+  // Parse each CSS source individually to handle errors gracefully
+  const parsedRoots: postcss.Root[] = []
 
-  const root = postcss.parse(cssText, { parser: safeParser })
+  for (const source of sources) {
+    try {
+      const root = postcss.parse(source.content, { parser: safeParser })
+      parsedRoots.push(root)
+    } catch (error) {
+      console.warn(`[basic-tokenizer] Failed to parse CSS from ${source.url || source.kind}:`, error instanceof Error ? error.message : error)
+      // Skip this source and continue with others
+    }
+  }
+
+  if (parsedRoots.length === 0) {
+    throw new Error('No valid CSS sources could be parsed')
+  }
+
+  // Merge all parsed roots into one
+  const root = postcss.root()
+  parsedRoots.forEach(parsedRoot => {
+    parsedRoot.nodes.forEach(node => {
+      root.append(node.clone())
+    })
+  })
+
   const variableMap = collectVariableMap(root)
 
   const colors = extractColors(root, variableMap)

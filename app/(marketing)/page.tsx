@@ -26,7 +26,9 @@ import {
 } from "lucide-react"
 import { ColorCardGrid } from "@/components/organisms/color-card-grid"
 import { ThemeToggle } from "@/components/atoms/theme-toggle"
+import { RealtimeStat } from "@/components/atoms/realtime-stat"
 import { cn } from "@/lib/utils"
+import { useRealtimeStats } from "@/hooks/use-realtime-stats"
 
 const tokenCategoryOptions = [
   { key: "all", label: "All categories" },
@@ -86,10 +88,129 @@ type ScanResultPayload = {
   domain?: string
   summary?: {
     tokensExtracted: number
+    curatedCount?: {
+      colors: number
+      fonts: number
+      sizes: number
+      spacing: number
+      radius: number
+      shadows: number
+    }
     confidence: number
     completeness: number
     reliability: number
     processingTime: number
+  }
+  curatedTokens?: {
+    colors: Array<{
+      name: string
+      value: string
+      usage: number
+      confidence: number
+      percentage: number
+      category: string
+      semantic?: string
+      preview?: any
+    }>
+    typography: {
+      families: Array<{
+        name: string
+        value: string
+        usage: number
+        confidence: number
+        percentage: number
+        category: string
+        semantic?: string
+        preview?: any
+      }>
+      sizes: Array<{
+        name: string
+        value: string
+        usage: number
+        confidence: number
+        percentage: number
+        category: string
+        semantic?: string
+      }>
+      weights: Array<{
+        name: string
+        value: string
+        usage: number
+        confidence: number
+        percentage: number
+        category: string
+        semantic?: string
+      }>
+    }
+    spacing: Array<{
+      name: string
+      value: string
+      usage: number
+      confidence: number
+      percentage: number
+      category: string
+      semantic?: string
+      preview?: any
+    }>
+    radius: Array<{
+      name: string
+      value: string
+      usage: number
+      confidence: number
+      percentage: number
+      category: string
+      semantic?: string
+      preview?: any
+    }>
+    shadows: Array<{
+      name: string
+      value: string
+      usage: number
+      confidence: number
+      percentage: number
+      category: string
+      semantic?: string
+      preview?: any
+    }>
+    motion: Array<{
+      name: string
+      value: string
+      usage: number
+      confidence: number
+      percentage: number
+      category: string
+      semantic?: string
+    }>
+  }
+  aiInsights?: {
+    summary: string
+    colorPalette: {
+      style: string
+      mood: string
+      accessibility: string
+      recommendations: string[]
+    }
+    typography: {
+      style: string
+      hierarchy: string
+      readability: string
+      recommendations: string[]
+    }
+    spacing: {
+      system: string
+      consistency: string
+      recommendations: string[]
+    }
+    components: {
+      patterns: string[]
+      quality: string
+      recommendations: string[]
+    }
+    overall: {
+      maturity: 'prototype' | 'developing' | 'mature' | 'systematic'
+      consistency: number
+      aiRecommendations: string[]
+    }
   }
   tokens?: Record<string, Array<{ name: string; value: string; confidence?: number; usage?: number; semantic?: string }>>
   brandAnalysis?: {
@@ -117,6 +238,9 @@ function HomePageContent() {
   const [scanResult, setScanResult] = useState<ScanResultPayload | null>(null)
   const [scanLoading, setScanLoading] = useState(false)
   const [scanError, setScanError] = useState<string | null>(null)
+
+  // Real-time stats from Neon database
+  const realtimeStats = useRealtimeStats(5000) // Updates every 5 seconds
 
   useEffect(() => {
     setIsSearchActive(query.trim().length > 0)
@@ -310,8 +434,8 @@ function HomePageContent() {
       {/* Minimal Grep-Style Header */}
       <header className="flex min-h-[64px] w-full shrink-0 flex-wrap items-center justify-between border-b border-grep-2 md:flex-nowrap">
 
-        {/* Left: Brand */}
-        <div className="flex pl-4 md:pl-6">
+        {/* Left: Brand + Live Stats */}
+        <div className="flex items-center pl-4 md:pl-6 gap-4">
           <div className="flex items-center space-x-2 pr-3">
             <Link className="outline-offset-4" href="/">
               <svg aria-label="ContextDS" className="fill-black dark:fill-white" viewBox="0 0 75 65" height="22">
@@ -327,6 +451,21 @@ function HomePageContent() {
                 <span className="text-lg font-semibold text-black dark:text-white">ContextDS</span>
               </div>
             </Link>
+          </div>
+
+          {/* Real-time Stats - Minimal Display */}
+          <div className="hidden lg:flex items-center gap-3 border-l border-grep-2 pl-4">
+            <RealtimeStat
+              value={realtimeStats.tokens}
+              label="tokens"
+              loading={realtimeStats.loading}
+            />
+            <div className="w-px h-3 bg-grep-3" />
+            <RealtimeStat
+              value={realtimeStats.sites}
+              label="sites"
+              loading={realtimeStats.loading}
+            />
           </div>
         </div>
 
@@ -368,7 +507,7 @@ function HomePageContent() {
               placeholder={
                 viewMode === "scan"
                   ? "Paste URL (stripe.com, github.com, linear.app...)"
-                  : `Search ${stats?.tokens.toLocaleString() || '17,000'}+ design tokens`
+                  : `Search ${realtimeStats.tokens > 0 ? realtimeStats.tokens.toLocaleString() + '+' : '17,000+'} design tokens`
               }
               id="search-input"
               className="flex w-full min-w-0 shrink rounded-md border border-grep-4 bg-grep-0 px-3 py-1 text-sm transition-colors focus-visible:border-grep-12 focus-visible:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grep-4 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-grep-7 h-[42px] md:h-9 max-md:max-w-none"
@@ -948,15 +1087,74 @@ function HomePageContent() {
           </div>
         </div>
       ) : viewMode === "scan" && scanLoading ? (
-        /* Scan Loading */
-        <div className="flex-1 flex items-center justify-center p-12">
-          <div className="text-center space-y-4">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center animate-pulse">
-              <Sparkles className="h-8 w-8 text-white" />
+        /* Scan Loading - Enhanced Visual Feedback */
+        <div className="flex-1 flex items-center justify-center p-4 md:p-12">
+          <div className="w-full max-w-2xl">
+
+            {/* Main Loading Card */}
+            <div className="relative overflow-hidden rounded-2xl border border-grep-2 bg-white dark:bg-neutral-900 p-8 md:p-12">
+
+              {/* Animated gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-emerald-950/20 dark:via-teal-950/20 dark:to-cyan-950/20 animate-pulse" />
+
+              {/* Grid pattern overlay */}
+              <div className="absolute inset-0 opacity-30" style={{
+                backgroundImage: 'radial-gradient(circle at 1px 1px, rgb(0 0 0 / 0.05) 1px, transparent 0)',
+                backgroundSize: '24px 24px'
+              }} />
+
+              <div className="relative z-10 text-center space-y-6">
+
+                {/* Icon with pulse animation */}
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-xl">
+                  <Sparkles className="h-10 w-10 text-white animate-pulse" />
+                </div>
+
+                {/* Status Text */}
+                <div className="space-y-3">
+                  <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+                    Scanning {query}
+                  </h2>
+                  <p className="text-base text-grep-9">
+                    Extracting design tokens and analyzing layout
+                  </p>
+                </div>
+
+                {/* Processing Steps - Animated */}
+                <div className="pt-6 space-y-3 max-w-md mx-auto">
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-grep-9 text-left">Analyzing CSS and computed styles</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse animation-delay-150" />
+                    <span className="text-grep-9 text-left">Extracting color palette and typography</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse animation-delay-300" />
+                    <span className="text-grep-9 text-left">Generating W3C design tokens</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse animation-delay-450" />
+                    <span className="text-grep-9 text-left">Analyzing brand consistency</span>
+                  </div>
+                </div>
+
+                {/* Progress Indicator */}
+                <div className="pt-4">
+                  <div className="h-1 w-full bg-grep-2 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 animate-scan-progress origin-left" />
+                  </div>
+                  <p className="text-xs text-grep-9 mt-2">This usually takes 30-60 seconds</p>
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-foreground">Scanning {query}...</h3>
-              <p className="text-sm text-grep-9">Extracting design tokens and analyzing layout</p>
+
+            {/* Fun fact while waiting */}
+            <div className="mt-6 text-center">
+              <p className="text-xs text-grep-9 italic">
+                💡 Tip: ContextDS analyzes both static CSS and runtime computed styles for maximum accuracy
+              </p>
             </div>
           </div>
         </div>
@@ -1127,95 +1325,122 @@ function HomePageContent() {
           </div>
         </div>
       ) : (
-        /* Home View - Grep.app Style */
+        /* Home View - Minimal ContextDS */
         <div className="absolute top-[64px] flex h-[calc(100dvh-64px)] w-full flex-col items-center justify-between overflow-y-auto">
-            <div className="flex min-h-full w-full shrink-0 select-none flex-col items-center justify-center space-y-2">
-              {/* Hero Title */}
-              <div className="flex w-full flex-row items-center justify-center pt-8 text-center text-[2rem]/[2.5rem] font-semibold tracking-tight sm:text-5xl">
-                Design tokens made
-                <div className="px-[2px]"></div>
-                <span className="hidden align-middle sm:inline-block">
-                  <svg width="90" height="56" viewBox="0 0 90 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M27.5341 18.8182L26.733 23.5909H11.2557L12.0568 18.8182H27.5341ZM11.5455 45L16.3353 16.3466C16.608 14.5852 17.2046 13.1193 18.125 11.9489C19.0568 10.7784 20.1875 9.90341 21.5171 9.32386C22.858 8.74432 24.2841 8.45454 25.7955 8.45454C26.875 8.45454 27.8125 8.53977 28.608 8.71023C29.4034 8.88068 29.983 9.03409 30.3466 9.17045L28.3523 13.9432C28.0909 13.8636 27.7728 13.7841 27.3978 13.7045C27.0341 13.6136 26.608 13.5682 26.1193 13.5682C24.9716 13.5682 24.1137 13.8466 23.5455 14.4034C22.9773 14.9489 22.6023 15.733 22.4205 16.7557L17.733 45H11.5455ZM31.728 45.5284C30.0689 45.5284 28.6257 45.233 27.3984 44.642C26.1712 44.0398 25.2678 43.1534 24.6882 41.983C24.12 40.8125 23.978 39.3693 24.2621 37.6534C24.5121 36.1761 24.9893 34.9545 25.6939 33.9886C26.4098 33.0227 27.2848 32.25 28.3189 31.6705C29.3643 31.0795 30.5007 30.6364 31.728 30.3409C32.9666 30.0455 34.228 29.8295 35.5121 29.6932C37.0803 29.5341 38.3473 29.3864 39.3132 29.25C40.2905 29.1136 41.0234 28.9091 41.5121 28.6364C42.0007 28.3523 42.2962 27.9205 42.3984 27.3409V27.2386C42.603 25.9545 42.3984 24.9602 41.7848 24.2557C41.1712 23.5511 40.1484 23.1989 38.7166 23.1989C37.2166 23.1989 35.9553 23.5284 34.9325 24.1875C33.9098 24.8466 33.1655 25.625 32.6996 26.5227L27.1087 25.7045C27.8132 24.1136 28.7791 22.7841 30.0064 21.7159C31.2337 20.6364 32.6484 19.8295 34.2507 19.2955C35.8643 18.75 37.5859 18.4773 39.4155 18.4773C40.6655 18.4773 41.8871 18.625 43.0803 18.9205C44.2848 19.2159 45.3473 19.7045 46.2678 20.3864C47.1996 21.0568 47.8814 21.9716 48.3132 23.1307C48.7564 24.2898 48.8303 25.7386 48.5348 27.4773L45.62 45H39.6882L40.3018 41.4034H40.0973C39.6087 42.1307 38.9723 42.8125 38.1882 43.4489C37.4041 44.0739 36.4723 44.5795 35.3928 44.9659C34.3132 45.3409 33.0916 45.5284 31.728 45.5284ZM34.0632 40.9943C35.3018 40.9943 36.4155 40.75 37.4041 40.2614C38.3928 39.7614 39.2053 39.1023 39.8416 38.2841C40.478 37.4659 40.8757 36.5739 41.0348 35.608L41.5462 32.5227C41.3189 32.6818 40.9666 32.8295 40.4893 32.9659C40.0121 33.1023 39.478 33.2216 38.8871 33.3239C38.3075 33.4261 37.7337 33.517 37.1655 33.5966C36.5973 33.6761 36.1087 33.7443 35.6996 33.8011C34.7564 33.9261 33.8928 34.1307 33.1087 34.4148C32.3359 34.6989 31.6939 35.0966 31.1825 35.608C30.6825 36.108 30.37 36.7557 30.245 37.5511C30.0632 38.6761 30.3303 39.5341 31.0462 40.125C31.7621 40.7045 32.7678 40.9943 34.0632 40.9943Z" className="fill-black dark:fill-white"></path>
-                    <ellipse cx="10.3333" cy="42.75" rx="5.33333" ry="0.75" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="18.3333" cy="11.25" rx="5.33333" ry="0.75" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="55.6667" cy="21.0625" rx="3.66667" ry="0.6875" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="50.5" cy="17.75" rx="2.5" ry="0.75" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="74" cy="14.75" rx="2" ry="0.75" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="72.5" cy="44.75" rx="2.5" ry="0.75" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="78.5" cy="13" rx="3.5" ry="0.5" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="72.5" cy="27.75" rx="2.5" ry="0.75" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="28.6667" cy="26.0625" rx="3.66667" ry="0.6875" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="8" cy="38.5" rx="2" ry="0.5" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="21.5" cy="38.5" rx="2" ry="0.5" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="49.5" cy="34.5" rx="1.5" ry="0.5" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="51.5" cy="36" rx="2.5" ry="0.5" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="52" cy="24.5" rx="2" ry="0.5" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="8" cy="33.5" rx="3" ry="0.5" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="25" cy="29.5" rx="3" ry="0.5" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="11" cy="16.5" rx="3" ry="0.5" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="10.3333" cy="41.75" rx="5.33333" ry="0.75" className="fill-white dark:fill-black"></ellipse>
-                    <ellipse cx="18.3333" cy="9.75" rx="5.33333" ry="0.75" className="fill-white dark:fill-black"></ellipse>
-                    <ellipse cx="55.6667" cy="19.6875" rx="3.66667" ry="0.6875" className="fill-white dark:fill-black"></ellipse>
-                    <ellipse cx="28.6667" cy="24.6875" rx="3.66667" ry="0.6875" className="fill-white dark:fill-black"></ellipse>
-                    <ellipse cx="14" cy="30.25" rx="3" ry="0.75" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="27" cy="33.25" rx="3" ry="0.75" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="25" cy="43.25" rx="3" ry="0.75" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="53" cy="32.25" rx="3" ry="0.75" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="76" cy="42.25" rx="3" ry="0.75" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="76" cy="31.25" rx="3" ry="0.75" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="51.5" cy="44.25" rx="3.5" ry="0.75" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="13.5" cy="25.25" rx="3.5" ry="0.75" className="fill-black dark:fill-white"></ellipse>
-                    <ellipse cx="14" cy="28.75" rx="3" ry="0.75" className="fill-white dark:fill-black"></ellipse>
-                    <ellipse cx="27" cy="31.75" rx="3" ry="0.75" className="fill-white dark:fill-black"></ellipse>
-                    <ellipse cx="25" cy="41.75" rx="3" ry="0.75" className="fill-white dark:fill-black"></ellipse>
-                    <ellipse cx="53" cy="30.75" rx="3" ry="0.75" className="fill-white dark:fill-black"></ellipse>
-                    <ellipse cx="76" cy="40.75" rx="3" ry="0.75" className="fill-white dark:fill-black"></ellipse>
-                    <ellipse cx="76" cy="29.75" rx="3" ry="0.75" className="fill-white dark:fill-black"></ellipse>
-                    <ellipse cx="51.5" cy="42.75" rx="3.5" ry="0.75" className="fill-white dark:fill-black"></ellipse>
-                    <ellipse cx="13.5" cy="23.75" rx="3.5" ry="0.75" className="fill-white dark:fill-black"></ellipse>
-                  </svg>
-                </span>
-                <span className="inline-block align-middle sm:hidden">
-                  <svg width="58" height="40" viewBox="0 0 58 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M15.5036 13.5455L14.9695 16.7273H4.65131L5.1854 13.5455H15.5036Z" className="fill-black dark:fill-white"></path>
-                  </svg>
-                </span>
-              </div>
+          <div className="flex min-h-full w-full shrink-0 select-none flex-col items-center justify-center px-4 py-12">
 
-              {/* Subtitle */}
-              <div className="px-[8px] text-center text-sm text-grep-9 sm:text-base">
-                Effortlessly extract tokens, analyze design systems,{" "}
-                <span className="whitespace-nowrap">and build consistent interfaces.</span>
-              </div>
+            {/* Hero Content */}
+            <div className="max-w-3xl mx-auto text-center space-y-6">
 
-              <div className="py-6"></div>
-
-              {/* Call to Action */}
-              <div className="flex flex-col items-center gap-4 text-center px-4">
-                <p className="text-sm text-grep-9 max-w-md">
-                  Use the header to {viewMode === "search" ? "search for design tokens" : "scan a website"} or switch between modes
+              {/* Headline - Clear value prop */}
+              <div className="space-y-4">
+                <h1 className="text-[2.5rem]/[3rem] sm:text-6xl font-bold tracking-tight text-foreground">
+                  Extract design tokens<br />from any website
+                </h1>
+                <p className="text-base sm:text-lg text-grep-9 max-w-2xl mx-auto leading-relaxed">
+                  Scan sites like{" "}
+                  <button
+                    onClick={() => { setQuery('stripe.com'); setViewMode('scan'); }}
+                    className="text-foreground font-medium hover:underline"
+                  >
+                    Stripe
+                  </button>
+                  ,{" "}
+                  <button
+                    onClick={() => { setQuery('linear.app'); setViewMode('scan'); }}
+                    className="text-foreground font-medium hover:underline"
+                  >
+                    Linear
+                  </button>
+                  , and{" "}
+                  <button
+                    onClick={() => { setQuery('github.com'); setViewMode('scan'); }}
+                    className="text-foreground font-medium hover:underline"
+                  >
+                    GitHub
+                  </button>
+                  {" "}to extract colors, typography, spacing. Then search across{" "}
+                  <span className="text-foreground font-semibold">{realtimeStats.tokens > 0 ? realtimeStats.tokens.toLocaleString() : '17,000'}+ tokens</span>.
                 </p>
-                {stats && (
-                  <div className="flex items-center gap-6 text-xs text-grep-9">
-                    <span className="flex items-center gap-1">
-                      <Palette className="h-3 w-3" />
-                      {stats.tokens.toLocaleString()} tokens
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Monitor className="h-3 w-3" />
-                      {stats.sites.toLocaleString()} sites
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <TrendingUp className="h-3 w-3" />
-                      {stats.scans.toLocaleString()} scans
-                    </span>
-                  </div>
-                )}
               </div>
 
-              <div className="h-[min(25dvh,250px)] w-full"></div>
+              {/* Visual Example - Token Preview */}
+              <div className="flex items-center justify-center pt-4 pb-2">
+                <div className="inline-flex items-center gap-4 px-5 py-4 rounded-xl border border-grep-2 bg-grep-0">
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-lg border-2 border-grep-3 shadow-sm" style={{backgroundColor: '#0070f3'}} />
+                    <div className="w-10 h-10 rounded-lg border-2 border-grep-3 shadow-sm" style={{backgroundColor: '#7928ca'}} />
+                    <div className="w-10 h-10 rounded-lg border-2 border-grep-3 shadow-sm" style={{backgroundColor: '#ff0080'}} />
+                    <div className="w-10 h-10 rounded-lg border-2 border-grep-3 shadow-sm" style={{backgroundColor: '#50e3c2'}} />
+                  </div>
+                  <div className="w-px h-10 bg-grep-3" />
+                  <div className="text-left">
+                    <p className="text-[10px] text-grep-9 uppercase tracking-wide font-semibold mb-0.5">Extracted Tokens</p>
+                    <code className="text-xs text-foreground font-mono">#0070f3, #7928ca, #ff0080...</code>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats - Prominent & Live */}
+              {!realtimeStats.loading && (
+                <div className="flex items-center justify-center gap-8 pt-6 text-[13px]">
+                  <div className="text-center">
+                    <p className={cn(
+                      "text-2xl font-bold text-foreground tabular-nums transition-all duration-300",
+                      realtimeStats.tokens > 0 && "animate-in fade-in"
+                    )}>
+                      {realtimeStats.tokens.toLocaleString()}
+                    </p>
+                    <p className="text-grep-9">design tokens</p>
+                  </div>
+                  <div className="w-px h-12 bg-grep-3" />
+                  <div className="text-center">
+                    <p className={cn(
+                      "text-2xl font-bold text-foreground tabular-nums transition-all duration-300",
+                      realtimeStats.sites > 0 && "animate-in fade-in"
+                    )}>
+                      {realtimeStats.sites}
+                    </p>
+                    <p className="text-grep-9">sites analyzed</p>
+                  </div>
+                  <div className="w-px h-12 bg-grep-3" />
+                  <div className="text-center">
+                    <p className={cn(
+                      "text-2xl font-bold text-foreground tabular-nums transition-all duration-300",
+                      realtimeStats.scans > 0 && "animate-in fade-in"
+                    )}>
+                      {realtimeStats.scans}
+                    </p>
+                    <p className="text-grep-9">scans completed</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Popular Sites - Interactive Examples */}
+              {popularSites.length > 0 && (
+                <div className="pt-8">
+                  <p className="text-xs text-grep-9 uppercase tracking-wide font-semibold mb-3">Try scanning</p>
+                  <div className="flex items-center justify-center gap-2 flex-wrap">
+                    {popularSites.slice(0, 6).map((site) => (
+                      <button
+                        key={site.domain}
+                        onClick={() => {
+                          setQuery(site.domain || '')
+                          setViewMode("scan")
+                          setTimeout(() => handleScan(), 100)
+                        }}
+                        className="group px-4 py-2 rounded-lg border border-grep-3 bg-grep-0 hover:border-foreground hover:bg-grep-1 transition-all text-sm text-foreground font-medium flex items-center gap-2"
+                      >
+                        <div className="w-2 h-2 rounded-full bg-grep-9 group-hover:bg-emerald-500 transition-colors" />
+                        {site.domain}
+                        <span className="text-xs text-grep-9">{site.tokens}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
+          </div>
 
             {/* Footer with Theme Toggle */}
             <div className="w-full select-none border-t border-grep-2 px-4 py-6 text-sm text-grep-9 sm:px-12 sm:py-8">

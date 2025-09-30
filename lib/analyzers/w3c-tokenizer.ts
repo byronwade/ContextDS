@@ -137,8 +137,30 @@ export function extractW3CTokens(
     url: string
   }
 ): TokenExtractionResult {
-  const cssText = sources.map(s => s.content).join('\n')
-  const root = postcss.parse(cssText, { parser: safeParser })
+  // Parse each CSS source individually to handle errors gracefully
+  const parsedRoots: postcss.Root[] = []
+
+  for (const source of sources) {
+    try {
+      const root = postcss.parse(source.content, { parser: safeParser })
+      parsedRoots.push(root)
+    } catch (error) {
+      console.warn(`Failed to parse CSS from ${source.url || source.kind}:`, error instanceof Error ? error.message : error)
+      // Skip this source and continue with others
+    }
+  }
+
+  if (parsedRoots.length === 0) {
+    throw new Error('No valid CSS sources could be parsed')
+  }
+
+  // Merge all parsed roots into one
+  const root = postcss.root()
+  parsedRoots.forEach(parsedRoot => {
+    parsedRoot.nodes.forEach(node => {
+      root.append(node.clone())
+    })
+  })
 
   // Collect CSS custom properties (variables)
   const variables = collectCSSVariables(root)
