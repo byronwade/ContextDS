@@ -32,6 +32,7 @@ import { ScanProgressViewer } from "@/components/organisms/scan-progress-viewer"
 import { FontPreviewCard, preloadFonts } from "@/components/molecules/font-preview"
 import { ComprehensiveAnalysisDisplay } from "@/components/organisms/comprehensive-analysis-display"
 import { RecentScansDropdown } from "@/components/molecules/recent-scans-dropdown"
+import { TokenDiffViewer } from "@/components/organisms/token-diff-viewer"
 import { cn } from "@/lib/utils"
 import { useRealtimeStats } from "@/hooks/use-realtime-stats"
 import { useRecentScans } from "@/stores/recent-scans-store"
@@ -337,6 +338,7 @@ function HomePageContent() {
   const [scanLoading, setScanLoading] = useState(false)
   const [scanError, setScanError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [showDiff, setShowDiff] = useState(false)
 
   // Expandable sections state
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
@@ -857,21 +859,13 @@ function HomePageContent() {
         </div>
       </div>
 
-      {/* Main Content */}
-      {(() => {
-        console.log('🎯 RENDER DECISION:', {
-          viewMode,
-          scanError: !!scanError,
-          scanResult: !!scanResult,
-          scanLoading,
-          willRenderError: viewMode === "scan" && !!scanError,
-          willRenderResults: viewMode === "scan" && !!scanResult,
-          willRenderLoading: viewMode === "scan" && scanLoading,
-          scanResultStructure: scanResult ? Object.keys(scanResult) : null
-        })
-        return null
-      })()}
-      {viewMode === "scan" && scanError ? (
+      {/* Main Content - Fixed Conditional Priority */}
+      {viewMode === "scan" && scanLoading ? (
+        /* Scan Loading - Show First */
+        <div className="flex-1 flex items-center justify-center p-4 md:p-12 bg-grep-0">
+          <ScanProgressViewer domain={query} />
+        </div>
+      ) : viewMode === "scan" && scanError ? (
         /* Scan Failed - Terminal Style */
         <div className="flex-1 flex items-center justify-center p-4 md:p-12 bg-grep-0">
           <div className="w-full max-w-3xl">
@@ -969,33 +963,39 @@ function HomePageContent() {
         <div className="flex-1 w-full overflow-y-auto bg-grep-0">
           <div className="w-full max-w-6xl mx-auto px-4 py-6 md:px-8 md:py-8">
 
-            {/* Minimal Header */}
+            {/* Minimal Header with Version Info */}
             <div className="mb-6 flex items-center justify-between border-b border-grep-2 pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-green-500" />
                 <h1 className="text-xl font-medium text-foreground font-mono">
                   {scanResult.domain}
                 </h1>
+                {scanResult.versionInfo && (
+                  <>
+                    <span className="text-grep-7">·</span>
+                    <Badge variant="secondary" className="h-6 font-mono text-xs">
+                      v{scanResult.versionInfo.versionNumber}
+                    </Badge>
+                    {scanResult.versionInfo.isNewVersion && scanResult.versionInfo.changeCount > 0 && (
+                      <Badge variant="outline" className="h-6 font-mono text-xs border-blue-300 dark:border-blue-900 text-blue-700 dark:text-blue-400">
+                        {scanResult.versionInfo.changeCount} changes from v{scanResult.versionInfo.previousVersionNumber}
+                      </Badge>
+                    )}
+                  </>
+                )}
               </div>
               <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleShareUrl}
-                  className="h-7 px-2 text-xs font-mono text-grep-9 hover:text-foreground"
-                >
-                  {copied ? (
-                    <>
-                      <Copy className="h-3.5 w-3.5 mr-1" />
-                      copied!
-                    </>
-                  ) : (
-                    <>
-                      <Share2 className="h-3.5 w-3.5 mr-1" />
-                      share
-                    </>
-                  )}
-                </Button>
+                {scanResult.versionInfo?.diff && scanResult.versionInfo.changeCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowDiff(!showDiff)}
+                    className="h-7 px-2 text-xs font-mono text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                  >
+                    <History className="h-3.5 w-3.5 mr-1" />
+                    {showDiff ? 'hide changes' : 'view changes'}
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1056,6 +1056,30 @@ function HomePageContent() {
                 </div>
               </div>
             </div>
+
+            {/* Version Diff - Show if there are changes */}
+            {showDiff && scanResult.versionInfo?.diff && (
+              <div className="mb-6">
+                <TokenDiffViewer
+                  diff={scanResult.versionInfo.diff}
+                  oldVersion={scanResult.versionInfo.previousVersionNumber || 1}
+                  newVersion={scanResult.versionInfo.versionNumber}
+                  domain={scanResult.domain || ''}
+                  onCopy={handleCopyToken}
+                  onExport={() => {
+                    const blob = new Blob([JSON.stringify(scanResult.versionInfo.diff, null, 2)], { type: "application/json" })
+                    const url = URL.createObjectURL(blob)
+                    const anchor = document.createElement("a")
+                    anchor.href = url
+                    anchor.download = `${scanResult.domain}-v${scanResult.versionInfo.previousVersionNumber}-to-v${scanResult.versionInfo.versionNumber}-diff.json`
+                    document.body.appendChild(anchor)
+                    anchor.click()
+                    anchor.remove()
+                    URL.revokeObjectURL(url)
+                  }}
+                />
+              </div>
+            )}
 
             {/* Comprehensive AI Analysis - Feature Showcase */}
             {scanResult.comprehensiveAnalysis && (
