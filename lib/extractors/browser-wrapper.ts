@@ -284,8 +284,8 @@ export async function extractWithBrowser(
           .join('\n')
 
         if (cssContent.trim().length > 0) {
-          const usagePercentage = entry.ranges.reduce((sum, r) => sum + (r.end - r.start), 0) / entry.text.length
-          usedCss.push(createCssSource(cssContent, `coverage-${usagePercentage.toFixed(2)}`))
+          // Use 'computed' kind for coverage-based CSS (valid enum value)
+          usedCss.push(createCssSource(cssContent, 'computed', entry.url))
         }
       })
     }
@@ -362,13 +362,13 @@ export async function extractWithBrowser(
   }
 }
 
-function createCssSource(content: string, kind: string = 'computed'): CssSource {
+function createCssSource(content: string, kind: 'inline' | 'link' | 'computed' = 'computed', url?: string): CssSource {
   const normalized = content.trim()
   const sha = createHash('sha256').update(normalized).digest('hex')
 
   return {
-    kind: kind as any,
-    url: undefined,
+    kind,
+    url,
     content: normalized,
     bytes: Buffer.byteLength(normalized, 'utf8'),
     sha

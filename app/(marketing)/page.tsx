@@ -307,37 +307,28 @@ function HomePageContent() {
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-between overflow-hidden antialiased">
-      {/* ULTRATHINK Header - Beautiful & Functional */}
-      <header className="sticky top-0 z-50 w-full border-b border-grep-2 bg-white/80 dark:bg-black/80 backdrop-blur-xl">
-        <div className="flex h-16 items-center justify-between px-4 md:px-6">
+      {/* Minimal Grep-Style Header */}
+      <div className="flex min-h-[64px] w-full shrink-0 flex-wrap items-center justify-between border-b border-grep-2 md:flex-nowrap">
 
-          {/* Left: Brand + Stats */}
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2 outline-offset-4 group">
-              <svg aria-label="ContextDS Logo" className="fill-black dark:fill-white transition-transform group-hover:scale-110" viewBox="0 0 75 65" height="24">
+        {/* Left: Brand */}
+        <div className="flex pl-4 md:pl-6">
+          <div className="flex items-center space-x-2 pr-3">
+            <Link className="outline-offset-4" href="/">
+              <svg aria-label="ContextDS" className="fill-black dark:fill-white" viewBox="0 0 75 65" height="22">
                 <path d="M37.59.25l36.95 64H.64l36.95-64z"></path>
               </svg>
-              <svg fill="none" height="24" shapeRendering="geometricPrecision" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24" className="stroke-grep-4">
-                <path d="M16.88 3.549L7.12 20.451"></path>
-              </svg>
+            </Link>
+            <svg fill="none" height="24" shapeRendering="geometricPrecision" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24" className="stroke-grep-4" style={{width: '22px', height: '22px'}}>
+              <path d="M16.88 3.549L7.12 20.451"></path>
+            </svg>
+            <Link className="outline-offset-4" href="/">
               <div className="flex items-center gap-2">
                 <Palette className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 <span className="text-lg font-semibold text-black dark:text-white">ContextDS</span>
               </div>
             </Link>
-
-            {/* Stats Pills - Hidden on mobile */}
-            {stats && (
-              <div className="hidden lg:flex items-center gap-2 text-xs">
-                <div className="px-2 py-1 rounded-full bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900">
-                  <span className="font-semibold">{stats.tokens.toLocaleString()}</span> tokens
-                </div>
-                <div className="px-2 py-1 rounded-full bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-900">
-                  <span className="font-semibold">{stats.sites}</span> sites
-                </div>
-              </div>
-            )}
           </div>
+        </div>
 
           {/* Center: Ultra-Clear Search/Scan Interface */}
           <div className="hidden md:flex flex-1 max-w-3xl mx-6">
