@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import pLimit from 'p-limit'
 
 export type CssSource = {
   kind: 'inline' | 'link' | 'computed'
@@ -10,6 +11,10 @@ export type CssSource = {
 
 const USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+
+// Concurrency limit for parallel stylesheet fetching
+// Prevents overwhelming the target server
+const fetchLimit = pLimit(6)  // Max 6 concurrent requests
 
 export async function collectStaticCss(targetUrl: string): Promise<CssSource[]> {
   const response = await fetch(targetUrl, {
@@ -32,15 +37,31 @@ export async function collectStaticCss(targetUrl: string): Promise<CssSource[]> 
     cssSources.push(createCssSource('inline', inlineCss))
   }
 
+  // PERFORMANCE OPTIMIZATION: Fetch all stylesheets in parallel with concurrency limit
   const stylesheetUrls = extractStylesheetLinks(html, baseUrl)
-  for (const stylesheetUrl of stylesheetUrls) {
-    try {
-      const cssText = await fetchStylesheet(stylesheetUrl)
-      cssSources.push(createCssSource('link', cssText, stylesheetUrl))
-    } catch (error) {
-      console.warn(`Failed to fetch stylesheet ${stylesheetUrl}:`, error)
-    }
-  }
+
+  // Parallel fetch with p-limit (max 6 concurrent requests)
+  // Before: Sequential (8 files × 100ms = 800ms)
+  // After: Parallel (8 files / 6 concurrent = ~200-300ms) ⚡
+  const stylesheetPromises = stylesheetUrls.map((stylesheetUrl) =>
+    fetchLimit(async () => {
+      try {
+        const cssText = await fetchStylesheet(stylesheetUrl)
+        return createCssSource('link', cssText, stylesheetUrl)
+      } catch (error) {
+        console.warn(`Failed to fetch stylesheet ${stylesheetUrl}:`, error)
+        return null
+      }
+    })
+  )
+
+  // Wait for all fetches to complete (parallelized, rate-limited)
+  const stylesheetResults = await Promise.all(stylesheetPromises)
+
+  // Add successful results
+  stylesheetResults.forEach(source => {
+    if (source) cssSources.push(source)
+  })
 
   // Deduplicate by SHA
   const uniqueSources = new Map<string, CssSource>()

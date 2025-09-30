@@ -19,6 +19,7 @@ export const cssSourceKindEnum = pgEnum('css_source_kind', ['link', 'inline', 'c
 export const submissionStatusEnum = pgEnum('submission_status', ['queued', 'scanning', 'done', 'rejected'])
 export const voteTypeEnum = pgEnum('vote_type', ['correct', 'alias', 'duplicate', 'low_contrast', 'rename'])
 export const robotsStatusEnum = pgEnum('robots_status', ['allowed', 'disallowed', 'unknown'])
+export const changeTypeEnum = pgEnum('change_type', ['added', 'removed', 'modified'])
 
 // Sites table - tracks domains and their scanning status
 export const sites = pgTable('sites', {
@@ -83,6 +84,7 @@ export const tokenSets = pgTable('token_sets', {
   siteId: uuid('site_id').references(() => sites.id, { onDelete: 'cascade' }), // Nullable for remixes
   scanId: uuid('scan_id').references(() => scans.id, { onDelete: 'cascade' }),
   version: varchar('version', { length: 50 }).notNull().default('1.0.0'),
+  versionNumber: integer('version_number').notNull().default(1), // Sequential version number
   tokensJson: jsonb('tokens_json').notNull(), // W3C design tokens format
   packJson: jsonb('pack_json'), // AI prompt pack
   consensusScore: decimal('consensus_score', { precision: 3, scale: 2 }).default('0.00'),
@@ -90,6 +92,30 @@ export const tokenSets = pgTable('token_sets', {
   createdBy: uuid('created_by').references(() => users.id),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+// Token Versions table - Track all historical versions for a site
+export const tokenVersions = pgTable('token_versions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  siteId: uuid('site_id').notNull().references(() => sites.id, { onDelete: 'cascade' }),
+  tokenSetId: uuid('token_set_id').notNull().references(() => tokenSets.id, { onDelete: 'cascade' }),
+  versionNumber: integer('version_number').notNull(),
+  previousVersionId: uuid('previous_version_id').references(() => tokenVersions.id),
+  changelogJson: jsonb('changelog_json'), // Structured diff/changelog
+  diffSummary: jsonb('diff_summary'), // Added, removed, changed counts
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+// Token Changes table - Granular change tracking
+export const tokenChanges = pgTable('token_changes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  versionId: uuid('version_id').notNull().references(() => tokenVersions.id, { onDelete: 'cascade' }),
+  tokenPath: varchar('token_path', { length: 255 }).notNull(), // e.g., 'color.primary.500'
+  changeType: changeTypeEnum('change_type').notNull(),
+  oldValue: jsonb('old_value'),
+  newValue: jsonb('new_value'),
+  category: varchar('category', { length: 50 }), // color, typography, spacing, etc.
+  createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 
 // Layout Profiles table - layout DNA analysis

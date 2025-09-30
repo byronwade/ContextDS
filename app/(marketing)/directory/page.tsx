@@ -2,11 +2,34 @@
 
 import { useState, useEffect } from "react"
 import { SiteDirectory } from "@/components/organisms/site-directory"
+import { SiteComparisonView } from "@/components/organisms/site-comparison-view"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Plus, TrendingUp, Clock, Star } from "lucide-react"
 import Link from "next/link"
+
+interface Site {
+  id: string
+  domain: string
+  title?: string
+  favicon?: string
+  popularity: number
+  lastScanned?: string
+  tokenCounts: {
+    colors: number
+    typography: number
+    spacing: number
+    radius: number
+    shadows: number
+    motion: number
+  }
+  layoutDNA: {
+    hasLayoutDNA: boolean
+    archetypes: string[]
+  }
+  status: "completed" | "scanning" | "failed" | "pending"
+}
 
 // Mock data for demonstration
 const mockSites = [
@@ -104,6 +127,10 @@ export default function DirectoryPage() {
     totalTokenSets: 3891,
     activeScans: 12
   })
+  const [comparisonView, setComparisonView] = useState<{
+    siteA: Site
+    siteB: Site
+  } | null>(null)
 
   const handleSearch = (query: string) => {
     setLoading(true)
@@ -125,6 +152,25 @@ export default function DirectoryPage() {
   const handleFilter = (filters: any) => {
     // Implement filtering logic
     console.log("Filters applied:", filters)
+  }
+
+  const handleCompare = (siteA: Site, siteB: Site) => {
+    setComparisonView({ siteA, siteB })
+  }
+
+  const handleBackToDirectory = () => {
+    setComparisonView(null)
+  }
+
+  // Show comparison view if active
+  if (comparisonView) {
+    return (
+      <SiteComparisonView
+        siteA={comparisonView.siteA}
+        siteB={comparisonView.siteB}
+        onBack={handleBackToDirectory}
+      />
+    )
   }
 
   return (
@@ -232,6 +278,7 @@ export default function DirectoryPage() {
           loading={loading}
           onSearch={handleSearch}
           onFilter={handleFilter}
+          onCompare={handleCompare}
         />
       </main>
     </div>

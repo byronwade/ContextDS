@@ -31,8 +31,10 @@ import { RealtimeStat } from "@/components/atoms/realtime-stat"
 import { ScanProgressViewer } from "@/components/organisms/scan-progress-viewer"
 import { FontPreviewCard, preloadFonts } from "@/components/molecules/font-preview"
 import { ComprehensiveAnalysisDisplay } from "@/components/organisms/comprehensive-analysis-display"
+import { RecentScansDropdown } from "@/components/molecules/recent-scans-dropdown"
 import { cn } from "@/lib/utils"
 import { useRealtimeStats } from "@/hooks/use-realtime-stats"
+import { useRecentScans } from "@/stores/recent-scans-store"
 
 const tokenCategoryOptions = [
   { key: "all", label: "All categories" },
@@ -347,6 +349,9 @@ function HomePageContent() {
   // Real-time stats from Neon database
   const realtimeStats = useRealtimeStats(5000) // Updates every 5 seconds
 
+  // Recent scans store
+  const { addScan } = useRecentScans()
+
   useEffect(() => {
     setIsSearchActive(query.trim().length > 0)
     setHasResults(results.length > 0 || scanResult !== null)
@@ -555,6 +560,16 @@ function HomePageContent() {
       setTimeout(() => {
         setScanResult(result)
         console.log('🔍 DEBUG: Result set after loading cleared')
+
+        // Save to recent scans
+        if (result.domain && result.summary) {
+          addScan({
+            domain: result.domain,
+            tokensExtracted: result.summary.tokensExtracted,
+            confidence: result.summary.confidence,
+            url: `/scan/${encodeURIComponent(result.domain)}`
+          })
+        }
       }, 0)
 
       console.log('🔍 DEBUG: State updates scheduled')
@@ -755,7 +770,8 @@ function HomePageContent() {
         </div>
 
         {/* Right: Minimal Actions */}
-        <div className="flex min-h-[64px] select-none items-center justify-end gap-3 pr-4 md:pr-6">
+        <div className="flex min-h-[64px] select-none items-center justify-end gap-2 pr-4 md:pr-6">
+          <RecentScansDropdown />
           <Button variant="ghost" size="sm" className="hidden sm:inline-flex h-8 px-3 text-xs font-medium text-grep-9 hover:text-foreground">
             Docs
           </Button>
