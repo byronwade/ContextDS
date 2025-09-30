@@ -33,7 +33,7 @@ export type ScanJobResult = {
     reliability: number
     processingTime: number
   }
-  tokens: ReturnType<typeof generateTokenSet>['tokenGroups']
+  tokens: ReturnType<typeof generateTokenSetLegacy>['tokenGroups']
   layoutDNA: ReturnType<typeof analyzeLayout>
   promptPack: ReturnType<typeof buildPromptPack>
   brandAnalysis: ReturnType<typeof buildBrandAnalysis>
@@ -48,7 +48,7 @@ export type ScanJobResult = {
       totalDurationMs: number
       entries: ReturnType<MetricsCollector['summary']>['entries']
     }
-    tokenQuality: ReturnType<typeof generateTokenSet>['qualityInsights']
+    tokenQuality: ReturnType<typeof generateTokenSetLegacy>['qualityInsights']
   }
   database: {
     siteId: string
@@ -210,7 +210,7 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
 
     // Task 2: Build prompt pack (can run in parallel with AI)
     (async () => {
-      const legacyPromptPack = buildPromptPack(generated.tokenGroups, layoutAnalysis || {})
+      const legacyPromptPack = buildPromptPack(generated.tokenGroups, layoutDNA)
       const aiPromptPack = w3cExtraction ? buildAiPromptPack(w3cExtraction, { domain, url: target.toString() }) : null
       return { legacyPromptPack, aiPromptPack }
     })(),
@@ -233,9 +233,9 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
   const comprehensiveAnalysis = comprehensiveResult.status === 'fulfilled' ? comprehensiveResult.value : null
 
   // Augment layout with wireframe (if available)
-  if (wireframeSections.length > 0 && layoutAnalysis) {
-    layoutAnalysis.wireframe = { sections: wireframeSections }
-    augmentArchetypesWithWireframe(layoutAnalysis, wireframeSections)
+  if (wireframeSections.length > 0) {
+    layoutDNA.wireframe = { sections: wireframeSections }
+    augmentArchetypesWithWireframe(layoutDNA, wireframeSections)
   }
 
   // Assemble prompt pack
@@ -248,6 +248,8 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
     format: 'ai-lean-core-plus'
   }
 
+  const brandAnalysis = buildBrandAnalysis(generated.curatedTokens?.colors || generated.tokenGroups.colors)
+
   // PERFORMANCE OPTIMIZATION: Batch all final database writes into single transaction
   const durationMs = Date.now() - startedAt
   const sha = hashW3CTokenSet(generated.tokenSet)
@@ -257,7 +259,7 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
   })
   const metricsSummary = metrics.summary()
 
-  // VERSION TRACKING: Get previous token set for this site (outside transaction)
+  // VERSION TRACKING: Get previous token set AND version for this site (outside transaction)
   const previousTokenSets = await db
     .select()
     .from(tokenSets)
@@ -265,14 +267,26 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
     .orderBy(desc(tokenSets.versionNumber))
     .limit(1)
 
-  const previousVersion = previousTokenSets[0] || null
-  const newVersionNumber = previousVersion ? previousVersion.versionNumber + 1 : 1
+  const previousTokenSet = previousTokenSets[0] || null
+  const newVersionNumber = previousTokenSet ? previousTokenSet.versionNumber + 1 : 1
+
+  // Get the previous tokenVersion record (not tokenSet) for proper foreign key reference
+  const previousVersionRecords = previousTokenSet
+    ? await db
+        .select()
+        .from(tokenVersions)
+        .where(eq(tokenVersions.tokenSetId, previousTokenSet.id))
+        .orderBy(desc(tokenVersions.versionNumber))
+        .limit(1)
+    : []
+
+  const previousVersionRecord = previousVersionRecords[0] || null
 
   // Calculate diff if there's a previous version
   let tokenDiff = null
-  if (previousVersion && generated.tokenSet) {
+  if (previousTokenSet && generated.tokenSet) {
     try {
-      tokenDiff = compareTokenSets(previousVersion.tokensJson, generated.tokenSet)
+      tokenDiff = compareTokenSets(previousTokenSet.tokensJson, generated.tokenSet)
     } catch (error) {
       console.warn('Failed to generate token diff:', error)
     }
@@ -295,14 +309,14 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
       .returning()
 
     // 2. Create version record if there's a diff
-    if (tokenDiff && previousVersion) {
+    if (tokenDiff && previousTokenSet) {
       const [versionRecord] = await tx
         .insert(tokenVersions)
         .values({
           siteId: siteRecord.id,
           tokenSetId: tokenSet.id,
           versionNumber: newVersionNumber,
-          previousVersionId: previousVersion.id,
+          previousVersionId: previousVersionRecord?.id || null, // Use tokenVersions.id, not tokenSets.id
           changelogJson: { raw: tokenDiff },
           diffSummary: tokenDiff.summary
         })
@@ -350,11 +364,11 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
       .values({
         siteId: siteRecord.id,
         scanId: scanRecord.id,
-        profileJson: layoutAnalysis || {},
-        archetypes: layoutAnalysis?.archetypes || [],
-        containers: layoutAnalysis?.containers || [],
-        gridFlex: layoutAnalysis?.gridSystem ? { system: layoutAnalysis.gridSystem } : null,
-        spacingScale: layoutAnalysis?.spacingBase ? { base: layoutAnalysis.spacingBase } : null,
+        profileJson: layoutDNA || {},
+        archetypes: layoutDNA?.archetypes || [],
+        containers: layoutDNA?.containers || [],
+        gridFlex: layoutDNA?.gridSystem ? { system: layoutDNA.gridSystem } : null,
+        spacingScale: layoutDNA?.spacingBase ? { base: layoutDNA.spacingBase } : null,
         motion: null,
         accessibility: null
       })
@@ -393,23 +407,19 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
     url: target.toString(),
     summary: {
       tokensExtracted: generated.summary.tokensExtracted,
-      curatedCount: generated.summary.curatedCount,
       confidence: generated.summary.confidence,
       completeness: generated.summary.completeness,
       reliability: generated.summary.reliability,
       processingTime: Math.max(1, Math.round(durationMs / 1000))
     },
-    curatedTokens: generated.curatedTokens,
-    aiInsights: promptPack.aiInsights,
-    comprehensiveAnalysis: promptPack.comprehensiveAnalysis,
     tokens: generated.tokenGroups,
-    layoutDNA: layoutAnalysis || {},
+    layoutDNA: layoutDNA || {},
     promptPack,
     brandAnalysis,
     versionInfo: {
       versionNumber: newVersionNumber,
-      isNewVersion: !!previousVersion,
-      previousVersionNumber: previousVersion?.versionNumber,
+      isNewVersion: !!previousTokenSet,
+      previousVersionNumber: previousTokenSet?.versionNumber,
       changeCount: tokenDiff?.summary.totalChanges || 0,
       diff: tokenDiff
     },
