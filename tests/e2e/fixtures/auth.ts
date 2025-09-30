@@ -12,7 +12,7 @@ type AuthFixtures = {
 };
 
 export const test = base.extend<AuthFixtures>({
-	authenticatedPage: async ({ page }, use) => {
+	authenticatedPage: async ({ page }: { page: any }, use: (page: any) => Promise<void>) => {
 		// Setup authentication state
 		// This would be customized based on your auth provider
 		await page.goto('/');
@@ -32,7 +32,7 @@ export const test = base.extend<AuthFixtures>({
 		await use(page);
 	},
 
-	authenticatedRequest: async ({ request }, use) => {
+	authenticatedRequest: async ({ request }: { request: any }, use: (request: any) => Promise<void>) => {
 		// Setup authenticated API client
 		// Add auth headers if needed
 		await use(request);

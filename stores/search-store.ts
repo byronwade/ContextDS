@@ -75,8 +75,10 @@ export const useSearchStore = create<SearchState>()(
           }),
 
         performSearch: async (query, signal) => {
+          console.log('🔍 [SearchStore] performSearch called with query:', query)
           const trimmed = query.trim()
           if (!trimmed) {
+            console.log('⚠️ [SearchStore] Empty query, clearing results')
             set({ results: [], error: null })
             return
           }
@@ -92,10 +94,12 @@ export const useSearchStore = create<SearchState>()(
               limit: '150'
             })
 
+            console.log('🌐 [SearchStore] Fetching:', `/api/search?${params.toString()}`)
             const response = await fetch(`/api/search?${params.toString()}`, { signal })
             if (!response.ok) throw new Error(`HTTP ${response.status}`)
 
             const data = await response.json()
+            console.log('📦 [SearchStore] Raw API response:', data)
             let items: TokenSearchResult[] = (data.results ?? []).map((item: any) => ({
               id: item.id,
               type: item.type,

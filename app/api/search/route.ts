@@ -78,7 +78,7 @@ type SearchResult = SiteSearchResult | TokenSearchResult | LayoutSearchResult | 
 export async function GET(request: NextRequest) {
   try {
     // Rate limiting for search endpoint
-    const identifier = request.ip ?? '127.0.0.1'
+    const identifier = request.headers.get('x-forwarded-for')?.split(',')[0] ?? request.headers.get('x-real-ip') ?? '127.0.0.1'
     const { success } = await searchRatelimit.limit(identifier)
 
     if (!success) {
@@ -220,7 +220,7 @@ async function searchSites(pattern: string, params: SearchParams): Promise<SiteS
     .limit(params.limit)
     .offset(params.offset)
 
-  return rows.map<SiteSearchResult>((row) => ({
+  return rows.map((row: typeof rows[number]): SiteSearchResult => ({
     id: row.id,
     type: 'site',
     domain: row.domain ?? null,
@@ -429,7 +429,7 @@ async function searchLayouts(params: SearchParams): Promise<LayoutSearchResult[]
   const queryLower = params.query.toLowerCase()
   const results: LayoutSearchResult[] = []
 
-  layoutRows.forEach((profile) => {
+  layoutRows.forEach((profile: typeof layoutRows[number]) => {
     if (!isRecord(profile.profileJson)) {
       return
     }
@@ -511,7 +511,7 @@ async function searchCode(params: SearchParams): Promise<CodeSearchResult[]> {
     .from(cssSources)
     .leftJoin(scans, eq(cssSources.scanId, scans.id))
     .leftJoin(sites, eq(scans.siteId, sites.id))
-    .where(sql`${cssSources.content} IS NOT NULL`)
+    .where(sql`content IS NOT NULL`)
     .limit(params.limit * 2)
 
   type CssRow = {
@@ -526,12 +526,13 @@ async function searchCode(params: SearchParams): Promise<CodeSearchResult[]> {
   const results: CodeSearchResult[] = []
   const query = params.caseInsensitive ? params.query.toLowerCase() : params.query
 
-  ;(cssRows as CssRow[]).forEach((source) => {
-    if (typeof source.content !== 'string') {
+  ;(cssRows as CssRow[]).forEach((source: CssRow) => {
+    const content = source.content
+    if (typeof content !== 'string') {
       return
     }
 
-    const lines = source.content.split('\n')
+    const lines = content.split('\n')
 
     lines.forEach((line, index) => {
       const lineToCheck = params.caseInsensitive ? line.toLowerCase() : line

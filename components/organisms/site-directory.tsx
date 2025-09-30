@@ -31,6 +31,11 @@ interface Site {
     hasLayoutDNA: boolean
     archetypes: string[]
   }
+  screenshots?: {
+    desktop?: string
+    mobile?: string
+    tablet?: string
+  }
   status: "completed" | "scanning" | "failed" | "pending"
 }
 
@@ -217,6 +222,38 @@ export function SiteDirectory({
               </CardHeader>
 
             <CardContent className="space-y-4">
+              {/* Screenshot Preview */}
+              {site.screenshots?.desktop && (
+                <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
+                  <Image
+                    src={site.screenshots.desktop}
+                    alt={`${site.domain} screenshot`}
+                    fill
+                    className="object-cover object-top transition-transform group-hover:scale-105"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute bottom-2 left-2 right-2">
+                      <div className="flex gap-1">
+                        {site.screenshots.mobile && (
+                          <Badge variant="secondary" className="text-xs">
+                            Mobile
+                          </Badge>
+                        )}
+                        {site.screenshots.tablet && (
+                          <Badge variant="secondary" className="text-xs">
+                            Tablet
+                          </Badge>
+                        )}
+                        <Badge variant="secondary" className="text-xs">
+                          Desktop
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Token Counts */}
               <div className="grid grid-cols-3 gap-2 text-sm">
                 <div className="flex items-center gap-1">

@@ -17,12 +17,30 @@ import {
 } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 
-interface SearchResult {
+interface TokenSearchResult {
   id: string
-  domain?: string
-  url?: string
-  [key: string]: unknown
+  type: 'token'
+  name: string
+  category: string
+  confidence: number
+  value: string | object
+  site: string
+  usage?: number
+  scannedAt?: string
 }
+
+interface SiteSearchResult {
+  id: string
+  type: 'site'
+  domain: string
+  tokensExtracted: number
+  confidence: number
+  title?: string
+  frameworks?: string[]
+  lastScanned: string
+}
+
+type SearchResult = TokenSearchResult | SiteSearchResult
 
 export default function DatabaseHomePage() {
   const [query, setQuery] = useState("")
@@ -293,30 +311,36 @@ export default function DatabaseHomePage() {
               <div className="space-y-3">
                 {searchResults.map((result) => (
                   <div key={result.id} className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow">
-                    {searchMode === 'tokens' ? (
+                    {result.type === 'token' ? (
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold">{result.name || 'Unnamed Token'}</h3>
-                            <Badge variant="secondary">{result.category || 'token'}</Badge>
-                            <span className="text-sm text-muted-foreground">{result.confidence || 80}% confidence</span>
+                            <h3 className="font-semibold">{result.name}</h3>
+                            <Badge variant="secondary">{result.category}</Badge>
+                            <span className="text-sm text-muted-foreground">{result.confidence}% confidence</span>
                           </div>
                           <div className="flex items-center gap-2 mb-2">
-                            {(result.category === 'color' || result.type === 'color') && result.value?.startsWith('#') && (
+                            {result.category === 'color' && typeof result.value === 'string' && result.value.startsWith('#') && (
                               <div
                                 className="w-4 h-4 rounded border border-border"
                                 style={{ backgroundColor: result.value }}
                               />
                             )}
-                            <code className="text-sm bg-muted px-2 py-1 rounded font-mono">{result.value || 'No value'}</code>
+                            <code className="text-sm bg-muted px-2 py-1 rounded font-mono">
+                              {typeof result.value === 'string' ? result.value : JSON.stringify(result.value)}
+                            </code>
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            From <span className="font-medium">{result.domain || result.site || 'Unknown site'}</span>
+                            From <span className="font-medium">{result.site}</span>
                             {result.usage && ` • Used ${result.usage} times`}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => handleCopyToken(result.value || '')}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleCopyToken(typeof result.value === 'string' ? result.value : JSON.stringify(result.value))}
+                          >
                             <Copy className="h-4 w-4" />
                           </Button>
                         </div>
@@ -327,10 +351,10 @@ export default function DatabaseHomePage() {
                           <div className="flex items-center gap-3 mb-2">
                             <span className="text-xl">{getAvatarForSite(result.domain)}</span>
                             <h3 className="font-semibold text-lg">{result.domain}</h3>
-                            <Badge variant="outline">{result.tokenCount || 0} tokens</Badge>
-                            <span className="text-sm text-muted-foreground">{result.confidence || 80}% confidence</span>
+                            <Badge variant="outline">{result.tokensExtracted} tokens</Badge>
+                            <span className="text-sm text-muted-foreground">{result.confidence}% confidence</span>
                           </div>
-                          <p className="text-muted-foreground mb-2">{result.title || result.description}</p>
+                          <p className="text-muted-foreground mb-2">{result.title}</p>
                           <p className="text-xs text-muted-foreground">
                             Last scanned: {result.lastScanned ? new Date(result.lastScanned).toLocaleDateString() : 'Recently'}
                           </p>

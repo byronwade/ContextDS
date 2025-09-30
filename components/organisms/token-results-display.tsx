@@ -208,22 +208,33 @@ export function TokenResultsDisplay({ tokens, domain, onCopy, onExport }: TokenR
           </div>
         </div>
 
-        {/* Category Facets */}
+        {/* Category Tabs */}
         <div className="px-4 py-2 bg-background border-b border-grep-2">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1">
+            <button
+              onClick={() => setSelectedCategory('all')}
+              className={cn(
+                "px-3 py-1.5 text-xs font-mono rounded-md transition-all cursor-pointer",
+                selectedCategory === 'all'
+                  ? "bg-blue-500 text-white shadow-sm font-semibold"
+                  : "bg-grep-1 text-grep-9 border border-grep-2 hover:bg-grep-2 hover:border-grep-4 hover:text-foreground"
+              )}
+            >
+              all <span className="opacity-60">·</span> {stats.total}
+            </button>
             {Object.entries(stats.categories).map(([key, count]) => (
               count > 0 && (
                 <button
                   key={key}
                   onClick={() => setSelectedCategory(selectedCategory === key ? 'all' : key as CategoryKey)}
                   className={cn(
-                    "px-2 py-1 text-xs font-mono rounded transition-colors",
+                    "px-3 py-1.5 text-xs font-mono rounded-md transition-all cursor-pointer",
                     selectedCategory === key
-                      ? "bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-900"
-                      : "bg-grep-1 text-grep-9 border border-grep-2 hover:border-grep-4"
+                      ? "bg-blue-500 text-white shadow-sm font-semibold"
+                      : "bg-grep-1 text-grep-9 border border-grep-2 hover:bg-grep-2 hover:border-grep-4 hover:text-foreground"
                   )}
                 >
-                  {key} <span className="text-grep-7">·</span> {count}
+                  {key} <span className="opacity-60">·</span> {count}
                 </button>
               )
             ))}
@@ -236,11 +247,11 @@ export function TokenResultsDisplay({ tokens, domain, onCopy, onExport }: TokenR
         {filteredCategories.map((category) => (
           <div key={category.key} className="rounded-md border border-grep-2 bg-grep-0 overflow-hidden">
             {/* Category Header */}
-            <button
-              onClick={() => toggleSection(category.key)}
-              className="w-full px-4 py-2.5 bg-background hover:bg-grep-1 transition-colors flex items-center justify-between group border-b border-grep-2"
-            >
-              <div className="flex items-center gap-3">
+            <div className="w-full px-4 py-2.5 bg-background border-b border-grep-2 flex items-center justify-between group">
+              <button
+                onClick={() => toggleSection(category.key)}
+                className="flex items-center gap-3 flex-1 hover:text-foreground transition-colors"
+              >
                 {expandedSections.has(category.key) ? (
                   <ChevronDown className="h-4 w-4 text-grep-9" />
                 ) : (
@@ -252,15 +263,12 @@ export function TokenResultsDisplay({ tokens, domain, onCopy, onExport }: TokenR
                 <Badge variant="secondary" className="h-5 font-mono text-[10px]">
                   {category.count}
                 </Badge>
-              </div>
+              </button>
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleCopy(JSON.stringify(category.data, null, 2))
-                  }}
+                  onClick={() => handleCopy(JSON.stringify(category.data, null, 2))}
                   className="h-6 px-2 text-xs font-mono text-grep-9 hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   <Copy className="h-3 w-3 mr-1" />
@@ -269,16 +277,13 @@ export function TokenResultsDisplay({ tokens, domain, onCopy, onExport }: TokenR
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onExport?.(category.key)
-                  }}
+                  onClick={() => onExport?.(category.key)}
                   className="h-6 px-2 text-xs font-mono text-grep-9 hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   <Download className="h-3 w-3" />
                 </Button>
               </div>
-            </button>
+            </div>
 
             {/* Category Content */}
             {expandedSections.has(category.key) && (

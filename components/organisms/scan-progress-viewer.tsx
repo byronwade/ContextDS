@@ -240,25 +240,25 @@ export function ScanProgressViewer({ domain, scanId: propScanId, metrics: propMe
             <div className="flex items-baseline justify-between pb-3 border-b border-grep-2">
               <span className="text-xs text-grep-9 font-mono">CSS Rules</span>
               <span className="text-2xl font-bold text-foreground tabular-nums">
-                {liveMetrics.cssRules.toLocaleString()}
+                {(liveMetrics.cssRules ?? 0).toLocaleString()}
               </span>
             </div>
             <div className="flex items-baseline justify-between pb-3 border-b border-grep-2">
               <span className="text-xs text-grep-9 font-mono">Variables</span>
               <span className="text-2xl font-bold text-foreground tabular-nums">
-                {liveMetrics.variables.toLocaleString()}
+                {(liveMetrics.variables ?? 0).toLocaleString()}
               </span>
             </div>
             <div className="flex items-baseline justify-between pb-3 border-b border-grep-2">
               <span className="text-xs text-grep-9 font-mono">Colors</span>
               <span className="text-2xl font-bold text-foreground tabular-nums">
-                {liveMetrics.colors.toLocaleString()}
+                {(liveMetrics.colors ?? 0).toLocaleString()}
               </span>
             </div>
             <div className="flex items-baseline justify-between pb-3 border-b border-grep-2">
               <span className="text-xs text-grep-9 font-mono">Tokens</span>
               <span className="text-2xl font-bold text-foreground tabular-nums">
-                {liveMetrics.tokens.toLocaleString()}
+                {(liveMetrics.tokens ?? 0).toLocaleString()}
               </span>
             </div>
             <div className="flex items-baseline justify-between">

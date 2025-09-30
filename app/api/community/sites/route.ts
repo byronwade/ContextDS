@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     const results = await orderedQuery.limit(limit)
 
     // Transform results
-    const sitesWithVotes = results.map((site) => ({
+    const sitesWithVotes = results.map((site: typeof results[number]) => ({
       id: site.id,
       domain: site.domain,
       title: site.title,

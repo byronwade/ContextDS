@@ -44,16 +44,17 @@ export const useStatsStore = create<StatsState>()(
       etag: null,
 
       loadStats: async () => {
-        const state = get()
+        // Check loading state and set atomically
+        const currentState = get()
 
         console.log('📊 [StatsStore] loadStats called', {
-          hasStats: !!state.stats,
-          loading: state.loading,
-          etag: state.etag
+          hasStats: !!currentState.stats,
+          loading: currentState.loading,
+          etag: currentState.etag
         })
 
         // Skip if already loading
-        if (state.loading) {
+        if (currentState.loading) {
           console.log('⚠️ [StatsStore] Already loading, skipping')
           return
         }
@@ -61,11 +62,14 @@ export const useStatsStore = create<StatsState>()(
         set({ loading: true, error: null })
 
         try {
+          // Get fresh state each time we need it
+          const { etag } = get()
+
           // Use ETag for conditional requests (304 Not Modified)
           const headers: HeadersInit = {}
-          if (state.etag) {
-            headers['If-None-Match'] = state.etag
-            console.log('🔖 [StatsStore] Using ETag:', state.etag)
+          if (etag) {
+            headers['If-None-Match'] = etag
+            console.log('🔖 [StatsStore] Using ETag:', etag)
           }
 
           console.log('🌐 [StatsStore] Fetching /api/stats')
@@ -74,8 +78,9 @@ export const useStatsStore = create<StatsState>()(
 
           // 304 Not Modified - data hasn't changed, use cached version
           if (response.status === 304) {
-            // Only return early if we actually have cached stats
-            if (state.stats) {
+            // Get fresh state to check for stats
+            const { stats } = get()
+            if (stats) {
               set({ loading: false })
               return
             }
@@ -88,11 +93,13 @@ export const useStatsStore = create<StatsState>()(
           const data = await response.json()
           const newEtag = response.headers.get('etag')
 
+          // Atomic update
           set({
             stats: data,
             loading: false,
             lastUpdated: Date.now(),
             etag: newEtag,
+            error: null // Clear any previous errors
           })
         } catch (error) {
           set({

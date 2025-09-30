@@ -19,13 +19,30 @@ import {
 import { useState, useEffect } from "react"
 import { scanStorage, convertApiResultToStoredResult, getTokensForSearch, getSitesForSearch } from "@/lib/storage/scan-storage"
 
-interface SearchResult {
+interface TokenSearchResult {
   id: string
-  domain?: string
-  url?: string
-  type?: 'token' | 'site'
-  [key: string]: unknown
+  type: 'token'
+  name: string
+  category: string
+  confidence: number
+  value: string
+  site: string
+  usage?: number
+  scannedAt?: string
 }
+
+interface SiteSearchResult {
+  id: string
+  type: 'site'
+  domain: string
+  tokensExtracted: number
+  confidence: number
+  title?: string
+  frameworks?: string[]
+  lastScanned: string
+}
+
+type SearchResult = TokenSearchResult | SiteSearchResult
 
 export default function HomePage() {
   const [query, setQuery] = useState("")
@@ -272,7 +289,7 @@ export default function HomePage() {
                 {searchResults.map((result) => (
                   <Card key={result.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
-                      {searchMode === 'tokens' ? (
+                      {result.type === 'token' ? (
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">

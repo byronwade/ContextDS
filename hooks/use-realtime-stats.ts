@@ -56,7 +56,7 @@ export function useRealtimeStats(updateInterval = 5000) {
         error: error instanceof Error ? error.message : 'Stats failed'
       }))
     }
-  }, [])
+  }, []) // Empty deps - function never changes
 
   useEffect(() => {
     // Initial fetch
@@ -66,7 +66,7 @@ export function useRealtimeStats(updateInterval = 5000) {
     const interval = setInterval(fetchStats, updateInterval)
 
     return () => clearInterval(interval)
-  }, [fetchStats, updateInterval])
+  }, [updateInterval]) // Remove fetchStats from deps to prevent recreation
 
   return stats
 }

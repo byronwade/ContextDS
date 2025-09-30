@@ -365,10 +365,12 @@ async function createPuppeteerBrowser(): Promise<BrowserWrapper> {
                   // Try to get source URL
                   let sourceURL = 'inline'
                   try {
-                    const info: any = await client.send('CSS.getStyleSheetText', { styleSheetId })
-                    sourceURL = info.sourceURL || 'inline'
-                  } catch {
-                    // Ignore if we can't get URL
+                    const info = await client.send('CSS.getStyleSheetInfo', { styleSheetId })
+                    if (info && typeof info === 'object' && 'sourceURL' in info) {
+                      sourceURL = info.sourceURL || 'inline'
+                    }
+                  } catch (err) {
+                    console.warn(`Failed to get stylesheet info for ${styleSheetId}`)
                   }
 
                   coverage.push({

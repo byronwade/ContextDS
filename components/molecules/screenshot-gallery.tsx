@@ -73,7 +73,19 @@ export function ScreenshotGallery({ scanId, className }: ScreenshotGalleryProps)
   }
 
   if (screenshots.length === 0) {
-    return null
+    return (
+      <div className={cn('rounded-lg border border-grep-2 bg-grep-0 p-6', className)}>
+        <div className="text-center py-8">
+          <Monitor className="w-12 h-12 mx-auto mb-3 text-grep-7" />
+          <p className="text-sm text-grep-9 font-medium mb-1">
+            Screenshots will appear here once available
+          </p>
+          <p className="text-xs text-grep-7">
+            Multi-viewport screenshots are captured during the scan
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -90,9 +102,9 @@ export function ScreenshotGallery({ scanId, className }: ScreenshotGalleryProps)
         </div>
       </div>
 
-      {/* Viewport Selector */}
-      <div className="border-b border-grep-2 bg-grep-0 px-4 py-2">
-        <div className="flex gap-2">
+      {/* Viewport Tabs */}
+      <div className="border-b border-grep-2 bg-background px-4 py-2">
+        <div className="flex gap-1">
           {(['mobile', 'tablet', 'desktop'] as const).map((viewport) => {
             const Icon = viewportIcons[viewport]
             const count = screenshots.filter(s => s.viewport === viewport).length
@@ -104,11 +116,11 @@ export function ScreenshotGallery({ scanId, className }: ScreenshotGalleryProps)
                 onClick={() => setSelectedViewport(viewport)}
                 disabled={count === 0}
                 className={cn(
-                  'flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-mono transition-colors',
+                  'flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-mono transition-all cursor-pointer',
                   isSelected
-                    ? 'bg-background text-foreground border border-grep-3'
-                    : 'text-grep-7 hover:text-grep-9 hover:bg-grep-1',
-                  count === 0 && 'opacity-40 cursor-not-allowed'
+                    ? 'bg-blue-500 text-white shadow-sm font-semibold'
+                    : 'bg-grep-1 text-grep-9 border border-grep-2 hover:bg-grep-2 hover:border-grep-4 hover:text-foreground',
+                  count === 0 && 'opacity-40 cursor-not-allowed hover:bg-grep-1'
                 )}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -116,7 +128,7 @@ export function ScreenshotGallery({ scanId, className }: ScreenshotGalleryProps)
                 {count > 0 && (
                   <span className={cn(
                     'px-1.5 rounded-full text-[10px]',
-                    isSelected ? 'bg-grep-2' : 'bg-grep-1'
+                    isSelected ? 'bg-white/20 text-white' : 'bg-grep-2'
                   )}>
                     {count}
                   </span>

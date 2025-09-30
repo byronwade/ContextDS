@@ -21,11 +21,16 @@ export function MinimalHeaderWrapper() {
       setViewMode={setViewMode}
       query={query}
       setQuery={setQuery}
-      stats={stats}
-      onSearch={() => {}}
+      caseInsensitive={false}
+      setCaseInsensitive={() => {}}
+      wholeWords={false}
+      setWholeWords={() => {}}
+      useRegex={false}
+      setUseRegex={() => {}}
+      scanLoading={false}
       onScan={() => {}}
-      isSearching={false}
-      isScanning={false}
+      onClearResults={() => {}}
+      stats={stats}
     />
   )
 }

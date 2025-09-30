@@ -89,8 +89,8 @@ export async function pollScanProgress(request: any, scanId: string, options: Po
 			// Parse SSE events from the body
 			const events = body
 				.split('\n\n')
-				.filter(chunk => chunk.trim().startsWith('data:'))
-				.map(chunk => {
+				.filter((chunk: string) => chunk.trim().startsWith('data:'))
+				.map((chunk: string) => {
 					try {
 						const jsonStr = chunk.replace(/^data:\s*/, '').trim();
 						return JSON.parse(jsonStr);
@@ -98,7 +98,7 @@ export async function pollScanProgress(request: any, scanId: string, options: Po
 						return null;
 					}
 				})
-				.filter(Boolean);
+				.filter((event: unknown): event is Record<string, unknown> => Boolean(event));
 
 			// Get the last event (most recent status)
 			if (events.length > 0) {

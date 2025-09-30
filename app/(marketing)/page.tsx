@@ -1,8 +1,21 @@
 "use client"
 
 import Link from "next/link"
+
+// Type for token export functions
+type TokenExportData = {
+  colors?: Array<{ value: string; name?: string; semantic?: string }>
+  typography?: {
+    families?: Array<{ value: string; name?: string }>
+    sizes?: Array<{ value: string; name?: string }>
+  }
+  spacing?: Array<{ value: string; name?: string }>
+  radius?: Array<{ value: string; name?: string }>
+  shadows?: Array<{ value: string; name?: string }>
+  gradients?: Array<{ value: string; name?: string }>
+}
 import { useEffect, useMemo, useState, Suspense, useCallback } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,6 +48,8 @@ import { RecentScansDropdown } from "@/components/molecules/recent-scans-dropdow
 import { TokenDiffViewer } from "@/components/organisms/token-diff-viewer"
 import { TokenResultsDisplay } from "@/components/organisms/token-results-display"
 import { SearchResultsView } from "@/components/organisms/search-results-view"
+import { SearchSidebar } from "@/components/organisms/search-sidebar"
+import { ScanResultsLayout } from "@/components/organisms/scan-results-layout"
 import { ScreenshotGallery } from "@/components/molecules/screenshot-gallery"
 import { cn } from "@/lib/utils"
 import { useRealtimeStats } from "@/hooks/use-realtime-stats"
@@ -355,6 +370,7 @@ function HomePageContent() {
     error: searchError,
     preferences,
     setQuery,
+    setError: setSearchError,
     updatePreferences,
     performSearch,
     clearSearch
@@ -382,6 +398,9 @@ function HomePageContent() {
   // Recent scans store
   const { addScan } = useRecentScans()
 
+  // Router for navigation
+  const router = useRouter()
+
   // Destructure search preferences
   const { caseInsensitive, wholeWords, useRegex } = preferences
 
@@ -389,6 +408,29 @@ function HomePageContent() {
   useEffect(() => {
     loadStats()
   }, [loadStats])
+
+  // Handle URL params (from scan page navigation)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const scanParam = params.get('scan')
+    const searchParam = params.get('q')
+
+    if (scanParam) {
+      setViewMode('scan')
+      setQuery(scanParam)
+      // Trigger scan after a short delay
+      setTimeout(() => {
+        startScan(scanParam)
+      }, 100)
+      // Clean up URL
+      window.history.replaceState({}, '', '/')
+    } else if (searchParam) {
+      setViewMode('search')
+      setQuery(searchParam)
+      // Clean up URL
+      window.history.replaceState({}, '', '/')
+    }
+  }, []) // Only run on mount
 
   // Keyboard shortcut: ⌘K to focus search
   useEffect(() => {
@@ -428,19 +470,19 @@ function HomePageContent() {
 
   const handleShareUrl = () => {
     if (scanResult?.domain) {
-      const shareUrl = `${window.location.origin}/scan/${encodeURIComponent(scanResult.domain)}`
+      const shareUrl = `${window.location.origin}/scan?domain=${encodeURIComponent(scanResult.domain)}`
       navigator.clipboard.writeText(shareUrl)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
   }
 
-  const handleExport = (format: 'json' | 'css' | 'scss' | 'js' | 'figma' | 'xd' | 'swift' | 'android' | 'tailwind') => {
+  const handleExport = (format: string) => {
     if (!scanResult?.curatedTokens) return
 
     let content = ''
     let mimeType = 'text/plain'
-    let extension = format
+    let extension: string = format
 
     switch (format) {
       case 'json':
@@ -491,6 +533,17 @@ function HomePageContent() {
         mimeType = 'text/xml'
         extension = 'xml'
         break
+
+      case 'ts':
+        content = generateTypeScript(scanResult.curatedTokens)
+        mimeType = 'text/typescript'
+        extension = 'ts'
+        break
+
+      default:
+        content = JSON.stringify(scanResult.curatedTokens, null, 2)
+        mimeType = 'application/json'
+        extension = 'json'
     }
 
     const blob = new Blob([content], { type: mimeType })
@@ -504,25 +557,25 @@ function HomePageContent() {
     URL.revokeObjectURL(url)
   }
 
-  const generateCSS = (tokens: any) => {
+  const generateCSS = (tokens: TokenExportData) => {
     let css = ':root {\n'
     if (tokens.colors) {
       css += '  /* Colors */\n'
-      tokens.colors.forEach((token: any, i: number) => {
+      tokens.colors.forEach((token, i: number) => {
         css += `  --color-${i + 1}: ${token.value};\n`
       })
       css += '\n'
     }
     if (tokens.typography?.families) {
       css += '  /* Fonts */\n'
-      tokens.typography.families.forEach((token: any, i: number) => {
+      tokens.typography.families.forEach((token, i: number) => {
         css += `  --font-${i + 1}: ${token.value};\n`
       })
       css += '\n'
     }
     if (tokens.spacing) {
       css += '  /* Spacing */\n'
-      tokens.spacing.forEach((token: any, i: number) => {
+      tokens.spacing.forEach((token, i: number) => {
         css += `  --spacing-${i + 1}: ${token.value};\n`
       })
       css += '\n'
@@ -544,7 +597,7 @@ function HomePageContent() {
     return css
   }
 
-  const generateSCSS = (tokens: any) => {
+  const generateSCSS = (tokens: TokenExportData) => {
     let scss = ''
     if (tokens.colors) {
       scss += '// Colors\n'
@@ -583,11 +636,11 @@ function HomePageContent() {
     return scss
   }
 
-  const generateJS = (tokens: any) => {
+  const generateJS = (tokens: TokenExportData) => {
     return `export const tokens = ${JSON.stringify(tokens, null, 2)};\n`
   }
 
-  const generateTailwind = (tokens: any) => {
+  const generateTailwind = (tokens: TokenExportData) => {
     let config = '/** @type {import(\'tailwindcss\').Config} */\n'
     config += 'module.exports = {\n'
     config += '  theme: {\n'
@@ -649,7 +702,7 @@ function HomePageContent() {
     return config
   }
 
-  const generateFigma = (tokens: any) => {
+  const generateFigma = (tokens: TokenExportData) => {
     const figmaTokens: any = {}
     if (tokens.colors) {
       figmaTokens.colors = tokens.colors.map((token: any, i: number) => ({
@@ -689,11 +742,11 @@ function HomePageContent() {
     return JSON.stringify(figmaTokens, null, 2)
   }
 
-  const generateXD = (tokens: any) => {
+  const generateXD = (tokens: TokenExportData) => {
     return generateFigma(tokens)
   }
 
-  const generateSwift = (tokens: any) => {
+  const generateSwift = (tokens: TokenExportData) => {
     let swift = 'import UIKit\n\nenum DesignTokens {\n'
     if (tokens.colors) {
       swift += '    enum Colors {\n'
@@ -731,7 +784,48 @@ function HomePageContent() {
     return swift
   }
 
-  const generateAndroid = (tokens: any) => {
+  const generateTypeScript = (tokens: TokenExportData) => {
+    let ts = '// Design Tokens\n\n'
+    ts += 'export const tokens = {\n'
+
+    if (tokens.colors && tokens.colors.length > 0) {
+      ts += '  colors: {\n'
+      tokens.colors.forEach((token: any, i: number) => {
+        ts += `    color${i + 1}: '${token.value}',\n`
+      })
+      ts += '  },\n\n'
+    }
+
+    if (tokens.typography?.families && tokens.typography.families.length > 0) {
+      ts += '  fonts: {\n'
+      tokens.typography.families.forEach((token: any, i: number) => {
+        ts += `    font${i + 1}: '${token.value}',\n`
+      })
+      ts += '  },\n\n'
+    }
+
+    if (tokens.spacing && tokens.spacing.length > 0) {
+      ts += '  spacing: {\n'
+      tokens.spacing.forEach((token: any, i: number) => {
+        ts += `    spacing${i + 1}: '${token.value}',\n`
+      })
+      ts += '  },\n\n'
+    }
+
+    if (tokens.radius && tokens.radius.length > 0) {
+      ts += '  radius: {\n'
+      tokens.radius.forEach((token: any, i: number) => {
+        ts += `    radius${i + 1}: '${token.value}',\n`
+      })
+      ts += '  },\n'
+    }
+
+    ts += '} as const\n\n'
+    ts += 'export type Tokens = typeof tokens\n'
+    return ts
+  }
+
+  const generateAndroid = (tokens: TokenExportData) => {
     let xml = '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
     if (tokens.colors) {
       xml += '    <!-- Colors -->\n'
@@ -764,14 +858,20 @@ function HomePageContent() {
     if (!target) return
 
     clearSearch() // Clear search results
+    setViewMode('scan') // Switch to scan view immediately
     await startScan(target) // Zustand handles all state updates
   }
 
-  // Watch for scan completion
+  // Watch for scan completion and navigate to scan page (only from home page)
   useEffect(() => {
-    if (!scanResult) return
+    if (!scanResult || !scanResult.domain) return
 
-    console.log('🎯 SCAN COMPLETE - Should show results now!', {
+    // Don't navigate if we're already on the scan page
+    if (typeof window !== 'undefined' && window.location.pathname.includes('/scan')) {
+      return
+    }
+
+    console.log('🎯 SCAN COMPLETE - Navigating to scan page', {
       domain: scanResult.domain,
       scanLoading,
       viewMode,
@@ -781,21 +881,24 @@ function HomePageContent() {
 
     // Preload fonts for preview
     if (scanResult.curatedTokens?.typography?.families) {
-      const fontFamilies = scanResult.curatedTokens.typography.families.map(f => f.value)
+      const fontFamilies = scanResult.curatedTokens.typography.families.map((f: { value: string }) => f.value)
       preloadFonts(fontFamilies)
     }
 
     // Refresh stats and add to recent scans
-    if (scanResult.domain && scanResult.summary) {
+    if (scanResult.summary) {
       loadStats()
       addScan({
         domain: scanResult.domain,
         tokensExtracted: scanResult.summary.tokensExtracted,
         confidence: scanResult.summary.confidence,
-        url: `/scan/${encodeURIComponent(scanResult.domain)}`
+        url: `/scan?domain=${encodeURIComponent(scanResult.domain)}`
       })
     }
-  }, [scanResult, loadStats, addScan, scanLoading, viewMode])
+
+    // Navigate to scan page with domain param
+    router.push(`/scan?domain=${encodeURIComponent(scanResult.domain)}`)
+  }, [scanResult, loadStats, addScan, scanLoading, viewMode, router])
 
   const categoryFacets = useMemo(() => {
     const base = tokenCategoryOptions.reduce<Record<string, number>>((acc, option) => {
@@ -1159,781 +1262,27 @@ function HomePageContent() {
           </div>
         </div>
       ) : viewMode === "scan" && (scanResult || scanLoading) ? (
-        /* Scan Results - Grep Terminal Style with Streaming */
-        <div className="flex-1 w-full overflow-y-auto bg-grep-0">
-          <div className="w-full max-w-6xl mx-auto px-4 py-6 md:px-8 md:py-8">
-
-            {/* Minimal Header with Version Info */}
-            <div className="mb-6 flex items-center justify-between border-b border-grep-2 pb-4">
-              <div className="flex items-center gap-3">
-                <div className={`w-2 h-2 rounded-full ${scanLoading ? 'bg-emerald-500 animate-pulse' : 'bg-green-500'}`} />
-                <h1 className="text-xl font-medium text-foreground font-mono">
-                  {scanResult?.domain || query}
-                </h1>
-                {scanLoading && (
-                  <>
-                    <span className="text-grep-7">·</span>
-                    <Badge variant="secondary" className="h-6 font-mono text-xs">
-                      {scanProgress?.message || scanProgress?.phase || 'scanning...'}
-                    </Badge>
-                  </>
-                )}
-                {scanResult?.versionInfo && (
-                  <>
-                    <span className="text-grep-7">·</span>
-                    <Badge variant="secondary" className="h-6 font-mono text-xs">
-                      v{scanResult.versionInfo.versionNumber}
-                    </Badge>
-                    {scanResult.versionInfo.isNewVersion && scanResult.versionInfo.changeCount > 0 && (
-                      <Badge variant="outline" className="h-6 font-mono text-xs border-blue-300 dark:border-blue-900 text-blue-700 dark:text-blue-400">
-                        {scanResult.versionInfo.changeCount} changes from v{scanResult.versionInfo.previousVersionNumber}
-                      </Badge>
-                    )}
-                  </>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {scanResult?.versionInfo?.diff && scanResult.versionInfo.changeCount > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowDiff(!showDiff)}
-                    className="h-7 px-2 text-xs font-mono text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
-                  >
-                    <History className="h-3.5 w-3.5 mr-1" />
-                    {showDiff ? 'hide changes' : 'view changes'}
-                  </Button>
-                )}
-                {scanResult && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleCopyToken(JSON.stringify(scanResult.curatedTokens, null, 2))}
-                    className="h-7 px-2 text-xs font-mono text-grep-9 hover:text-foreground"
-                  >
-                    <Copy className="h-3.5 w-3.5 mr-1" />
-                    copy json
-                  </Button>
-                )}
-                <div className="relative group">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-xs font-mono text-grep-9 hover:text-foreground"
-                  >
-                    <Download className="h-3.5 w-3.5 mr-1" />
-                    export
-                  </Button>
-                  <div className="absolute right-0 top-full mt-1 w-40 bg-background border border-grep-2 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                    <div className="py-1">
-                      <button
-                        onClick={() => handleExport('json')}
-                        className="w-full px-3 py-2 text-left text-xs font-mono text-grep-9 hover:text-foreground hover:bg-grep-1 transition-colors"
-                      >
-                        JSON
-                      </button>
-                      <button
-                        onClick={() => handleExport('css')}
-                        className="w-full px-3 py-2 text-left text-xs font-mono text-grep-9 hover:text-foreground hover:bg-grep-1 transition-colors"
-                      >
-                        CSS
-                      </button>
-                      <button
-                        onClick={() => handleExport('scss')}
-                        className="w-full px-3 py-2 text-left text-xs font-mono text-grep-9 hover:text-foreground hover:bg-grep-1 transition-colors"
-                      >
-                        SCSS
-                      </button>
-                      <button
-                        onClick={() => handleExport('js')}
-                        className="w-full px-3 py-2 text-left text-xs font-mono text-grep-9 hover:text-foreground hover:bg-grep-1 transition-colors"
-                      >
-                        JavaScript
-                      </button>
-                      <button
-                        onClick={() => handleExport('tailwind')}
-                        className="w-full px-3 py-2 text-left text-xs font-mono text-grep-9 hover:text-foreground hover:bg-grep-1 transition-colors"
-                      >
-                        Tailwind Config
-                      </button>
-                      <button
-                        onClick={() => handleExport('figma')}
-                        className="w-full px-3 py-2 text-left text-xs font-mono text-grep-9 hover:text-foreground hover:bg-grep-1 transition-colors"
-                      >
-                        Figma
-                      </button>
-                      <button
-                        onClick={() => handleExport('xd')}
-                        className="w-full px-3 py-2 text-left text-xs font-mono text-grep-9 hover:text-foreground hover:bg-grep-1 transition-colors"
-                      >
-                        Adobe XD
-                      </button>
-                      <button
-                        onClick={() => handleExport('swift')}
-                        className="w-full px-3 py-2 text-left text-xs font-mono text-grep-9 hover:text-foreground hover:bg-grep-1 transition-colors"
-                      >
-                        Swift
-                      </button>
-                      <button
-                        onClick={() => handleExport('android')}
-                        className="w-full px-3 py-2 text-left text-xs font-mono text-grep-9 hover:text-foreground hover:bg-grep-1 transition-colors"
-                      >
-                        Android
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Live Progress Messages - Show during scan */}
-            {scanLoading && scanProgress && (
-              <div className="mb-6 rounded-md border border-grep-2 bg-grep-0 overflow-hidden">
-                <div className="px-4 py-3 flex items-start gap-3">
-                  <div className="flex gap-1 mt-1">
-                    <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                    <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse [animation-delay:150ms]" />
-                    <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse [animation-delay:300ms]" />
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <div className="font-mono text-sm text-foreground">
-                      {scanProgress.message}
-                    </div>
-                    {scanProgress.details && scanProgress.details.length > 0 && (
-                      <div className="text-xs text-grep-9 font-mono space-y-0.5">
-                        {scanProgress.details.slice(-3).map((detail, i) => (
-                          <div key={i}>→ {detail}</div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-xs text-grep-7 font-mono tabular-nums">
-                    {scanProgress.step}/{scanProgress.totalSteps}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Summary Stats - Terminal Style */}
-            <div className="mb-6 rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
-              <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-grep-2">
-                <div className="px-4 py-3 border-b border-grep-2 md:border-b-0">
-                  <div className="text-grep-9 text-xs mb-1">tokens</div>
-                  <div className="text-2xl font-bold text-foreground tabular-nums">
-                    {scanLoading ? (
-                      <div className="h-8 w-16 bg-grep-2 animate-pulse rounded" />
-                    ) : (
-                      scanResult?.summary?.tokensExtracted || 0
-                    )}
-                  </div>
-                </div>
-                <div className="px-4 py-3 border-b border-grep-2 md:border-b-0">
-                  <div className="text-grep-9 text-xs mb-1">confidence</div>
-                  <div className="text-2xl font-bold text-foreground tabular-nums">
-                    {scanLoading ? (
-                      <div className="h-8 w-16 bg-grep-2 animate-pulse rounded" />
-                    ) : (
-                      `${scanResult?.summary?.confidence || 0}%`
-                    )}
-                  </div>
-                </div>
-                <div className="px-4 py-3">
-                  <div className="text-grep-9 text-xs mb-1">complete</div>
-                  <div className="text-2xl font-bold text-foreground tabular-nums">
-                    {scanLoading ? (
-                      <div className="h-8 w-16 bg-grep-2 animate-pulse rounded" />
-                    ) : (
-                      `${scanResult?.summary?.completeness || 0}%`
-                    )}
-                  </div>
-                </div>
-                <div className="px-4 py-3">
-                  <div className="text-grep-9 text-xs mb-1">quality</div>
-                  <div className="text-2xl font-bold text-foreground tabular-nums">
-                    {scanLoading ? (
-                      <div className="h-8 w-16 bg-grep-2 animate-pulse rounded" />
-                    ) : (
-                      `${scanResult?.summary?.reliability || 0}%`
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Version Diff - Show if there are changes */}
-            {showDiff && scanResult?.versionInfo?.diff && (
-              <div className="mb-6">
-                <TokenDiffViewer
-                  diff={scanResult.versionInfo.diff}
-                  oldVersion={scanResult.versionInfo.previousVersionNumber || 1}
-                  newVersion={scanResult.versionInfo.versionNumber}
-                  domain={scanResult.domain || ''}
-                  onCopy={handleCopyToken}
-                  onExport={() => {
-                    const blob = new Blob([JSON.stringify(scanResult.versionInfo.diff, null, 2)], { type: "application/json" })
-                    const url = URL.createObjectURL(blob)
-                    const anchor = document.createElement("a")
-                    anchor.href = url
-                    anchor.download = `${scanResult.domain}-v${scanResult.versionInfo.previousVersionNumber}-to-v${scanResult.versionInfo.versionNumber}-diff.json`
-                    document.body.appendChild(anchor)
-                    anchor.click()
-                    anchor.remove()
-                    URL.revokeObjectURL(url)
-                  }}
-                />
-              </div>
-            )}
-
-            {/* Comprehensive AI Analysis - Feature Showcase */}
-            {scanResult?.comprehensiveAnalysis && (
-              <ComprehensiveAnalysisDisplay analysis={scanResult.comprehensiveAnalysis} />
-            )}
-
-            {/* Loading State - Show skeleton loaders while scanning */}
-            {scanLoading && !scanResult && (
-              <div className="space-y-4">
-                {/* Helpful message */}
-                <div className="text-center py-4">
-                  <p className="text-sm text-grep-9 font-mono">
-                    Extracting design tokens... This usually takes 30-60 seconds
-                  </p>
-                </div>
-
-                {/* Skeleton for Colors */}
-                <div className="rounded-md border border-grep-2 bg-grep-0 overflow-hidden">
-                  <div className="border-b border-grep-2 bg-background px-4 py-2.5">
-                    <span className="text-xs text-grep-9 font-mono uppercase tracking-wide">Colors</span>
-                  </div>
-                  <div className="p-4 grid grid-cols-4 md:grid-cols-8 gap-2">
-                    {Array.from({ length: 16 }).map((_, i) => (
-                      <div key={i} className="h-12 bg-grep-2 animate-pulse rounded" />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Skeleton for Typography */}
-                <div className="rounded-md border border-grep-2 bg-grep-0 overflow-hidden">
-                  <div className="border-b border-grep-2 bg-background px-4 py-2.5">
-                    <span className="text-xs text-grep-9 font-mono uppercase tracking-wide">Typography</span>
-                  </div>
-                  <div className="p-4 space-y-2">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="h-8 bg-grep-2 animate-pulse rounded" />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Skeleton for Spacing */}
-                <div className="rounded-md border border-grep-2 bg-grep-0 overflow-hidden">
-                  <div className="border-b border-grep-2 bg-background px-4 py-2.5">
-                    <span className="text-xs text-grep-9 font-mono uppercase tracking-wide">Spacing</span>
-                  </div>
-                  <div className="p-4 space-y-2">
-                    {Array.from({ length: 8 }).map((_, i) => (
-                      <div key={i} className="h-6 bg-grep-2 animate-pulse rounded" />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Token Categories - Grep.app Style with Enhanced Features */}
-            {scanResult?.curatedTokens && (
-              <div className="space-y-4">
-
-                {/* Component Screenshots */}
-                {scanResult && scanId && (
-                  <ScreenshotGallery scanId={scanId} />
-                )}
-
-                {/* Enhanced Token Results Display */}
-                <TokenResultsDisplay
-                  tokens={scanResult.curatedTokens}
-                  domain={scanResult.domain || query}
-                  onCopy={handleCopyToken}
-                  onExport={(category) => {
-                    const categoryData = category === 'typography'
-                      ? scanResult.curatedTokens.typography?.families
-                      : scanResult.curatedTokens[category as keyof typeof scanResult.curatedTokens]
-                    if (categoryData) {
-                      const blob = new Blob([JSON.stringify(categoryData, null, 2)], { type: "application/json" })
-                      const url = URL.createObjectURL(blob)
-                      const anchor = document.createElement("a")
-                      anchor.href = url
-                      anchor.download = `${scanResult.domain || query}-${category}.json`
-                      document.body.appendChild(anchor)
-                      anchor.click()
-                      anchor.remove()
-                      URL.revokeObjectURL(url)
-                    }
-                  }}
-                />
-
-                </div>
-            )}
-
-            {/* Components - Extracted from site */}
-            {scanResult && (
-              <div className="space-y-4">
-
-                {/* Components - Buttons */}
-                {scanResult.components?.buttons && scanResult.components.buttons.length > 0 && (
-                  <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
-                    <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
-                      <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">
-                        Components - Buttons ({scanResult.components.buttons.length})
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCopyToken(JSON.stringify(scanResult.curatedTokens.typography.families, null, 2))}
-                        className="h-6 px-2 text-xs text-grep-9 hover:text-foreground"
-                      >
-                        copy
-                      </Button>
-                    </div>
-                    <div className="divide-y divide-grep-2">
-                      {scanResult.curatedTokens.typography.families.map((token, index) => (
-                        <button
-                          key={`font-${index}`}
-                          onClick={() => handleCopyToken(String(token.value))}
-                          className="w-full px-4 py-3 text-left hover:bg-background transition-colors group"
-                        >
-                          <div className="flex items-center justify-between gap-4 mb-2">
-                            <code className="text-sm text-foreground truncate flex-1">{token.value}</code>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span className="text-[10px] text-grep-9">{token.percentage}%</span>
-                              <Copy className="h-3.5 w-3.5 text-grep-7 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </div>
-                          </div>
-                          {/* Live font preview with fallback handling */}
-                          <FontPreview fontFamily={String(token.value)} className="relative">
-                            <div className="flex items-baseline gap-4 not-mono">
-                              <span className="text-2xl text-foreground">Aa</span>
-                              <span className="text-xl text-grep-9">Bb Cc</span>
-                              <span className="text-base text-grep-9">123 abc</span>
-                              <span className="text-sm text-grep-9">The quick brown fox</span>
-                            </div>
-                          </FontPreview>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Spacing - Compact List */}
-                {scanResult.curatedTokens.spacing && scanResult.curatedTokens.spacing.length > 0 && (
-                  <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
-                    <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
-                      <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">
-                        Spacing ({scanResult.curatedTokens.spacing.length})
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCopyToken(JSON.stringify(scanResult.curatedTokens.spacing, null, 2))}
-                        className="h-6 px-2 text-xs text-grep-9 hover:text-foreground"
-                      >
-                        copy
-                      </Button>
-                    </div>
-                    <div className="p-4">
-                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                        {scanResult.curatedTokens.spacing.map((token, index) => (
-                          <button
-                            key={`spacing-${index}`}
-                            onClick={() => handleCopyToken(String(token.value))}
-                            className="flex items-center gap-2 px-3 py-2 rounded border border-grep-2 bg-background hover:border-foreground transition-colors group"
-                            title={`${token.percentage}% usage`}
-                          >
-                            <div className="w-1 h-4 bg-foreground rounded-sm" style={{ width: `${Math.min(parseInt(token.value) / 2, 24)}px` }} />
-                            <code className="text-xs text-foreground">{token.value}</code>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Radius - Inline Display */}
-                {scanResult.curatedTokens.radius && scanResult.curatedTokens.radius.length > 0 && (
-                  <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
-                    <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
-                      <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">
-                        Radius ({scanResult.curatedTokens.radius.length})
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCopyToken(JSON.stringify(scanResult.curatedTokens.radius, null, 2))}
-                        className="h-6 px-2 text-xs text-grep-9 hover:text-foreground"
-                      >
-                        copy
-                      </Button>
-                    </div>
-                    <div className="p-4">
-                      <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-                        {scanResult.curatedTokens.radius.map((token, index) => (
-                          <button
-                            key={`radius-${index}`}
-                            onClick={() => handleCopyToken(String(token.value))}
-                            className="flex flex-col items-center gap-2 p-3 rounded border border-grep-2 bg-background hover:border-foreground transition-colors"
-                            title={`${token.percentage}% usage`}
-                          >
-                            <div className="w-12 h-12 bg-foreground" style={{ borderRadius: String(token.value) }} />
-                            <code className="text-xs text-foreground">{token.value}</code>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Shadows - Table Style */}
-                {scanResult.curatedTokens.shadows && scanResult.curatedTokens.shadows.length > 0 && (
-                  <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
-                    <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
-                      <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">
-                        Shadows ({scanResult.curatedTokens.shadows.length})
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCopyToken(JSON.stringify(scanResult.curatedTokens.shadows, null, 2))}
-                        className="h-6 px-2 text-xs text-grep-9 hover:text-foreground"
-                      >
-                        copy
-                      </Button>
-                    </div>
-                    <div className="divide-y divide-grep-2">
-                      {scanResult.curatedTokens.shadows.map((token, index) => (
-                        <button
-                          key={`shadow-${index}`}
-                          onClick={() => handleCopyToken(String(token.value))}
-                          className="w-full px-4 py-3 text-left hover:bg-background transition-colors group flex items-center gap-4"
-                        >
-                          <div className="w-16 h-16 shrink-0 bg-background rounded border border-grep-3 flex items-center justify-center">
-                            <div className="w-10 h-10 bg-grep-0 rounded" style={{ boxShadow: String(token.value) }} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <code className="text-xs text-foreground block truncate">{token.value}</code>
-                            <div className="text-[10px] text-grep-9 mt-1">{token.percentage}% usage</div>
-                          </div>
-                          <Copy className="h-3.5 w-3.5 text-grep-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Components - Buttons */}
-                {scanResult.components?.buttons && scanResult.components.buttons.length > 0 && (
-                  <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
-                    <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
-                      <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">
-                        Components - Buttons ({scanResult.components.buttons.length})
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCopyToken(JSON.stringify(scanResult.components.buttons, null, 2))}
-                        className="h-6 px-2 text-xs text-grep-9 hover:text-foreground"
-                      >
-                        copy
-                      </Button>
-                    </div>
-                    <div className="divide-y divide-grep-2">
-                      {scanResult.components.buttons.map((button, index) => (
-                        <div key={`button-${index}`} className="p-4 hover:bg-background transition-colors">
-                          <div className="flex items-start justify-between mb-3">
-                            <div>
-                              <div className="text-sm font-semibold text-foreground mb-1">{button.variant}</div>
-                              <div className="text-[10px] text-grep-9">Used {button.usage} times • {button.confidence}% confidence</div>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
-                            <div>
-                              <div className="text-grep-9 mb-1">Typography</div>
-                              <div className="space-y-0.5 text-grep-11">
-                                <div>Font Size: <code className="text-foreground">{button.properties.fontSize}</code></div>
-                                <div>Font Weight: <code className="text-foreground">{button.properties.fontWeight}</code></div>
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-grep-9 mb-1">Spacing</div>
-                              <div className="space-y-0.5 text-grep-11">
-                                <div>Padding X: <code className="text-foreground">{button.properties.paddingX}</code></div>
-                                <div>Padding Y: <code className="text-foreground">{button.properties.paddingY}</code></div>
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-grep-9 mb-1">Colors</div>
-                              <div className="space-y-0.5 text-grep-11">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-3 h-3 rounded border border-grep-3" style={{ backgroundColor: button.properties.backgroundColor }} />
-                                  Background: <code className="text-foreground">{button.properties.backgroundColor}</code>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <div className="w-3 h-3 rounded border border-grep-3" style={{ backgroundColor: button.properties.textColor }} />
-                                  Text: <code className="text-foreground">{button.properties.textColor}</code>
-                                </div>
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-grep-9 mb-1">Effects</div>
-                              <div className="space-y-0.5 text-grep-11">
-                                <div>Border Radius: <code className="text-foreground">{button.properties.borderRadius}</code></div>
-                                {button.properties.boxShadow && (
-                                  <div>Shadow: <code className="text-foreground text-[10px]">{button.properties.boxShadow}</code></div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          {button.properties.hover && (
-                            <div className="mt-3 pt-3 border-t border-grep-2">
-                              <div className="text-grep-9 mb-1 text-[11px]">Hover State</div>
-                              <div className="grid grid-cols-2 gap-2 text-[11px]">
-                                {button.properties.hover.backgroundColor && (
-                                  <div className="text-grep-11">
-                                    BG: <code className="text-foreground">{button.properties.hover.backgroundColor}</code>
-                                  </div>
-                                )}
-                                {button.properties.hover.boxShadow && (
-                                  <div className="text-grep-11">
-                                    Shadow: <code className="text-foreground text-[10px]">{button.properties.hover.boxShadow}</code>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Layout Patterns */}
-                {scanResult.layoutPatterns && (
-                  <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
-                    <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
-                      <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">
-                        Layout Patterns
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCopyToken(JSON.stringify(scanResult.layoutPatterns, null, 2))}
-                        className="h-6 px-2 text-xs text-grep-9 hover:text-foreground"
-                      >
-                        copy
-                      </Button>
-                    </div>
-                    <div className="p-4 space-y-4">
-                      {/* Containers */}
-                      {scanResult.layoutPatterns.containers?.maxWidths && scanResult.layoutPatterns.containers.maxWidths.length > 0 && (
-                        <div>
-                          <div className="text-grep-9 text-xs mb-2">Container Max Widths</div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            {scanResult.layoutPatterns.containers.maxWidths.slice(0, 8).map((width, index) => (
-                              <button
-                                key={`width-${index}`}
-                                onClick={() => handleCopyToken(width.value)}
-                                className="px-3 py-2 rounded border border-grep-2 bg-background hover:border-foreground transition-colors text-left"
-                              >
-                                <code className="text-xs text-foreground block">{width.value}</code>
-                                <div className="text-[10px] text-grep-9 mt-0.5">{width.usage} uses</div>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Grid System */}
-                      {scanResult.layoutPatterns.grids?.columnCounts && scanResult.layoutPatterns.grids.columnCounts.length > 0 && (
-                        <div className="pt-4 border-t border-grep-2">
-                          <div className="text-grep-9 text-xs mb-2">Grid Columns</div>
-                          <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                            {scanResult.layoutPatterns.grids.columnCounts.map((grid, index) => (
-                              <div
-                                key={`grid-${index}`}
-                                className="px-3 py-2 rounded border border-grep-2 bg-background text-center"
-                              >
-                                <div className="text-sm font-semibold text-foreground">{grid.columns}</div>
-                                <div className="text-[10px] text-grep-9">cols • {grid.usage} uses</div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Spacing Scale */}
-                      {scanResult.layoutPatterns.spacing?.scale && scanResult.layoutPatterns.spacing.scale.length > 0 && (
-                        <div className="pt-4 border-t border-grep-2">
-                          <div className="text-grep-9 text-xs mb-2">
-                            Spacing Scale ({scanResult.layoutPatterns.spacing.type}) • Base Unit: {scanResult.layoutPatterns.spacing.baseUnit}px
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {scanResult.layoutPatterns.spacing.scale.slice(0, 12).map((value, index) => (
-                              <button
-                                key={`spacing-scale-${index}`}
-                                onClick={() => handleCopyToken(value)}
-                                className="px-2 py-1 rounded border border-grep-2 bg-background hover:border-foreground transition-colors"
-                              >
-                                <code className="text-xs text-foreground">{value}</code>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Z-Index System */}
-                {scanResult.zIndexSystem?.layers && scanResult.zIndexSystem.layers.length > 0 && (
-                  <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
-                    <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
-                      <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">
-                        Z-Index Layers ({scanResult.zIndexSystem.layers.length})
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCopyToken(JSON.stringify(scanResult.zIndexSystem, null, 2))}
-                        className="h-6 px-2 text-xs text-grep-9 hover:text-foreground"
-                      >
-                        copy
-                      </Button>
-                    </div>
-                    <div className="p-4">
-                      <div className="mb-4 text-[11px] text-grep-11">
-                        Scale: <span className="text-foreground font-semibold">{scanResult.zIndexSystem.scale}</span>
-                        {' • '}
-                        Base: <span className="text-foreground">{scanResult.zIndexSystem.baseValue}</span>
-                        {' • '}
-                        Max: <span className="text-foreground">{scanResult.zIndexSystem.maxValue}</span>
-                      </div>
-                      <div className="space-y-2">
-                        {scanResult.zIndexSystem.layers.slice(0, 10).map((layer, index) => (
-                          <div
-                            key={`layer-${index}`}
-                            className="px-3 py-2 rounded border border-grep-2 bg-background hover:border-foreground transition-colors"
-                          >
-                            <div className="flex items-center justify-between mb-1">
-                              <div className="flex items-center gap-2">
-                                <code className="text-sm font-semibold text-foreground">{layer.value}</code>
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-grep-2 text-grep-11">
-                                  {layer.semanticLayer}
-                                </span>
-                              </div>
-                              <div className="text-[10px] text-grep-9">{layer.usage} uses</div>
-                            </div>
-                            {layer.selectors.length > 0 && (
-                              <div className="text-[10px] text-grep-9">
-                                {layer.selectors.slice(0, 2).join(', ')}
-                                {layer.selectors.length > 2 && ` +${layer.selectors.length - 2} more`}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Animation System */}
-                {scanResult.animationSystem && (
-                  <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
-                    <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
-                      <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">
-                        Animation & Transitions
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCopyToken(JSON.stringify(scanResult.animationSystem, null, 2))}
-                        className="h-6 px-2 text-xs text-grep-9 hover:text-foreground"
-                      >
-                        copy
-                      </Button>
-                    </div>
-                    <div className="p-4 space-y-4">
-                      {/* Durations */}
-                      {scanResult.animationSystem.durations && scanResult.animationSystem.durations.length > 0 && (
-                        <div>
-                          <div className="text-grep-9 text-xs mb-2">Durations</div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            {scanResult.animationSystem.durations.slice(0, 8).map((duration, index) => (
-                              <button
-                                key={`duration-${index}`}
-                                onClick={() => handleCopyToken(duration.value)}
-                                className="px-3 py-2 rounded border border-grep-2 bg-background hover:border-foreground transition-colors text-left"
-                              >
-                                <code className="text-xs text-foreground block">{duration.value}</code>
-                                <div className="text-[10px] text-grep-9">{duration.semantic} • {duration.usage} uses</div>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Timing Functions */}
-                      {scanResult.animationSystem.timingFunctions && scanResult.animationSystem.timingFunctions.length > 0 && (
-                        <div className="pt-4 border-t border-grep-2">
-                          <div className="text-grep-9 text-xs mb-2">Timing Functions</div>
-                          <div className="space-y-2">
-                            {scanResult.animationSystem.timingFunctions.slice(0, 6).map((timing, index) => (
-                              <button
-                                key={`timing-${index}`}
-                                onClick={() => handleCopyToken(timing.value)}
-                                className="w-full px-3 py-2 rounded border border-grep-2 bg-background hover:border-foreground transition-colors text-left"
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <code className="text-xs text-foreground block">{timing.value}</code>
-                                    <div className="text-[10px] text-grep-9 mt-0.5">{timing.semantic}</div>
-                                  </div>
-                                  <div className="text-[10px] text-grep-9">{timing.usage} uses</div>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Common Transitions */}
-                      {scanResult.animationSystem.commonTransitions && scanResult.animationSystem.commonTransitions.length > 0 && (
-                        <div className="pt-4 border-t border-grep-2">
-                          <div className="text-grep-9 text-xs mb-2">Common Transitions</div>
-                          <div className="space-y-2">
-                            {scanResult.animationSystem.commonTransitions.slice(0, 5).map((transition, index) => (
-                              <div
-                                key={`transition-${index}`}
-                                className="px-3 py-2 rounded border border-grep-2 bg-background"
-                              >
-                                <div className="flex items-center justify-between mb-1">
-                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-grep-2 text-grep-11">
-                                    {transition.semantic}
-                                  </span>
-                                  <div className="text-[10px] text-grep-9">{transition.usage} uses</div>
-                                </div>
-                                <div className="text-[11px] text-grep-11 space-y-0.5">
-                                  <div>Properties: <code className="text-foreground">{transition.properties.join(', ')}</code></div>
-                                  <div>Duration: <code className="text-foreground">{transition.duration}</code></div>
-                                  <div>Timing: <code className="text-foreground">{transition.timing}</code></div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+        /* Scan Results - New Grep.app Style Layout */
+        <ScanResultsLayout
+          result={scanResult}
+          isLoading={scanLoading}
+          scanId={scanId}
+          progress={scanProgress}
+          onCopy={handleCopyToken}
+          onExport={handleExport}
+          onShare={handleShareUrl}
+          showDiff={showDiff}
+          onToggleDiff={() => setShowDiff(!showDiff)}
+          onNewScan={() => {
+            resetScan()
+            setViewMode('search')
+            setQuery('')
+          }}
+          onScanHistory={() => {
+            // Could open a modal or navigate to history page
+            console.log('Show scan history')
+          }}
+        />
       ) : viewMode === "search" && searchError ? (
         /* Search Failed - Terminal Style */
         <div className="flex-1 flex items-center justify-center p-4 md:p-12 bg-grep-0">
@@ -1997,61 +1346,19 @@ function HomePageContent() {
           </div>
         </div>
       ) : viewMode === "search" && (loading || results.length > 0 || query.trim()) ? (
-        /* Search Results - Grep.app Style */
+        /* Search Results - Grep.app Style with ChatGPT Sidebar */
         <div className="h-[calc(100dvh-130px)] w-full md:h-[calc(100dvh-65px)]">
           <div className="group flex h-full w-full">
-            {/* Left Sidebar - Filters */}
-            <div className="hidden overflow-y-auto md:flex md:w-[24%] md:min-w-[200px] lg:max-w-[320px]">
-              <div className="flex w-full flex-col divide-y divide-dashed px-3">
-                {/* Repository Filter */}
-                <div className="w-full select-none py-2">
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-foreground">Repository</h3>
-                    <div className="space-y-2">
-                      {popularSites.slice(0, 8).map((site) => (
-                        <button
-                          key={site.domain}
-                          onClick={() => setQuery(site.domain || '')}
-                          className="group/facet flex h-10 w-full items-center justify-between rounded-md bg-grep-0 px-2 py-2 hover:bg-muted"
-                        >
-                          <div className="flex min-w-0 items-center justify-start gap-2">
-                            <div className="w-4 h-4 rounded-sm bg-neutral-300 dark:bg-neutral-700" />
-                            <span className="truncate text-[14px] md:text-[13px]">{site.domain}</span>
-                          </div>
-                          <span className="rounded-full bg-muted px-2 py-0.5 text-xxs tabular-nums text-muted-foreground group-hover/facet:bg-grep-2">
-                            {site.tokens}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Category Filter */}
-                <div className="w-full select-none py-2">
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-foreground">Category</h3>
-                    <div className="space-y-2">
-                      {categoryFacets.map((facet) => (
-                        <label key={facet.key} className="group/facet flex h-10 w-full cursor-pointer items-center justify-between rounded-md bg-grep-0 px-2 py-2 hover:bg-muted">
-                          <div className="flex min-w-0 items-center justify-start gap-2">
-                            <button
-                              type="button"
-                              role="checkbox"
-                              className="peer h-4 w-4 shrink-0 rounded-sm border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground border-grep-9 shadow-none data-[state=checked]:border-foreground"
-                            />
-                            <span className="truncate text-[14px] md:text-[13px]">{facet.label}</span>
-                          </div>
-                          <span className="rounded-full bg-muted px-2 py-0.5 text-xxs tabular-nums text-muted-foreground group-hover/facet:bg-grep-2">
-                            {facet.count}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* ChatGPT-Style Sidebar */}
+            <SearchSidebar
+              popularSites={popularSites}
+              categoryFacets={categoryFacets}
+              onSiteClick={(site) => setQuery(site)}
+              onCategoryClick={(category) => {
+                // TODO: Implement category filtering
+                console.log('Filter by category:', category)
+              }}
+            />
 
             {/* Main Content Area */}
             <div className="flex w-full flex-1 flex-col border-grep-2 md:border-l">

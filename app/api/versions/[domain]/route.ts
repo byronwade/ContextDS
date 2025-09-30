@@ -43,7 +43,7 @@ export async function GET(
       .orderBy(desc(tokenSets.versionNumber))
 
     // Count tokens in each version
-    const versionsWithCounts = versions.map(v => ({
+    const versionsWithCounts = versions.map((v: typeof versions[number]) => ({
       id: v.id,
       versionNumber: v.versionNumber,
       createdAt: v.createdAt.toISOString(),

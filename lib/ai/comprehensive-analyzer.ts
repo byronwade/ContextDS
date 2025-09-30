@@ -122,6 +122,12 @@ export async function analyzeDesignSystemComprehensive(
     url: string
   }
 ): Promise<ComprehensiveAnalysis> {
+  // Input validation
+  if (!curatedTokens || !curatedTokens.colors || !Array.isArray(curatedTokens.colors)) {
+    console.error('Invalid curatedTokens structure:', curatedTokens)
+    return getMinimalFallback()
+  }
+
   try {
     const prompt = buildComprehensivePrompt(curatedTokens, metadata)
 
@@ -136,8 +142,75 @@ export async function analyzeDesignSystemComprehensive(
 
     return object
   } catch (error) {
-    console.error('Comprehensive AI analysis failed, using enhanced fallback:', error)
-    return generateEnhancedFallback(curatedTokens, metadata)
+    console.error('Comprehensive AI analysis failed:', error)
+
+    try {
+      return generateEnhancedFallback(curatedTokens, metadata)
+    } catch (fallbackError) {
+      console.error('Fallback analysis also failed:', fallbackError)
+      return getMinimalFallback()
+    }
+  }
+}
+
+/**
+ * Minimal fallback when all analysis fails
+ */
+function getMinimalFallback(): ComprehensiveAnalysis {
+  return {
+    designSystemScore: {
+      overall: 50,
+      maturity: 'developing',
+      completeness: 40,
+      consistency: 50,
+      scalability: 50
+    },
+    componentArchitecture: {
+      detectedPatterns: [],
+      buttonVariants: [],
+      formComponents: [],
+      cardPatterns: [],
+      navigationPatterns: [],
+      complexity: 'simple',
+      reusability: 50
+    },
+    accessibility: {
+      wcagLevel: 'A',
+      contrastIssues: [],
+      colorBlindness: {
+        safeForProtanopia: true,
+        safeForDeuteranopia: true,
+        safeForTritanopia: true,
+        recommendations: ['Unable to analyze accessibility']
+      },
+      focusIndicators: {
+        present: false,
+        quality: 'poor'
+      },
+      overallScore: 50
+    },
+    tokenNamingConventions: {
+      strategy: 'inconsistent',
+      examples: [],
+      consistencyScore: 50,
+      recommendations: ['Unable to analyze token naming']
+    },
+    designPatterns: {
+      identified: [],
+      antiPatterns: []
+    },
+    brandIdentity: {
+      primaryColors: [],
+      colorPersonality: 'Unknown',
+      typographicVoice: 'Unknown',
+      visualStyle: ['Unable to analyze'],
+      industryAlignment: 'Unknown'
+    },
+    recommendations: {
+      quick_wins: [],
+      long_term: [],
+      critical: []
+    }
   }
 }
 

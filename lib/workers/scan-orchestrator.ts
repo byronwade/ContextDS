@@ -87,7 +87,8 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
   let computedCss: CssSource[] = []
   if (actuallyIncludeComputed) {
     const endComputedPhase = metrics.startPhase('collect_computed_css')
-    computedCss = await collectComputedCss(target.toString())
+    const computedResult = await collectComputedCss(target.toString())
+    computedCss = computedResult.sources
     endComputedPhase()
   }
 
@@ -259,28 +260,21 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
   })
   const metricsSummary = metrics.summary()
 
-  // VERSION TRACKING: Get previous token set AND version for this site (outside transaction)
-  const previousTokenSets = await db
-    .select()
+  // VERSION TRACKING: Get previous token set AND version with single JOIN query
+  const previousData = await db
+    .select({
+      tokenSet: tokenSets,
+      version: tokenVersions
+    })
     .from(tokenSets)
+    .leftJoin(tokenVersions, eq(tokenVersions.tokenSetId, tokenSets.id))
     .where(eq(tokenSets.siteId, siteRecord.id))
-    .orderBy(desc(tokenSets.versionNumber))
+    .orderBy(desc(tokenSets.versionNumber), desc(tokenVersions.versionNumber))
     .limit(1)
 
-  const previousTokenSet = previousTokenSets[0] || null
+  const previousTokenSet = previousData[0]?.tokenSet || null
+  const previousVersionRecord = previousData[0]?.version || null
   const newVersionNumber = previousTokenSet ? previousTokenSet.versionNumber + 1 : 1
-
-  // Get the previous tokenVersion record (not tokenSet) for proper foreign key reference
-  const previousVersionRecords = previousTokenSet
-    ? await db
-        .select()
-        .from(tokenVersions)
-        .where(eq(tokenVersions.tokenSetId, previousTokenSet.id))
-        .orderBy(desc(tokenVersions.versionNumber))
-        .limit(1)
-    : []
-
-  const previousVersionRecord = previousVersionRecords[0] || null
 
   // Calculate diff if there's a previous version
   let tokenDiff = null
@@ -294,112 +288,162 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
 
   // Single transaction for all final writes (50ms vs 200ms)
   const [tokenSetRecord] = await db.transaction(async (tx) => {
-    // 1. Insert token set with version number
-    const [tokenSet] = await tx
-      .insert(tokenSets)
-      .values({
-        siteId: siteRecord.id,
-        scanId: scanRecord.id,
-        versionNumber: newVersionNumber,
-        tokensJson: generated.tokenSet,
-        packJson: promptPack,
-        consensusScore: (generated.summary.confidence / 100).toFixed(2),
-        isPublic: true
-      })
-      .returning()
-
-    // 2. Create version record if there's a diff
-    if (tokenDiff && previousTokenSet) {
-      const [versionRecord] = await tx
-        .insert(tokenVersions)
+    try {
+      // 1. Insert token set with version number
+      const [tokenSet] = await tx
+        .insert(tokenSets)
         .values({
           siteId: siteRecord.id,
-          tokenSetId: tokenSet.id,
+          scanId: scanRecord.id,
           versionNumber: newVersionNumber,
-          previousVersionId: previousVersionRecord?.id || null, // Use tokenVersions.id, not tokenSets.id
-          changelogJson: { raw: tokenDiff },
-          diffSummary: tokenDiff.summary
+          tokensJson: generated.tokenSet,
+          packJson: promptPack,
+          consensusScore: (generated.summary.confidence / 100).toFixed(2),
+          isPublic: true
         })
         .returning()
 
-      // 3. Insert individual token changes
-      if (versionRecord && tokenDiff.summary.totalChanges > 0) {
-        const changes = [
-          ...tokenDiff.added.map(c => ({
-            versionId: versionRecord.id,
-            tokenPath: c.path,
-            changeType: 'added' as const,
-            oldValue: null,
-            newValue: c.newValue,
-            category: c.category
-          })),
-          ...tokenDiff.removed.map(c => ({
-            versionId: versionRecord.id,
-            tokenPath: c.path,
-            changeType: 'removed' as const,
-            oldValue: c.oldValue,
-            newValue: null,
-            category: c.category
-          })),
-          ...tokenDiff.modified.map(c => ({
-            versionId: versionRecord.id,
-            tokenPath: c.path,
-            changeType: 'modified' as const,
-            oldValue: c.oldValue,
-            newValue: c.newValue,
-            category: c.category
-          }))
-        ]
+      if (!tokenSet) {
+        throw new Error('Failed to create token set')
+      }
 
-        // Batch insert changes (limit to 1000 for performance)
-        if (changes.length > 0) {
-          await tx.insert(tokenChanges).values(changes.slice(0, 1000))
+      // 2. Create version record if there's a diff
+      if (tokenDiff && previousTokenSet) {
+        const [versionRecord] = await tx
+          .insert(tokenVersions)
+          .values({
+            siteId: siteRecord.id,
+            tokenSetId: tokenSet.id,
+            versionNumber: newVersionNumber,
+            previousVersionId: previousVersionRecord?.id || null,
+            changelogJson: { raw: tokenDiff },
+            diffSummary: tokenDiff.summary
+          })
+          .returning()
+
+        if (!versionRecord) {
+          throw new Error('Failed to create version record')
+        }
+
+        // 3. Insert individual token changes in batches
+        if (tokenDiff.summary.totalChanges > 0) {
+          const changes = [
+            ...tokenDiff.added.map(c => ({
+              versionId: versionRecord.id,
+              tokenPath: c.path,
+              changeType: 'added' as const,
+              oldValue: null,
+              newValue: c.newValue,
+              category: c.category
+            })),
+            ...tokenDiff.removed.map(c => ({
+              versionId: versionRecord.id,
+              tokenPath: c.path,
+              changeType: 'removed' as const,
+              oldValue: c.oldValue,
+              newValue: null,
+              category: c.category
+            })),
+            ...tokenDiff.modified.map(c => ({
+              versionId: versionRecord.id,
+              tokenPath: c.path,
+              changeType: 'modified' as const,
+              oldValue: c.oldValue,
+              newValue: c.newValue,
+              category: c.category
+            }))
+          ]
+
+          // Batch insert to avoid timeout (500 per batch)
+          const BATCH_SIZE = 500
+          for (let i = 0; i < changes.length; i += BATCH_SIZE) {
+            const batch = changes.slice(i, i + BATCH_SIZE)
+            await tx.insert(tokenChanges).values(batch)
+          }
+
+          // Warn about large change sets
+          if (changes.length > 5000) {
+            console.warn(`Large change set: ${changes.length} changes for ${domain}`)
+          }
         }
       }
+
+      // 4. Insert layout profile (in same transaction)
+      await tx
+        .insert(layoutProfiles)
+        .values({
+          siteId: siteRecord.id,
+          scanId: scanRecord.id,
+          profileJson: layoutDNA || {},
+          archetypes: layoutDNA?.archetypes || [],
+          containers: layoutDNA?.containers || [],
+          gridFlex: layoutDNA?.gridSystem ? { system: layoutDNA.gridSystem } : null,
+          spacingScale: layoutDNA?.spacingBase ? { base: layoutDNA.spacingBase } : null,
+          motion: null,
+          accessibility: null
+        })
+        .onConflictDoNothing()
+
+      // 5. Update scan record (in same transaction)
+      const [updatedScan] = await tx
+        .update(scans)
+        .set({
+          finishedAt: new Date(),
+          cssSourceCount: cssArtifacts.length,
+          sha,
+          metricsJson: {
+            ...metricsSummary,
+            tokenQuality: generated.qualityInsights
+          }
+        })
+        .where(eq(scans.id, scanRecord.id))
+        .returning()
+
+      if (!updatedScan) {
+        throw new Error('Failed to update scan record')
+      }
+
+      // 6. Update site record (in same transaction)
+      const [updatedSite] = await tx
+        .update(sites)
+        .set({
+          status: 'completed',
+          lastScanned: new Date(),
+          popularity: (siteRecord.popularity ?? 0) + 1
+        })
+        .where(eq(sites.id, siteRecord.id))
+        .returning()
+
+      if (!updatedSite) {
+        throw new Error('Failed to update site record')
+      }
+
+      return [tokenSet]
+    } catch (error) {
+      console.error('Transaction failed, rolling back:', error)
+      throw error // Rollback entire transaction
     }
-
-    // 4. Insert layout profile (in same transaction)
-    await tx
-      .insert(layoutProfiles)
-      .values({
-        siteId: siteRecord.id,
-        scanId: scanRecord.id,
-        profileJson: layoutDNA || {},
-        archetypes: layoutDNA?.archetypes || [],
-        containers: layoutDNA?.containers || [],
-        gridFlex: layoutDNA?.gridSystem ? { system: layoutDNA.gridSystem } : null,
-        spacingScale: layoutDNA?.spacingBase ? { base: layoutDNA.spacingBase } : null,
-        motion: null,
-        accessibility: null
-      })
-      .onConflictDoNothing()
-
-    // 5. Update scan record (in same transaction)
-    await tx
-      .update(scans)
-      .set({
-        finishedAt: new Date(),
-        cssSourceCount: cssArtifacts.length,
-        sha,
-        metricsJson: {
-          ...metricsSummary,
-          tokenQuality: generated.qualityInsights
-        }
-      })
-      .where(eq(scans.id, scanRecord.id))
-
-    // 6. Update site record (in same transaction)
-    await tx
-      .update(sites)
-      .set({
-        status: 'completed',
-        lastScanned: new Date(),
-        popularity: (siteRecord.popularity ?? 0) + 1
-      })
-      .where(eq(sites.id, siteRecord.id))
-
-    return [tokenSet]
+  }, {
+    isolationLevel: 'read committed',
+    accessMode: 'read write'
   })
+
+  // Trigger screenshot capture in background (don't await to avoid blocking response)
+  // Screenshots are captured async and stored separately
+  if (process.env.ENABLE_SCREENSHOTS !== '0') {
+    fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/screenshot`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url: target.toString(),
+        scanId: scanRecord.id,
+        viewports: ['mobile', 'tablet', 'desktop'],
+        fullPage: false
+      })
+    }).catch(error => {
+      console.warn('Screenshot capture failed (non-blocking):', error)
+    })
+  }
 
   return {
     status: 'completed',
@@ -407,14 +451,18 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
     url: target.toString(),
     summary: {
       tokensExtracted: generated.summary.tokensExtracted,
+      curatedCount: generated.summary.curatedCount,
       confidence: generated.summary.confidence,
       completeness: generated.summary.completeness,
       reliability: generated.summary.reliability,
       processingTime: Math.max(1, Math.round(durationMs / 1000))
     },
     tokens: generated.tokenGroups,
+    curatedTokens: generated.curatedTokens,
     layoutDNA: layoutDNA || {},
     promptPack,
+    aiInsights,
+    comprehensiveAnalysis,
     brandAnalysis,
     versionInfo: {
       versionNumber: newVersionNumber,
