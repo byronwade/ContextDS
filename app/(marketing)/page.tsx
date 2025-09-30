@@ -330,268 +330,33 @@ function HomePageContent() {
           </div>
         </div>
 
-          {/* Center: Ultra-Clear Search/Scan Interface */}
-          <div className="hidden md:flex flex-1 max-w-3xl mx-6">
-            {/* Mode Selector - Large & Clear */}
-            <div className="flex rounded-xl border-2 border-grep-3 bg-grep-0 p-1 mr-3 shadow-sm">
+        {/* Center: Grep-minimal input with smart mode dropdown */}
+        <div className="order-1 flex w-full items-center justify-center border-t border-grep-2 px-4 py-3 md:order-none md:border-none md:px-3 md:py-0" id="header-contents">
+          <div className="relative z-10 w-full flex-grow max-w-2xl">
+
+            {/* Mode Dropdown Selector (like grep.app repo selector) */}
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 z-20">
               <button
                 onClick={() => {
-                  setViewMode("search")
+                  setViewMode(viewMode === "search" ? "scan" : "search")
                   setResults([])
                   setScanResult(null)
                 }}
-                className={cn(
-                  "px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 min-w-[100px] justify-center",
-                  viewMode === "search"
-                    ? "bg-blue-500 text-white shadow-lg scale-105"
-                    : "text-grep-9 hover:text-foreground hover:bg-grep-1"
-                )}
+                className="flex items-center gap-1.5 text-[13px] font-medium text-foreground hover:text-grep-9 transition-colors"
+                title={`Mode: ${viewMode} (click to switch)`}
               >
-                <Search className="h-4 w-4" />
-                Search
-              </button>
-              <button
-                onClick={() => {
-                  setViewMode("scan")
-                  setResults([])
-                  setScanResult(null)
-                }}
-                className={cn(
-                  "px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 min-w-[100px] justify-center",
-                  viewMode === "scan"
-                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg scale-105"
-                    : "text-grep-9 hover:text-foreground hover:bg-grep-1"
-                )}
-              >
-                <Sparkles className="h-4 w-4" />
-                Scan
-              </button>
-            </div>
-
-            {/* Search Bar with Color-Coded Mode */}
-            <div className="relative flex-1">
-              {/* Mode Indicator Badge */}
-              <div className="absolute -top-2 left-4 z-30">
-                <div className={cn(
-                  "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide shadow-sm border-2 border-white dark:border-black",
-                  viewMode === "search"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gradient-to-r from-emerald-500 to-teal-500 text-white"
-                )}>
-                  {viewMode === "search" ? "Search Mode" : "Scan Mode"}
-                </div>
-              </div>
-
-              {/* Input with Mode-Specific Styling */}
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && query.trim()) {
-                    viewMode === "scan" ? handleScan() : null
-                  }
-                }}
-                placeholder={viewMode === "scan" ? "Enter URL: https://stripe.com" : "Search 17K+ design tokens..."}
-                id="search-input"
-                className={cn(
-                  "w-full h-11 pl-4 pr-36 rounded-xl border-2 transition-all duration-200 text-sm font-medium",
-                  viewMode === "search" && [
-                    "border-blue-200 dark:border-blue-900",
-                    "bg-blue-50/50 dark:bg-blue-950/20",
-                    "focus-visible:border-blue-400 focus-visible:ring-4 focus-visible:ring-blue-100 dark:focus-visible:ring-blue-950",
-                    "placeholder:text-blue-600/50 dark:placeholder:text-blue-400/50"
-                  ],
-                  viewMode === "scan" && [
-                    "border-emerald-200 dark:border-emerald-900",
-                    "bg-emerald-50/50 dark:bg-emerald-950/20",
-                    "focus-visible:border-emerald-400 focus-visible:ring-4 focus-visible:ring-emerald-100 dark:focus-visible:ring-emerald-950",
-                    "placeholder:text-emerald-600/50 dark:placeholder:text-emerald-400/50"
-                  ]
-                )}
-                spellCheck="false"
-                autoCapitalize="off"
-                autoComplete="off"
-                autoCorrect="off"
-              />
-
-              {/* Right Controls - Mode Specific */}
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
                 {viewMode === "search" ? (
-                  <>
-                    {/* Search Filter Toggles - Blue Theme */}
-                    <div className="flex items-center gap-1 bg-white dark:bg-black rounded-lg px-1 py-1 border border-blue-200 dark:border-blue-900 shadow-sm">
-                      <button
-                        type="button"
-                        onClick={() => setCaseInsensitive(!caseInsensitive)}
-                        className={cn(
-                          "h-7 w-7 rounded-md inline-flex items-center justify-center transition-all duration-200",
-                          caseInsensitive
-                            ? "bg-blue-500 text-white"
-                            : "text-grep-9 hover:bg-blue-50 dark:hover:bg-blue-950 hover:text-blue-600"
-                        )}
-                        aria-pressed={caseInsensitive}
-                        title="Match case (Aa)"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
-                          <path d="M11.6667 11C12.7713 11 13.6667 10.1046 13.6667 9C13.6667 7.89543 12.7713 7 11.6667 7C10.5621 7 9.66669 7.89543 9.66669 9C9.66669 10.1046 10.5621 11 11.6667 11Z" stroke="currentColor" strokeWidth="1.5"/>
-                          <path d="M13.6667 7V11" stroke="currentColor" strokeWidth="1.5"/>
-                          <path fillRule="evenodd" clipRule="evenodd" d="M3.26242 10.0789L2.63419 11.8414L2.57767 12H0.985229L1.22126 11.3378L4.22128 2.92102L5.63421 2.92102L8.63419 11.3378L8.87023 12H7.27779L7.22126 11.8414L6.59305 10.0789H6.5777H3.2777H3.26242ZM3.79707 8.57885H6.0584L4.92774 5.40668L3.79707 8.57885Z" fill="currentColor"/>
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setWholeWords(!wholeWords)}
-                        className={cn(
-                          "h-7 w-7 rounded-md inline-flex items-center justify-center transition-all duration-200",
-                          wholeWords
-                            ? "bg-blue-500 text-white"
-                            : "text-grep-9 hover:bg-blue-50 dark:hover:bg-blue-950 hover:text-blue-600"
-                        )}
-                        aria-pressed={wholeWords}
-                        title="Whole words"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
-                          <path d="M4.66669 10C5.77126 10 6.66669 9.10457 6.66669 8C6.66669 6.89543 5.77126 6 4.66669 6C3.56212 6 2.66669 6.89543 2.66669 8C2.66669 9.10457 3.56212 10 4.66669 10Z" stroke="currentColor" strokeWidth="1.5"/>
-                          <path d="M6.66669 6V10" stroke="currentColor" strokeWidth="1.5"/>
-                          <path d="M11.3333 10C12.4379 10 13.3333 9.10457 13.3333 8C13.3333 6.89543 12.4379 6 11.3333 6C10.2287 6 9.33331 6.89543 9.33331 8C9.33331 9.10457 10.2287 10 11.3333 10Z" stroke="currentColor" strokeWidth="1.5"/>
-                          <path d="M9.33331 4.66675V10.0001" stroke="currentColor" strokeWidth="1.5"/>
-                          <path d="M1 11V13H15V11" stroke="currentColor" strokeWidth="1.5"/>
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setUseRegex(!useRegex)}
-                        className={cn(
-                          "h-7 w-7 rounded-md inline-flex items-center justify-center transition-all duration-200",
-                          useRegex
-                            ? "bg-blue-500 text-white"
-                            : "text-grep-9 hover:bg-blue-50 dark:hover:bg-blue-950 hover:text-blue-600"
-                        )}
-                        aria-pressed={useRegex}
-                        title="Regex"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
-                          <path d="M10.8867 2V8.66667" stroke="currentColor" strokeWidth="1.5"/>
-                          <path d="M8 3.66675L13.7733 7.00008" stroke="currentColor" strokeWidth="1.5"/>
-                          <path d="M8 7.00008L13.7733 3.66675" stroke="currentColor" strokeWidth="1.5"/>
-                          <rect x="2" y="9" width="4" height="4" fill="currentColor"/>
-                        </svg>
-                      </button>
-                    </div>
-                  </>
+                  <Search className="h-3.5 w-3.5" />
                 ) : (
-                  <>
-                    {/* Scan Button - Emerald Theme */}
-                    <Button
-                      onClick={handleScan}
-                      disabled={!query.trim() || scanLoading}
-                      size="sm"
-                      className="h-8 px-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg disabled:opacity-50 transition-all duration-200"
-                    >
-                      {scanLoading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          Scanning...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="h-4 w-4 mr-2" />
-                          Scan Now
-                        </>
-                      )}
-                    </Button>
-                  </>
+                  <Sparkles className="h-3.5 w-3.5" />
                 )}
-
-                {/* Keyboard Shortcut */}
-                <kbd className="hidden xl:inline-flex h-7 px-2 items-center gap-0.5 rounded-md bg-white dark:bg-black border border-grep-3 text-xs text-grep-9 font-mono shadow-sm">
-                  <span className="text-[11px] font-bold">⌘</span>
-                  <span className="font-semibold">K</span>
-                </kbd>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Actions + Theme */}
-          <div className="flex items-center gap-3">
-            {/* Quick Actions */}
-            <div className="hidden md:flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 px-3 text-xs font-medium text-grep-9 hover:text-foreground hover:bg-grep-1"
-              >
-                Docs
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 px-3 text-xs font-medium text-grep-9 hover:text-foreground hover:bg-grep-1"
-              >
-                API
-              </Button>
-            </div>
-
-            {/* Theme Toggle - Minimal */}
-            <div className="hidden sm:flex items-center">
-              <button
-                className="h-8 w-8 rounded-md flex items-center justify-center transition-colors hover:bg-grep-1 text-grep-9 hover:text-foreground"
-                title="Toggle theme"
-              >
-                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                <span className="capitalize">{viewMode}</span>
+                <ChevronDown className="h-3 w-3" />
               </button>
+              <div className="w-px h-4 bg-grep-3" />
             </div>
 
-            {/* Sign In Button */}
-            <Button
-              size="sm"
-              className="h-8 px-4 bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90 font-medium rounded-md shadow-sm"
-            >
-              Sign In
-            </Button>
-          </div>
-
-        {/* Mobile Search Bar */}
-        <div className="md:hidden border-t border-grep-2 px-4 py-3">
-          <div className="relative w-full">
-            {/* Mobile Mode Toggle */}
-            <div className="flex gap-2 mb-3">
-              <button
-                onClick={() => {
-                  setViewMode("search")
-                  setResults([])
-                  setScanResult(null)
-                }}
-                className={cn(
-                  "flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2",
-                  viewMode === "search"
-                    ? "bg-blue-500 text-white shadow-md"
-                    : "bg-grep-0 text-grep-9 border border-grep-3 hover:border-grep-4"
-                )}
-              >
-                <Search className="h-4 w-4" />
-                Search
-              </button>
-              <button
-                onClick={() => {
-                  setViewMode("scan")
-                  setResults([])
-                  setScanResult(null)
-                }}
-                className={cn(
-                  "flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2",
-                  viewMode === "scan"
-                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md"
-                    : "bg-grep-0 text-grep-9 border border-grep-3 hover:border-grep-4"
-                )}
-              >
-                <Sparkles className="h-4 w-4" />
-                Scan
-              </button>
-            </div>
-
-            {/* Mobile Input */}
+            {/* Input - placeholder is key to understanding mode */}
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -600,27 +365,176 @@ function HomePageContent() {
                   handleScan()
                 }
               }}
-              placeholder={viewMode === "scan" ? "https://stripe.com" : "Search tokens..."}
-              className="h-11 pl-4 pr-12 rounded-lg border-2 border-grep-3 focus-visible:border-blue-400 focus-visible:ring-4 focus-visible:ring-blue-100 dark:focus-visible:ring-blue-950"
+              placeholder={
+                viewMode === "scan"
+                  ? "Paste URL (stripe.com, github.com, linear.app...)"
+                  : `Search ${stats?.tokens.toLocaleString() || '17,000'}+ design tokens`
+              }
+              id="search-input"
+              className="flex w-full min-w-0 shrink rounded-md border border-grep-4 bg-grep-0 px-3 py-1 text-sm transition-colors focus-visible:border-grep-12 focus-visible:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grep-4 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-grep-7 h-[42px] md:h-9 max-md:max-w-none"
+              style={{paddingLeft: '105px', paddingRight: viewMode === "search" ? '96px' : '72px'}}
+              spellCheck="false"
+              autoCapitalize="off"
+              autoComplete="off"
+              autoCorrect="off"
             />
 
-            {viewMode === "scan" && (
-              <Button
-                onClick={handleScan}
-                disabled={!query.trim() || scanLoading}
-                size="sm"
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 px-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-md"
-              >
-                {scanLoading ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  "Go"
-                )}
-              </Button>
-            )}
+            {/* Right Controls - Contextual */}
+            <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
+              {viewMode === "search" ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setCaseInsensitive(!caseInsensitive)}
+                    className={cn(
+                      "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors h-6 px-1 min-w-6",
+                      caseInsensitive && "bg-grep-11 border-grep-6 text-foreground"
+                    )}
+                    aria-pressed={caseInsensitive}
+                    title="Match case"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="h-4 w-4">
+                      <path d="M11.6667 11C12.7713 11 13.6667 10.1046 13.6667 9C13.6667 7.89543 12.7713 7 11.6667 7C10.5621 7 9.66669 7.89543 9.66669 9C9.66669 10.1046 10.5621 11 11.6667 11Z" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M13.6667 7V11" stroke="currentColor" strokeWidth="1.5"/>
+                      <path fillRule="evenodd" clipRule="evenodd" d="M3.26242 10.0789L2.63419 11.8414L2.57767 12H0.985229L1.22126 11.3378L4.22128 2.92102L5.63421 2.92102L8.63419 11.3378L8.87023 12H7.27779L7.22126 11.8414L6.59305 10.0789H6.5777H3.2777H3.26242ZM3.79707 8.57885H6.0584L4.92774 5.40668L3.79707 8.57885Z" fill="currentColor"/>
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWholeWords(!wholeWords)}
+                    className={cn(
+                      "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors h-6 px-1 min-w-6",
+                      wholeWords && "bg-grep-11 border-grep-6 text-foreground"
+                    )}
+                    aria-pressed={wholeWords}
+                    title="Match whole words"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="h-4 w-4">
+                      <path d="M4.66669 10C5.77126 10 6.66669 9.10457 6.66669 8C6.66669 6.89543 5.77126 6 4.66669 6C3.56212 6 2.66669 6.89543 2.66669 8C2.66669 9.10457 3.56212 10 4.66669 10Z" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M6.66669 6V10" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M11.3333 10C12.4379 10 13.3333 9.10457 13.3333 8C13.3333 6.89543 12.4379 6 11.3333 6C10.2287 6 9.33331 6.89543 9.33331 8C9.33331 9.10457 10.2287 10 11.3333 10Z" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M9.33331 4.66675V10.0001" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M1 11V13H15V11" stroke="currentColor" strokeWidth="1.5"/>
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUseRegex(!useRegex)}
+                    className={cn(
+                      "border border-transparent inline-flex items-center justify-center gap-2 rounded-md text-sm text-grep-9 font-medium transition-colors h-6 px-1 min-w-6",
+                      useRegex && "bg-grep-11 border-grep-6 text-foreground"
+                    )}
+                    aria-pressed={useRegex}
+                    title="Use regular expression"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="h-4 w-4">
+                      <path d="M10.8867 2V8.66667" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M8 3.66675L13.7733 7.00008" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M8 7.00008L13.7733 3.66675" stroke="currentColor" strokeWidth="1.5"/>
+                      <rect x="2" y="9" width="4" height="4" fill="currentColor"/>
+                    </svg>
+                  </button>
+                </>
+              ) : (
+                <Button
+                  onClick={handleScan}
+                  disabled={!query.trim() || scanLoading}
+                  size="sm"
+                  className="h-7 px-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-medium rounded hover:from-emerald-600 hover:to-teal-600 transition-all duration-200 shadow-none border-0"
+                >
+                  {scanLoading ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <>
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Scan
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Right: Minimal Actions */}
+        <div className="flex min-h-[64px] select-none items-center justify-end gap-3 pr-4 md:pr-6">
+          <Button variant="ghost" size="sm" className="hidden sm:inline-flex h-8 px-3 text-xs font-medium text-grep-9 hover:text-foreground">
+            Docs
+          </Button>
+          <Button variant="ghost" size="sm" className="hidden md:inline-flex h-8 px-3 text-xs font-medium text-grep-9 hover:text-foreground [@media(max-width:374px)]:hidden">
+            API
+          </Button>
+        </div>
       </header>
+
+      {/* Mobile: Separate mode toggle + input */}
+      <div className="md:hidden border-b border-grep-2 px-4 py-3">
+        <div className="relative w-full">
+          {/* Mobile Mode Toggle */}
+          <div className="flex gap-2 mb-3">
+            <button
+              onClick={() => {
+                setViewMode("search")
+                setResults([])
+                setScanResult(null)
+              }}
+              className={cn(
+                "flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2",
+                viewMode === "search"
+                  ? "bg-blue-500 text-white shadow-md"
+                  : "bg-grep-0 text-grep-9 border border-grep-3 hover:border-grep-4"
+              )}
+            >
+              <Search className="h-4 w-4" />
+              Search
+            </button>
+            <button
+              onClick={() => {
+                setViewMode("scan")
+                setResults([])
+                setScanResult(null)
+              }}
+              className={cn(
+                "flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2",
+                viewMode === "scan"
+                  ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md"
+                  : "bg-grep-0 text-grep-9 border border-grep-3 hover:border-grep-4"
+              )}
+            >
+              <Sparkles className="h-4 w-4" />
+              Scan
+            </button>
+          </div>
+
+          {/* Mobile Input */}
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && query.trim() && viewMode === "scan") {
+                handleScan()
+              }
+            }}
+            placeholder={viewMode === "scan" ? "https://stripe.com" : "Search tokens..."}
+            className="h-11 pl-4 pr-12 rounded-lg border-2 border-grep-3 focus-visible:border-blue-400 focus-visible:ring-4 focus-visible:ring-blue-100 dark:focus-visible:ring-blue-950"
+          />
+
+          {viewMode === "scan" && (
+            <Button
+              onClick={handleScan}
+              disabled={!query.trim() || scanLoading}
+              size="sm"
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-8 px-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-md"
+            >
+              {scanLoading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                "Go"
+              )}
+            </Button>
+          )}
+        </div>
+      </div>
 
       {/* Main Content */}
       {viewMode === "scan" && scanError ? (
