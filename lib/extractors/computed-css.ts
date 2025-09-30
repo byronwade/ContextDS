@@ -29,7 +29,7 @@ export async function collectComputedCss(url: string, options: ComputedCssOption
         .map(([prop, value]) => `  ${prop}: ${value};`)
         .join('\n')}\n}`
 
-      sources.push(createComputedSource(customPropsCSS, 'custom-properties'))
+      sources.push(createComputedSource(customPropsCSS, 'computed'))
     }
 
     // Add component styles as a CSS source
@@ -45,7 +45,7 @@ export async function collectComputedCss(url: string, options: ComputedCssOption
         })
         .join('\n\n')
 
-      sources.push(createComputedSource(componentCSS, 'component-computed'))
+      sources.push(createComputedSource(componentCSS, 'computed'))
     }
 
     return sources
@@ -55,11 +55,11 @@ export async function collectComputedCss(url: string, options: ComputedCssOption
   }
 }
 
-function createComputedSource(content: string, kind: string = 'computed'): CssSource {
+function createComputedSource(content: string, kind: 'inline' | 'link' | 'computed' = 'computed'): CssSource {
   const normalized = content.trim()
   const sha = createHash('sha256').update(normalized).digest('hex')
   return {
-    kind: kind as 'computed',
+    kind,
     url: undefined,
     content: normalized,
     bytes: Buffer.byteLength(normalized, 'utf8'),

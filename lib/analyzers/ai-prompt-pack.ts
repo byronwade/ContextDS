@@ -5,7 +5,7 @@
  */
 
 import type { W3CTokenSet, TokenExtractionResult } from './w3c-tokenizer'
-import type { parseColor, rgbToHsl } from './color-utils'
+import { rgbToOklch as properRgbToOklch, type RGBColor } from './color-utils'
 
 export interface AiPromptPack {
   meta: {
@@ -319,13 +319,13 @@ function rgbToHex(components: number[]): string {
  * Convert RGB to OKLCH using Culori (proper perceptual color space)
  */
 function rgbToOklch(components: number[]): [number, number, number] {
-  const { rgbToOklch: properRgbToOklch } = require('./color-utils')
-
-  const oklch = properRgbToOklch({
+  const rgb: RGBColor = {
     r: Math.round(components[0] * 255),
     g: Math.round(components[1] * 255),
     b: Math.round(components[2] * 255)
-  })
+  }
+
+  const oklch = properRgbToOklch(rgb)
 
   return [
     Math.round(oklch.l * 100),

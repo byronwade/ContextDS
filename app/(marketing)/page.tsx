@@ -308,7 +308,7 @@ function HomePageContent() {
   return (
     <div className="flex h-full w-full flex-col items-center justify-between overflow-hidden antialiased">
       {/* Minimal Grep-Style Header */}
-      <div className="flex min-h-[64px] w-full shrink-0 flex-wrap items-center justify-between border-b border-grep-2 md:flex-nowrap">
+      <header className="flex min-h-[64px] w-full shrink-0 flex-wrap items-center justify-between border-b border-grep-2 md:flex-nowrap">
 
         {/* Left: Brand */}
         <div className="flex pl-4 md:pl-6">
@@ -551,7 +551,6 @@ function HomePageContent() {
               Sign In
             </Button>
           </div>
-        </div>
 
         {/* Mobile Search Bar */}
         <div className="md:hidden border-t border-grep-2 px-4 py-3">

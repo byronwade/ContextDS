@@ -181,37 +181,58 @@ async function createPuppeteerBrowser(): Promise<BrowserWrapper> {
           async stopCSSCoverage() {
             if (!client) return []
 
-            const { ruleUsage } = await client.send('CSS.stopRuleUsageTracking')
-            const { styleSheets } = await client.send('CSS.getAllStyleSheets')
+            try {
+              const { ruleUsage } = await client.send('CSS.stopRuleUsageTracking')
 
-            const coverage: CoverageEntry[] = []
+              // Group ranges by stylesheet ID
+              const coverageMap = new Map<string, Array<{ start: number; end: number }>>()
 
-            for (const sheet of styleSheets) {
-              const { text } = await client.send('CSS.getStyleSheetText', {
-                styleSheetId: sheet.styleSheetId
-              })
-
-              // Find which rules were used
-              const usedRanges: Array<{ start: number; end: number }> = []
               ruleUsage.forEach((usage: any) => {
-                if (usage.used && usage.styleSheetId === sheet.styleSheetId) {
-                  usedRanges.push({
+                if (usage.used) {
+                  const id = usage.styleSheetId
+                  if (!coverageMap.has(id)) {
+                    coverageMap.set(id, [])
+                  }
+                  coverageMap.get(id)!.push({
                     start: usage.startOffset,
                     end: usage.endOffset
                   })
                 }
               })
 
-              if (usedRanges.length > 0) {
-                coverage.push({
-                  url: sheet.sourceURL || 'inline',
-                  ranges: usedRanges,
-                  text
-                })
-              }
-            }
+              // Fetch text for each stylesheet
+              const coverage: CoverageEntry[] = []
 
-            return coverage
+              for (const [styleSheetId, ranges] of coverageMap.entries()) {
+                try {
+                  const { text } = await client.send('CSS.getStyleSheetText', {
+                    styleSheetId
+                  })
+
+                  // Try to get source URL
+                  let sourceURL = 'inline'
+                  try {
+                    const info: any = await client.send('CSS.getStyleSheetText', { styleSheetId })
+                    sourceURL = info.sourceURL || 'inline'
+                  } catch {
+                    // Ignore if we can't get URL
+                  }
+
+                  coverage.push({
+                    url: sourceURL,
+                    ranges,
+                    text
+                  })
+                } catch (err) {
+                  console.warn(`Failed to fetch stylesheet ${styleSheetId}`, err)
+                }
+              }
+
+              return coverage
+            } catch (error) {
+              console.error('CSS coverage collection failed', error)
+              return []
+            }
           },
 
           async close() {

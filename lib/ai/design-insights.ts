@@ -4,6 +4,7 @@
  */
 
 import { generateText } from 'ai'
+import { openai } from '@ai-sdk/openai'
 import type { CuratedTokenSet } from '@/lib/analyzers/token-curator'
 
 export interface DesignInsights {
@@ -53,7 +54,7 @@ export async function generateDesignInsights(
   try {
     // Use Vercel AI Gateway with fast model for analysis
     const { text } = await generateText({
-      model: 'openai/gpt-4o-mini', // Fast, cost-effective model via AI Gateway
+      model: openai('gpt-4o-mini'), // Fast, cost-effective model via AI Gateway
       prompt,
       temperature: 0.3, // Lower temperature for consistent analysis
       maxTokens: 1000

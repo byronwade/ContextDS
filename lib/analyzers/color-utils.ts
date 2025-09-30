@@ -54,10 +54,15 @@ export function parseColor(color: string): RGBColor | null {
     const rgb = toRgb(parsed)
     if (!rgb) return null
 
+    // Ensure RGB components exist (handle exotic color spaces)
+    if (rgb.r === undefined || rgb.g === undefined || rgb.b === undefined) {
+      return null
+    }
+
     return {
-      r: Math.round((rgb.r || 0) * 255),
-      g: Math.round((rgb.g || 0) * 255),
-      b: Math.round((rgb.b || 0) * 255),
+      r: Math.round(rgb.r * 255),
+      g: Math.round(rgb.g * 255),
+      b: Math.round(rgb.b * 255),
       a: rgb.alpha
     }
   } catch (error) {
@@ -147,22 +152,28 @@ export function rgbToHsl(rgb: RGBColor): HSLColor {
  * Convert RGB to OKLCH using Culori (proper perceptual color space)
  */
 export function rgbToOklch(rgb: RGBColor): OKLCHColor {
-  const rgbColor = {
-    mode: 'rgb' as const,
-    r: rgb.r / 255,
-    g: rgb.g / 255,
-    b: rgb.b / 255,
-    alpha: rgb.a
-  }
+  try {
+    const rgbColor = {
+      mode: 'rgb' as const,
+      r: rgb.r / 255,
+      g: rgb.g / 255,
+      b: rgb.b / 255,
+      alpha: rgb.a
+    }
 
-  const oklch = toOklch(rgbColor)
-  if (!oklch) return { l: 0, c: 0, h: 0, a: rgb.a }
+    const oklch = toOklch(rgbColor)
+    if (!oklch) return { l: 0, c: 0, h: 0, a: rgb.a }
 
-  return {
-    l: oklch.l || 0,
-    c: oklch.c || 0,
-    h: oklch.h || 0,
-    a: oklch.alpha
+    // Handle undefined properties from exotic conversions
+    return {
+      l: oklch.l ?? 0,
+      c: oklch.c ?? 0,
+      h: oklch.h ?? 0,
+      a: oklch.alpha ?? rgb.a
+    }
+  } catch (error) {
+    // Fallback for conversion errors
+    return { l: 0, c: 0, h: 0, a: rgb.a }
   }
 }
 
