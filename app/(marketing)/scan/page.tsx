@@ -42,7 +42,8 @@ function shouldRevalidate(timestamp: number): boolean {
   return Date.now() - timestamp > REVALIDATE_AFTER
 }
 
-export default function ScanPage() {
+// Inner component that uses useSearchParams
+function ScanPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const domain = searchParams.get("domain")
@@ -436,6 +437,19 @@ export default function ScanPage() {
         onScanHistory={handleScanHistory}
       />
     </div>
+  )
+}
+
+// Wrap in Suspense to handle useSearchParams() properly
+export default function ScanPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    }>
+      <ScanPageContent />
+    </Suspense>
   )
 }
 
