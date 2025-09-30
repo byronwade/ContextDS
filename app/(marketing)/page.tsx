@@ -29,6 +29,7 @@ import { ThemeToggle } from "@/components/atoms/theme-toggle"
 import { RealtimeStat } from "@/components/atoms/realtime-stat"
 import { ScanProgressViewer } from "@/components/organisms/scan-progress-viewer"
 import { FontPreviewCard, preloadFonts } from "@/components/molecules/font-preview"
+import { ComprehensiveAnalysisDisplay } from "@/components/organisms/comprehensive-analysis-display"
 import { cn } from "@/lib/utils"
 import { useRealtimeStats } from "@/hooks/use-realtime-stats"
 
@@ -952,37 +953,9 @@ function HomePageContent() {
               </div>
             </div>
 
-            {/* Brand Analysis - Expanded Data */}
-            {scanResult.brandAnalysis && (
-              <div className="mb-6 rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
-                <div className="px-4 py-2.5 border-b border-grep-2 bg-background">
-                  <span className="text-grep-9 text-xs uppercase tracking-wide font-semibold">Brand Analysis</span>
-                </div>
-                <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-grep-2">
-                  <div className="px-4 py-3">
-                    <div className="text-grep-9 text-xs mb-1">Style</div>
-                    <div className="text-foreground capitalize">{scanResult.brandAnalysis.style || 'unknown'}</div>
-                  </div>
-                  <div className="px-4 py-3">
-                    <div className="text-grep-9 text-xs mb-1">Maturity</div>
-                    <div className="text-foreground capitalize">{scanResult.brandAnalysis.maturity || 'unknown'}</div>
-                  </div>
-                  <div className="px-4 py-3">
-                    <div className="text-grep-9 text-xs mb-1">Consistency</div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 bg-grep-2 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-foreground rounded-full transition-all"
-                          style={{ width: `${typeof scanResult.brandAnalysis.consistency === 'number' ? scanResult.brandAnalysis.consistency : 0}%` }}
-                        />
-                      </div>
-                      <span className="text-foreground tabular-nums text-sm">
-                        {typeof scanResult.brandAnalysis.consistency === 'number' ? Math.round(scanResult.brandAnalysis.consistency) : 0}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            {/* Comprehensive AI Analysis - Feature Showcase */}
+            {scanResult.comprehensiveAnalysis && (
+              <ComprehensiveAnalysisDisplay analysis={scanResult.comprehensiveAnalysis} />
             )}
 
             {/* Token Categories - Minimal Grep Style */}
