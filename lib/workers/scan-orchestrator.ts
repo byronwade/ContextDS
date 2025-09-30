@@ -172,56 +172,54 @@ export async function runScanJob({ url, prettify, includeComputed }: ScanJobInpu
   const layoutDNA = analyzeLayout(cssArtifacts)
   endLayoutPhase()
 
-  const wireframeSections = includeComputed
-    ? await (async () => {
-        const endWireframePhase = metrics.startPhase('collect_layout_wireframe')
-        const sections = await collectLayoutWireframe(target.toString())
-        endWireframePhase()
-        return sections
-      })()
-    : []
+  // PERFORMANCE OPTIMIZATION: Parallelize all independent analysis tasks
+  const [
+    wireframeResult,
+    promptPackResult,
+    aiInsightsResult,
+    comprehensiveResult
+  ] = await Promise.allSettled([
+    // Task 1: Wireframe (if computed CSS enabled)
+    includeComputed ? collectLayoutWireframe(target.toString()) : Promise.resolve([]),
 
-  const endPromptPhase = metrics.startPhase('build_prompt_pack')
+    // Task 2: Build prompt pack (can run in parallel with AI)
+    (async () => {
+      const legacyPromptPack = buildPromptPack(generated.tokenGroups, layoutAnalysis || {})
+      const aiPromptPack = w3cExtraction ? buildAiPromptPack(w3cExtraction, { domain, url: target.toString() }) : null
+      return { legacyPromptPack, aiPromptPack }
+    })(),
 
-  // Generate both legacy prompt pack and new AI-optimized pack
-  const legacyPromptPack = buildPromptPack(generated.tokenGroups, layoutDNA)
-  const aiPromptPack = buildAiPromptPack(w3cExtraction, { domain, url: target.toString() })
+    // Task 3: AI insights (can run in parallel with comprehensive)
+    curatedTokens
+      ? generateDesignInsights(curatedTokens, { domain, url: target.toString() })
+      : Promise.resolve(null),
 
-  // Generate AI-powered design insights using Vercel AI Gateway
-  let aiInsights = null
-  try {
-    const insightsPhase = metrics.startPhase('generate_ai_insights')
-    aiInsights = await generateDesignInsights(curatedTokens, { domain, url: target.toString() })
-    insightsPhase()
-  } catch (error) {
-    console.warn('AI insights generation failed, using rule-based fallback', error)
+    // Task 4: Comprehensive AI analysis (runs in parallel with basic insights)
+    curatedTokens
+      ? analyzeDesignSystemComprehensive(curatedTokens, { domain, url: target.toString() })
+      : Promise.resolve(null)
+  ])
+
+  // Extract results
+  const wireframeSections = wireframeResult.status === 'fulfilled' ? wireframeResult.value : []
+  const { legacyPromptPack, aiPromptPack } = promptPackResult.status === 'fulfilled' ? promptPackResult.value : { legacyPromptPack: {}, aiPromptPack: null }
+  const aiInsights = aiInsightsResult.status === 'fulfilled' ? aiInsightsResult.value : null
+  const comprehensiveAnalysis = comprehensiveResult.status === 'fulfilled' ? comprehensiveResult.value : null
+
+  // Augment layout with wireframe (if available)
+  if (wireframeSections.length > 0 && layoutAnalysis) {
+    layoutAnalysis.wireframe = { sections: wireframeSections }
+    augmentArchetypesWithWireframe(layoutAnalysis, wireframeSections)
   }
 
-  // Generate comprehensive AI analysis (deep, multi-layer insights)
-  let comprehensiveAnalysis = null
-  try {
-    const analysisPhase = metrics.startPhase('comprehensive_ai_analysis')
-    comprehensiveAnalysis = await analyzeDesignSystemComprehensive(curatedTokens, { domain, url: target.toString() })
-    analysisPhase()
-  } catch (error) {
-    console.warn('Comprehensive AI analysis failed, will use basic insights only', error)
-  }
-
-  // Use AI prompt pack as primary
+  // Assemble prompt pack
   const promptPack = {
     ...legacyPromptPack,
     aiOptimized: aiPromptPack,
     aiInsights,
-    comprehensiveAnalysis, // Add comprehensive analysis
+    comprehensiveAnalysis,
     version: '2.1.0',
     format: 'ai-lean-core-plus'
-  }
-
-  endPromptPhase()
-
-  if (wireframeSections.length > 0) {
-    layoutDNA.wireframe = { sections: wireframeSections }
-    augmentArchetypesWithWireframe(layoutDNA, wireframeSections)
   }
 
   const [tokenSetRecord] = await db
@@ -294,11 +292,11 @@ export async function runScanJob({ url, prettify, includeComputed }: ScanJobInpu
     },
     curatedTokens: generated.curatedTokens,
     aiInsights: promptPack.aiInsights,
-    comprehensiveAnalysis: promptPack.comprehensiveAnalysis, // Add comprehensive analysis
+    comprehensiveAnalysis: promptPack.comprehensiveAnalysis,
     tokens: generated.tokenGroups,
-    layoutDNA,
+    layoutDNA: layoutAnalysis || {},
     promptPack,
-    brandAnalysis: analyzeBrand(legacyGenerated),
+    brandAnalysis,
     metadata: {
       cssSources: cssArtifacts.length,
       staticCssSources: staticCss.length,

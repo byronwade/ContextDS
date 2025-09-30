@@ -1,6 +1,6 @@
 /**
- * Smart Font Preview Component
- * Only loads fonts if not already available on user's system
+ * Accurate Font Preview Component
+ * Uses Canvas-based font detection for reliable rendering
  */
 
 'use client'
@@ -14,128 +14,122 @@ interface FontPreviewProps {
   children?: React.ReactNode
 }
 
-// System fonts that are guaranteed to be available
-const SYSTEM_FONTS = new Set([
-  // macOS/iOS
-  'system-ui', '-apple-system', 'BlinkMacSystemFont', 'San Francisco',
-  'Helvetica Neue', 'Helvetica', 'Arial', 'Courier', 'Courier New',
-  'Times', 'Times New Roman', 'Georgia', 'Verdana', 'Monaco',
-
-  // Windows
-  'Segoe UI', 'Tahoma', 'Arial', 'Trebuchet MS', 'Consolas',
-  'Comic Sans MS', 'Impact', 'Lucida Console',
-
-  // Linux
-  'Ubuntu', 'Roboto', 'Oxygen', 'Cantarell', 'Fira Sans', 'Droid Sans',
-  'Liberation Sans', 'DejaVu Sans',
-
-  // Generic families
-  'sans-serif', 'serif', 'monospace', 'cursive', 'fantasy'
-])
-
-// Popular web fonts from Google Fonts / Adobe Fonts
-const WEB_FONTS = new Set([
-  'Inter', 'Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Poppins',
-  'Source Sans Pro', 'Raleway', 'PT Sans', 'Noto Sans', 'Ubuntu',
-  'Playfair Display', 'Merriweather', 'Crimson Text',
-  'Fira Code', 'JetBrains Mono', 'Source Code Pro', 'Inconsolata',
-  'Geist', 'Geist Mono', 'Cal Sans', 'Lexend'
-])
-
 /**
- * Check if font is available on the system
+ * Detect if a font is actually rendering (not falling back)
+ * Uses canvas measurement technique
  */
-function checkFontAvailable(fontFamily: string): boolean {
-  // Extract first font from comma-separated stack
+function detectFontRendering(fontFamily: string): boolean {
+  if (typeof document === 'undefined') return false
+
   const primaryFont = fontFamily.split(',')[0].trim().replace(/['"]/g, '')
 
-  // Check if it's a system font
-  if (SYSTEM_FONTS.has(primaryFont)) {
-    return true
-  }
+  // Create canvas for measurement
+  const canvas = document.createElement('canvas')
+  const context = canvas.getContext('2d')
+  if (!context) return false
 
-  // Use CSS Font Loading API to check if font is available
-  if (typeof document !== 'undefined' && 'fonts' in document) {
-    try {
-      // Check if font is already loaded
-      const fontFace = `12px "${primaryFont}"`
-      return document.fonts.check(fontFace)
-    } catch {
-      return false
-    }
-  }
+  const testText = 'mmmmmmmmmmlli'
+  const testSize = '72px'
 
-  return false
+  // Measure with fallback font
+  context.font = `${testSize} monospace`
+  const fallbackWidth = context.measureText(testText).width
+
+  // Measure with target font
+  context.font = `${testSize} "${primaryFont}", monospace`
+  const targetWidth = context.measureText(testText).width
+
+  // If widths differ, the font is rendering
+  return Math.abs(targetWidth - fallbackWidth) > 1
 }
 
 /**
- * Load web font dynamically via Google Fonts
+ * Load web font via Google Fonts with verification
  */
-function loadWebFont(fontFamily: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const primaryFont = fontFamily.split(',')[0].trim().replace(/['"]/g, '')
+async function loadGoogleFont(fontFamily: string): Promise<boolean> {
+  const primaryFont = fontFamily.split(',')[0].trim().replace(/['"]/g, '')
 
-    // Check if it's a known web font
-    if (!WEB_FONTS.has(primaryFont)) {
-      resolve() // Don't try to load unknown fonts
-      return
-    }
+  // Check if already rendering
+  if (detectFontRendering(fontFamily)) {
+    return true
+  }
 
-    // Check if already loaded
-    if (checkFontAvailable(fontFamily)) {
-      resolve()
-      return
-    }
-
-    // Create Google Fonts link (only for known Google Fonts)
+  return new Promise((resolve) => {
+    // Create Google Fonts link
     const link = document.createElement('link')
     link.rel = 'stylesheet'
-    link.href = `https://fonts.googleapis.com/css2?family=${primaryFont.replace(/\s+/g, '+')}:wght@400;700&display=swap`
+    link.href = `https://fonts.googleapis.com/css2?family=${primaryFont.replace(/\s+/g, '+')}:wght@300;400;500;600;700&display=swap`
 
-    link.onload = () => resolve()
-    link.onerror = () => resolve() // Don't fail, just use fallback
+    // Set timeout
+    const timeout = setTimeout(() => {
+      resolve(false)
+    }, 5000)
 
-    // Set timeout to prevent hanging
-    setTimeout(resolve, 3000)
+    link.onload = () => {
+      clearTimeout(timeout)
+
+      // Wait for font to actually load
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => {
+          // Verify font is rendering
+          setTimeout(() => {
+            resolve(detectFontRendering(fontFamily))
+          }, 100)
+        })
+      } else {
+        setTimeout(() => {
+          resolve(detectFontRendering(fontFamily))
+        }, 500)
+      }
+    }
+
+    link.onerror = () => {
+      clearTimeout(timeout)
+      resolve(false)
+    }
 
     document.head.appendChild(link)
   })
 }
 
 export function FontPreview({ fontFamily, className, children }: FontPreviewProps) {
-  const [fontLoaded, setFontLoaded] = useState(false)
-  const [useFallback, setUseFallback] = useState(false)
+  const [fontStatus, setFontStatus] = useState<'loading' | 'loaded' | 'fallback'>('loading')
 
   useEffect(() => {
     const primaryFont = fontFamily.split(',')[0].trim().replace(/['"]/g, '')
 
-    // Check if font is already available (system font or cached web font)
-    if (checkFontAvailable(fontFamily)) {
-      setFontLoaded(true)
+    // Immediate check if font is already rendering
+    if (detectFontRendering(fontFamily)) {
+      setFontStatus('loaded')
       return
     }
 
-    // Try to load as web font
-    if (WEB_FONTS.has(primaryFont)) {
-      loadWebFont(fontFamily)
-        .then(() => setFontLoaded(true))
-        .catch(() => setUseFallback(true))
-    } else {
-      // Unknown font, use system fallback
-      setUseFallback(true)
-    }
+    // Try to load from Google Fonts
+    loadGoogleFont(fontFamily).then((success) => {
+      setFontStatus(success ? 'loaded' : 'fallback')
+    })
   }, [fontFamily])
 
-  const displayFontFamily = useFallback
-    ? `${fontFamily.split(',')[0]}, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`
+  const displayFontFamily = fontStatus === 'fallback'
+    ? `-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`
     : fontFamily
 
   return (
     <div
-      className={cn(className, !fontLoaded && !useFallback && 'animate-pulse')}
+      className={cn(
+        className,
+        fontStatus === 'loading' && 'animate-pulse opacity-50'
+      )}
       style={{ fontFamily: displayFontFamily }}
     >
       {children}
+      {fontStatus === 'fallback' && (
+        <div className="absolute top-2 right-2">
+          <span className="text-[9px] bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-500 px-1.5 py-0.5 rounded border border-yellow-300 dark:border-yellow-800">
+            Preview Unavailable
+          </span>
+        </div>
+      )}
     </div>
   )
 }

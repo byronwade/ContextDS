@@ -1013,7 +1013,7 @@ function HomePageContent() {
                   </div>
                 )}
 
-                {/* Typography - List Style */}
+                {/* Typography - Accurate Preview */}
                 {scanResult.curatedTokens.typography?.families && scanResult.curatedTokens.typography.families.length > 0 && (
                   <div className="rounded-md border border-grep-2 bg-grep-0 font-mono text-[13px] overflow-hidden">
                     <div className="px-4 py-2.5 border-b border-grep-2 bg-background flex items-center justify-between">
@@ -1034,18 +1034,24 @@ function HomePageContent() {
                         <button
                           key={`font-${index}`}
                           onClick={() => handleCopyToken(String(token.value))}
-                          className="w-full px-4 py-3 text-left hover:bg-background transition-colors flex items-center justify-between gap-4 group"
+                          className="w-full px-4 py-3 text-left hover:bg-background transition-colors group"
                         >
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <code className="text-sm text-foreground truncate">{token.value}</code>
+                          <div className="flex items-center justify-between gap-4 mb-2">
+                            <code className="text-sm text-foreground truncate flex-1">{token.value}</code>
+                            <div className="flex items-center gap-2 shrink-0">
                               <span className="text-[10px] text-grep-9">{token.percentage}%</span>
-                            </div>
-                            <div className="text-base text-grep-9" style={{ fontFamily: String(token.value) }}>
-                              Aa Bb Cc 123
+                              <Copy className="h-3.5 w-3.5 text-grep-7 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>
                           </div>
-                          <Copy className="h-3.5 w-3.5 text-grep-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                          {/* Live font preview with fallback handling */}
+                          <FontPreview fontFamily={String(token.value)} className="relative">
+                            <div className="flex items-baseline gap-4 not-mono">
+                              <span className="text-2xl text-foreground">Aa</span>
+                              <span className="text-xl text-grep-9">Bb Cc</span>
+                              <span className="text-base text-grep-9">123 abc</span>
+                              <span className="text-sm text-grep-9">The quick brown fox</span>
+                            </div>
+                          </FontPreview>
                         </button>
                       ))}
                     </div>

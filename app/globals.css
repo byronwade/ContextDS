@@ -44,6 +44,11 @@
   animation-delay: 450ms;
 }
 
+/* Font preview - exclude from monospace */
+.not-mono * {
+  font-family: inherit !important;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
