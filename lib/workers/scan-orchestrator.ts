@@ -14,6 +14,7 @@ import { compareTokenSets } from '@/lib/analyzers/version-diff'
 import { collectLayoutWireframe } from '@/lib/analyzers/layout-wireframe'
 import { MetricsCollector } from '@/lib/observability/metrics'
 import { analyzeBrand } from '@/lib/analyzers/brand-analyzer'
+import { extractComponents, type ComponentLibrary } from '@/lib/analyzers/component-extractor'
 
 export type ScanJobInput = {
   url: string
@@ -85,10 +86,12 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
   endStaticPhase()
 
   let computedCss: CssSource[] = []
+  let computedStyles: any[] = []
   if (actuallyIncludeComputed) {
     const endComputedPhase = metrics.startPhase('collect_computed_css')
     const computedResult = await collectComputedCss(target.toString())
     computedCss = computedResult.sources
+    computedStyles = computedResult.computedStyles
     endComputedPhase()
   }
 
@@ -250,6 +253,11 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
   }
 
   const brandAnalysis = buildBrandAnalysis(generated.curatedTokens?.colors || generated.tokenGroups.colors)
+
+  // Extract component library from computed styles (if available)
+  const componentLibrary: ComponentLibrary | null = computedStyles.length > 0
+    ? extractComponents(computedStyles, generated.tokenSet)
+    : null
 
   // PERFORMANCE OPTIMIZATION: Batch all final database writes into single transaction
   const durationMs = Date.now() - startedAt
@@ -480,6 +488,7 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
     aiInsights,
     comprehensiveAnalysis,
     brandAnalysis,
+    componentLibrary,
     versionInfo: {
       versionNumber: newVersionNumber,
       isNewVersion: !!previousTokenSet,

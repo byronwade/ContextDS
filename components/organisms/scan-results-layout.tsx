@@ -36,6 +36,7 @@ import { ScreenshotGallery } from "@/components/molecules/screenshot-gallery"
 import { TypographySection } from "./typography-section"
 import { LayoutPatternsSection } from "./layout-patterns-section"
 import { BrandAnalysisSection } from "./brand-analysis-section"
+import { ComponentLibrarySection } from "./component-library-section"
 
 type ScanResult = any // Import from scan-store if needed
 
@@ -68,6 +69,7 @@ const sections = [
   { id: 'screenshots', label: 'Screenshots', icon: Eye },
   { id: 'overview', label: 'Overview', icon: BarChart3 },
   { id: 'analysis', label: 'AI Analysis', icon: Zap },
+  { id: 'components', label: 'Components', icon: Code2 },
   { id: 'tokens', label: 'Design Tokens', icon: Palette },
   { id: 'typography', label: 'Typography', icon: Type },
   { id: 'brand', label: 'Brand Analysis', icon: Box },
@@ -631,6 +633,33 @@ export function ScanResultsLayout({
               className="mb-8"
             >
               <ComprehensiveAnalysisDisplay analysis={result.comprehensiveAnalysis} />
+            </section>
+          )}
+
+          {/* Component Library Section */}
+          {isLoading && !result ? (
+            <section
+              id="components"
+              ref={(el) => { sectionRefs.current['components'] = el }}
+              className="mb-8"
+            >
+              <div className="h-5 w-32 bg-grep-2 animate-pulse rounded mb-4" />
+              <div className="space-y-3">
+                <div className="h-24 bg-grep-2 animate-pulse rounded" />
+                <div className="h-24 bg-grep-2 animate-pulse rounded" />
+              </div>
+            </section>
+          ) : result?.componentLibrary && (
+            <section
+              id="components"
+              ref={(el) => { sectionRefs.current['components'] = el }}
+              className="mb-8"
+            >
+              <h2 className="text-lg font-semibold font-mono text-foreground mb-4 flex items-center gap-2">
+                <Code2 className="h-5 w-5" />
+                Component Library
+              </h2>
+              <ComponentLibrarySection componentLibrary={result.componentLibrary} onCopy={onCopy} />
             </section>
           )}
 
