@@ -684,18 +684,24 @@ function createColorProfile(token: CuratedToken, maxUsage: number): ColorProfile
   const chroma = computeChroma(rgb)
   const usageWeight = maxUsage > 0 ? Math.log(token.usage + 1) / Math.log(maxUsage + 1) : 0
   let semanticBoost = computeSemanticBoost(token)
-  const isNeutral = s < 0.08 || semanticBoost < -0.2
+
+  // More aggressive neutral detection: only very low saturation OR heavily penalized by semantics
+  const isNeutral = s < 0.05 || (s < 0.12 && semanticBoost < -0.4)
 
   if (isNeutral) {
     semanticBoost = Math.min(0, semanticBoost)
   }
 
   const lightnessScore = Math.max(0, 1 - Math.abs(l - 0.45) * 2)
-  const brandBase = (s * 55) + (chroma * 45) + (lightnessScore * 25) + (usageWeight * 35)
-  let brandScore = brandBase + (semanticBoost * 40) + computePureHueBoost(rgb)
 
+  // NEW WEIGHTS: Prioritize saturation/chroma over raw usage count
+  // Saturated colors = brand colors, usage count is secondary
+  const brandBase = (s * 70) + (chroma * 65) + (lightnessScore * 30) + (usageWeight * 20)
+  let brandScore = brandBase + (semanticBoost * 60) + computePureHueBoost(rgb)
+
+  // Extreme penalty for neutral colors (gray/black/white)
   if (isNeutral) {
-    brandScore *= 0.25
+    brandScore *= 0.15  // Reduced from 0.25
   }
 
   brandScore = Math.max(0, brandScore)
@@ -741,18 +747,55 @@ function computeChroma(rgb: { r: number; g: number; b: number }): number {
 function computeSemanticBoost(token: CuratedToken): number {
   const semantic = (token.semantic || '').toLowerCase()
   const name = token.name.toLowerCase()
+  const hex = String(token.value).toLowerCase()
 
   let boost = 0
 
-  if (semantic.includes('primary') || name.includes('primary')) boost += 0.6
-  if (semantic.includes('brand') || name.includes('brand') || name.includes('logo')) boost += 0.55
-  if (semantic.includes('accent') || name.includes('accent') || name.includes('highlight') || name.includes('cta')) boost += 0.4
-  if (semantic.includes('interactive') || name.includes('button') || name.includes('link')) boost += 0.2
+  // BRAND-CRITICAL KEYWORDS (highest boost)
+  if (semantic.includes('primary') || name.includes('primary')) boost += 0.8
+  if (semantic.includes('brand') || name.includes('brand') || name.includes('logo')) boost += 0.75
+  if (semantic.includes('accent') || name.includes('accent') || name.includes('highlight')) boost += 0.6
+  if (name.includes('cta') || name.includes('call-to-action') || name.includes('action')) boost += 0.5
 
-  if (semantic.includes('background') || semantic.includes('text') || semantic.includes('muted') || semantic.includes('gray')) boost -= 0.45
-  if (name.includes('background') || name.includes('text') || name.includes('grey') || name.includes('gray') || name.includes('neutral')) boost -= 0.45
+  // INTERACTIVE ELEMENTS (medium boost)
+  if (semantic.includes('interactive') || name.includes('button') || name.includes('link')) boost += 0.3
+  if (name.includes('nav') || name.includes('header') || name.includes('hero')) boost += 0.4
 
-  return Math.max(-0.6, Math.min(1.2, boost))
+  // COLOR NAMES (brand colors often have descriptive names)
+  if (name.includes('green') || name.includes('blue') || name.includes('red') ||
+      name.includes('purple') || name.includes('orange') || name.includes('yellow') ||
+      name.includes('teal') || name.includes('cyan') || name.includes('magenta') ||
+      name.includes('violet') || name.includes('indigo') || name.includes('pink')) {
+    boost += 0.35
+  }
+
+  // UTILITY KEYWORDS (heavy penalty)
+  if (semantic.includes('background') || semantic.includes('text') || semantic.includes('muted')) boost -= 0.6
+  if (name.includes('background') || name.includes('bg-') || name.includes('-bg')) boost -= 0.6
+  if (name.includes('text') || name.includes('fg-') || name.includes('-fg')) boost -= 0.5
+  if (name.includes('grey') || name.includes('gray') || name.includes('neutral')) boost -= 0.5
+  if (name.includes('border') || name.includes('outline') || name.includes('divider')) boost -= 0.4
+
+  // PURE UTILITY COLORS (extreme penalty for common values)
+  const rgb = hexToRgb(hex)
+  if (rgb) {
+    const { r, g, b } = rgb
+
+    // Pure black (#000000) - extreme penalty
+    if (r === 0 && g === 0 && b === 0) boost -= 1.0
+
+    // Pure white (#ffffff) - extreme penalty
+    if (r === 255 && g === 255 && b === 255) boost -= 1.0
+
+    // Near-black/near-white (within 30 of pure) - heavy penalty
+    if ((r < 30 && g < 30 && b < 30) || (r > 225 && g > 225 && b > 225)) boost -= 0.8
+
+    // Pure grayscale (no chroma) - heavy penalty
+    const isGrayscale = Math.abs(r - g) < 10 && Math.abs(g - b) < 10 && Math.abs(r - b) < 10
+    if (isGrayscale) boost -= 0.6
+  }
+
+  return Math.max(-1.2, Math.min(1.2, boost))
 }
 
 function rgbToHslNormalized(rgb: { r: number; g: number; b: number }): { h: number; s: number; l: number } {
