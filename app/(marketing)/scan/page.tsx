@@ -125,20 +125,64 @@ function ScanPageContent() {
     }
   }, [domain, forceScan, router, isScanning, scanResult, startScan, setResult, hasInitialized])
 
-  // Save scan results to localStorage
+  // Save scan results to localStorage (with size optimization)
   useEffect(() => {
     if (scanResult && scanResult.domain && scanId) {
       try {
         const cacheKey = `scan_${scanResult.domain}`
+
+        // Create a lightweight version of scan results for caching
+        // Exclude large data like screenshots, comprehensive analysis, and component library
+        const lightweightResult = {
+          domain: scanResult.domain,
+          summary: scanResult.summary,
+          curatedTokens: scanResult.curatedTokens,
+          versionInfo: scanResult.versionInfo,
+          brandAnalysis: scanResult.brandAnalysis,
+          layoutDNA: scanResult.layoutDNA,
+          // Exclude: comprehensiveAnalysis, designSystemSpec, componentLibrary, aiInsights
+        }
+
         const cacheData: CachedScan = {
-          result: scanResult,
+          result: lightweightResult as any,
           timestamp: Date.now(),
           scanId
         }
-        localStorage.setItem(cacheKey, JSON.stringify(cacheData))
-        console.log("💾 Saved scan results to cache for", scanResult.domain)
-      } catch (error) {
-        console.error("Failed to cache scan results:", error)
+
+        const cacheString = JSON.stringify(cacheData)
+        const cacheSizeKB = Math.round(cacheString.length / 1024)
+
+        // Only cache if less than 2MB (localStorage limit is ~5MB)
+        if (cacheSizeKB < 2048) {
+          localStorage.setItem(cacheKey, cacheString)
+          console.log(`💾 Saved scan results to cache for ${scanResult.domain} (${cacheSizeKB}KB)`)
+        } else {
+          console.warn(`⚠️ Scan results too large to cache (${cacheSizeKB}KB), skipping localStorage`)
+          // Clear this domain's cache if it exists
+          localStorage.removeItem(cacheKey)
+        }
+      } catch (error: any) {
+        // Handle QuotaExceededError by clearing old cache entries
+        if (error.name === 'QuotaExceededError') {
+          console.warn("⚠️ localStorage quota exceeded, clearing old scan caches...")
+
+          // Remove all scan cache entries except the current one
+          const keysToRemove: string[] = []
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i)
+            if (key && key.startsWith('scan_') && key !== `scan_${scanResult.domain}`) {
+              keysToRemove.push(key)
+            }
+          }
+
+          keysToRemove.forEach(key => localStorage.removeItem(key))
+          console.log(`🗑️ Cleared ${keysToRemove.length} old scan cache(s)`)
+
+          // Don't try to cache this scan - it's too large
+          console.warn(`⚠️ Current scan too large to cache, skipping`)
+        } else {
+          console.error("Failed to cache scan results:", error)
+        }
       }
     }
   }, [scanResult, scanId])
