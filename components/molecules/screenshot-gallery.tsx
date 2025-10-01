@@ -41,12 +41,12 @@ export function ScreenshotGallery({ scanId, className }: ScreenshotGalleryProps)
     async function fetchScreenshots() {
       console.log('[ScreenshotGallery] Fetching screenshots for scanId:', scanId)
       try {
-        const response = await fetch(`/api/screenshot?scanId=${scanId}`)
+        const response = await fetch(`/api/scans/${scanId}/screenshots`)
         console.log('[ScreenshotGallery] API response status:', response.status)
         if (response.ok) {
           const data = await response.json()
           console.log('[ScreenshotGallery] Screenshots received:', data)
-          setScreenshots(data.screenshots)
+          setScreenshots(data.screenshots || [])
         } else {
           const errorText = await response.text()
           console.error('[ScreenshotGallery] API error response:', response.status, errorText)

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db, screenshots } from '@/lib/db'
+import { db, screenshots, screenshotContent } from '@/lib/db'
 import { eq, asc } from 'drizzle-orm'
 
 export const runtime = 'nodejs'
@@ -16,18 +16,34 @@ export async function GET(
   try {
     const { scanId } = await params
 
-    // Fetch all screenshots for this scan
+    console.log('[Screenshots API] Fetching screenshots for scanId:', scanId)
+
+    // Fetch screenshots with content data joined
     const results = await db
-      .select()
+      .select({
+        id: screenshots.id,
+        scanId: screenshots.scanId,
+        viewport: screenshots.viewport,
+        capturedAt: screenshots.capturedAt,
+        selector: screenshots.selector,
+        label: screenshots.label,
+        url: screenshotContent.url,
+        width: screenshotContent.width,
+        height: screenshotContent.height,
+        fileSize: screenshotContent.fileSize,
+      })
       .from(screenshots)
+      .innerJoin(screenshotContent, eq(screenshots.sha, screenshotContent.sha))
       .where(eq(screenshots.scanId, scanId))
       .orderBy(asc(screenshots.capturedAt))
 
+    console.log('[Screenshots API] Found', results.length, 'screenshots')
+
     // Group by viewport for easy access
     const grouped = {
-      mobile: results.find((s: typeof results[number]) => s.viewport === 'mobile'),
-      tablet: results.find((s: typeof results[number]) => s.viewport === 'tablet'),
-      desktop: results.find((s: typeof results[number]) => s.viewport === 'desktop'),
+      mobile: results.find((s) => s.viewport === 'mobile'),
+      tablet: results.find((s) => s.viewport === 'tablet'),
+      desktop: results.find((s) => s.viewport === 'desktop'),
     }
 
     return NextResponse.json({
@@ -37,7 +53,7 @@ export async function GET(
       count: results.length,
     })
   } catch (error) {
-    console.error('Screenshot fetch error:', error)
+    console.error('[Screenshots API] Error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch screenshots' },
       { status: 500 }
