@@ -1,11 +1,12 @@
 /**
- * Universal Browser Automation Wrapper with Stealth Mode
+ * Bulletproof Browser Automation Wrapper with Stealth Mode
  * Works in both local development (Playwright) and Vercel deployment (Puppeteer-core)
- * Includes advanced bot protection evasion techniques
+ * Includes advanced bot protection evasion techniques and resource limits
  */
 
 import type { CssSource } from './static-css'
 import { createHash } from 'node:crypto'
+import { withTimeout, createMemoryLimit } from '@/lib/utils/resilience'
 
 // Detect runtime environment
 const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV !== undefined
@@ -417,12 +418,20 @@ export interface ComputedStyleEntry {
   styles: Record<string, string>
 }
 
+// BULLETPROOF LIMITS for browser extraction
+const MAX_BROWSER_MEMORY = 100 * 1024 * 1024 // 100MB browser memory limit
+const MAX_DOM_ELEMENTS = 5000 // Max DOM elements to process
+const MAX_EXTRACTION_TIME = 20000 // 20s max extraction time
+const VERCEL_EXTRACTION_TIME = 12000 // 12s on Vercel (serverless limits)
+const BROWSER_NAVIGATION_TIMEOUT = 15000 // 15s for page load
+
 export async function extractWithBrowser(
   url: string,
   options: {
     useCoverage?: boolean
     extractCustomProps?: boolean
     timeout?: number
+    fastMode?: boolean
   } = {}
 ): Promise<{
   usedCss: CssSource[]
@@ -431,88 +440,143 @@ export async function extractWithBrowser(
 }> {
   const useCoverage = options.useCoverage ?? !isVercel // Coverage API slower on serverless
   const extractCustomProps = options.extractCustomProps ?? true
-  const timeout = options.timeout ?? (isVercel ? 10000 : 15000) // Shorter timeout on Vercel
+  const baseTimeout = isVercel ? VERCEL_EXTRACTION_TIME : MAX_EXTRACTION_TIME
+  const timeout = options.timeout ?? (options.fastMode ? baseTimeout * 0.6 : baseTimeout)
 
+  // BULLETPROOF: Memory and resource tracking
+  const memoryLimit = createMemoryLimit(MAX_BROWSER_MEMORY)
   let browser: BrowserWrapper | null = null
   let page: BrowserPageWrapper | null = null
+  let resourcesUsed = 0
 
-  try {
-    browser = await createBrowser()
-    page = await browser.newPage()
+  return withTimeout(async () => {
+    try {
+      browser = await createBrowser()
+      page = await browser.newPage()
 
-    // Start coverage if enabled
-    if (useCoverage && page.startCSSCoverage) {
-      await page.startCSSCoverage()
-    }
+      // Start coverage if enabled
+      if (useCoverage && page.startCSSCoverage) {
+        await page.startCSSCoverage()
+      }
 
-    await page.goto(url, { waitUntil: 'networkidle', timeout })
+      // BULLETPROOF: Navigation with timeout and error handling
+      try {
+        await page.goto(url, {
+          waitUntil: 'networkidle',
+          timeout: Math.min(timeout * 0.6, BROWSER_NAVIGATION_TIMEOUT)
+        })
+      } catch (error) {
+        console.warn(`Navigation timeout or error for ${url}, continuing with partial load:`, error)
+        // Continue with partial page load - better than total failure
+      }
 
-    // Trigger interactive states
-    await page.hover('button')
-    await page.hover('a')
-    await page.click('input')
+      // BULLETPROOF: Trigger interactive states with error handling
+      try {
+        await Promise.race([
+          Promise.all([
+            page.hover('button').catch(() => {}),
+            page.hover('a').catch(() => {}),
+            page.click('input').catch(() => {})
+          ]),
+          new Promise(resolve => setTimeout(resolve, 2000)) // Max 2s for interactions
+        ])
+      } catch (error) {
+        console.warn('Interactive state triggering failed:', error)
+        // Continue - not critical for token extraction
+      }
 
-    // Extract used CSS via coverage
-    const usedCss: CssSource[] = []
+      // BULLETPROOF: Extract used CSS via coverage with limits
+      const usedCss: CssSource[] = []
+      let totalCssBytes = 0
 
-    if (useCoverage && page.stopCSSCoverage) {
-      const coverage = await page.stopCSSCoverage()
+      if (useCoverage && page.stopCSSCoverage) {
+        const coverage = await page.stopCSSCoverage()
 
-      coverage.forEach(entry => {
-        if (entry.ranges.length === 0) return
+        for (const entry of coverage.slice(0, 100)) { // Limit coverage entries
+          if (entry.ranges.length === 0) continue
 
-        const cssContent = entry.ranges
-          .map(range => entry.text.slice(range.start, range.end))
-          .join('\n')
+          const cssContent = entry.ranges
+            .slice(0, 50) // Limit ranges per entry
+            .map(range => entry.text.slice(range.start, range.end))
+            .join('\n')
 
-        if (cssContent.trim().length > 0) {
-          // Use 'computed' kind for coverage-based CSS (valid enum value)
-          usedCss.push(createCssSource(cssContent, 'computed', entry.url))
-        }
-      })
-    }
+          if (cssContent.trim().length > 0) {
+            const source = createCssSource(cssContent, 'computed', entry.url)
 
-    // Extract custom properties
-    let customProperties: Record<string, string> = {}
-
-    if (extractCustomProps) {
-      customProperties = await page.evaluate(() => {
-        const root = document.documentElement
-        const styles = window.getComputedStyle(root)
-        const props: Record<string, string> = {}
-
-        for (let i = 0; i < styles.length; i++) {
-          const prop = styles[i]
-          if (prop.startsWith('--')) {
-            const value = styles.getPropertyValue(prop).trim()
-            if (value) {
-              props[prop] = value
+            // Size check
+            if (source.bytes > 1024 * 1024) { // 1MB per CSS source
+              console.warn(`Skipping large coverage CSS: ${source.bytes} bytes`)
+              continue
             }
+
+            if (totalCssBytes + source.bytes > 10 * 1024 * 1024) { // 10MB total
+              console.warn('Coverage CSS size limit reached')
+              break
+            }
+
+            usedCss.push(source)
+            totalCssBytes += source.bytes
+            memoryLimit.track(source.bytes)
+            resourcesUsed++
           }
-        }
-
-        return props
-      })
-    }
-
-    // Extract comprehensive component styles for ALL elements
-    const computedStylesData = await page.evaluate(() => {
-      interface ComputedStyleEntry {
-        selector: string
-        element: string
-        styles: Record<string, string>
-        pseudoStates?: {
-          hover?: Record<string, string>
-          focus?: Record<string, string>
-          active?: Record<string, string>
         }
       }
 
-      const results: ComputedStyleEntry[] = []
+      // BULLETPROOF: Extract custom properties with limits
+      let customProperties: Record<string, string> = {}
 
-      // Extract styles from actual DOM elements (more accurate than CSS rules)
-      const extractStyles = (el: Element, selector: string, element: string) => {
-        const styles = window.getComputedStyle(el)
+      if (extractCustomProps) {
+        try {
+          customProperties = await withTimeout(async () => {
+            return page!.evaluate(() => {
+              const root = document.documentElement
+              const styles = window.getComputedStyle(root)
+              const props: Record<string, string> = {}
+              let count = 0
+
+              for (let i = 0; i < styles.length && count < 200; i++) { // Limit to 200 props
+                const prop = styles[i]
+                if (prop.startsWith('--')) {
+                  const value = styles.getPropertyValue(prop).trim()
+                  if (value && value.length < 500) { // Limit value length
+                    props[prop] = value
+                    count++
+                  }
+                }
+              }
+
+              return props
+            })
+          }, 3000) // 3s timeout for custom props
+        } catch (error) {
+          console.warn('Custom properties extraction failed:', error)
+          customProperties = {}
+        }
+      }
+
+      // BULLETPROOF: Extract component styles with strict limits
+      const computedStylesData = await withTimeout(async () => {
+        return page!.evaluate((maxElements: number) => {
+          interface ComputedStyleEntry {
+            selector: string
+            element: string
+            styles: Record<string, string>
+            pseudoStates?: {
+              hover?: Record<string, string>
+              focus?: Record<string, string>
+              active?: Record<string, string>
+            }
+          }
+
+          const results: ComputedStyleEntry[] = []
+          let processedElements = 0
+
+          // BULLETPROOF: Extract styles from DOM elements with limits
+          const extractStyles = (el: Element, selector: string, element: string) => {
+            if (processedElements >= maxElements) return
+
+            const styles = window.getComputedStyle(el)
+            processedElements++
 
         const styleObj: Record<string, string> = {
           // Typography
@@ -597,82 +661,103 @@ export async function extractWithBrowser(
         })
       }
 
-      // Extract buttons
-      document.querySelectorAll('button, [role="button"], .btn, .button, [type="button"], [type="submit"]').forEach((el, idx) => {
-        const classes = el.className ? `.${el.className.split(' ').join('.')}` : ''
-        const selector = `${el.tagName.toLowerCase()}${classes}`.substring(0, 100)
-        extractStyles(el, selector, 'button')
-      })
+          // BULLETPROOF: Extract buttons with limits
+          document.querySelectorAll('button, [role="button"], .btn, .button, [type="button"], [type="submit"]').forEach((el, idx) => {
+            if (idx >= 20 || processedElements >= maxElements) return // Limit to 20 buttons
+            const classes = el.className ? `.${el.className.split(' ').join('.')}` : ''
+            const selector = `${el.tagName.toLowerCase()}${classes}`.substring(0, 100)
+            extractStyles(el, selector, 'button')
+          })
 
-      // Extract inputs
-      document.querySelectorAll('input, textarea, select, .input, .form-control').forEach((el, idx) => {
-        const classes = el.className ? `.${el.className.split(' ').join('.')}` : ''
-        const selector = `${el.tagName.toLowerCase()}${classes}`.substring(0, 100)
-        extractStyles(el, selector, 'input')
-      })
+          // Extract inputs with limits
+          document.querySelectorAll('input, textarea, select, .input, .form-control').forEach((el, idx) => {
+            if (idx >= 15 || processedElements >= maxElements) return
+            const classes = el.className ? `.${el.className.split(' ').join('.')}` : ''
+            const selector = `${el.tagName.toLowerCase()}${classes}`.substring(0, 100)
+            extractStyles(el, selector, 'input')
+          })
 
-      // Extract cards
-      document.querySelectorAll('.card, .panel, .box, [class*="card"]').forEach((el, idx) => {
-        const classes = el.className ? `.${el.className.split(' ').join('.')}` : ''
-        const selector = classes.substring(0, 100)
-        extractStyles(el, selector, 'card')
-      })
+          // Extract cards with limits
+          document.querySelectorAll('.card, .panel, .box, [class*="card"]').forEach((el, idx) => {
+            if (idx >= 10 || processedElements >= maxElements) return
+            const classes = el.className ? `.${el.className.split(' ').join('.')}` : ''
+            const selector = classes.substring(0, 100)
+            extractStyles(el, selector, 'card')
+          })
 
-      // Extract badges
-      document.querySelectorAll('.badge, .tag, .chip, .label, [class*="badge"]').forEach((el, idx) => {
-        const classes = el.className ? `.${el.className.split(' ').join('.')}` : ''
-        const selector = classes.substring(0, 100)
-        extractStyles(el, selector, 'badge')
-      })
+          // Extract badges with limits
+          document.querySelectorAll('.badge, .tag, .chip, .label, [class*="badge"]').forEach((el, idx) => {
+            if (idx >= 10 || processedElements >= maxElements) return
+            const classes = el.className ? `.${el.className.split(' ').join('.')}` : ''
+            const selector = classes.substring(0, 100)
+            extractStyles(el, selector, 'badge')
+          })
 
-      // Extract links
-      document.querySelectorAll('a[href], .link').forEach((el, idx) => {
-        const classes = el.className ? `.${el.className.split(' ').join('.')}` : ''
-        const selector = `${el.tagName.toLowerCase()}${classes}`.substring(0, 100)
-        extractStyles(el, selector, 'link')
-      })
+          // Extract links with limits
+          document.querySelectorAll('a[href], .link').forEach((el, idx) => {
+            if (idx >= 15 || processedElements >= maxElements) return
+            const classes = el.className ? `.${el.className.split(' ').join('.')}` : ''
+            const selector = `${el.tagName.toLowerCase()}${classes}`.substring(0, 100)
+            extractStyles(el, selector, 'link')
+          })
 
-      // Extract headings
-      document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((el, idx) => {
-        const classes = el.className ? `.${el.className.split(' ').join('.')}` : ''
-        const selector = `${el.tagName.toLowerCase()}${classes}`.substring(0, 100)
-        extractStyles(el, selector, 'heading')
-      })
+          // Extract headings with limits
+          document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((el, idx) => {
+            if (idx >= 20 || processedElements >= maxElements) return
+            const classes = el.className ? `.${el.className.split(' ').join('.')}` : ''
+            const selector = `${el.tagName.toLowerCase()}${classes}`.substring(0, 100)
+            extractStyles(el, selector, 'heading')
+          })
 
-      // Extract alerts/notifications
-      document.querySelectorAll('.alert, .notification, .toast, .message, [role="alert"]').forEach((el, idx) => {
-        const classes = el.className ? `.${el.className.split(' ').join('.')}` : ''
-        const selector = classes.substring(0, 100)
-        extractStyles(el, selector, 'alert')
-      })
+          // Extract alerts with limits
+          document.querySelectorAll('.alert, .notification, .toast, .message, [role="alert"]').forEach((el, idx) => {
+            if (idx >= 5 || processedElements >= maxElements) return
+            const classes = el.className ? `.${el.className.split(' ').join('.')}` : ''
+            const selector = classes.substring(0, 100)
+            extractStyles(el, selector, 'alert')
+          })
 
-      // Extract layout containers
-      document.querySelectorAll('.container, .wrapper, .content, main, [class*="container"]').forEach((el, idx) => {
-        if (idx > 10) return // Limit to first 10 containers
-        const classes = el.className ? `.${el.className.split(' ').join('.')}` : ''
-        const selector = `${el.tagName.toLowerCase()}${classes}`.substring(0, 100)
-        extractStyles(el, selector, 'container')
-      })
+          // Extract layout containers with limits
+          document.querySelectorAll('.container, .wrapper, .content, main, [class*="container"]').forEach((el, idx) => {
+            if (idx >= 5 || processedElements >= maxElements) return
+            const classes = el.className ? `.${el.className.split(' ').join('.')}` : ''
+            const selector = `${el.tagName.toLowerCase()}${classes}`.substring(0, 100)
+            extractStyles(el, selector, 'container')
+          })
 
-      return results
-    })
+          return results
+        }, MAX_DOM_ELEMENTS) // Pass max elements as parameter
+      }, 8000) // 8s timeout for style extraction
 
-    return {
-      usedCss,
-      customProperties,
-      computedStyles: computedStylesData
+      console.log(`[browser-wrapper] Extracted ${usedCss.length} CSS sources, ${Object.keys(customProperties).length} custom props, ${computedStylesData.length} computed styles (${resourcesUsed} resources)`)
+
+      return {
+        usedCss,
+        customProperties,
+        computedStyles: computedStylesData
+      }
+    } catch (error) {
+      console.error('Browser extraction failed', error)
+      return {
+        usedCss: [],
+        customProperties: {},
+        computedStyles: []
+      }
+    } finally {
+      // BULLETPROOF: Always cleanup resources
+      try {
+        await page?.close()
+      } catch (error) {
+        console.warn('Failed to close page:', error)
+      }
+
+      try {
+        await browser?.close()
+      } catch (error) {
+        console.warn('Failed to close browser:', error)
+      }
     }
-  } catch (error) {
-    console.error('Browser extraction failed', error)
-    return {
-      usedCss: [],
-      customProperties: {},
-      computedStyles: []
-    }
-  } finally {
-    await page?.close().catch(() => {})
-    await browser?.close().catch(() => {})
-  }
+  }, timeout)
 }
 
 function createCssSource(content: string, kind: 'inline' | 'link' | 'computed' = 'computed', url?: string): CssSource {

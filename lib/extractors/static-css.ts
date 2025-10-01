@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import pLimit from 'p-limit'
+import { withTimeout, createMemoryLimit, createCircuitBreaker } from '@/lib/utils/resilience'
 
 export type CssSource = {
   kind: 'inline' | 'link' | 'computed'
@@ -12,15 +13,32 @@ export type CssSource = {
 const USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 ContextDS/1.0 (+https://contextds.com/bot)'
 
-// Concurrency limit for parallel stylesheet fetching
-// Prevents overwhelming the target server
+// BULLETPROOF LIMITS: Prevent system overload from large sites
 const fetchLimit = pLimit(6)  // Max 6 concurrent requests
+const MAX_CSS_SIZE = 2 * 1024 * 1024 // 2MB per CSS file
+const MAX_TOTAL_CSS = 10 * 1024 * 1024 // 10MB total CSS
+const MAX_CSS_FILES = 50 // Maximum CSS files to process
+const CSS_FETCH_TIMEOUT = 5000 // 5s timeout per CSS file
+const TOTAL_SCAN_TIMEOUT = 30000 // 30s total timeout
+
+// Circuit breaker for CSS fetching
+const cssCircuitBreaker = createCircuitBreaker({
+  failureThreshold: 5,
+  resetTimeout: 10000,
+  name: 'css-fetch'
+})
 
 export async function collectStaticCss(targetUrl: string): Promise<CssSource[]> {
-  const response = await fetch(targetUrl, {
-    headers: buildPrimaryRequestHeaders(targetUrl),
-    redirect: 'follow'
-  })
+  // BULLETPROOF: Wrap entire function with timeout and memory limits
+  return withTimeout(async () => {
+    const memoryLimit = createMemoryLimit(MAX_TOTAL_CSS)
+
+    const response = await fetch(targetUrl, {
+      headers: buildPrimaryRequestHeaders(targetUrl),
+      redirect: 'follow',
+      // Add AbortController for fetch timeout
+      signal: AbortSignal.timeout(10000) // 10s timeout for initial page
+    })
 
   if (!response.ok) {
     const statusMessages: Record<number, string> = {
@@ -34,49 +52,95 @@ export async function collectStaticCss(targetUrl: string): Promise<CssSource[]> 
     throw new Error(message)
   }
 
-  const html = await response.text()
-  const baseUrl = new URL(response.url)
-  const cssSources: CssSource[] = []
+    const html = await response.text()
+    const baseUrl = new URL(response.url)
+    const cssSources: CssSource[] = []
+    let totalBytes = 0
 
-  for (const inlineCss of extractInlineStyles(html)) {
-    cssSources.push(createCssSource('inline', inlineCss))
-  }
+    // BULLETPROOF: Process inline styles with size limits
+    const inlineStyles = extractInlineStyles(html)
+    for (const inlineCss of inlineStyles) {
+      const source = createCssSource('inline', inlineCss)
 
-  // PERFORMANCE OPTIMIZATION: Fetch all stylesheets in parallel with concurrency limit
-  const stylesheetUrls = extractStylesheetLinks(html, baseUrl)
+      // Check size limits
+      if (source.bytes > MAX_CSS_SIZE) {
+        console.warn(`Skipping large inline CSS: ${source.bytes} bytes`)
+        continue
+      }
 
-  // Parallel fetch with p-limit (max 6 concurrent requests)
-  // Before: Sequential (8 files × 100ms = 800ms)
-  // After: Parallel (8 files / 6 concurrent = ~200-300ms) ⚡
-  const stylesheetPromises = stylesheetUrls.map((stylesheetUrl) =>
-    fetchLimit(async () => {
-      try {
-        const cssText = await fetchStylesheet(stylesheetUrl, response.url)
-        return createCssSource('link', cssText, stylesheetUrl)
-      } catch (error) {
-        console.warn(`Failed to fetch stylesheet ${stylesheetUrl}:`, error)
-        return null
+      totalBytes += source.bytes
+      if (totalBytes > MAX_TOTAL_CSS) {
+        console.warn(`CSS size limit reached: ${totalBytes} bytes, stopping collection`)
+        break
+      }
+
+      cssSources.push(source)
+      memoryLimit.track(source.bytes)
+    }
+
+    // BULLETPROOF: Limit number of stylesheets and add circuit breaker
+    const allStylesheetUrls = extractStylesheetLinks(html, baseUrl)
+    const stylesheetUrls = allStylesheetUrls.slice(0, MAX_CSS_FILES)
+
+    if (allStylesheetUrls.length > MAX_CSS_FILES) {
+      console.warn(`Too many CSS files (${allStylesheetUrls.length}), processing only first ${MAX_CSS_FILES}`)
+    }
+
+    // BULLETPROOF: Parallel fetch with size limits, timeouts, and circuit breaker
+    const stylesheetPromises = stylesheetUrls.map((stylesheetUrl) =>
+      fetchLimit(async () => {
+        try {
+          // Check circuit breaker
+          return await cssCircuitBreaker.execute(async () => {
+            const cssText = await withTimeout(
+              () => fetchStylesheet(stylesheetUrl, response.url),
+              CSS_FETCH_TIMEOUT
+            )
+
+            // Size check before creating source
+            const bytes = Buffer.byteLength(cssText, 'utf8')
+            if (bytes > MAX_CSS_SIZE) {
+              console.warn(`Skipping large CSS file ${stylesheetUrl}: ${bytes} bytes`)
+              return null
+            }
+
+            if (totalBytes + bytes > MAX_TOTAL_CSS) {
+              console.warn(`CSS size limit would be exceeded, skipping ${stylesheetUrl}`)
+              return null
+            }
+
+            const source = createCssSource('link', cssText, stylesheetUrl)
+            totalBytes += source.bytes
+            memoryLimit.track(source.bytes)
+
+            return source
+          })
+        } catch (error) {
+          console.warn(`Failed to fetch stylesheet ${stylesheetUrl}:`, error)
+          return null
+        }
+      })
+    )
+
+    // Wait for all fetches to complete (parallelized, rate-limited)
+    const stylesheetResults = await Promise.all(stylesheetPromises)
+
+    // Add successful results
+    stylesheetResults.forEach(source => {
+      if (source) cssSources.push(source)
+    })
+
+    // Deduplicate by SHA
+    const uniqueSources = new Map<string, CssSource>()
+    cssSources.forEach((source) => {
+      if (!uniqueSources.has(source.sha)) {
+        uniqueSources.set(source.sha, source)
       }
     })
-  )
 
-  // Wait for all fetches to complete (parallelized, rate-limited)
-  const stylesheetResults = await Promise.all(stylesheetPromises)
-
-  // Add successful results
-  stylesheetResults.forEach(source => {
-    if (source) cssSources.push(source)
-  })
-
-  // Deduplicate by SHA
-  const uniqueSources = new Map<string, CssSource>()
-  cssSources.forEach((source) => {
-    if (!uniqueSources.has(source.sha)) {
-      uniqueSources.set(source.sha, source)
-    }
-  })
-
-  return [...uniqueSources.values()]
+    console.log(`[static-css] Successfully collected ${uniqueSources.size} CSS sources (${totalBytes} bytes)`)
+    return [...uniqueSources.values()]
+  }, TOTAL_SCAN_TIMEOUT)
 }
 
 function extractInlineStyles(html: string): string[] {

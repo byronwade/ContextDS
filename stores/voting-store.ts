@@ -32,9 +32,14 @@ export const useVotingStore = create<VotingState>((set, get) => ({
     set((state) => {
       const newVotedSites = [...state.votedSites, votedSite]
 
-      // Persist to localStorage
+      // Persist to localStorage with error handling
       if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newVotedSites))
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(newVotedSites))
+        } catch (error) {
+          console.error("Failed to save vote to localStorage:", error)
+          // Vote still persists in memory for current session
+        }
       }
 
       return { votedSites: newVotedSites }
@@ -47,9 +52,14 @@ export const useVotingStore = create<VotingState>((set, get) => ({
         (vote) => vote.siteId !== siteId
       )
 
-      // Persist to localStorage
+      // Persist to localStorage with error handling
       if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newVotedSites))
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(newVotedSites))
+        } catch (error) {
+          console.error("Failed to remove vote from localStorage:", error)
+          // Vote removal still persists in memory for current session
+        }
       }
 
       return { votedSites: newVotedSites }

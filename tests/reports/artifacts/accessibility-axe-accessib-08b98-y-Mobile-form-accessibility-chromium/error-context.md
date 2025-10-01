@@ -1,0 +1,113 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - link "Skip to search" [ref=e4] [cursor=pointer]:
+      - /url: "#search-input"
+  - generic [ref=e5]:
+    - banner "Site header" [ref=e6]:
+      - generic [ref=e7]:
+        - generic [ref=e8]:
+          - link "ContextDS" [ref=e10] [cursor=pointer]:
+            - /url: /
+            - img [ref=e11] [cursor=pointer]
+            - generic [ref=e17] [cursor=pointer]: ContextDS
+          - generic [ref=e18]:
+            - button "Toggle mobile menu" [ref=e19]:
+              - img
+            - generic [ref=e21]:
+              - button "Switch to system theme" [ref=e23]:
+                - img [ref=e24]
+              - button "Switch to light theme" [ref=e26]:
+                - img [ref=e27]
+              - button "Switch to dark theme" [ref=e33]:
+                - img [ref=e34]
+        - generic [ref=e37]:
+          - generic [ref=e38]: Search for website to scan for design tokens
+          - searchbox "Enter website URL to scan for design tokens" [ref=e39]
+    - main "Main content" [ref=e40]:
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - heading "Extract Design Tokens from Any Website" [level=1] [ref=e44]:
+            - text: Extract Design Tokens
+            - text: from Any Website
+          - paragraph [ref=e45]:
+            - text: AI-powered CSS analysis and design token extraction. Scan sites like
+            - button "Scan Stripe.com for design tokens" [ref=e46]: Stripe
+            - text: ","
+            - button "Scan Linear.app for design tokens" [ref=e47]: Linear
+            - text: ", and"
+            - button "Scan GitHub.com for design tokens" [ref=e48]: GitHub
+            - text: to extract colors, typography, spacing across
+            - generic [ref=e49]: 62,000+ tokens
+            - text: .
+        - generic [ref=e61]:
+          - button "Install MCP Server for Claude" [ref=e62]:
+            - img [ref=e63]
+            - text: Install MCP Server
+            - generic [ref=e66]: for Claude
+          - generic [ref=e67]: Extract tokens from any website instantly
+        - generic [ref=e69]:
+          - generic [ref=e70]:
+            - generic [ref=e71]:
+              - generic [ref=e72]: Scans
+              - img [ref=e73]
+            - generic [ref=e75]:
+              - generic [ref=e76]: "102"
+              - generic [ref=e77]: live
+          - generic [ref=e78]:
+            - generic [ref=e79]:
+              - generic [ref=e80]: Tokens
+              - img [ref=e81]
+            - generic [ref=e84]:
+              - generic [ref=e85]: 62.3K
+              - generic [ref=e86]: +8%
+          - generic [ref=e87]:
+            - generic [ref=e88]:
+              - generic [ref=e89]: Sites
+              - img [ref=e90]
+            - generic [ref=e93]:
+              - generic [ref=e94]: "38"
+              - generic [ref=e95]: +24%
+          - generic [ref=e96]:
+            - generic [ref=e97]:
+              - generic [ref=e98]: Active
+              - img [ref=e99]
+            - generic [ref=e101]:
+              - generic [ref=e102]: "0"
+              - generic [ref=e103]: Live
+      - contentinfo "Site footer" [ref=e105]:
+        - generic [ref=e106]:
+          - generic [ref=e107]:
+            - link "ContextDS" [ref=e109] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e110] [cursor=pointer]:
+                - img [ref=e111] [cursor=pointer]
+                - generic [ref=e117] [cursor=pointer]: ContextDS
+            - link "Docs" [ref=e119] [cursor=pointer]:
+              - /url: /docs
+            - link "API" [ref=e121] [cursor=pointer]:
+              - /url: /api
+            - link "Community" [ref=e123] [cursor=pointer]:
+              - /url: /community
+            - link "Pricing" [ref=e125] [cursor=pointer]:
+              - /url: /pricing
+            - link "Privacy" [ref=e127] [cursor=pointer]:
+              - /url: /privacy
+            - link "Terms" [ref=e129] [cursor=pointer]:
+              - /url: /terms
+          - generic [ref=e130]: © 2025, ContextDS Inc.
+          - generic [ref=e132]:
+            - button "Switch to system theme" [ref=e134]:
+              - img [ref=e135]
+            - button "Switch to light theme" [ref=e137]:
+              - img [ref=e138]
+            - button "Switch to dark theme" [ref=e144]:
+              - img [ref=e145]
+  - button "Open Next.js Dev Tools" [ref=e152] [cursor=pointer]:
+    - img [ref=e153] [cursor=pointer]
+  - alert [ref=e156]
+```

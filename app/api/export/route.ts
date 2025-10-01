@@ -1,19 +1,56 @@
 /**
  * Token Export API
- * Exports design tokens in multiple formats (Figma, XD, Swift, Android, CSS, etc.)
+ * Exports design tokens in multiple formats following industry standards
+ * - W3C Design Tokens Community Group (DTCG) specification
+ * - Figma Tokens Plugin format
+ * - Tailwind CSS v3/v4 configuration
+ * - CSS/SCSS/LESS/Stylus variables
+ * - TypeScript/JavaScript modules
+ * - Mobile platforms (Swift, Kotlin, Dart)
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db, tokenSets } from '@/lib/db'
 import { eq } from 'drizzle-orm'
-import { exportTokens, getFileExtension, getMimeType, type ExportFormat } from '@/lib/exporters/token-exporter'
+import {
+  exportTokens,
+  getFileExtension,
+  getMimeType,
+  type ExportFormat
+} from '@/lib/exporters/comprehensive-token-exporter'
 
 const exportRequestSchema = z.object({
   tokenSetId: z.string().optional(),
   domain: z.string().optional(),
-  format: z.enum(['figma', 'xd', 'swift', 'android', 'css', 'scss', 'js', 'ts', 'json']),
-  download: z.boolean().default(true)
+  format: z.enum([
+    'w3c-json',
+    'figma',
+    'figma-variables',
+    'tailwind',
+    'css',
+    'scss',
+    'sass',
+    'less',
+    'stylus',
+    'ts',
+    'js',
+    'json',
+    'yaml',
+    'style-dictionary',
+    'theo',
+    'swift',
+    'kotlin',
+    'xml',
+    'dart'
+  ]),
+  download: z.boolean().default(true),
+  options: z.object({
+    includeComments: z.boolean().default(true),
+    prettify: z.boolean().default(true),
+    prefix: z.string().default(''),
+    tailwindVersion: z.union([z.literal(3), z.literal(4)]).default(4)
+  }).optional()
 }).refine(data => data.tokenSetId || data.domain, {
   message: 'Either tokenSetId or domain must be provided'
 })
@@ -56,14 +93,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Export tokens to requested format
+    // Parse token data (support both W3C and curated formats)
+    const tokenData = tokenSet.tokensJson as any
+
+    // Export tokens to requested format using comprehensive exporter
     const exported = exportTokens({
       format: params.format as ExportFormat,
-      tokens: tokenSet.tokensJson as any,
+      tokens: tokenData,
       metadata: {
         name: params.domain || 'design-tokens',
-        version: String(tokenSet.versionNumber || 1)
-      }
+        version: String(tokenSet.versionNumber || 1),
+        description: `Design tokens for ${params.domain}`,
+        homepage: `https://contextds.com/site/${params.domain}`
+      },
+      options: params.options
     })
 
     // Determine filename

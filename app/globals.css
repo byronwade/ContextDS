@@ -154,6 +154,14 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Scan interface colors */
+  --color-scan-primary: var(--primary);
+  --color-scan-secondary: var(--chart-5);
+  --color-scan-success: var(--success);
+  --color-scan-warning: var(--warning);
+  --color-scan-error: var(--destructive);
+  --color-scan-border-focus: var(--primary);
 }
 
 :root {
@@ -636,6 +644,101 @@
     font-weight: 400;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'zero';
     font-variant-ligatures: common-ligatures;
+  }
+
+  /* Vercel-inspired scan interface */
+  .scan-input-focus {
+    transform: translateY(-1px) scale(1.005);
+    box-shadow:
+      0 0 0 3px oklch(0.55 0.18 255 / 0.12),
+      0 0 25px oklch(0.55 0.18 255 / 0.08),
+      0 8px 25px oklch(0 0 0 / 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .scan-button-hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 12px 25px oklch(0.55 0.18 255 / 0.25);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .scan-button-active {
+    transform: translateY(0) scale(0.98);
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Scan progress animations */
+  .scan-step-enter {
+    animation: scan-step-enter 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes scan-step-enter {
+    from {
+      opacity: 0;
+      transform: translateX(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .scan-step-complete {
+    animation: scan-step-complete 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes scan-step-complete {
+    0% {
+      background-color: transparent;
+    }
+    50% {
+      background-color: oklch(0.6 0.18 140 / 0.2);
+    }
+    100% {
+      background-color: oklch(0.6 0.18 140 / 0.1);
+    }
+  }
+
+  /* Enhanced URL validation states */
+  .url-valid {
+    border-color: oklch(0.6 0.18 140);
+    box-shadow: 0 0 0 3px oklch(0.6 0.18 140 / 0.12);
+  }
+
+  .url-invalid {
+    border-color: oklch(0.65 0.25 15);
+    box-shadow: 0 0 0 3px oklch(0.65 0.25 15 / 0.12);
+  }
+
+  .url-loading {
+    border-color: oklch(0.75 0.15 70);
+    box-shadow: 0 0 0 3px oklch(0.75 0.15 70 / 0.12);
+  }
+
+  /* Smooth suggestions dropdown */
+  .suggestions-enter {
+    animation: suggestions-enter 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes suggestions-enter {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  /* Premium backdrop blur for modals */
+  .vercel-backdrop {
+    backdrop-filter: blur(12px) saturate(120%);
+    background: oklch(0.99 0.002 240 / 0.8);
+  }
+
+  .dark .vercel-backdrop {
+    background: oklch(0.12 0.005 240 / 0.8);
   }
 }
 

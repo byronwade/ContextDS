@@ -8,7 +8,8 @@ import {
   jsonb,
   varchar,
   decimal,
-  pgEnum
+  pgEnum,
+  unique
 } from 'drizzle-orm/pg-core'
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 
@@ -116,7 +117,10 @@ export const screenshots = pgTable('screenshots', {
   capturedAt: timestamp('captured_at').notNull().defaultNow(),
   selector: text('selector'), // Optional: specific component selector
   label: varchar('label', { length: 100 }), // e.g., "Hero Section", "Navigation"
-})
+}, (table) => ({
+  // Unique constraint: one screenshot per site per viewport
+  uniqueSiteViewport: unique('screenshots_site_viewport_unique').on(table.siteId, table.viewport)
+}))
 
 // Token Sets table - W3C design tokens with metadata
 export const tokenSets = pgTable('token_sets', {
@@ -342,3 +346,43 @@ export type NewSubmission = typeof submissions.$inferInsert
 
 export type Screenshot = typeof screenshots.$inferSelect
 export type NewScreenshot = typeof screenshots.$inferInsert
+
+// Cache Tables for Performance
+export const statsCache = pgTable('stats_cache', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  key: varchar('key', { length: 100 }).notNull().unique(),
+  data: jsonb('data').notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const popularSitesCache = pgTable('popular_sites_cache', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  siteId: uuid('site_id').notNull().references(() => sites.id, { onDelete: 'cascade' }),
+  domain: varchar('domain', { length: 255 }).notNull(),
+  popularity: integer('popularity').notNull().default(0),
+  tokens: integer('tokens').notNull().default(0),
+  lastScanned: timestamp('last_scanned'),
+  rank: integer('rank').notNull(),
+  cacheDate: timestamp('cache_date').notNull().defaultNow(),
+})
+
+export const recentActivityCache = pgTable('recent_activity_cache', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  domain: varchar('domain', { length: 255 }).notNull(),
+  scanId: uuid('scan_id').notNull().references(() => scans.id, { onDelete: 'cascade' }),
+  tokens: integer('tokens').notNull().default(0),
+  scannedAt: timestamp('scanned_at').notNull(),
+  rank: integer('rank').notNull(),
+  cacheDate: timestamp('cache_date').notNull().defaultNow(),
+})
+
+export type StatsCache = typeof statsCache.$inferSelect
+export type NewStatsCache = typeof statsCache.$inferInsert
+
+export type PopularSitesCache = typeof popularSitesCache.$inferSelect
+export type NewPopularSitesCache = typeof popularSitesCache.$inferInsert
+
+export type RecentActivityCache = typeof recentActivityCache.$inferSelect
+export type NewRecentActivityCache = typeof recentActivityCache.$inferInsert

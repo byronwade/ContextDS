@@ -55,6 +55,8 @@ export interface ScanResult {
   layoutDNA?: any
   metadata?: any
   database?: any
+  designSystemSpec?: any
+  componentLibrary?: any
 }
 
 interface ScanState {

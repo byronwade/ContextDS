@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     )
 
     // Apply sorting
-    let sortedSites = sitesWithData
+    const sortedSites = sitesWithData
     switch (sortBy) {
       case "recent":
         sortedSites.sort((a, b) => {

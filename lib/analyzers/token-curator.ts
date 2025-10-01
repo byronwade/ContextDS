@@ -4,6 +4,8 @@
  */
 
 import type { W3CTokenSet, TokenExtractionResult } from './w3c-tokenizer'
+import { deduplicateColors, deduplicateByUnitConversion, filterLowQualityTokens } from './token-deduplication'
+import { detectColorPalettes, detectModularScale, detectShadeSystem, detectSpacingGrid } from './token-relationships'
 
 export interface CuratedTokenSet {
   colors: CuratedToken[]
@@ -16,6 +18,12 @@ export interface CuratedTokenSet {
   radius: CuratedToken[]
   shadows: CuratedToken[]
   motion: CuratedToken[]
+  metadata?: {
+    colorPalettes?: any[]
+    modularScale?: any
+    shadeSystem?: any[]
+    spacingGrid?: any
+  }
 }
 
 export interface CuratedToken {
@@ -53,8 +61,8 @@ const DEFAULT_CONFIG: CurationConfig = {
   maxRadius: undefined,
   maxShadows: undefined,
   maxMotion: undefined,
-  minUsage: 2,
-  minConfidence: 60,
+  minUsage: 1,  // Include all tokens used at least once
+  minConfidence: 50,  // Lower threshold to capture more design system tokens
   returnAllFiltered: true  // Return all filtered tokens
 }
 
@@ -67,13 +75,32 @@ export function curateTokens(
 ): CuratedTokenSet {
   const cfg = { ...DEFAULT_CONFIG, ...config }
 
+  const colors = curateColors(tokenSet, cfg)
+  const typography = curateTypography(tokenSet, cfg)
+  const spacing = curateSpacing(tokenSet, cfg)
+  const radius = curateRadius(tokenSet, cfg)
+  const shadows = curateShadows(tokenSet, cfg)
+  const motion = curateMotion(tokenSet, cfg)
+
+  // Detect token relationships for metadata
+  const colorPalettes = detectColorPalettes(colors)
+  const modularScale = detectModularScale(typography.sizes)
+  const shadeSystem = detectShadeSystem(colors)
+  const spacingGrid = detectSpacingGrid(spacing)
+
   return {
-    colors: curateColors(tokenSet, cfg),
-    typography: curateTypography(tokenSet, cfg),
-    spacing: curateSpacing(tokenSet, cfg),
-    radius: curateRadius(tokenSet, cfg),
-    shadows: curateShadows(tokenSet, cfg),
-    motion: curateMotion(tokenSet, cfg)
+    colors,
+    typography,
+    spacing,
+    radius,
+    shadows,
+    motion,
+    metadata: {
+      colorPalettes,
+      modularScale,
+      shadeSystem,
+      spacingGrid
+    }
   }
 }
 
@@ -122,31 +149,18 @@ function curateColors(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTok
     })
   })
 
-  // Calculate percentages
-  tokens.forEach(token => {
-    token.percentage = totalUsage > 0 ? Math.round((token.usage / totalUsage) * 100) : 0
-  })
-
-  // Deduplicate colors by hex value, combining usage counts
-  const colorMap = new Map<string, CuratedToken>()
-  tokens.forEach(token => {
-    const hex = String(token.value).toLowerCase()
-    const existing = colorMap.get(hex)
-    if (!existing) {
-      colorMap.set(hex, token)
-    } else {
-      // Merge usage for duplicate colors
-      existing.usage += token.usage
-    }
-  })
+  // Apply advanced deduplication first (handles both exact and near-duplicates)
+  const dedupedTokens = deduplicateColors(tokens)
 
   // Recalculate percentages after deduplication
-  const dedupedTokens = Array.from(colorMap.values())
   const dedupedTotal = dedupedTokens.reduce((sum, t) => sum + t.usage, 0)
   dedupedTokens.forEach(t => t.percentage = dedupedTotal > 0 ? Math.round((t.usage / dedupedTotal) * 100) : 0)
 
-  const maxUsage = dedupedTokens.reduce((max, token) => Math.max(max, token.usage), 1)
-  const profiles = dedupedTokens
+  // Filter out low-quality tokens (browser defaults, computed artifacts, zero values)
+  const qualityFilteredTokens = filterLowQualityTokens(dedupedTokens, 'color')
+
+  const maxUsage = qualityFilteredTokens.reduce((max, token) => Math.max(max, token.usage), 1)
+  const profiles = qualityFilteredTokens
     .map(token => createColorProfile(token, maxUsage))
     .filter((profile): profile is ColorProfile => profile !== null)
 
@@ -322,22 +336,27 @@ function curateTypography(tokenSet: W3CTokenSet, config: CurationConfig): Curate
   sizes.forEach(t => t.percentage = totalSizeUsage > 0 ? Math.round((t.usage / totalSizeUsage) * 100) : 0)
   weights.forEach(t => t.percentage = totalWeightUsage > 0 ? Math.round((t.usage / totalWeightUsage) * 100) : 0)
 
+  // Apply quality filtering to all typography tokens
+  const qualityFilteredFamilies = filterLowQualityTokens(families, 'typography')
+  const qualityFilteredSizes = filterLowQualityTokens(sizes, 'typography-size')
+  const qualityFilteredWeights = filterLowQualityTokens(weights, 'typography')
+
   // SMART FONT RANKING: Prioritize brand fonts over generic fallbacks
-  const sortedFamilies = families.sort((a, b) => {
+  const sortedFamilies = qualityFilteredFamilies.sort((a, b) => {
     const aScore = calculateFontBrandScore(a)
     const bScore = calculateFontBrandScore(b)
     return bScore - aScore
   })
 
   // SMART SIZE RANKING: Detect type scale and prioritize important sizes
-  const sortedSizes = sizes.sort((a, b) => {
-    const aScore = calculateSizeImportance(a, sizes)
-    const bScore = calculateSizeImportance(b, sizes)
+  const sortedSizes = qualityFilteredSizes.sort((a, b) => {
+    const aScore = calculateSizeImportance(a, qualityFilteredSizes)
+    const bScore = calculateSizeImportance(b, qualityFilteredSizes)
     return bScore - aScore
   })
 
   // SMART WEIGHT RANKING: Prioritize common design system weights
-  const sortedWeights = weights.sort((a, b) => {
+  const sortedWeights = qualityFilteredWeights.sort((a, b) => {
     const aScore = calculateWeightImportance(a)
     const bScore = calculateWeightImportance(b)
     return bScore - aScore
@@ -501,8 +520,8 @@ function isValidDesignSystemSpacing(value: number, unit: string): boolean {
   // 1. Skip 0px (not useful for spacing scale)
   if (pixels === 0) return false
 
-  // 2. Skip tiny values (1px, 2px, 3px - likely borders/outlines, not spacing)
-  if (pixels < 4) return false
+  // 2. Skip 1px (commonly borders), but allow 2px/3px (valid tight spacing)
+  if (pixels < 2) return false
 
   // 3. Skip percentage-based spacing (100%, 50% are layout, not spacing tokens)
   if (unit === '%') return false
@@ -606,10 +625,16 @@ function curateSpacing(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTo
   const dedupedTotal = dedupedTokens.reduce((sum, t) => sum + t.usage, 0)
   dedupedTokens.forEach(t => t.percentage = dedupedTotal > 0 ? Math.round((t.usage / dedupedTotal) * 100) : 0)
 
+  // Apply advanced unit conversion deduplication (16px === 1rem)
+  const advancedDedupedTokens = deduplicateByUnitConversion(dedupedTokens)
+
+  // Filter out low-quality spacing tokens
+  const qualityFilteredTokens = filterLowQualityTokens(advancedDedupedTokens, 'spacing')
+
   // SMART SPACING RANKING: Detect spacing scale and prioritize system values
-  const sorted = dedupedTokens.sort((a, b) => {
-    const aScore = calculateSpacingSystemScore(a, dedupedTokens)
-    const bScore = calculateSpacingSystemScore(b, dedupedTokens)
+  const sorted = qualityFilteredTokens.sort((a, b) => {
+    const aScore = calculateSpacingSystemScore(a, qualityFilteredTokens)
+    const bScore = calculateSpacingSystemScore(b, qualityFilteredTokens)
     return bScore - aScore
   })
 
@@ -785,8 +810,11 @@ function curateShadows(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTo
   const dedupedTotal = dedupedTokens.reduce((sum, t) => sum + t.usage, 0)
   dedupedTokens.forEach(t => t.percentage = dedupedTotal > 0 ? Math.round((t.usage / dedupedTotal) * 100) : 0)
 
+  // Filter out low-quality shadow tokens (none, 0 0 0, browser defaults)
+  const qualityFilteredTokens = filterLowQualityTokens(dedupedTokens, 'shadow')
+
   // SMART SHADOW RANKING: Prioritize design system shadows over browser defaults
-  const sorted = dedupedTokens.sort((a, b) => {
+  const sorted = qualityFilteredTokens.sort((a, b) => {
     const aScore = calculateShadowQualityScore(a)
     const bScore = calculateShadowQualityScore(b)
     return bScore - aScore

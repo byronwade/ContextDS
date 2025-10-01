@@ -1,0 +1,26 @@
+{
+  "name": "ContextDS - Design Token Extraction Platform",
+  "short_name": "ContextDS",
+  "description": "AI-powered design token extraction and analysis platform that automatically scans websites to generate design tokens and layout DNA profiles.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "categories": ["design", "developer", "productivity"],
+  "lang": "en",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

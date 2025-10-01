@@ -14,7 +14,7 @@ export function Skeleton({
   return (
     <div
       className={cn(
-        "bg-grep-2",
+        "bg-neutral-200 dark:bg-neutral-800",
         animated && "animate-pulse",
         variant === "rounded" && "rounded-md",
         variant === "circle" && "rounded-full",
@@ -73,7 +73,7 @@ export function StatSkeleton({
   animated?: boolean
 }) {
   return (
-    <div className={cn("p-3 sm:p-5 rounded-lg border border-grep-3 bg-gradient-to-br from-grep-0 to-grep-1", className)}>
+    <div className={cn("p-3 sm:p-5 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-900 dark:to-neutral-800", className)}>
       <div className="flex items-start justify-between mb-3">
         <Skeleton className="h-9 w-20" animated={animated} />
         <Skeleton className="w-2 h-2" variant="circle" animated={animated} />

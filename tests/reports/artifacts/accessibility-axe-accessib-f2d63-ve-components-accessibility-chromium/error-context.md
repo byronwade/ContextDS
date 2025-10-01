@@ -1,0 +1,135 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - link "Skip to search" [ref=e4] [cursor=pointer]:
+      - /url: "#search-input"
+  - generic [ref=e5]:
+    - banner "Site header" [ref=e6]:
+      - generic [ref=e8]:
+        - generic [ref=e9]:
+          - link "ContextDS" [ref=e10] [cursor=pointer]:
+            - /url: /
+            - img [ref=e11] [cursor=pointer]
+            - generic [ref=e17] [cursor=pointer]: ContextDS
+          - generic [ref=e18]:
+            - generic [ref=e19]:
+              - generic [ref=e20]: "0"
+              - generic [ref=e21]: tokens
+            - generic [ref=e22]:
+              - generic [ref=e23]: "0"
+              - generic [ref=e24]: sites
+            - generic [ref=e27]: Live
+        - generic [ref=e29]:
+          - generic [ref=e30]: Search for website to scan for design tokens
+          - searchbox "Enter website URL to scan for design tokens" [ref=e31]
+        - generic [ref=e32]:
+          - navigation "Main navigation" [ref=e33]:
+            - link "Features" [ref=e34] [cursor=pointer]:
+              - /url: /features
+            - link "Community" [ref=e35] [cursor=pointer]:
+              - /url: /community
+            - link "Docs" [ref=e36] [cursor=pointer]:
+              - /url: /docs
+            - link "Pricing" [ref=e37] [cursor=pointer]:
+              - /url: /pricing
+            - link "About" [ref=e38] [cursor=pointer]:
+              - /url: /about
+          - generic [ref=e40]:
+            - button "Switch to system theme" [ref=e42]:
+              - img [ref=e43]
+            - button "Switch to light theme" [ref=e45]:
+              - img [ref=e46]
+            - button "Switch to dark theme" [ref=e52]:
+              - img [ref=e53]
+    - main "Main content" [ref=e55]:
+      - generic [ref=e57]:
+        - generic [ref=e58]:
+          - heading "Extract Design Tokens from Any Website" [level=1] [ref=e59]:
+            - text: Extract Design Tokens
+            - text: from Any Website
+          - paragraph [ref=e60]:
+            - text: AI-powered CSS analysis and design token extraction. Scan sites like
+            - button "Scan Stripe.com for design tokens" [ref=e61]: Stripe
+            - text: ","
+            - button "Scan Linear.app for design tokens" [ref=e62]: Linear
+            - text: ", and"
+            - button "Scan GitHub.com for design tokens" [ref=e63]: GitHub
+            - text: to extract colors, typography, spacing across
+            - generic [ref=e64]: 62,000+ tokens
+            - text: .
+        - generic [ref=e77]:
+          - paragraph [ref=e79]: Live Tokens
+          - code [ref=e80]: "#0070f3, #7928ca..."
+          - generic [ref=e81]: 06:53 AM
+        - generic [ref=e82]:
+          - button "Install MCP Server for Claude" [ref=e83]:
+            - img [ref=e84]
+            - text: Install MCP Server
+            - generic [ref=e87]: for Claude
+          - generic [ref=e88]: or
+          - generic [ref=e89]: Extract tokens from any website instantly
+        - generic [ref=e91]:
+          - generic [ref=e92]:
+            - generic [ref=e93]:
+              - generic [ref=e94]: Scans
+              - img [ref=e95]
+            - generic [ref=e97]:
+              - generic [ref=e98]: "102"
+              - generic [ref=e99]: live
+          - generic [ref=e100]:
+            - generic [ref=e101]:
+              - generic [ref=e102]: Tokens
+              - img [ref=e103]
+            - generic [ref=e106]:
+              - generic [ref=e107]: 62.3K
+              - generic [ref=e108]: +8%
+          - generic [ref=e109]:
+            - generic [ref=e110]:
+              - generic [ref=e111]: Sites
+              - img [ref=e112]
+            - generic [ref=e115]:
+              - generic [ref=e116]: "38"
+              - generic [ref=e117]: +24%
+          - generic [ref=e118]:
+            - generic [ref=e119]:
+              - generic [ref=e120]: Active
+              - img [ref=e121]
+            - generic [ref=e123]:
+              - generic [ref=e124]: "0"
+              - generic [ref=e125]: Live
+      - contentinfo "Site footer" [ref=e127]:
+        - generic [ref=e128]:
+          - generic [ref=e129]:
+            - link "ContextDS" [ref=e131] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e132] [cursor=pointer]:
+                - img [ref=e133] [cursor=pointer]
+                - generic [ref=e139] [cursor=pointer]: ContextDS
+            - link "Docs" [ref=e141] [cursor=pointer]:
+              - /url: /docs
+            - link "API" [ref=e143] [cursor=pointer]:
+              - /url: /api
+            - link "Community" [ref=e145] [cursor=pointer]:
+              - /url: /community
+            - link "Pricing" [ref=e147] [cursor=pointer]:
+              - /url: /pricing
+            - link "Privacy" [ref=e149] [cursor=pointer]:
+              - /url: /privacy
+            - link "Terms" [ref=e151] [cursor=pointer]:
+              - /url: /terms
+          - generic [ref=e152]: © 2025, ContextDS Inc.
+          - generic [ref=e154]:
+            - button "Switch to system theme" [ref=e156]:
+              - img [ref=e157]
+            - button "Switch to light theme" [ref=e159]:
+              - img [ref=e160]
+            - button "Switch to dark theme" [ref=e166]:
+              - img [ref=e167]
+  - button "Open Next.js Dev Tools" [ref=e174] [cursor=pointer]:
+    - img [ref=e175] [cursor=pointer]
+  - alert [ref=e178]
+```

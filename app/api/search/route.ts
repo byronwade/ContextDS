@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { sites, tokenSets, scans, layoutProfiles, cssSources } from '@/lib/db/schema'
+import { sites, tokenSets, scans, layoutProfiles, cssSources, cssContent } from '@/lib/db/schema'
 import { eq, and, or, like, ilike, sql, desc } from 'drizzle-orm'
 import { z } from 'zod'
 import { searchRatelimit } from '@/lib/ratelimit'
+
+// PERFORMANCE: Node.js runtime required for database access
+export const runtime = 'nodejs'
 
 const searchSchema = z.object({
   query: z.string().min(1),
@@ -90,16 +93,23 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
 
+    // Helper to safely parse positive integers
+    const parsePositiveInt = (value: string | null, defaultValue: number): number => {
+      if (!value) return defaultValue
+      const parsed = parseInt(value, 10)
+      return !isNaN(parsed) && parsed >= 0 ? parsed : defaultValue
+    }
+
     const params = searchSchema.parse({
       query: searchParams.get('query'),
       mode: searchParams.get('mode') || 'tokens',
       outputMode: searchParams.get('outputMode') || 'content',
       caseInsensitive: searchParams.get('caseInsensitive') === 'true',
       tokenType: searchParams.get('tokenType') || undefined,
-      confidenceMin: parseInt(searchParams.get('confidenceMin') || '0'),
-      popularityMin: parseInt(searchParams.get('popularityMin') || '0'),
-      limit: parseInt(searchParams.get('limit') || '50'),
-      offset: parseInt(searchParams.get('offset') || '0')
+      confidenceMin: parsePositiveInt(searchParams.get('confidenceMin'), 0),
+      popularityMin: parsePositiveInt(searchParams.get('popularityMin'), 0),
+      limit: Math.min(parsePositiveInt(searchParams.get('limit'), 50), 100), // Cap at 100
+      offset: parsePositiveInt(searchParams.get('offset'), 0)
     })
 
     let results: SearchResult[] = []
@@ -503,15 +513,16 @@ async function searchCode(params: SearchParams): Promise<CodeSearchResult[]> {
     .select({
       id: cssSources.id,
       url: cssSources.url,
-      content: cssSources.content,
+      content: cssContent.content,
       kind: cssSources.kind,
       bytes: cssSources.bytes,
       domain: sites.domain
     })
     .from(cssSources)
+    .leftJoin(cssContent, eq(cssSources.sha, cssContent.sha))
     .leftJoin(scans, eq(cssSources.scanId, scans.id))
     .leftJoin(sites, eq(scans.siteId, sites.id))
-    .where(sql`content IS NOT NULL`)
+    .where(sql`${cssContent.content} IS NOT NULL`)
     .limit(params.limit * 2)
 
   type CssRow = {

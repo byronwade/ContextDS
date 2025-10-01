@@ -10,7 +10,7 @@ import { defineConfig, devices } from '@playwright/test';
  * 4. Visual regression - Screenshot comparison for consistency
  */
 export default defineConfig({
-	testDir: './tests/e2e',
+	testDir: './tests',
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,
@@ -74,6 +74,26 @@ export default defineConfig({
 			testMatch: /.*api\.spec\.ts/,
 			use: {
 				baseURL: process.env.BASE_URL || 'http://localhost:3000',
+			},
+		},
+
+		// Accessibility testing project
+		{
+			name: 'accessibility',
+			testMatch: /.*accessibility.*\.spec\.ts/,
+			use: {
+				...devices['Desktop Chrome'],
+				colorScheme: 'light', // Test in light mode by default
+			},
+		},
+
+		// Accessibility testing in dark mode
+		{
+			name: 'accessibility-dark',
+			testMatch: /.*accessibility.*\.spec\.ts/,
+			use: {
+				...devices['Desktop Chrome'],
+				colorScheme: 'dark',
 			},
 		},
 	],

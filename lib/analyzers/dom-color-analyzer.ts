@@ -32,7 +32,7 @@ export interface EnhancedColorUsage {
  * Run this in the browser via page.evaluate()
  * Returns color usage with visual context
  */
-export function analyzeDOM ColorsInBrowser(): EnhancedColorUsage[] {
+export function analyzeDOMColorsInBrowser(): EnhancedColorUsage[] {
   const colorMap = new Map<string, EnhancedColorUsage>()
 
   // Get viewport height for above-fold detection

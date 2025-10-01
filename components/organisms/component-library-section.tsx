@@ -43,14 +43,14 @@ export function ComponentLibrarySection({ componentLibrary, onCopy }: ComponentL
   }
 
   const totalComponents =
-    componentLibrary.buttons.length +
-    componentLibrary.inputs.length +
-    componentLibrary.cards.length +
-    componentLibrary.badges.length +
-    componentLibrary.alerts.length +
-    componentLibrary.links.length +
-    componentLibrary.headings.length +
-    componentLibrary.text.length
+    (componentLibrary.buttons?.length || 0) +
+    (componentLibrary.inputs?.length || 0) +
+    (componentLibrary.cards?.length || 0) +
+    (componentLibrary.badges?.length || 0) +
+    (componentLibrary.alerts?.length || 0) +
+    (componentLibrary.links?.length || 0) +
+    (componentLibrary.headings?.length || 0) +
+    (componentLibrary.text?.length || 0)
 
   if (totalComponents === 0) {
     return (
@@ -84,10 +84,10 @@ export function ComponentLibrarySection({ componentLibrary, onCopy }: ComponentL
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 p-4 sm:p-6 bg-gradient-to-b from-background/50 to-background">
           {[
-            { label: 'Buttons', count: componentLibrary.buttons.length, color: 'blue' },
-            { label: 'Inputs', count: componentLibrary.inputs.length, color: 'green' },
-            { label: 'Cards', count: componentLibrary.cards.length, color: 'purple' },
-            { label: 'Badges', count: componentLibrary.badges.length, color: 'orange' },
+            { label: 'Buttons', count: componentLibrary.buttons?.length || 0, color: 'blue' },
+            { label: 'Inputs', count: componentLibrary.inputs?.length || 0, color: 'green' },
+            { label: 'Cards', count: componentLibrary.cards?.length || 0, color: 'purple' },
+            { label: 'Badges', count: componentLibrary.badges?.length || 0, color: 'orange' },
           ].map(({ label, count, color }) => (
             count > 0 && (
               <div key={label} className="p-3 rounded-lg bg-background border border-grep-2">
@@ -102,7 +102,7 @@ export function ComponentLibrarySection({ componentLibrary, onCopy }: ComponentL
       </div>
 
       {/* Buttons */}
-      {componentLibrary.buttons.length > 0 && (
+      {(componentLibrary.buttons?.length || 0) > 0 && (
         <ComponentGroup
           title="Buttons"
           icon={Box}
@@ -112,7 +112,7 @@ export function ComponentLibrarySection({ componentLibrary, onCopy }: ComponentL
       )}
 
       {/* Inputs */}
-      {componentLibrary.inputs.length > 0 && (
+      {(componentLibrary.inputs?.length || 0) > 0 && (
         <ComponentGroup
           title="Inputs"
           icon={Box}
@@ -122,7 +122,7 @@ export function ComponentLibrarySection({ componentLibrary, onCopy }: ComponentL
       )}
 
       {/* Cards */}
-      {componentLibrary.cards.length > 0 && (
+      {(componentLibrary.cards?.length || 0) > 0 && (
         <ComponentGroup
           title="Cards"
           icon={Box}
@@ -132,7 +132,7 @@ export function ComponentLibrarySection({ componentLibrary, onCopy }: ComponentL
       )}
 
       {/* Badges */}
-      {componentLibrary.badges.length > 0 && (
+      {(componentLibrary.badges?.length || 0) > 0 && (
         <ComponentGroup
           title="Badges"
           icon={Box}
@@ -142,7 +142,7 @@ export function ComponentLibrarySection({ componentLibrary, onCopy }: ComponentL
       )}
 
       {/* Headings */}
-      {componentLibrary.headings.length > 0 && (
+      {(componentLibrary.headings?.length || 0) > 0 && (
         <ComponentGroup
           title="Headings"
           icon={Box}

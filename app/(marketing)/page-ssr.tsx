@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import { HeroSection } from '@/components/organisms/hero-section'
 import { StatsSection } from '@/components/organisms/stats-section'
 import { SearchSection } from '@/components/organisms/search-section'
-import { MinimalHeaderWrapper } from '@/components/organisms/minimal-header-wrapper'
+import { MarketingHeader } from '@/components/organisms/marketing-header'
 
 /**
  * Homepage - Server Component with Streaming
@@ -17,7 +17,7 @@ export default async function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header loads immediately (static) */}
-      <MinimalHeaderWrapper />
+      <MarketingHeader currentPage="home" showSearch={true} />
 
       {/* Main content with streaming sections */}
       <main id="main-content" className="flex-1">

@@ -2,6 +2,20 @@ import { NextRequest } from 'next/server'
 import { progressStore } from '@/lib/events/progress-store'
 import type { ProgressEvent } from '@/lib/workers/progress-emitter'
 
+// Global real-time broadcast function
+async function broadcastToRealtime(data: any) {
+  try {
+    // Broadcast to the real-time stream endpoint
+    await fetch('/api/realtime/broadcast', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+  } catch (error) {
+    console.error('Failed to broadcast to real-time stream:', error)
+  }
+}
+
 // SSE endpoint for real-time scan progress
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -37,6 +51,37 @@ export async function GET(request: NextRequest) {
         try {
           const message = encoder.encode(`data: ${JSON.stringify(event)}\n\n`)
           controller.enqueue(message)
+
+          // Broadcast to global real-time stream for live metrics
+          if (event.type === 'progress' || event.type === 'metrics') {
+            broadcastToRealtime({
+              type: 'scan_update',
+              scanId: scanId,
+              progress: event.type === 'progress' ? {
+                step: event.step,
+                totalSteps: event.totalSteps,
+                phase: event.phase,
+                message: event.message
+              } : undefined,
+              metrics: event.type === 'metrics' ? event.metrics : undefined,
+              timestamp: Date.now()
+            })
+          }
+
+          // Broadcast scan completion to real-time stream
+          if (event.type === 'complete') {
+            broadcastToRealtime({
+              type: 'activity',
+              activity: {
+                id: `scan_${scanId}_${Date.now()}`,
+                type: 'scan_completed',
+                message: `Scan completed for ${scanId}`,
+                timestamp: Date.now(),
+                domain: event.data?.domain || scanId,
+                isReal: true
+              }
+            })
+          }
 
           // Close stream when scan completes
           if (event.type === 'complete' || event.type === 'error') {

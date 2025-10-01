@@ -566,6 +566,7 @@ function extractTypography(root: Root, variables: Map<string, string>): Array<{ 
   const fontFamilies = new Map<string, DimensionStats>()
   const fontSizes = new Map<string, DimensionStats>()
   const fontWeights = new Map<string, DimensionStats>()
+  const lineHeights = new Map<string, DimensionStats>()
 
   root.walkDecls(decl => {
     const prop = decl.prop.toLowerCase()
@@ -621,6 +622,25 @@ function extractTypography(root: Root, variables: Map<string, string>): Array<{ 
       }
 
       fontWeights.get(weight)!.usage++
+    }
+
+    if (prop === 'line-height') {
+      const lineHeight = resolved
+      if (lineHeight && lineHeight !== 'normal' && lineHeight !== '0') {
+        if (!lineHeights.has(lineHeight)) {
+          // Parse as dimension or unitless number
+          const dim = parseDimension(lineHeight) || { value: parseFloat(lineHeight) || 1.5, unit: '' }
+          lineHeights.set(lineHeight, {
+            value: lineHeight,
+            w3c: dim,
+            usage: 0,
+            property: prop,
+            selectors: new Set()
+          })
+        }
+
+        lineHeights.get(lineHeight)!.usage++
+      }
     }
   })
 
@@ -682,6 +702,27 @@ function extractTypography(root: Root, variables: Map<string, string>): Array<{ 
           'contextds.usage': stats.usage,
           'contextds.confidence': Math.min(100, 75 + stats.usage * 2),
           'contextds.sources': ['font-weight'],
+          'contextds.original': stats.value
+        }
+      }
+    })
+  })
+
+  // Line height tokens
+  lineHeights.forEach((stats, key) => {
+    const index = tokens.length + 1
+    const isUnitless = !stats.w3c.unit || stats.w3c.unit === ''
+    tokens.push({
+      name: `line-height-${isUnitless ? 'ratio' : 'size'}-${index}`,
+      usage: stats.usage,
+      token: {
+        $type: isUnitless ? 'number' : 'dimension',
+        $value: isUnitless ? stats.w3c.value : stats.w3c,
+        $description: `Line height used ${stats.usage} times`,
+        $extensions: {
+          'contextds.usage': stats.usage,
+          'contextds.confidence': Math.min(100, 70 + stats.usage * 2),
+          'contextds.sources': ['line-height'],
           'contextds.original': stats.value
         }
       }

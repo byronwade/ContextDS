@@ -1,14 +1,18 @@
 # App TODO
 
 ## Marketing Routes (app/(marketing))
-- [ ] Landing page (/) with product explanation and trending brands
-- [ ] Features page (/features) highlighting differentiators
-- [ ] Pricing page (/pricing) with $9.95/mo Pro plan
-- [ ] Documentation (/docs) for API and MCP usage
-- [ ] About page (/about) with team and mission
-- [ ] Terms of Service (/terms) with robots.txt compliance
-- [ ] Privacy Policy (/privacy) with data handling
-- [ ] Contact page (/contact) for support and feedback
+- [x] Landing page (/) with product explanation and trending brands
+- [x] Features page (/features) highlighting differentiators
+- [x] Pricing page (/pricing) with $9.95/mo Pro plan
+- [x] Documentation (/docs) for API and MCP usage
+- [x] About page (/about) with team and mission
+- [x] Terms of Service (/terms) with robots.txt compliance
+- [x] Privacy Policy (/privacy) with data handling
+- [x] Contact page (/contact) for support and feedback
+- [x] Community page (/community) with site directory
+- [x] Metrics page (/metrics) with analytics dashboard
+- [x] Scan page (/scan) for site analysis
+- [x] Site detail pages (/site/[domain]) with token analysis
 
 ## Dashboard Routes (app/(dashboard))
 - [ ] Dashboard home (/dashboard) with user overview
@@ -23,23 +27,33 @@
 
 ## API Routes (app/api)
 - [ ] Authentication endpoints (/api/auth)
-- [ ] Site scanning API (/api/scan)
+- [x] Site scanning API (/api/scan)
 - [ ] Token retrieval API (/api/tokens)
 - [ ] Layout profile API (/api/layout)
 - [ ] Company research API (/api/research)
-- [ ] Voting API (/api/vote)
+- [x] Voting API (/api/vote) via community endpoints
 - [ ] Remix API (/api/remix)
-- [ ] MCP server endpoints (/api/mcp)
+- [x] MCP server endpoints (/api/mcp)
 - [ ] Webhook handlers (/api/webhooks)
 - [ ] File upload API (/api/upload)
 - [ ] Billing webhooks (/api/billing)
+- [x] Analytics API (/api/analytics)
+- [x] Community API (/api/community)
+- [x] Export API (/api/export)
+- [x] Health check API (/api/health)
+- [x] Metrics API (/api/metrics)
+- [x] Screenshot API (/api/screenshot)
+- [x] Search API (/api/search)
+- [x] Stats API (/api/stats)
+- [x] Versions API (/api/versions)
+- [x] Cron cleanup API (/api/cron)
 
 ## Shared Components
-- [ ] Root layout with theme provider
-- [ ] Error boundaries for graceful failures
-- [ ] Loading states and suspense boundaries
-- [ ] SEO components and metadata
-- [ ] Analytics integration
+- [x] Root layout with theme provider
+- [x] Error boundaries for graceful failures
+- [x] Loading states and suspense boundaries
+- [x] SEO components and metadata
+- [x] Analytics integration
 - [ ] Toast notification system
 
 ## Auth Pages
@@ -55,4 +69,4 @@
 - [ ] Rate limit exceeded page
 - [ ] Maintenance mode page
 
-## Completed: 0/43 | Pending: 43/43
+## Completed: 32/51 | Pending: 19/51

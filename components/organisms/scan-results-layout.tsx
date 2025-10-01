@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -16,56 +17,30 @@ import {
   Download,
   Share2,
   History,
-  Palette,
-  Type,
-  Box,
-  Grid3x3,
+  TrendingUp,
+  Target,
   Zap,
-  Code2,
-  BarChart3,
-  Eye,
-  Loader2
+  Shield,
+  Lightbulb,
+  AlertCircle,
+  Sparkles
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useState, useEffect, useRef } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
-import { ComprehensiveAnalysisDisplay } from "./comprehensive-analysis-display"
-import { DesignSystemSpecDisplay } from "./design-system-spec-display"
-import { TokenResultsDisplay } from "./token-results-display"
-import { TokenDiffViewer } from "./token-diff-viewer"
+import { ResultsTabs, type TabId } from "./results-tabs"
+import { MetricCard } from "@/components/molecules/metric-card"
+import { TokenGrid } from "@/components/molecules/token-grid"
+import { InsightCard } from "@/components/molecules/insight-card"
+import { ComponentShowcase } from "@/components/molecules/component-showcase"
 import { ScreenshotGallery } from "@/components/molecules/screenshot-gallery"
-import { TypographySection } from "./typography-section"
-import { LayoutPatternsSection } from "./layout-patterns-section"
-import { BrandAnalysisSection } from "./brand-analysis-section"
-import { AdvancedComponentLibrary } from "./advanced-component-library"
-import {
-  OverviewSkeleton,
-  ScreenshotsSkeleton,
-  AnalysisSkeleton,
-  TokensSkeleton,
-  TypographySkeleton,
-  BrandSkeleton,
-  LayoutSkeleton,
-  ComponentsSkeleton
-} from "@/components/molecules/section-skeletons"
-import { RealtimeScanningOverview } from "@/components/molecules/realtime-scanning-skeleton"
-import { RealtimeTokensSkeleton } from "@/components/molecules/realtime-tokens-skeleton"
-import { AIReasoningDisplay } from "@/components/molecules/ai-reasoning-display"
-import { LiveDOMScanner } from "@/components/molecules/live-dom-scanner"
-import { DesignDNAHelix } from "@/components/molecules/design-dna-helix"
-import { NeuralTokenNetwork } from "@/components/molecules/neural-token-network"
-import { AIInsightsStream } from "@/components/molecules/ai-insights-stream"
-import { ScanningRadar } from "@/components/molecules/scanning-radar"
+import { FontPreviewCard } from "@/components/molecules/font-preview"
 
-type ScanResult = any // Import from scan-store if needed
+type ScanResult = any
 
 interface ScanProgress {
   step: number
   totalSteps: number
   phase: string
   message: string
-  data?: string
-  time?: string
   details?: string[]
   timestamp: number
 }
@@ -76,6 +51,7 @@ interface ScanResultsLayoutProps {
   scanId?: string | null
   progress?: ScanProgress | null
   metrics?: any | null
+  error?: string | null
   onCopy: (value: string) => void
   onExport: (format: string) => void
   onShare: () => void
@@ -85,773 +61,877 @@ interface ScanResultsLayoutProps {
   onScanHistory?: () => void
 }
 
-const sections = [
-  { id: 'screenshots', label: 'Screenshots', icon: Eye },
-  { id: 'overview', label: 'Overview', icon: BarChart3 },
-  { id: 'analysis', label: 'AI Analysis', icon: Zap },
-  { id: 'components', label: 'Components', icon: Code2 },
-  { id: 'tokens', label: 'Design Tokens', icon: Palette },
-  { id: 'typography', label: 'Typography', icon: Type },
-  { id: 'brand', label: 'Brand Analysis', icon: Box },
-  { id: 'layout', label: 'Layout Patterns', icon: Grid3x3 },
-] as const
-
 export function ScanResultsLayout({
   result,
   isLoading,
   scanId,
   progress,
   metrics,
+  error,
   onCopy,
   onExport,
   onShare,
-  showDiff = false,
+  showDiff,
   onToggleDiff,
   onNewScan,
   onScanHistory
 }: ScanResultsLayoutProps) {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const initialSection = searchParams.get('section') || 'overview'
+  const [activeTab, setActiveTab] = useState<TabId>("overview")
 
-  const [activeSection, setActiveSection] = useState(initialSection)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const sectionRefs = useRef<Record<string, HTMLElement | null>>({})
-  const mainContentRef = useRef<HTMLDivElement | null>(null)
+  // Calculate tab counts
+  const tabCounts = useMemo(() => ({
+    tokens: result?.curatedTokens ? (
+      (result.curatedTokens.colors?.length || 0) +
+      (result.curatedTokens.typography?.families?.length || 0) +
+      (result.curatedTokens.spacing?.length || 0) +
+      (result.curatedTokens.radius?.length || 0) +
+      (result.curatedTokens.shadows?.length || 0)
+    ) : 0,
+    components: result?.componentLibrary?.summary?.totalComponents || 0,
+    insights: result?.comprehensiveAnalysis ? (
+      (result.comprehensiveAnalysis.recommendations?.quick_wins?.length || 0) +
+      (result.comprehensiveAnalysis.recommendations?.critical?.length || 0)
+    ) : 0,
+    screenshots: scanId ? "•" : 0 // Show indicator if scanId exists
+  }), [result, scanId])
 
-  // Sync active section with URL on mount
-  useEffect(() => {
-    const section = searchParams.get('section')
-    if (section && sections.some(s => s.id === section)) {
-      setActiveSection(section)
-      // Scroll to section after a short delay to ensure DOM is ready
-      setTimeout(() => {
-        const element = sectionRefs.current[section]
-        if (element && mainContentRef.current) {
-          const elementTop = element.offsetTop
-          mainContentRef.current.scrollTo({ top: elementTop - 80, behavior: 'smooth' })
-        }
-      }, 100)
-    }
-  }, [searchParams])
-
-  // Auto-scroll and highlight active section
-  useEffect(() => {
-    const mainContent = mainContentRef.current
-    if (!mainContent) return
-
-    const handleScroll = () => {
-      const scrollPosition = mainContent.scrollTop + 100
-
-      for (const section of sections) {
-        const element = sectionRefs.current[section.id]
-        if (element) {
-          const elementTop = element.offsetTop
-          const elementHeight = element.offsetHeight
-          if (scrollPosition >= elementTop && scrollPosition < elementTop + elementHeight) {
-            setActiveSection(section.id)
-            break
-          }
-        }
-      }
-    }
-
-    mainContent.addEventListener('scroll', handleScroll)
-    return () => mainContent.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  const scrollToSection = (sectionId: string) => {
-    const mainContent = mainContentRef.current
-    const element = sectionRefs.current[sectionId]
-    if (element && mainContent) {
-      const elementTop = element.offsetTop
-      mainContent.scrollTo({ top: elementTop - 80, behavior: 'smooth' })
-      setActiveSection(sectionId)
-
-      // Update URL without page reload
-      const params = new URLSearchParams(searchParams.toString())
-      params.set('section', sectionId)
-      router.push(`?${params.toString()}`, { scroll: false })
-    }
+  // Show error state if there's an error
+  if (error && !isLoading) {
+    return (
+      <div className="flex h-full w-full items-center justify-center p-8">
+        <div className="text-center max-w-md">
+          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-foreground mb-2">Scan Failed</h3>
+          <p className="text-sm text-muted-foreground mb-6">{error}</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button onClick={onNewScan} variant="default">
+              <Target className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+            <Button onClick={() => window.location.href = '/'} variant="outline">
+              Back to Home
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
-  // Always show the layout, use skeletons when loading
   return (
-    <div className="flex h-full w-full overflow-hidden relative">
-      {/* ChatGPT-style Left Sidebar Navigation */}
-      <aside className={cn(
-        "hidden lg:flex flex-col border-r border-grep-2 bg-grep-0 transition-all h-full",
-        sidebarCollapsed ? "w-14" : "w-56"
-      )}>
-        {/* Header */}
-        <div className="h-14 flex items-center justify-between px-4 border-b border-grep-3 bg-grep-0 shrink-0">
-          {!sidebarCollapsed && (
-            <div className="flex items-center gap-2.5">
-              <div className={cn("w-2 h-2 rounded-full", isLoading ? "bg-blue-500 animate-pulse" : "bg-green-500")} />
-              <span className="text-[11px] font-mono font-bold text-foreground tracking-wide">RESULTS</span>
+    <div className="flex h-full w-full flex-col overflow-hidden">
+      {/* Loading progress bar */}
+      {isLoading && progress && (
+        <div className="absolute top-0 left-0 right-0 z-50 h-0.5 bg-grep-2">
+          <div
+            className="h-full bg-blue-500 transition-all duration-300"
+            style={{ width: `${(progress.step / progress.totalSteps) * 100}%` }}
+          />
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="shrink-0 border-b border-grep-2 bg-background px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "w-2 h-2 rounded-full",
+              isLoading ? "bg-blue-500 animate-pulse" : "bg-green-500"
+            )} />
+            {result?.favicon && (
+              <img
+                src={result.favicon}
+                alt={`${result.domain} logo`}
+                className="w-8 h-8 rounded object-contain"
+                onError={(e) => {
+                  // Hide image if it fails to load
+                  e.currentTarget.style.display = 'none'
+                }}
+              />
+            )}
+            <div>
+              <h1 className="text-xl font-semibold text-foreground">
+                {result?.domain || "Analyzing..."}
+              </h1>
+              <div className="flex items-center gap-2 mt-0.5">
+                {result?.versionInfo && (
+                  <Badge variant="secondary" className="h-5 font-mono text-[10px]">
+                    v{result.versionInfo.versionNumber}
+                  </Badge>
+                )}
+                {isLoading && progress && (
+                  <span className="text-xs text-grep-7 font-mono">
+                    {progress.phase} ({progress.step}/{progress.totalSteps})
+                  </span>
+                )}
+              </div>
             </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            {result?.versionInfo?.diff && onToggleDiff && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onToggleDiff}
+                className="h-8 text-xs"
+              >
+                <History className="h-3.5 w-3.5 mr-1.5" />
+                Changes
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onShare}
+              className="h-8 text-xs"
+            >
+              <Share2 className="h-3.5 w-3.5 mr-1.5" />
+              Share
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 text-xs">
+                  <Download className="h-3.5 w-3.5 mr-1.5" />
+                  Export
+                  <ChevronDown className="h-3 w-3 ml-1.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Standards & Specs</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => onExport('w3c-json')}>
+                  W3C Design Tokens (JSON)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport('style-dictionary')}>
+                  Style Dictionary
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Design Tools</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => onExport('figma')}>
+                  Figma Tokens Plugin
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport('figma-variables')}>
+                  Figma Variables API
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Web Frameworks</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => onExport('tailwind')}>
+                  Tailwind CSS v4
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport('css')}>
+                  CSS Custom Properties
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport('scss')}>
+                  SCSS Variables
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport('sass')}>
+                  Sass (Indented)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport('less')}>
+                  Less Variables
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport('stylus')}>
+                  Stylus
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>JavaScript/TypeScript</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => onExport('ts')}>
+                  TypeScript (Typed)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport('js')}>
+                  JavaScript (ES6)
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Mobile Platforms</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => onExport('swift')}>
+                  iOS Swift
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport('kotlin')}>
+                  Android Kotlin
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport('xml')}>
+                  Android XML
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport('dart')}>
+                  Flutter Dart
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Other Formats</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => onExport('json')}>
+                  Raw JSON
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport('yaml')}>
+                  YAML
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <ResultsTabs
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        counts={tabCounts}
+      />
+
+      {/* Tab content */}
+      <div className="flex-1 overflow-y-auto bg-background">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          {activeTab === "overview" && (
+            <OverviewTab
+              result={result}
+              isLoading={isLoading}
+              progress={progress}
+              metrics={metrics}
+              onCopy={onCopy}
+            />
           )}
+
+          {activeTab === "tokens" && (
+            <TokensTab
+              result={result}
+              isLoading={isLoading}
+              onCopy={onCopy}
+            />
+          )}
+
+          {activeTab === "components" && (
+            <ComponentsTab
+              result={result}
+              isLoading={isLoading}
+              onCopy={onCopy}
+            />
+          )}
+
+          {activeTab === "analysis" && (
+            <AnalysisTab
+              result={result}
+              isLoading={isLoading}
+            />
+          )}
+
+          {activeTab === "layout" && (
+            <LayoutTab
+              result={result}
+              isLoading={isLoading}
+            />
+          )}
+
+          {activeTab === "recommendations" && (
+            <RecommendationsTab
+              result={result}
+              isLoading={isLoading}
+            />
+          )}
+
+          {activeTab === "screenshots" && (
+            <ScreenshotsTab scanId={scanId} isLoading={isLoading} />
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Overview Tab
+function OverviewTab({ result, isLoading, progress, metrics, onCopy }: any) {
+  const summary = result?.summary || {}
+  const comprehensiveAnalysis = result?.comprehensiveAnalysis
+
+  return (
+    <div className="space-y-8">
+      {/* Key Metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <MetricCard
+          label="Design Tokens"
+          value={summary.tokensExtracted || 0}
+          icon={TrendingUp}
+          status={summary.tokensExtracted > 20 ? "success" : "warning"}
+          subtitle={summary.curatedCount ? `${summary.curatedCount.colors}c · ${summary.curatedCount.fonts}f · ${summary.curatedCount.spacing}s` : undefined}
+          isLoading={isLoading && !summary.tokensExtracted}
+        />
+
+        <MetricCard
+          label="Confidence"
+          value={`${summary.confidence || 0}%`}
+          icon={Shield}
+          status={summary.confidence >= 80 ? "success" : summary.confidence >= 60 ? "info" : "warning"}
+          progress={summary.confidence}
+          isLoading={isLoading && !summary.confidence}
+        />
+
+        <MetricCard
+          label="Components"
+          value={result?.componentLibrary?.summary?.totalComponents || 0}
+          icon={Target}
+          status="info"
+          subtitle={result?.componentLibrary?.summary?.detectionAccuracy}
+          isLoading={isLoading && !result?.componentLibrary}
+        />
+
+        <MetricCard
+          label="System Maturity"
+          value={comprehensiveAnalysis?.designSystemScore?.maturity || "N/A"}
+          icon={Zap}
+          status={comprehensiveAnalysis?.designSystemScore?.overall >= 70 ? "success" : "info"}
+          subtitle={comprehensiveAnalysis?.designSystemScore?.overall ? `${comprehensiveAnalysis.designSystemScore.overall}% score` : undefined}
+          isLoading={isLoading && !comprehensiveAnalysis}
+        />
+      </div>
+
+      {/* Top Insights */}
+      {comprehensiveAnalysis && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Key Findings</h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Brand Identity */}
+            {comprehensiveAnalysis.brandIdentity && (
+              <InsightCard
+                title="Brand Identity"
+                description={`${comprehensiveAnalysis.brandIdentity.colorPersonality}. Typography: ${comprehensiveAnalysis.brandIdentity.typographicVoice}.`}
+                icon={Sparkles}
+                severity="info"
+                metrics={[
+                  { label: "Primary Colors", value: comprehensiveAnalysis.brandIdentity.primaryColors?.length || 0 },
+                  { label: "Industry", value: comprehensiveAnalysis.brandIdentity.industryAlignment || "N/A" }
+                ]}
+              />
+            )}
+
+            {/* Accessibility */}
+            {comprehensiveAnalysis.accessibility && (
+              <InsightCard
+                title="Accessibility"
+                description={`WCAG ${comprehensiveAnalysis.accessibility.wcagLevel} compliance with ${comprehensiveAnalysis.accessibility.contrastIssues?.length || 0} contrast issues.`}
+                icon={Shield}
+                severity={comprehensiveAnalysis.accessibility.wcagLevel === "AAA" ? "info" : "warning"}
+                metrics={[
+                  { label: "Score", value: `${comprehensiveAnalysis.accessibility.overallScore}%` },
+                  { label: "Focus Indicators", value: comprehensiveAnalysis.accessibility.focusIndicators?.quality || "N/A" }
+                ]}
+              />
+            )}
+
+            {/* Critical Issues */}
+            {comprehensiveAnalysis.recommendations?.critical && comprehensiveAnalysis.recommendations.critical.length > 0 && (
+              <InsightCard
+                title="Critical Issues"
+                description={comprehensiveAnalysis.recommendations.critical[0].issue}
+                icon={AlertCircle}
+                severity="critical"
+                recommendation={comprehensiveAnalysis.recommendations.critical[0].solution}
+              />
+            )}
+
+            {/* Quick Win */}
+            {comprehensiveAnalysis.recommendations?.quick_wins && comprehensiveAnalysis.recommendations.quick_wins[0] && (
+              <InsightCard
+                title={comprehensiveAnalysis.recommendations.quick_wins[0].title}
+                description={comprehensiveAnalysis.recommendations.quick_wins[0].description}
+                icon={Lightbulb}
+                severity="info"
+                impact={comprehensiveAnalysis.recommendations.quick_wins[0].impact}
+                effort={comprehensiveAnalysis.recommendations.quick_wins[0].effort}
+              />
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Tokens Tab
+function TokensTab({ result, isLoading, onCopy }: any) {
+  const tokens = result?.curatedTokens || {}
+
+  return (
+    <div className="space-y-8">
+      {/* Colors Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground">Colors</h2>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="h-7 w-7 p-0 hover:bg-grep-2"
+            onClick={() => onCopy(JSON.stringify(tokens.colors || [], null, 2))}
+            disabled={!tokens.colors || tokens.colors.length === 0}
           >
-            <ChevronDown className={cn(
-              "h-3.5 w-3.5 transition-transform text-grep-9",
-              sidebarCollapsed ? "rotate-90" : "-rotate-90"
-            )} />
+            <Copy className="h-3.5 w-3.5 mr-1.5" />
+            Copy All
           </Button>
         </div>
-
-        {/* Navigation Links */}
-        <nav className="flex-1 overflow-y-auto py-1.5">
-          {/* Quick Actions Section */}
-          {!sidebarCollapsed && (
-            <div className="mb-4">
-              <button
-                onClick={onNewScan}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-[14px] font-medium transition-all text-foreground hover:bg-grep-1 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-lg bg-grep-1 flex items-center justify-center">
-                  <Copy className="h-4 w-4" />
-                </div>
-                <span>New scan</span>
-              </button>
-              <button
-                onClick={onScanHistory}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-[14px] font-medium transition-all text-foreground hover:bg-grep-1 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-lg bg-grep-1 flex items-center justify-center">
-                  <History className="h-4 w-4" />
-                </div>
-                <span>Scan history</span>
-              </button>
-            </div>
-          )}
-
-          {/* Sections Heading */}
-          {!sidebarCollapsed && (
-            <div className="px-4 py-2">
-              <h3 className="text-xs font-semibold text-grep-9 uppercase tracking-wider">Sections</h3>
-            </div>
-          )}
-
-          {/* Section Links */}
-          <div className="px-2 space-y-0.5">
-            {sections.map((section) => {
-              const Icon = section.icon
-              const isActive = activeSection === section.id
-
-              return (
-                <button
-                  key={section.id}
-                  onClick={() => scrollToSection(section.id)}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2 text-[14px] font-medium transition-all rounded-md",
-                    isActive
-                      ? "bg-grep-1 text-foreground"
-                      : "text-grep-9 hover:bg-grep-1 hover:text-foreground"
-                  )}
-                  title={sidebarCollapsed ? section.label : undefined}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  {!sidebarCollapsed && <span className="truncate">{section.label}</span>}
-                </button>
-              )
-            })}
+        {isLoading && (!tokens.colors || tokens.colors.length === 0) ? (
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="aspect-square bg-grep-2 rounded-lg animate-pulse" />
+            ))}
           </div>
-
-          {/* Export Section */}
-          {!sidebarCollapsed && (
-            <div className="mt-6">
-              <div className="px-4 py-2">
-                <h3 className="text-xs font-semibold text-grep-9 uppercase tracking-wider">Export</h3>
-              </div>
-              <div className="px-2 space-y-0.5">
-                <button
-                  onClick={onShare}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-[14px] font-medium transition-all rounded-md text-grep-9 hover:bg-grep-1 hover:text-foreground"
-                >
-                  <Share2 className="h-4 w-4 shrink-0" />
-                  <span className="truncate">Share Results</span>
-                </button>
-                <button
-                  onClick={() => onExport('json')}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-[14px] font-medium transition-all rounded-md text-grep-9 hover:bg-grep-1 hover:text-foreground"
-                >
-                  <Download className="h-4 w-4 shrink-0" />
-                  <span className="truncate">Export Tokens</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </nav>
-
-        {/* Footer - User Section Style */}
-        {!sidebarCollapsed && result && (
-          <div className="p-3 border-t border-grep-3 bg-grep-0 shrink-0">
-            <div className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-grep-1 cursor-pointer transition-colors">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-semibold shrink-0">
-                {result.domain?.charAt(0).toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-medium text-foreground truncate">{result.domain}</div>
-                <div className="text-xs text-grep-9 truncate">v{result.versionInfo?.versionNumber || 1}</div>
-              </div>
-            </div>
+        ) : tokens.colors && tokens.colors.length > 0 ? (
+          <TokenGrid tokens={tokens.colors} type="color" columns={6} onCopy={onCopy} />
+        ) : (
+          <div className="text-center py-8 text-grep-7">
+            <div className="w-12 h-12 rounded-full bg-grep-2 mx-auto mb-2" />
+            <p className="text-sm">No colors detected yet</p>
           </div>
         )}
-      </aside>
+      </div>
 
-      {/* Main Content Area */}
-      <main ref={mainContentRef} className="flex-1 overflow-y-auto bg-background">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 md:px-12 md:py-10">
-
-          {/* Show detailed skeletons when loading */}
-          {isLoading && !result ? (
-            <>
-              <RealtimeScanningOverview
-                ref={(el) => { sectionRefs.current['overview'] = el }}
-                domain={searchParams.get('domain') || undefined}
-                progress={progress || undefined}
+      {/* Typography Section */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-foreground">Typography</h2>
+        {isLoading && (!tokens.typography?.families || tokens.typography.families.length === 0) ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="h-24 bg-grep-2 rounded-lg animate-pulse" />
+            ))}
+          </div>
+        ) : tokens.typography?.families && tokens.typography.families.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            {tokens.typography.families.map((font: any, i: number) => (
+              <FontPreviewCard
+                key={i}
+                fontFamily={font.value}
+                percentage={font.percentage}
+                onCopy={() => onCopy(font.value)}
               />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-grep-7">
+            <div className="w-12 h-12 rounded bg-grep-2 mx-auto mb-2" />
+            <p className="text-sm">No fonts detected yet</p>
+          </div>
+        )}
+      </div>
 
-              {/* Advanced AI Scanning Visualizations */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <AIReasoningDisplay isActive={true} progress={progress} metrics={metrics} />
-                <LiveDOMScanner isActive={true} progress={progress} metrics={metrics} />
-              </div>
+      {/* Spacing Section */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-foreground">Spacing</h2>
+        {isLoading && (!tokens.spacing || tokens.spacing.length === 0) ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-16 bg-grep-2 rounded-lg animate-pulse" />
+            ))}
+          </div>
+        ) : tokens.spacing && tokens.spacing.length > 0 ? (
+          <TokenGrid tokens={tokens.spacing} type="spacing" columns={4} onCopy={onCopy} />
+        ) : (
+          <div className="text-center py-8 text-grep-7">
+            <div className="w-12 h-4 bg-grep-2 mx-auto mb-2" />
+            <p className="text-sm">No spacing detected yet</p>
+          </div>
+        )}
+      </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <DesignDNAHelix isActive={true} progress={progress} metrics={metrics} />
-                <NeuralTokenNetwork isActive={true} />
-              </div>
+      {/* Border Radius Section */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-foreground">Border Radius</h2>
+        {isLoading && (!tokens.radius || tokens.radius.length === 0) ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-16 bg-grep-2 rounded-lg animate-pulse" />
+            ))}
+          </div>
+        ) : tokens.radius && tokens.radius.length > 0 ? (
+          <TokenGrid tokens={tokens.radius} type="radius" columns={4} onCopy={onCopy} />
+        ) : (
+          <div className="text-center py-8 text-grep-7">
+            <div className="w-12 h-12 rounded-full bg-grep-2 mx-auto mb-2" />
+            <p className="text-sm">No border radius detected yet</p>
+          </div>
+        )}
+      </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <AIInsightsStream isActive={true} progress={progress} metrics={metrics} />
-                <ScanningRadar isActive={true} progress={progress} metrics={metrics} />
-              </div>
+      {/* Shadows Section */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-foreground">Shadows</h2>
+        {isLoading && (!tokens.shadows || tokens.shadows.length === 0) ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-20 bg-grep-2 rounded-lg animate-pulse" />
+            ))}
+          </div>
+        ) : tokens.shadows && tokens.shadows.length > 0 ? (
+          <TokenGrid tokens={tokens.shadows} type="shadow" columns={3} onCopy={onCopy} />
+        ) : (
+          <div className="text-center py-8 text-grep-7">
+            <div className="w-12 h-12 bg-grep-2 mx-auto mb-2 shadow-lg" />
+            <p className="text-sm">No shadows detected yet</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
-              <ScreenshotsSkeleton ref={(el) => { sectionRefs.current['screenshots'] = el }} />
-              <AnalysisSkeleton ref={(el) => { sectionRefs.current['analysis'] = el }} />
-              <ComponentsSkeleton ref={(el) => { sectionRefs.current['components'] = el }} />
-              <RealtimeTokensSkeleton ref={(el) => { sectionRefs.current['tokens'] = el }} />
-              <TypographySkeleton ref={(el) => { sectionRefs.current['typography'] = el }} />
-              <BrandSkeleton ref={(el) => { sectionRefs.current['brand'] = el }} />
-              <LayoutSkeleton ref={(el) => { sectionRefs.current['layout'] = el }} />
-            </>
-          ) : (
-            <>
+// Components Tab
+function ComponentsTab({ result, isLoading, onCopy }: any) {
+  const componentLibrary = result?.componentLibrary
+  const { components = [], summary = {} } = componentLibrary || {}
 
-
-          {/* Overview Section */}
-          <section
-            id="overview"
-            ref={(el) => { sectionRefs.current['overview'] = el }}
-            className="mb-8"
-          >
-            {/* Minimal Header - Vercel style */}
-            <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 gap-4">
-              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                {isLoading && !result ? (
-                  <>
-                    <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                    <div className="h-7 w-48 bg-grep-2 animate-pulse rounded" />
-                  </>
-                ) : (
-                  <>
-                    <div className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
-                    <h1 className="text-xl font-medium text-foreground break-all">
-                      {result?.domain}
-                    </h1>
-                  </>
-                )}
-                {result?.versionInfo && (
-                  <>
-                    <span className="text-grep-7 hidden sm:inline">·</span>
-                    <Badge variant="secondary" className="h-6 font-mono text-xs">
-                      v{result.versionInfo.versionNumber}
-                    </Badge>
-                    {result.versionInfo.isNewVersion && result.versionInfo.changeCount > 0 && (
-                      <Badge variant="outline" className="h-6 font-mono text-xs border-blue-300 dark:border-blue-900 text-blue-700 dark:text-blue-400">
-                        {result.versionInfo.changeCount} changes
-                      </Badge>
-                    )}
-                  </>
-                )}
-              </div>
-              {result && (
-                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                  {result?.versionInfo?.diff && result.versionInfo.changeCount > 0 && onToggleDiff && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={onToggleDiff}
-                      className="h-8 px-3 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
-                    >
-                      <History className="h-3.5 w-3.5 sm:mr-1.5" />
-                      <span className="hidden sm:inline">{showDiff ? 'Hide Changes' : 'View Changes'}</span>
-                    </Button>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onCopy(JSON.stringify(result?.curatedTokens, null, 2))}
-                    className="h-8 px-3 text-xs font-medium border-grep-3 hover:border-grep-4 hover:bg-grep-1"
-                  >
-                    <Copy className="h-3.5 w-3.5 sm:mr-1.5" />
-                    <span className="hidden sm:inline">Copy</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onShare}
-                    className="hidden md:inline-flex h-8 px-3 text-xs font-medium border-grep-3 hover:border-grep-4 hover:bg-grep-1"
-                  >
-                    <Share2 className="h-3.5 w-3.5 mr-1.5" />
-                    Share
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-3 text-xs font-medium border-grep-3 hover:border-grep-4 hover:bg-grep-1"
-                      >
-                        <Download className="h-3.5 w-3.5 sm:mr-1.5" />
-                        <span className="hidden sm:inline">Export</span>
-                        <ChevronDown className="h-3 w-3 sm:ml-1.5 opacity-60" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuLabel className="font-mono text-[10px] uppercase tracking-wider text-grep-9">
-                        Common Formats
-                      </DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => onExport('json')} className="font-mono text-xs">
-                        <Download className="h-3.5 w-3.5 mr-2" />
-                        JSON
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onExport('css')} className="font-mono text-xs">
-                        <Download className="h-3.5 w-3.5 mr-2" />
-                        CSS
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onExport('scss')} className="font-mono text-xs">
-                        <Download className="h-3.5 w-3.5 mr-2" />
-                        SCSS
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onExport('js')} className="font-mono text-xs">
-                        <Download className="h-3.5 w-3.5 mr-2" />
-                        JavaScript
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onExport('ts')} className="font-mono text-xs">
-                        <Download className="h-3.5 w-3.5 mr-2" />
-                        TypeScript
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuLabel className="font-mono text-[10px] uppercase tracking-wider text-grep-9">
-                        Design Tools
-                      </DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => onExport('figma')} className="font-mono text-xs">
-                        <Download className="h-3.5 w-3.5 mr-2" />
-                        Figma
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onExport('xd')} className="font-mono text-xs">
-                        <Download className="h-3.5 w-3.5 mr-2" />
-                        Adobe XD
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuLabel className="font-mono text-[10px] uppercase tracking-wider text-grep-9">
-                        Platform-Specific
-                      </DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => onExport('swift')} className="font-mono text-xs">
-                        <Download className="h-3.5 w-3.5 mr-2" />
-                        Swift (iOS)
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onExport('android')} className="font-mono text-xs">
-                        <Download className="h-3.5 w-3.5 mr-2" />
-                        Android XML
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onExport('tailwind')} className="font-mono text-xs">
-                        <Download className="h-3.5 w-3.5 mr-2" />
-                        Tailwind Config
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              )}
-            </div>
-
-
-            {/* Enhanced Stats Grid with Visual Indicators */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8">
-              {/* Tokens Count */}
-              <div className="group relative p-3 sm:p-5 rounded-lg border border-grep-3 bg-gradient-to-br from-grep-0 to-grep-1 hover:border-blue-400 hover:shadow-lg transition-all duration-300">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="text-3xl font-bold tabular-nums text-foreground">
-                    {isLoading ? (
-                      <div className="h-9 w-20 bg-grep-2 animate-pulse rounded" />
-                    ) : (
-                      result?.summary?.tokensExtracted || 0
-                    )}
-                  </div>
-                  <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                </div>
-                <div className="text-xs text-grep-9 font-semibold tracking-wide uppercase mb-2">Design Tokens</div>
-                {!isLoading && result?.summary?.curatedCount && (
-                  <div className="text-[10px] text-grep-7 font-mono">
-                    {result.summary.curatedCount.colors}c · {result.summary.curatedCount.fonts}f · {result.summary.curatedCount.spacing}s
-                  </div>
-                )}
-              </div>
-
-              {/* Confidence Score */}
-              <div className="group relative p-3 sm:p-5 rounded-lg border border-grep-3 bg-gradient-to-br from-grep-0 to-grep-1 hover:border-green-400 hover:shadow-lg transition-all duration-300">
-                <div className="flex items-start justify-between mb-3">
-                  <div className={cn(
-                    "text-3xl font-bold tabular-nums transition-colors",
-                    isLoading ? "" :
-                    (result?.summary?.confidence || 0) >= 80 ? "text-green-600 dark:text-green-500" :
-                    (result?.summary?.confidence || 0) >= 60 ? "text-blue-600 dark:text-blue-500" :
-                    "text-orange-600 dark:text-orange-500"
-                  )}>
-                    {isLoading ? (
-                      <div className="h-9 w-20 bg-grep-2 animate-pulse rounded" />
-                    ) : (
-                      `${result?.summary?.confidence || 0}%`
-                    )}
-                  </div>
-                  <div className={cn(
-                    "w-2 h-2 rounded-full",
-                    isLoading ? "bg-blue-500 animate-pulse" :
-                    (result?.summary?.confidence || 0) >= 80 ? "bg-green-500" :
-                    (result?.summary?.confidence || 0) >= 60 ? "bg-blue-500" :
-                    "bg-orange-500"
-                  )} />
-                </div>
-                <div className="text-xs text-grep-9 font-semibold tracking-wide uppercase mb-2">Confidence</div>
-                {!isLoading && (
-                  <div className="w-full h-1.5 bg-grep-2 rounded-full overflow-hidden">
-                    <div
-                      className={cn(
-                        "h-full rounded-full transition-all duration-1000 ease-out",
-                        (result?.summary?.confidence || 0) >= 80 ? "bg-green-500" :
-                        (result?.summary?.confidence || 0) >= 60 ? "bg-blue-500" :
-                        "bg-orange-500"
-                      )}
-                      style={{ width: `${result?.summary?.confidence || 0}%` }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Completeness */}
-              <div className="group relative p-3 sm:p-5 rounded-lg border border-grep-3 bg-gradient-to-br from-grep-0 to-grep-1 hover:border-purple-400 hover:shadow-lg transition-all duration-300">
-                <div className="flex items-start justify-between mb-3">
-                  <div className={cn(
-                    "text-3xl font-bold tabular-nums transition-colors",
-                    isLoading ? "" :
-                    (result?.summary?.completeness || 0) >= 80 ? "text-purple-600 dark:text-purple-500" :
-                    (result?.summary?.completeness || 0) >= 60 ? "text-blue-600 dark:text-blue-500" :
-                    "text-orange-600 dark:text-orange-500"
-                  )}>
-                    {isLoading ? (
-                      <div className="h-9 w-20 bg-grep-2 animate-pulse rounded" />
-                    ) : (
-                      `${result?.summary?.completeness || 0}%`
-                    )}
-                  </div>
-                  <div className={cn(
-                    "w-2 h-2 rounded-full",
-                    isLoading ? "bg-blue-500 animate-pulse" :
-                    (result?.summary?.completeness || 0) >= 80 ? "bg-purple-500" :
-                    (result?.summary?.completeness || 0) >= 60 ? "bg-blue-500" :
-                    "bg-orange-500"
-                  )} />
-                </div>
-                <div className="text-xs text-grep-9 font-semibold tracking-wide uppercase mb-2">Completeness</div>
-                {!isLoading && (
-                  <div className="w-full h-1.5 bg-grep-2 rounded-full overflow-hidden">
-                    <div
-                      className={cn(
-                        "h-full rounded-full transition-all duration-1000 ease-out",
-                        (result?.summary?.completeness || 0) >= 80 ? "bg-purple-500" :
-                        (result?.summary?.completeness || 0) >= 60 ? "bg-blue-500" :
-                        "bg-orange-500"
-                      )}
-                      style={{ width: `${result?.summary?.completeness || 0}%` }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Reliability */}
-              <div className="group relative p-3 sm:p-5 rounded-lg border border-grep-3 bg-gradient-to-br from-grep-0 to-grep-1 hover:border-cyan-400 hover:shadow-lg transition-all duration-300">
-                <div className="flex items-start justify-between mb-3">
-                  <div className={cn(
-                    "text-3xl font-bold tabular-nums transition-colors",
-                    isLoading ? "" :
-                    (result?.summary?.reliability || 0) >= 80 ? "text-cyan-600 dark:text-cyan-500" :
-                    (result?.summary?.reliability || 0) >= 60 ? "text-blue-600 dark:text-blue-500" :
-                    "text-orange-600 dark:text-orange-500"
-                  )}>
-                    {isLoading ? (
-                      <div className="h-9 w-20 bg-grep-2 animate-pulse rounded" />
-                    ) : (
-                      `${result?.summary?.reliability || 0}%`
-                    )}
-                  </div>
-                  <div className={cn(
-                    "w-2 h-2 rounded-full",
-                    isLoading ? "bg-blue-500 animate-pulse" :
-                    (result?.summary?.reliability || 0) >= 80 ? "bg-cyan-500" :
-                    (result?.summary?.reliability || 0) >= 60 ? "bg-blue-500" :
-                    "bg-orange-500"
-                  )} />
-                </div>
-                <div className="text-xs text-grep-9 font-semibold tracking-wide uppercase mb-2">Reliability</div>
-                {!isLoading && (
-                  <div className="w-full h-1.5 bg-grep-2 rounded-full overflow-hidden">
-                    <div
-                      className={cn(
-                        "h-full rounded-full transition-all duration-1000 ease-out",
-                        (result?.summary?.reliability || 0) >= 80 ? "bg-cyan-500" :
-                        (result?.summary?.reliability || 0) >= 60 ? "bg-blue-500" :
-                        "bg-orange-500"
-                      )}
-                      style={{ width: `${result?.summary?.reliability || 0}%` }}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Version Diff */}
-            {showDiff && result?.versionInfo?.diff && (
-              <div className="mb-6">
-                <TokenDiffViewer
-                  diff={result.versionInfo.diff}
-                  oldVersion={result.versionInfo.previousVersionNumber || 1}
-                  newVersion={result.versionInfo.versionNumber}
-                  domain={result.domain || ''}
-                  onCopy={onCopy}
-                  onExport={() => {
-                    const blob = new Blob([JSON.stringify(result.versionInfo.diff, null, 2)], { type: "application/json" })
-                    const url = URL.createObjectURL(blob)
-                    const anchor = document.createElement("a")
-                    anchor.href = url
-                    anchor.download = `${result.domain}-v${result.versionInfo.previousVersionNumber}-to-v${result.versionInfo.versionNumber}-diff.json`
-                    document.body.appendChild(anchor)
-                    anchor.click()
-                    anchor.remove()
-                  }}
-                />
-              </div>
+  return (
+    <div className="space-y-6">
+      {/* Summary */}
+      <div className="rounded-lg border border-grep-2 bg-grep-0 p-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+          <div>
+            {isLoading && !summary.totalComponents ? (
+              <div className="text-2xl font-bold bg-grep-2 h-8 w-12 mx-auto rounded animate-pulse mb-1" />
+            ) : (
+              <div className="text-2xl font-bold text-foreground">{summary.totalComponents || 0}</div>
             )}
-          </section>
-
-          {/* Screenshots Section - Moved to Top */}
-          {isLoading && !result ? (
-            <section
-              id="screenshots"
-              ref={(el) => { sectionRefs.current['screenshots'] = el }}
-              className="mb-8"
-            >
-              <div className="h-5 w-32 bg-grep-2 animate-pulse rounded mb-4" />
-              <div className="aspect-video bg-grep-2 animate-pulse rounded" />
-            </section>
-          ) : result && scanId && (
-            <section
-              id="screenshots"
-              ref={(el) => { sectionRefs.current['screenshots'] = el }}
-              className="mb-8"
-            >
-              <ScreenshotGallery scanId={scanId} />
-            </section>
-          )}
-
-          {/* AI Analysis Section */}
-          {isLoading && !result?.designSystemSpec ? (
-            <section
-              id="analysis"
-              ref={(el) => { sectionRefs.current['analysis'] = el }}
-              className="mb-8"
-            >
-              <div className="h-5 w-32 bg-grep-2 animate-pulse rounded mb-4" />
-              <div className="space-y-3">
-                <div className="h-24 bg-grep-2 animate-pulse rounded" />
-                <div className="h-24 bg-grep-2 animate-pulse rounded" />
-              </div>
-            </section>
-          ) : result?.designSystemSpec && (
-            <section
-              id="analysis"
-              ref={(el) => { sectionRefs.current['analysis'] = el }}
-              className="mb-8"
-            >
-              <DesignSystemSpecDisplay spec={result.designSystemSpec} onCopy={onCopy} />
-            </section>
-          )}
-
-          {/* Component Library Section */}
-          {isLoading && !result ? (
-            <section
-              id="components"
-              ref={(el) => { sectionRefs.current['components'] = el }}
-              className="mb-8"
-            >
-              <div className="h-5 w-32 bg-grep-2 animate-pulse rounded mb-4" />
-              <div className="space-y-3">
-                <div className="h-24 bg-grep-2 animate-pulse rounded" />
-                <div className="h-24 bg-grep-2 animate-pulse rounded" />
-              </div>
-            </section>
-          ) : result?.componentLibrary && (
-            <section
-              id="components"
-              ref={(el) => { sectionRefs.current['components'] = el }}
-              className="mb-8"
-            >
-              <h2 className="text-lg font-semibold font-mono text-foreground mb-4 flex items-center gap-2">
-                <Code2 className="h-5 w-5" />
-                Advanced Component Library
-              </h2>
-              <AdvancedComponentLibrary componentLibrary={result.componentLibrary} onCopy={onCopy} />
-            </section>
-          )}
-
-          {/* Design Tokens Section */}
-          {isLoading && !result?.curatedTokens ? (
-            <section
-              id="tokens"
-              ref={(el) => { sectionRefs.current['tokens'] = el }}
-              className="mb-8"
-            >
-              <div className="h-5 w-32 bg-grep-2 animate-pulse rounded mb-4" />
-              <div className="space-y-3">
-                <div className="h-32 bg-grep-2 animate-pulse rounded" />
-                <div className="h-32 bg-grep-2 animate-pulse rounded" />
-                <div className="h-32 bg-grep-2 animate-pulse rounded" />
-              </div>
-            </section>
-          ) : result?.curatedTokens && (
-            <section
-              id="tokens"
-              ref={(el) => { sectionRefs.current['tokens'] = el }}
-              className="mb-8"
-            >
-              <h2 className="text-lg font-semibold font-mono text-foreground mb-4 flex items-center gap-2">
-                <Palette className="h-5 w-5" />
-                Design Tokens
-              </h2>
-              <TokenResultsDisplay
-                tokens={result.curatedTokens}
-                domain={result.domain || ''}
-                onCopy={onCopy}
-                onExport={(category) => {
-                  const categoryData = category === 'typography'
-                    ? result.curatedTokens.typography?.families
-                    : result.curatedTokens[category as keyof typeof result.curatedTokens]
-                  if (categoryData) {
-                    const blob = new Blob([JSON.stringify(categoryData, null, 2)], { type: "application/json" })
-                    const url = URL.createObjectURL(blob)
-                    const anchor = document.createElement("a")
-                    anchor.href = url
-                    anchor.download = `${result.domain}-${category}.json`
-                    document.body.appendChild(anchor)
-                    anchor.click()
-                    anchor.remove()
-                  }
-                }}
-              />
-            </section>
-          )}
-
-          {/* Typography Section */}
-          {isLoading && !result?.curatedTokens?.typography ? (
-            <section
-              id="typography"
-              ref={(el) => { sectionRefs.current['typography'] = el }}
-              className="mb-8"
-            >
-              <div className="h-5 w-32 bg-grep-2 animate-pulse rounded mb-4" />
-              <div className="space-y-3">
-                <div className="h-24 bg-grep-2 animate-pulse rounded" />
-                <div className="h-24 bg-grep-2 animate-pulse rounded" />
-              </div>
-            </section>
-          ) : result?.curatedTokens?.typography && (
-            <section
-              id="typography"
-              ref={(el) => { sectionRefs.current['typography'] = el }}
-              className="mb-8"
-            >
-              <h2 className="text-lg font-semibold font-mono text-foreground mb-4 flex items-center gap-2">
-                <Type className="h-5 w-5" />
-                Typography
-              </h2>
-              <TypographySection typography={result.curatedTokens.typography} onCopy={onCopy} />
-            </section>
-          )}
-
-          {/* Brand Analysis Section */}
-          {isLoading && !result?.brandAnalysis ? (
-            <section
-              id="brand"
-              ref={(el) => { sectionRefs.current['brand'] = el }}
-              className="mb-8"
-            >
-              <div className="h-5 w-32 bg-grep-2 animate-pulse rounded mb-4" />
-              <div className="space-y-3">
-                <div className="h-32 bg-grep-2 animate-pulse rounded" />
-              </div>
-            </section>
-          ) : result?.brandAnalysis && (
-            <section
-              id="brand"
-              ref={(el) => { sectionRefs.current['brand'] = el }}
-              className="mb-8"
-            >
-              <h2 className="text-lg font-semibold font-mono text-foreground mb-4 flex items-center gap-2">
-                <Box className="h-5 w-5" />
-                Brand Analysis
-              </h2>
-              <BrandAnalysisSection brandAnalysis={result.brandAnalysis} />
-            </section>
-          )}
-
-          {/* Layout Patterns Section */}
-          {isLoading && !result?.layoutDNA ? (
-            <section
-              id="layout"
-              ref={(el) => { sectionRefs.current['layout'] = el }}
-              className="mb-8"
-            >
-              <div className="h-5 w-32 bg-grep-2 animate-pulse rounded mb-4" />
-              <div className="space-y-3">
-                <div className="h-24 bg-grep-2 animate-pulse rounded" />
-                <div className="h-24 bg-grep-2 animate-pulse rounded" />
-              </div>
-            </section>
-          ) : result?.layoutDNA && (
-            <section
-              id="layout"
-              ref={(el) => { sectionRefs.current['layout'] = el }}
-              className="mb-8"
-            >
-              <h2 className="text-lg font-semibold font-mono text-foreground mb-4 flex items-center gap-2">
-                <Grid3x3 className="h-5 w-5" />
-                Layout Patterns
-              </h2>
-              <LayoutPatternsSection layoutDNA={result.layoutDNA} />
-            </section>
-          )}
-
-            </>
-          )}
-
+            <div className="text-xs text-grep-7 uppercase tracking-wide">Total Components</div>
+          </div>
+          <div>
+            {isLoading && !summary.averageConfidence ? (
+              <div className="text-2xl font-bold bg-grep-2 h-8 w-12 mx-auto rounded animate-pulse mb-1" />
+            ) : (
+              <div className="text-2xl font-bold text-foreground">{summary.averageConfidence || 0}%</div>
+            )}
+            <div className="text-xs text-grep-7 uppercase tracking-wide">Avg Confidence</div>
+          </div>
+          <div>
+            {isLoading && !summary.detectionAccuracy ? (
+              <div className="text-2xl font-bold bg-grep-2 h-8 w-16 mx-auto rounded animate-pulse mb-1" />
+            ) : (
+              <div className="text-2xl font-bold text-foreground capitalize">{summary.detectionAccuracy || "N/A"}</div>
+            )}
+            <div className="text-xs text-grep-7 uppercase tracking-wide">Detection Quality</div>
+          </div>
+          <div>
+            {isLoading && !summary.byType ? (
+              <div className="text-2xl font-bold bg-grep-2 h-8 w-8 mx-auto rounded animate-pulse mb-1" />
+            ) : (
+              <div className="text-2xl font-bold text-foreground">{summary.byType ? Object.keys(summary.byType).length : 0}</div>
+            )}
+            <div className="text-xs text-grep-7 uppercase tracking-wide">Component Types</div>
+          </div>
         </div>
-      </main>
+      </div>
+
+      {/* Component List */}
+      <div className="space-y-3">
+        {isLoading && components.length === 0 ? (
+          // Loading skeleton
+          [...Array(3)].map((_, i) => (
+            <div key={i} className="h-24 bg-grep-2 rounded-lg animate-pulse" />
+          ))
+        ) : components.length > 0 ? (
+          components.map((component: any, index: number) => (
+            <ComponentShowcase
+              key={index}
+              type={component.type}
+              variant={component.variant}
+              confidence={Math.min(100, Math.round(component.confidence))}
+              usage={component.usage}
+              tokens={component.tokens}
+              examples={component.examples}
+              onCopy={onCopy}
+            />
+          ))
+        ) : (
+          <div className="text-center py-8 text-grep-7">
+            <div className="w-12 h-12 rounded bg-grep-2 mx-auto mb-2" />
+            <p className="text-sm">No components detected yet</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Analysis Tab
+function AnalysisTab({ result, isLoading }: any) {
+  const analysis = result?.comprehensiveAnalysis
+
+  return (
+    <div className="space-y-8">
+      {/* Design System Score */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-foreground">Design System Maturity</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <MetricCard
+            label="Overall"
+            value={`${analysis?.designSystemScore?.overall || 0}%`}
+            status={analysis?.designSystemScore?.overall >= 70 ? "success" : "info"}
+            progress={analysis?.designSystemScore?.overall}
+            isLoading={isLoading && !analysis?.designSystemScore}
+          />
+          <MetricCard
+            label="Completeness"
+            value={`${analysis?.designSystemScore?.completeness || 0}%`}
+            status={analysis?.designSystemScore?.completeness >= 70 ? "success" : "info"}
+            progress={analysis?.designSystemScore?.completeness}
+            isLoading={isLoading && !analysis?.designSystemScore}
+          />
+          <MetricCard
+            label="Consistency"
+            value={`${analysis?.designSystemScore?.consistency || 0}%`}
+            status={analysis?.designSystemScore?.consistency >= 70 ? "success" : "info"}
+            progress={analysis?.designSystemScore?.consistency}
+            isLoading={isLoading && !analysis?.designSystemScore}
+          />
+          <MetricCard
+            label="Scalability"
+            value={`${analysis?.designSystemScore?.scalability || 0}%`}
+            status={analysis?.designSystemScore?.scalability >= 70 ? "success" : "info"}
+            progress={analysis?.designSystemScore?.scalability}
+            isLoading={isLoading && !analysis?.designSystemScore}
+          />
+        </div>
+      </div>
+
+      {/* Component Architecture */}
+      {analysis?.componentArchitecture && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Component Architecture</h2>
+          <InsightCard
+            title="Detected Patterns"
+            description={`${analysis.componentArchitecture?.detectedPatterns?.length || 0} patterns found with ${analysis.componentArchitecture?.reusability || 0}% reusability score.`}
+            icon={Target}
+            severity="info"
+            metrics={[
+              { label: "Complexity", value: analysis.componentArchitecture?.complexity || "Unknown" },
+              { label: "Button Variants", value: analysis.componentArchitecture?.buttonVariants?.length || 0 }
+            ]}
+          />
+        </div>
+      )}
+
+      {/* Accessibility */}
+      {analysis?.accessibility && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Accessibility Audit</h2>
+          <div className="grid gap-4">
+            <InsightCard
+              title={`WCAG ${analysis.accessibility?.wcagLevel || "Unknown"} Compliance`}
+              description={`Overall accessibility score: ${analysis.accessibility?.overallScore || 0}%. ${analysis.accessibility?.contrastIssues?.length || 0} contrast issues detected.`}
+              icon={Shield}
+              severity={analysis.accessibility?.wcagLevel === "AAA" ? "info" : analysis.accessibility?.wcagLevel === "AA" ? "medium" : "high"}
+              metrics={[
+                { label: "Contrast Issues", value: analysis.accessibility?.contrastIssues?.length || 0 },
+                { label: "Focus Quality", value: analysis.accessibility?.focusIndicators?.quality || "Unknown" }
+              ]}
+            />
+
+            {analysis.accessibility?.contrastIssues?.slice(0, 3).map((issue: any, i: number) => (
+              <InsightCard
+                key={i}
+                title="Contrast Issue"
+                description={`${issue.foreground} on ${issue.background} has ratio ${issue.ratio.toFixed(1)}`}
+                severity="warning"
+                recommendation={issue.recommendation}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Brand Identity */}
+      {analysis?.brandIdentity && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Brand Analysis</h2>
+          <InsightCard
+            title="Brand Personality"
+            description={`${analysis.brandIdentity?.colorPersonality || "Unknown"} with ${analysis.brandIdentity?.typographicVoice?.toLowerCase() || "unknown"} typography.`}
+            icon={Sparkles}
+            severity="info"
+            metrics={[
+              { label: "Visual Style", value: analysis.brandIdentity?.visualStyle?.join(", ") || "Unknown" },
+              { label: "Industry", value: analysis.brandIdentity?.industryAlignment || "Unknown" }
+            ]}
+          />
+        </div>
+      )}
+
+      {/* Design Patterns */}
+      {analysis?.designPatterns && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Design Patterns</h2>
+          <div className="grid gap-3">
+            {analysis.designPatterns?.identified?.map((pattern: any, i: number) => (
+              <InsightCard
+                key={i}
+                title={pattern.pattern}
+                description={`Confidence: ${pattern.confidence}%. Examples: ${pattern.examples.slice(0, 3).join(", ")}`}
+                severity="info"
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Anti-patterns */}
+      {analysis?.designPatterns?.antiPatterns && analysis?.designPatterns?.antiPatterns?.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Anti-Patterns Detected</h2>
+          <div className="grid gap-3">
+            {analysis.designPatterns?.antiPatterns?.map((antiPattern: any, i: number) => (
+              <InsightCard
+                key={i}
+                title={antiPattern.issue}
+                description=""
+                severity={antiPattern.severity}
+                recommendation={antiPattern.recommendation}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Layout Tab
+function LayoutTab({ result, isLoading }: any) {
+  return (
+    <div className="space-y-6">
+      <h2 className="text-lg font-semibold text-foreground">Layout DNA Analysis</h2>
+      <div className="rounded-lg border border-grep-2 bg-grep-0 p-6">
+        {isLoading && !result?.layoutDNA ? (
+          <div className="space-y-3">
+            <div className="h-4 bg-grep-2 rounded animate-pulse w-3/4" />
+            <div className="h-4 bg-grep-2 rounded animate-pulse w-1/2" />
+            <div className="h-4 bg-grep-2 rounded animate-pulse w-2/3" />
+            <div className="h-4 bg-grep-2 rounded animate-pulse w-1/3" />
+          </div>
+        ) : result?.layoutDNA ? (
+          <pre className="text-xs font-mono text-grep-9 overflow-auto">
+            {JSON.stringify(result.layoutDNA, null, 2)}
+          </pre>
+        ) : (
+          <div className="text-center py-8 text-grep-7">
+            <div className="w-12 h-12 bg-grep-2 mx-auto mb-2 rounded" />
+            <p className="text-sm">Layout analysis pending...</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Recommendations Tab
+function RecommendationsTab({ result, isLoading }: any) {
+  const recommendations = result?.comprehensiveAnalysis?.recommendations
+
+  return (
+    <div className="space-y-8">
+      {/* Critical Issues */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <AlertCircle className="h-5 w-5 text-red-600" />
+          Critical Issues
+        </h2>
+        <div className="grid gap-3">
+          {isLoading && (!recommendations?.critical || recommendations.critical.length === 0) ? (
+            [...Array(2)].map((_, i) => (
+              <div key={i} className="h-20 bg-grep-2 rounded-lg animate-pulse" />
+            ))
+          ) : recommendations?.critical && recommendations.critical.length > 0 ? (
+            recommendations.critical.map((issue: any, i: number) => (
+              <InsightCard
+                key={i}
+                title={issue.issue}
+                description=""
+                severity="critical"
+                recommendation={issue.solution}
+              />
+            ))
+          ) : (
+            <div className="text-center py-8 text-grep-7">
+              <div className="w-12 h-12 bg-green-100 rounded-full mx-auto mb-2 flex items-center justify-center">
+                <Shield className="w-6 h-6 text-green-600" />
+              </div>
+              <p className="text-sm">No critical issues detected</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Quick Wins */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <Lightbulb className="h-5 w-5 text-yellow-600" />
+          Quick Wins
+        </h2>
+        <div className="grid gap-3">
+          {isLoading && (!recommendations?.quick_wins || recommendations.quick_wins.length === 0) ? (
+            [...Array(3)].map((_, i) => (
+              <div key={i} className="h-16 bg-grep-2 rounded-lg animate-pulse" />
+            ))
+          ) : recommendations?.quick_wins && recommendations.quick_wins.length > 0 ? (
+            recommendations.quick_wins.map((win: any, i: number) => (
+              <InsightCard
+                key={i}
+                title={win.title}
+                description={win.description}
+                severity="info"
+                impact={win.impact}
+                effort={win.effort}
+              />
+            ))
+          ) : (
+            <div className="text-center py-8 text-grep-7">
+              <div className="w-12 h-12 bg-yellow-100 rounded-full mx-auto mb-2 flex items-center justify-center">
+                <Lightbulb className="w-6 h-6 text-yellow-600" />
+              </div>
+              <p className="text-sm">Analyzing opportunities...</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Long-term Improvements */}
+      {recommendations.long_term && recommendations.long_term.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <Target className="h-5 w-5 text-blue-600" />
+            Long-term Improvements
+          </h2>
+          <div className="grid gap-3">
+            {recommendations.long_term.map((improvement: any, i: number) => (
+              <InsightCard
+                key={i}
+                title={improvement.title}
+                description={improvement.description}
+                severity="info"
+                impact={improvement.impact}
+                effort={improvement.effort}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Screenshots Tab
+function ScreenshotsTab({ scanId, isLoading }: { scanId: string | null; isLoading: boolean }) {
+  return (
+    <div className="space-y-4">
+      <h2 className="text-lg font-semibold text-foreground">Multi-Viewport Screenshots</h2>
+      {!scanId && isLoading ? (
+        <div className="text-center py-8 text-grep-7">
+          <div className="w-12 h-12 bg-grep-2 mx-auto mb-2 rounded animate-pulse" />
+          <p className="text-sm">Initializing scan...</p>
+        </div>
+      ) : scanId ? (
+        <ScreenshotGallery scanId={scanId} />
+      ) : (
+        <div className="text-center py-8 text-grep-7">
+          <div className="w-12 h-12 bg-grep-2 mx-auto mb-2 rounded" />
+          <p className="text-sm">No scan ID available for screenshots</p>
+        </div>
+      )}
     </div>
   )
 }

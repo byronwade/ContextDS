@@ -1,0 +1,376 @@
+{"version":8,"type":"context-options","origin":"library","browserName":"","options":{},"platform":"darwin","wallTime":1759316069857,"monotonicTime":99469.019,"sdkLanguage":"javascript","contextId":"request-context@d05025020e24cae4eb538472537badd8","title":"e2e/stress-advanced.spec.ts:99 › Soak Testing - Long-Running Stability › should maintain stability over extended period"}
+{"type":"before","callId":"call@5","startTime":99472.874,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"fast\",\"mode\":\"fast\"}","timeout":30000},"stepId":"pw:api@27","beforeSnapshot":"before@call@5"}
+{"type":"log","callId":"call@5","time":99479.124,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@5","time":99479.137,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36"}
+{"type":"log","callId":"call@5","time":99479.141,"message":"  accept: */*"}
+{"type":"log","callId":"call@5","time":99479.145,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@5","time":99479.148,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@5","time":99479.154,"message":"  content-length: 60"}
+{"type":"before","callId":"call@7","startTime":99479.217,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"fast\",\"mode\":\"fast\"}","timeout":30000},"stepId":"pw:api@28","beforeSnapshot":"before@call@7"}
+{"type":"log","callId":"call@7","time":99479.569,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@7","time":99479.579,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36"}
+{"type":"log","callId":"call@7","time":99479.584,"message":"  accept: */*"}
+{"type":"log","callId":"call@7","time":99479.593,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@7","time":99479.598,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@7","time":99479.6,"message":"  content-length: 60"}
+{"type":"before","callId":"call@9","startTime":99479.65,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"fast\",\"mode\":\"fast\"}","timeout":30000},"stepId":"pw:api@29","beforeSnapshot":"before@call@9"}
+{"type":"log","callId":"call@9","time":99479.856,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@9","time":99479.863,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36"}
+{"type":"log","callId":"call@9","time":99479.865,"message":"  accept: */*"}
+{"type":"log","callId":"call@9","time":99479.868,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@9","time":99479.87,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@9","time":99479.872,"message":"  content-length: 60"}
+{"type":"log","callId":"call@5","time":99575.483,"message":"← 400 Bad Request"}
+{"type":"log","callId":"call@5","time":99575.502,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@5","time":99575.506,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@5","time":99575.509,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@5","time":99575.511,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@5","time":99575.514,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@5","time":99575.516,"message":"  cache-control: public, s-maxage=1, stale-while-revalidate=59"}
+{"type":"log","callId":"call@5","time":99575.519,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@5","time":99575.521,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@5","time":99575.524,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@5","time":99575.526,"message":"  x-ratelimit-reset: 2025-10-01T10:55:29.914Z"}
+{"type":"log","callId":"call@5","time":99575.53,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@5","time":99575.533,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@5","time":99575.535,"message":"  date: Wed, 01 Oct 2025 10:54:29 GMT"}
+{"type":"log","callId":"call@5","time":99575.537,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@5","time":99575.54,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@5","time":99575.542,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@5","endTime":99576.667,"result":{"response":{"url":"http://localhost:3000/api/scan","status":400,"statusText":"Bad Request","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"public, s-maxage=1, stale-while-revalidate=59"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2025-10-01T10:55:29.914Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Wed, 01 Oct 2025 10:54:29 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"fetchUid":"ce2189ef56475152bd6a670ef0e72d47"}},"afterSnapshot":"after@call@5"}
+{"type":"log","callId":"call@7","time":99627.091,"message":"← 400 Bad Request"}
+{"type":"log","callId":"call@7","time":99627.124,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@7","time":99627.127,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@7","time":99627.131,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@7","time":99627.134,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@7","time":99627.137,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@7","time":99627.139,"message":"  cache-control: public, s-maxage=1, stale-while-revalidate=59"}
+{"type":"log","callId":"call@7","time":99627.142,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@7","time":99627.145,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@7","time":99627.147,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@7","time":99627.156,"message":"  x-ratelimit-reset: 2025-10-01T10:55:29.915Z"}
+{"type":"log","callId":"call@7","time":99627.164,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@7","time":99627.171,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@7","time":99627.174,"message":"  date: Wed, 01 Oct 2025 10:54:29 GMT"}
+{"type":"log","callId":"call@7","time":99627.177,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@7","time":99627.179,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@7","time":99627.182,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@7","endTime":99628.577,"result":{"response":{"url":"http://localhost:3000/api/scan","status":400,"statusText":"Bad Request","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"public, s-maxage=1, stale-while-revalidate=59"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2025-10-01T10:55:29.915Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Wed, 01 Oct 2025 10:54:29 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"fetchUid":"1a2e6d3f9bf44c25de73fe64509767b1"}},"afterSnapshot":"after@call@7"}
+{"type":"log","callId":"call@9","time":99679.006,"message":"← 400 Bad Request"}
+{"type":"log","callId":"call@9","time":99679.018,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@9","time":99679.021,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@9","time":99679.024,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@9","time":99679.026,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@9","time":99679.027,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@9","time":99679.029,"message":"  cache-control: public, s-maxage=1, stale-while-revalidate=59"}
+{"type":"log","callId":"call@9","time":99679.03,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@9","time":99679.032,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@9","time":99679.033,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@9","time":99679.035,"message":"  x-ratelimit-reset: 2025-10-01T10:55:29.916Z"}
+{"type":"log","callId":"call@9","time":99679.036,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@9","time":99679.038,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@9","time":99679.04,"message":"  date: Wed, 01 Oct 2025 10:54:30 GMT"}
+{"type":"log","callId":"call@9","time":99679.042,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@9","time":99679.043,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@9","time":99679.045,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@9","endTime":99679.483,"result":{"response":{"url":"http://localhost:3000/api/scan","status":400,"statusText":"Bad Request","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"public, s-maxage=1, stale-while-revalidate=59"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2025-10-01T10:55:29.916Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Wed, 01 Oct 2025 10:54:30 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"fetchUid":"5348fac891c7cc90a3509c58d7e54988"}},"afterSnapshot":"after@call@9"}
+{"type":"before","callId":"call@11","startTime":104474.535,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"fast\",\"mode\":\"fast\"}","timeout":30000},"stepId":"pw:api@30","beforeSnapshot":"before@call@11"}
+{"type":"log","callId":"call@11","time":104475.167,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@11","time":104475.171,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36"}
+{"type":"log","callId":"call@11","time":104475.174,"message":"  accept: */*"}
+{"type":"log","callId":"call@11","time":104475.176,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@11","time":104475.178,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@11","time":104475.179,"message":"  content-length: 60"}
+{"type":"before","callId":"call@13","startTime":104475.317,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"fast\",\"mode\":\"fast\"}","timeout":30000},"stepId":"pw:api@31","beforeSnapshot":"before@call@13"}
+{"type":"log","callId":"call@13","time":104475.55,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@13","time":104475.554,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36"}
+{"type":"log","callId":"call@13","time":104475.556,"message":"  accept: */*"}
+{"type":"log","callId":"call@13","time":104475.558,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@13","time":104475.56,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@13","time":104475.561,"message":"  content-length: 60"}
+{"type":"before","callId":"call@15","startTime":104475.684,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"fast\",\"mode\":\"fast\"}","timeout":30000},"stepId":"pw:api@32","beforeSnapshot":"before@call@15"}
+{"type":"log","callId":"call@15","time":104475.89,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@15","time":104475.894,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36"}
+{"type":"log","callId":"call@15","time":104475.896,"message":"  accept: */*"}
+{"type":"log","callId":"call@15","time":104475.897,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@15","time":104475.899,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@15","time":104475.9,"message":"  content-length: 60"}
+{"type":"log","callId":"call@11","time":104526.756,"message":"← 400 Bad Request"}
+{"type":"log","callId":"call@11","time":104526.77,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@11","time":104526.772,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@11","time":104526.775,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@11","time":104526.777,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@11","time":104526.779,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@11","time":104526.78,"message":"  cache-control: public, s-maxage=1, stale-while-revalidate=59"}
+{"type":"log","callId":"call@11","time":104526.782,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@11","time":104526.783,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@11","time":104526.784,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@11","time":104526.786,"message":"  x-ratelimit-reset: 2025-10-01T10:55:34.865Z"}
+{"type":"log","callId":"call@11","time":104526.787,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@11","time":104526.789,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@11","time":104526.791,"message":"  date: Wed, 01 Oct 2025 10:54:34 GMT"}
+{"type":"log","callId":"call@11","time":104526.793,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@11","time":104526.794,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@11","time":104526.796,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@11","endTime":104527.203,"result":{"response":{"url":"http://localhost:3000/api/scan","status":400,"statusText":"Bad Request","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"public, s-maxage=1, stale-while-revalidate=59"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2025-10-01T10:55:34.865Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Wed, 01 Oct 2025 10:54:34 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"fetchUid":"a633675157e37fc69e691664ce2a4fbc"}},"afterSnapshot":"after@call@11"}
+{"type":"log","callId":"call@13","time":104581.798,"message":"← 400 Bad Request"}
+{"type":"log","callId":"call@13","time":104581.833,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@13","time":104581.836,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@13","time":104581.837,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@13","time":104581.839,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@13","time":104581.84,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@13","time":104581.842,"message":"  cache-control: public, s-maxage=1, stale-while-revalidate=59"}
+{"type":"log","callId":"call@13","time":104581.851,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@13","time":104581.853,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@13","time":104581.855,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@13","time":104581.856,"message":"  x-ratelimit-reset: 2025-10-01T10:55:34.866Z"}
+{"type":"log","callId":"call@13","time":104581.878,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@13","time":104581.88,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@13","time":104581.881,"message":"  date: Wed, 01 Oct 2025 10:54:34 GMT"}
+{"type":"log","callId":"call@13","time":104581.882,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@13","time":104581.884,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@13","time":104581.885,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@13","endTime":104582.539,"result":{"response":{"url":"http://localhost:3000/api/scan","status":400,"statusText":"Bad Request","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"public, s-maxage=1, stale-while-revalidate=59"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2025-10-01T10:55:34.866Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Wed, 01 Oct 2025 10:54:34 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"fetchUid":"bbf67a63e3c6a5e989173cc195ca733b"}},"afterSnapshot":"after@call@13"}
+{"type":"log","callId":"call@15","time":104633.92,"message":"← 400 Bad Request"}
+{"type":"log","callId":"call@15","time":104633.941,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@15","time":104633.944,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@15","time":104633.946,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@15","time":104633.947,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@15","time":104633.949,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@15","time":104633.95,"message":"  cache-control: public, s-maxage=1, stale-while-revalidate=59"}
+{"type":"log","callId":"call@15","time":104633.952,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@15","time":104633.953,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@15","time":104633.955,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@15","time":104633.958,"message":"  x-ratelimit-reset: 2025-10-01T10:55:34.867Z"}
+{"type":"log","callId":"call@15","time":104633.96,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@15","time":104633.961,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@15","time":104633.963,"message":"  date: Wed, 01 Oct 2025 10:54:34 GMT"}
+{"type":"log","callId":"call@15","time":104633.964,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@15","time":104633.966,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@15","time":104633.967,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@15","endTime":104634.318,"result":{"response":{"url":"http://localhost:3000/api/scan","status":400,"statusText":"Bad Request","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"public, s-maxage=1, stale-while-revalidate=59"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2025-10-01T10:55:34.867Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Wed, 01 Oct 2025 10:54:34 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"fetchUid":"5246e02141296eb909b0dcda8749a61b"}},"afterSnapshot":"after@call@15"}
+{"type":"before","callId":"call@17","startTime":109476.054,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"fast\",\"mode\":\"fast\"}","timeout":30000},"stepId":"pw:api@33","beforeSnapshot":"before@call@17"}
+{"type":"log","callId":"call@17","time":109476.679,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@17","time":109476.686,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36"}
+{"type":"log","callId":"call@17","time":109476.689,"message":"  accept: */*"}
+{"type":"log","callId":"call@17","time":109476.69,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@17","time":109476.692,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@17","time":109476.693,"message":"  content-length: 60"}
+{"type":"before","callId":"call@19","startTime":109476.95,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"fast\",\"mode\":\"fast\"}","timeout":30000},"stepId":"pw:api@34","beforeSnapshot":"before@call@19"}
+{"type":"log","callId":"call@19","time":109477.257,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@19","time":109477.26,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36"}
+{"type":"log","callId":"call@19","time":109477.262,"message":"  accept: */*"}
+{"type":"log","callId":"call@19","time":109477.265,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@19","time":109477.266,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@19","time":109477.268,"message":"  content-length: 60"}
+{"type":"before","callId":"call@21","startTime":109477.353,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"fast\",\"mode\":\"fast\"}","timeout":30000},"stepId":"pw:api@35","beforeSnapshot":"before@call@21"}
+{"type":"log","callId":"call@21","time":109477.94,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@21","time":109477.943,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36"}
+{"type":"log","callId":"call@21","time":109477.945,"message":"  accept: */*"}
+{"type":"log","callId":"call@21","time":109477.946,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@21","time":109477.948,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@21","time":109477.95,"message":"  content-length: 60"}
+{"type":"log","callId":"call@17","time":109530.937,"message":"← 400 Bad Request"}
+{"type":"log","callId":"call@17","time":109530.967,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@17","time":109530.97,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@17","time":109530.973,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@17","time":109530.975,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@17","time":109530.976,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@17","time":109530.978,"message":"  cache-control: public, s-maxage=1, stale-while-revalidate=59"}
+{"type":"log","callId":"call@17","time":109530.979,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@17","time":109530.981,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@17","time":109530.982,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@17","time":109530.984,"message":"  x-ratelimit-reset: 2025-10-01T10:55:39.867Z"}
+{"type":"log","callId":"call@17","time":109530.986,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@17","time":109530.988,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@17","time":109530.99,"message":"  date: Wed, 01 Oct 2025 10:54:39 GMT"}
+{"type":"log","callId":"call@17","time":109530.992,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@17","time":109530.993,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@17","time":109530.994,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@17","endTime":109531.48,"result":{"response":{"url":"http://localhost:3000/api/scan","status":400,"statusText":"Bad Request","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"public, s-maxage=1, stale-while-revalidate=59"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2025-10-01T10:55:39.867Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Wed, 01 Oct 2025 10:54:39 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"fetchUid":"bbecb1447e08c92b9b07226e85230314"}},"afterSnapshot":"after@call@17"}
+{"type":"log","callId":"call@19","time":109579.698,"message":"← 400 Bad Request"}
+{"type":"log","callId":"call@19","time":109579.713,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@19","time":109579.715,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@19","time":109579.717,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@19","time":109579.718,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@19","time":109579.72,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@19","time":109579.722,"message":"  cache-control: public, s-maxage=1, stale-while-revalidate=59"}
+{"type":"log","callId":"call@19","time":109579.723,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@19","time":109579.725,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@19","time":109579.728,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@19","time":109579.729,"message":"  x-ratelimit-reset: 2025-10-01T10:55:39.868Z"}
+{"type":"log","callId":"call@19","time":109579.731,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@19","time":109579.732,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@19","time":109579.734,"message":"  date: Wed, 01 Oct 2025 10:54:39 GMT"}
+{"type":"log","callId":"call@19","time":109579.735,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@19","time":109579.737,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@19","time":109579.738,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@19","endTime":109580.208,"result":{"response":{"url":"http://localhost:3000/api/scan","status":400,"statusText":"Bad Request","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"public, s-maxage=1, stale-while-revalidate=59"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2025-10-01T10:55:39.868Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Wed, 01 Oct 2025 10:54:39 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"fetchUid":"a184ce32200786582d84779eddeb4151"}},"afterSnapshot":"after@call@19"}
+{"type":"log","callId":"call@21","time":109622.181,"message":"← 400 Bad Request"}
+{"type":"log","callId":"call@21","time":109622.214,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@21","time":109622.217,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@21","time":109622.218,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@21","time":109622.245,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@21","time":109622.247,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@21","time":109622.249,"message":"  cache-control: public, s-maxage=1, stale-while-revalidate=59"}
+{"type":"log","callId":"call@21","time":109622.25,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@21","time":109622.252,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@21","time":109622.253,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@21","time":109622.255,"message":"  x-ratelimit-reset: 2025-10-01T10:55:39.873Z"}
+{"type":"log","callId":"call@21","time":109622.256,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@21","time":109622.262,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@21","time":109622.281,"message":"  date: Wed, 01 Oct 2025 10:54:39 GMT"}
+{"type":"log","callId":"call@21","time":109622.291,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@21","time":109622.294,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@21","time":109622.318,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@21","endTime":109623.252,"result":{"response":{"url":"http://localhost:3000/api/scan","status":400,"statusText":"Bad Request","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"public, s-maxage=1, stale-while-revalidate=59"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2025-10-01T10:55:39.873Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Wed, 01 Oct 2025 10:54:39 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"fetchUid":"68e3cb3ff8c7bd8d3dc64ea688b99477"}},"afterSnapshot":"after@call@21"}
+{"type":"before","callId":"call@23","startTime":114477.849,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"fast\",\"mode\":\"fast\"}","timeout":30000},"stepId":"pw:api@36","beforeSnapshot":"before@call@23"}
+{"type":"log","callId":"call@23","time":114478.418,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@23","time":114478.428,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36"}
+{"type":"log","callId":"call@23","time":114478.43,"message":"  accept: */*"}
+{"type":"log","callId":"call@23","time":114478.432,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@23","time":114478.433,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@23","time":114478.435,"message":"  content-length: 60"}
+{"type":"before","callId":"call@25","startTime":114478.629,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"fast\",\"mode\":\"fast\"}","timeout":30000},"stepId":"pw:api@37","beforeSnapshot":"before@call@25"}
+{"type":"log","callId":"call@25","time":114478.81,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@25","time":114478.814,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36"}
+{"type":"log","callId":"call@25","time":114478.816,"message":"  accept: */*"}
+{"type":"log","callId":"call@25","time":114478.817,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@25","time":114478.819,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@25","time":114478.82,"message":"  content-length: 60"}
+{"type":"before","callId":"call@27","startTime":114478.921,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"fast\",\"mode\":\"fast\"}","timeout":30000},"stepId":"pw:api@38","beforeSnapshot":"before@call@27"}
+{"type":"log","callId":"call@27","time":114479.071,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@27","time":114479.074,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36"}
+{"type":"log","callId":"call@27","time":114479.075,"message":"  accept: */*"}
+{"type":"log","callId":"call@27","time":114479.078,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@27","time":114479.079,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@27","time":114479.081,"message":"  content-length: 60"}
+{"type":"log","callId":"call@23","time":114913.136,"message":"← 400 Bad Request"}
+{"type":"log","callId":"call@23","time":114913.149,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@23","time":114913.15,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@23","time":114913.152,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@23","time":114913.153,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@23","time":114913.155,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@23","time":114913.156,"message":"  cache-control: public, s-maxage=1, stale-while-revalidate=59"}
+{"type":"log","callId":"call@23","time":114913.157,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@23","time":114913.159,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@23","time":114913.16,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@23","time":114913.161,"message":"  x-ratelimit-reset: 2025-10-01T10:55:45.006Z"}
+{"type":"log","callId":"call@23","time":114913.163,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@23","time":114913.164,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@23","time":114913.165,"message":"  date: Wed, 01 Oct 2025 10:54:45 GMT"}
+{"type":"log","callId":"call@23","time":114913.167,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@23","time":114913.168,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@23","time":114913.169,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@23","endTime":114913.587,"result":{"response":{"url":"http://localhost:3000/api/scan","status":400,"statusText":"Bad Request","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"public, s-maxage=1, stale-while-revalidate=59"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2025-10-01T10:55:45.006Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Wed, 01 Oct 2025 10:54:45 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"fetchUid":"ef31d65b2838230059e10738921a18c8"}},"afterSnapshot":"after@call@23"}
+{"type":"log","callId":"call@25","time":114954.158,"message":"← 400 Bad Request"}
+{"type":"log","callId":"call@25","time":114954.175,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@25","time":114954.178,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@25","time":114954.18,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@25","time":114954.182,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@25","time":114954.183,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@25","time":114954.185,"message":"  cache-control: public, s-maxage=1, stale-while-revalidate=59"}
+{"type":"log","callId":"call@25","time":114954.187,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@25","time":114954.188,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@25","time":114954.189,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@25","time":114954.191,"message":"  x-ratelimit-reset: 2025-10-01T10:55:45.007Z"}
+{"type":"log","callId":"call@25","time":114954.192,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@25","time":114954.193,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@25","time":114954.195,"message":"  date: Wed, 01 Oct 2025 10:54:45 GMT"}
+{"type":"log","callId":"call@25","time":114954.196,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@25","time":114954.198,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@25","time":114954.199,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@25","endTime":114954.451,"result":{"response":{"url":"http://localhost:3000/api/scan","status":400,"statusText":"Bad Request","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"public, s-maxage=1, stale-while-revalidate=59"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2025-10-01T10:55:45.007Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Wed, 01 Oct 2025 10:54:45 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"fetchUid":"0641534cbd64ba2f7980a7a96b95b8e8"}},"afterSnapshot":"after@call@25"}
+{"type":"log","callId":"call@27","time":115002.007,"message":"← 400 Bad Request"}
+{"type":"log","callId":"call@27","time":115002.021,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@27","time":115002.024,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@27","time":115002.026,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@27","time":115002.028,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@27","time":115002.029,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@27","time":115002.031,"message":"  cache-control: public, s-maxage=1, stale-while-revalidate=59"}
+{"type":"log","callId":"call@27","time":115002.033,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@27","time":115002.035,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@27","time":115002.047,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@27","time":115002.055,"message":"  x-ratelimit-reset: 2025-10-01T10:55:45.008Z"}
+{"type":"log","callId":"call@27","time":115002.057,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@27","time":115002.059,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@27","time":115002.061,"message":"  date: Wed, 01 Oct 2025 10:54:45 GMT"}
+{"type":"log","callId":"call@27","time":115002.062,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@27","time":115002.064,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@27","time":115002.065,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@27","endTime":115002.142,"result":{"response":{"url":"http://localhost:3000/api/scan","status":400,"statusText":"Bad Request","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"public, s-maxage=1, stale-while-revalidate=59"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2025-10-01T10:55:45.008Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Wed, 01 Oct 2025 10:54:45 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"fetchUid":"1936cbe9591e48110548165c75dc1b31"}},"afterSnapshot":"after@call@27"}
+{"type":"before","callId":"call@29","startTime":119487.707,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"fast\",\"mode\":\"fast\"}","timeout":30000},"stepId":"pw:api@39","beforeSnapshot":"before@call@29"}
+{"type":"log","callId":"call@29","time":119488.526,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@29","time":119488.535,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36"}
+{"type":"log","callId":"call@29","time":119488.537,"message":"  accept: */*"}
+{"type":"log","callId":"call@29","time":119488.538,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@29","time":119488.54,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@29","time":119488.541,"message":"  content-length: 60"}
+{"type":"before","callId":"call@31","startTime":119488.672,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"fast\",\"mode\":\"fast\"}","timeout":30000},"stepId":"pw:api@40","beforeSnapshot":"before@call@31"}
+{"type":"log","callId":"call@31","time":119488.802,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@31","time":119488.805,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36"}
+{"type":"log","callId":"call@31","time":119488.807,"message":"  accept: */*"}
+{"type":"log","callId":"call@31","time":119488.808,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@31","time":119488.81,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@31","time":119488.811,"message":"  content-length: 60"}
+{"type":"before","callId":"call@33","startTime":119488.872,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"fast\",\"mode\":\"fast\"}","timeout":30000},"stepId":"pw:api@41","beforeSnapshot":"before@call@33"}
+{"type":"log","callId":"call@33","time":119488.964,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@33","time":119488.966,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36"}
+{"type":"log","callId":"call@33","time":119488.968,"message":"  accept: */*"}
+{"type":"log","callId":"call@33","time":119488.969,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@33","time":119488.97,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@33","time":119488.972,"message":"  content-length: 60"}
+{"type":"log","callId":"call@29","time":119670.118,"message":"← 400 Bad Request"}
+{"type":"log","callId":"call@29","time":119670.135,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@29","time":119670.138,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@29","time":119670.139,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@29","time":119670.149,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@29","time":119670.151,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@29","time":119670.152,"message":"  cache-control: public, s-maxage=1, stale-while-revalidate=59"}
+{"type":"log","callId":"call@29","time":119670.154,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@29","time":119670.155,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@29","time":119670.157,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@29","time":119670.158,"message":"  x-ratelimit-reset: 2025-10-01T10:55:49.947Z"}
+{"type":"log","callId":"call@29","time":119670.159,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@29","time":119670.161,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@29","time":119670.162,"message":"  date: Wed, 01 Oct 2025 10:54:50 GMT"}
+{"type":"log","callId":"call@29","time":119670.163,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@29","time":119670.165,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@29","time":119670.166,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@29","endTime":119670.672,"result":{"response":{"url":"http://localhost:3000/api/scan","status":400,"statusText":"Bad Request","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"public, s-maxage=1, stale-while-revalidate=59"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2025-10-01T10:55:49.947Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Wed, 01 Oct 2025 10:54:50 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"fetchUid":"617b1538b611b33854c16a35ec608b67"}},"afterSnapshot":"after@call@29"}
+{"type":"log","callId":"call@31","time":119716.346,"message":"← 400 Bad Request"}
+{"type":"log","callId":"call@31","time":119716.36,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@31","time":119716.362,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@31","time":119716.364,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@31","time":119716.366,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@31","time":119716.367,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@31","time":119716.368,"message":"  cache-control: public, s-maxage=1, stale-while-revalidate=59"}
+{"type":"log","callId":"call@31","time":119716.37,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@31","time":119716.371,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@31","time":119716.373,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@31","time":119716.374,"message":"  x-ratelimit-reset: 2025-10-01T10:55:49.948Z"}
+{"type":"log","callId":"call@31","time":119716.375,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@31","time":119716.377,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@31","time":119716.378,"message":"  date: Wed, 01 Oct 2025 10:54:50 GMT"}
+{"type":"log","callId":"call@31","time":119716.379,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@31","time":119716.381,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@31","time":119716.382,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@31","endTime":119716.63,"result":{"response":{"url":"http://localhost:3000/api/scan","status":400,"statusText":"Bad Request","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"public, s-maxage=1, stale-while-revalidate=59"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2025-10-01T10:55:49.948Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Wed, 01 Oct 2025 10:54:50 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"fetchUid":"0966642c262bdd974f6a3f70036d9ff8"}},"afterSnapshot":"after@call@31"}
+{"type":"log","callId":"call@33","time":119769.863,"message":"← 400 Bad Request"}
+{"type":"log","callId":"call@33","time":119769.877,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@33","time":119769.88,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@33","time":119769.882,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@33","time":119769.884,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@33","time":119769.885,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@33","time":119769.887,"message":"  cache-control: public, s-maxage=1, stale-while-revalidate=59"}
+{"type":"log","callId":"call@33","time":119769.888,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@33","time":119769.889,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@33","time":119769.891,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@33","time":119769.892,"message":"  x-ratelimit-reset: 2025-10-01T10:55:50.000Z"}
+{"type":"log","callId":"call@33","time":119769.895,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@33","time":119769.896,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@33","time":119769.898,"message":"  date: Wed, 01 Oct 2025 10:54:50 GMT"}
+{"type":"log","callId":"call@33","time":119769.899,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@33","time":119769.9,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@33","time":119769.902,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@33","endTime":119770.292,"result":{"response":{"url":"http://localhost:3000/api/scan","status":400,"statusText":"Bad Request","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"public, s-maxage=1, stale-while-revalidate=59"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2025-10-01T10:55:50.000Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Wed, 01 Oct 2025 10:54:50 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"fetchUid":"340f6e31540eabc02147d5c130885b8b"}},"afterSnapshot":"after@call@33"}

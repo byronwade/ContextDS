@@ -1,0 +1,183 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - link "Skip to search" [ref=e4] [cursor=pointer]:
+      - /url: "#search-input"
+  - generic [ref=e5]:
+    - banner [ref=e6]:
+      - generic [ref=e7]:
+        - generic [ref=e8]:
+          - link "ContextDS" [ref=e10] [cursor=pointer]:
+            - /url: /
+            - img [ref=e11] [cursor=pointer]
+            - generic [ref=e17] [cursor=pointer]: ContextDS
+          - generic [ref=e18]:
+            - generic [ref=e19]:
+              - generic [ref=e20]: "0"
+              - generic [ref=e21]: tokens
+            - generic [ref=e22]:
+              - generic [ref=e23]: "0"
+              - generic [ref=e24]: sites
+        - generic [ref=e26]:
+          - 'button "Mode: search (click to switch)" [ref=e28]':
+            - img [ref=e29]
+            - img [ref=e32]
+          - textbox "Search 17,000+ tokens" [ref=e35]
+          - generic [ref=e36]:
+            - button "Match case" [ref=e37]:
+              - img [ref=e38]
+            - button "Match whole words" [ref=e41]:
+              - img [ref=e42]
+            - button "Use regular expression" [ref=e46]:
+              - img [ref=e47]
+        - generic [ref=e51]:
+          - link "Community" [ref=e52] [cursor=pointer]:
+            - /url: /community
+            - button "Community" [ref=e53]
+          - link "Docs" [ref=e54] [cursor=pointer]:
+            - /url: /docs
+            - button "Docs" [ref=e55]
+          - generic [ref=e56]:
+            - button "Switch to system theme" [ref=e58]:
+              - img [ref=e59]
+            - button "Switch to light theme" [ref=e61]:
+              - img [ref=e62]
+            - button "Switch to dark theme" [ref=e68]:
+              - img [ref=e69]
+    - main "Community design token database" [ref=e71]:
+      - generic [ref=e74]:
+        - heading "Design Token Community" [level=1] [ref=e75]
+        - paragraph [ref=e76]: Explore design tokens from top brands and design systems. Browse curated collections of colors, typography, spacing, and more.
+        - generic [ref=e78]:
+          - generic [ref=e79]:
+            - img [ref=e80]
+            - generic [ref=e82]:
+              - generic [ref=e83]: "0"
+              - generic [ref=e84]: total
+          - generic [ref=e85]:
+            - img [ref=e86]
+            - generic [ref=e89]:
+              - generic [ref=e90]: "0"
+              - generic [ref=e91]: design
+          - generic [ref=e92]:
+            - img [ref=e93]
+            - generic [ref=e96]:
+              - generic [ref=e97]: "0"
+              - generic [ref=e98]: sites
+          - generic [ref=e99]:
+            - img [ref=e100]
+            - generic [ref=e102]:
+              - generic [ref=e103]: "0"
+              - generic [ref=e104]: active
+        - generic [ref=e106]:
+          - generic [ref=e107]: Search sites, brands, or design systems
+          - img [ref=e108]
+          - searchbox "Search community design tokens database" [ref=e111]
+      - generic [ref=e114]:
+        - generic [ref=e115]:
+          - generic [ref=e116]:
+            - img [ref=e117]
+            - generic [ref=e123]: 0 sites
+          - generic [ref=e126]: Live
+        - generic [ref=e127]:
+          - generic [ref=e128]: "Sort by:"
+          - tablist "Sort options" [ref=e129]:
+            - tab "Sort by popularity" [selected] [ref=e130]:
+              - generic [ref=e131]: Popular
+            - tab "Sort by most recent" [ref=e132]:
+              - generic [ref=e133]: Recent
+            - tab "Sort by token count" [ref=e134]:
+              - generic [ref=e135]: Tokens
+      - generic [ref=e137]:
+        - img [ref=e138]
+        - heading "No sites found" [level=2] [ref=e141]
+        - paragraph [ref=e142]: Check back soon for new design systems
+    - contentinfo [ref=e143]:
+      - generic [ref=e144]:
+        - generic [ref=e145]:
+          - generic [ref=e146]:
+            - heading "Product" [level=3] [ref=e147]
+            - list [ref=e148]:
+              - listitem [ref=e149]:
+                - link "Token Scanner" [ref=e150] [cursor=pointer]:
+                  - /url: /
+              - listitem [ref=e151]:
+                - link "Community" [ref=e152] [cursor=pointer]:
+                  - /url: /community
+              - listitem [ref=e153]:
+                - link "Metrics" [ref=e154] [cursor=pointer]:
+                  - /url: /metrics
+              - listitem [ref=e155]:
+                - link "Pricing" [ref=e156] [cursor=pointer]:
+                  - /url: "#"
+          - generic [ref=e157]:
+            - heading "Resources" [level=3] [ref=e158]
+            - list [ref=e159]:
+              - listitem [ref=e160]:
+                - link "Documentation" [ref=e161] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e162]:
+                - link "API Reference" [ref=e163] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e164]:
+                - link "Guides" [ref=e165] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e166]:
+                - link "Examples" [ref=e167] [cursor=pointer]:
+                  - /url: "#"
+          - generic [ref=e168]:
+            - heading "Company" [level=3] [ref=e169]
+            - list [ref=e170]:
+              - listitem [ref=e171]:
+                - link "About" [ref=e172] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e173]:
+                - link "Blog" [ref=e174] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e175]:
+                - link "Careers" [ref=e176] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e177]:
+                - link "Contact" [ref=e178] [cursor=pointer]:
+                  - /url: "#"
+          - generic [ref=e179]:
+            - heading "Legal" [level=3] [ref=e180]
+            - list [ref=e181]:
+              - listitem [ref=e182]:
+                - link "Privacy" [ref=e183] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e184]:
+                - link "Terms" [ref=e185] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e186]:
+                - link "License" [ref=e187] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e188]:
+                - link "Security" [ref=e189] [cursor=pointer]:
+                  - /url: "#"
+        - generic [ref=e190]:
+          - paragraph [ref=e191]: © 2025 ContextDS. All rights reserved.
+          - generic [ref=e192]:
+            - link [ref=e193] [cursor=pointer]:
+              - /url: https://github.com
+              - img [ref=e194] [cursor=pointer]
+            - link [ref=e197] [cursor=pointer]:
+              - /url: https://twitter.com
+              - img [ref=e198] [cursor=pointer]
+  - generic [ref=e204] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e205] [cursor=pointer]:
+      - img [ref=e206] [cursor=pointer]
+    - generic [ref=e209] [cursor=pointer]:
+      - button "Open issues overlay" [ref=e210] [cursor=pointer]:
+        - generic [ref=e211] [cursor=pointer]:
+          - generic [ref=e212] [cursor=pointer]: "0"
+          - generic [ref=e213] [cursor=pointer]: "1"
+        - generic [ref=e214] [cursor=pointer]: Issue
+      - button "Collapse issues badge" [ref=e215] [cursor=pointer]:
+        - img [ref=e216] [cursor=pointer]
+  - alert [ref=e218]
+```

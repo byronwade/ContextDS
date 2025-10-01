@@ -1,0 +1,866 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - link "Skip to search" [ref=e4] [cursor=pointer]:
+      - /url: "#search-input"
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - link "ContextDS" [ref=e9] [cursor=pointer]:
+          - /url: /
+          - img [ref=e10] [cursor=pointer]
+          - generic [ref=e16] [cursor=pointer]: ContextDS
+        - generic [ref=e17]:
+          - generic [ref=e18]:
+            - generic [ref=e19]: "0"
+            - generic [ref=e20]: tokens
+          - generic [ref=e21]:
+            - generic [ref=e22]: "0"
+            - generic [ref=e23]: sites
+      - generic [ref=e25]:
+        - 'button "Mode: search (click to switch)" [ref=e27]':
+          - img [ref=e28]
+          - img [ref=e31]
+        - textbox "Search 17,000+ tokens" [ref=e34]
+        - generic [ref=e35]:
+          - button "Match case" [ref=e36]:
+            - img [ref=e37]
+          - button "Match whole words" [ref=e40]:
+            - img [ref=e41]
+          - button "Use regular expression" [ref=e45]:
+            - img [ref=e46]
+      - generic [ref=e50]:
+        - link "Community" [ref=e51] [cursor=pointer]:
+          - /url: /community
+          - button "Community" [ref=e52]
+        - link "Docs" [ref=e53] [cursor=pointer]:
+          - /url: /docs
+          - button "Docs" [ref=e54]
+        - generic [ref=e55]:
+          - button "Switch to system theme" [ref=e57]:
+            - img [ref=e58]
+          - button "Switch to light theme" [ref=e60]:
+            - img [ref=e61]
+          - button "Switch to dark theme" [ref=e67]:
+            - img [ref=e68]
+  - main [ref=e70]:
+    - generic [ref=e72]:
+      - generic [ref=e73]: Powered by AI
+      - heading "Features that make design tokens effortless" [level=1] [ref=e74]:
+        - text: Features that make design tokens
+        - generic [ref=e75]: effortless
+      - paragraph [ref=e76]: From instant extraction to AI-powered analysis, discover why ContextDS is the fastest way to turn any website into actionable design tokens.
+    - generic [ref=e79]:
+      - generic [ref=e81]:
+        - img [ref=e82]
+        - heading "Lightning-Fast Extraction" [level=3] [ref=e84]
+        - paragraph [ref=e85]: Extract design tokens from any website in under 30 seconds using our performance-optimized pipeline.
+        - list [ref=e86]:
+          - listitem [ref=e87]:
+            - img [ref=e88]
+            - text: Parallel processing engine
+          - listitem [ref=e91]:
+            - img [ref=e92]
+            - text: W3C-compliant tokens
+          - listitem [ref=e95]:
+            - img [ref=e96]
+            - text: Sub-second CSS analysis
+          - listitem [ref=e99]:
+            - img [ref=e100]
+            - text: Batch optimization
+      - generic [ref=e104]:
+        - img [ref=e105]
+        - heading "GPT-4o AI Analysis" [level=3] [ref=e113]
+        - paragraph [ref=e114]: Advanced AI reasoning with structured outputs for comprehensive design system insights.
+        - list [ref=e115]:
+          - listitem [ref=e116]:
+            - img [ref=e117]
+            - text: Multi-layer analysis
+          - listitem [ref=e120]:
+            - img [ref=e121]
+            - text: Design maturity scoring
+          - listitem [ref=e124]:
+            - img [ref=e125]
+            - text: Brand personality detection
+          - listitem [ref=e128]:
+            - img [ref=e129]
+            - text: Anti-pattern identification
+      - generic [ref=e133]:
+        - img [ref=e134]
+        - heading "Layout DNA Profiling" [level=3] [ref=e138]
+        - paragraph [ref=e139]: Revolutionary multi-page, multi-viewport analysis revealing the genetic code of design systems.
+        - list [ref=e140]:
+          - listitem [ref=e141]:
+            - img [ref=e142]
+            - text: Cross-page consistency
+          - listitem [ref=e145]:
+            - img [ref=e146]
+            - text: Archetype classification
+          - listitem [ref=e149]:
+            - img [ref=e150]
+            - text: Responsive patterns
+          - listitem [ref=e153]:
+            - img [ref=e154]
+            - text: Visual hierarchy mapping
+      - generic [ref=e158]:
+        - img [ref=e159]
+        - heading "Neural Token Networks" [level=3] [ref=e162]
+        - paragraph [ref=e163]: Real-time visualization of token relationships using network analysis and machine learning.
+        - list [ref=e164]:
+          - listitem [ref=e165]:
+            - img [ref=e166]
+            - text: Relationship discovery
+          - listitem [ref=e169]:
+            - img [ref=e170]
+            - text: Semantic clustering
+          - listitem [ref=e173]:
+            - img [ref=e174]
+            - text: Interactive visualization
+          - listitem [ref=e177]:
+            - img [ref=e178]
+            - text: Pattern emergence
+      - generic [ref=e182]:
+        - img [ref=e183]
+        - heading "Computer Vision Analysis" [level=3] [ref=e186]
+        - paragraph [ref=e187]: Advanced visual analysis extracting insights from actual rendered pages using CV algorithms.
+        - list [ref=e188]:
+          - listitem [ref=e189]:
+            - img [ref=e190]
+            - text: Color dominance mapping
+          - listitem [ref=e193]:
+            - img [ref=e194]
+            - text: Visual element detection
+          - listitem [ref=e197]:
+            - img [ref=e198]
+            - text: Layout zone analysis
+          - listitem [ref=e201]:
+            - img [ref=e202]
+            - text: Accessibility scanning
+      - generic [ref=e206]:
+        - img [ref=e207]
+        - heading "Component Archaeology" [level=3] [ref=e210]
+        - paragraph [ref=e211]: Industry-leading 8-strategy component detection system with behavioral analysis and framework intelligence.
+        - list [ref=e212]:
+          - listitem [ref=e213]:
+            - img [ref=e214]
+            - text: 8 weighted detection strategies (100% scoring)
+          - listitem [ref=e217]:
+            - img [ref=e218]
+            - text: 21 framework detectors (React, Vue, Web Components)
+          - listitem [ref=e221]:
+            - img [ref=e222]
+            - text: 17 behavioral pattern analyzers
+          - listitem [ref=e225]:
+            - img [ref=e226]
+            - text: 51 component types with cross-element validation
+      - generic [ref=e230]:
+        - img [ref=e231]
+        - heading "Intelligent Versioning" [level=3] [ref=e235]
+        - paragraph [ref=e236]: Advanced diffing algorithms tracking micro-changes in design systems over time.
+        - list [ref=e237]:
+          - listitem [ref=e238]:
+            - img [ref=e239]
+            - text: Semantic change detection
+          - listitem [ref=e242]:
+            - img [ref=e243]
+            - text: Impact analysis
+          - listitem [ref=e246]:
+            - img [ref=e247]
+            - text: Migration guidance
+          - listitem [ref=e250]:
+            - img [ref=e251]
+            - text: Rollback support
+      - generic [ref=e255]:
+        - img [ref=e256]
+        - heading "Design System Intelligence" [level=3] [ref=e258]
+        - paragraph [ref=e259]: Comprehensive scoring and recommendations using industry best practices and AI insights.
+        - list [ref=e260]:
+          - listitem [ref=e261]:
+            - img [ref=e262]
+            - text: Maturity assessment
+          - listitem [ref=e265]:
+            - img [ref=e266]
+            - text: Consistency scoring
+          - listitem [ref=e269]:
+            - img [ref=e270]
+            - text: Scalability analysis
+          - listitem [ref=e273]:
+            - img [ref=e274]
+            - text: Competitive benchmarking
+      - generic [ref=e278]:
+        - img [ref=e279]
+        - heading "Enterprise Security" [level=3] [ref=e281]
+        - paragraph [ref=e282]: Production-grade security with privacy-first architecture and compliance frameworks.
+        - list [ref=e283]:
+          - listitem [ref=e284]:
+            - img [ref=e285]
+            - text: GDPR compliance
+          - listitem [ref=e288]:
+            - img [ref=e289]
+            - text: Robots.txt respect
+          - listitem [ref=e292]:
+            - img [ref=e293]
+            - text: Owner opt-out
+          - listitem [ref=e296]:
+            - img [ref=e297]
+            - text: Data minimization
+    - generic [ref=e301]:
+      - generic [ref=e302]:
+        - heading "How we compare" [level=2] [ref=e303]
+        - paragraph [ref=e304]: See why teams choose ContextDS over manual extraction or limited tools
+      - table [ref=e306]:
+        - rowgroup [ref=e307]:
+          - row "Feature ContextDS Manual Process Other Tools" [ref=e308]:
+            - cell "Feature" [ref=e309]
+            - cell "ContextDS" [ref=e310]
+            - cell "Manual Process" [ref=e311]
+            - cell "Other Tools" [ref=e312]
+        - rowgroup [ref=e313]:
+          - row "Speed < 30 seconds Hours of work Varies, often slow" [ref=e314]:
+            - cell "Speed" [ref=e315]
+            - cell "< 30 seconds" [ref=e316]
+            - cell "Hours of work" [ref=e317]
+            - cell "Varies, often slow" [ref=e318]
+          - row "Accuracy AI-verified 95%+ Error-prone Limited coverage" [ref=e319]:
+            - cell "Accuracy" [ref=e320]
+            - cell "AI-verified 95%+" [ref=e321]
+            - cell "Error-prone" [ref=e322]
+            - cell "Limited coverage" [ref=e323]
+          - row "Coverage Full token spectrum Selective Basic tokens only" [ref=e324]:
+            - cell "Coverage" [ref=e325]
+            - cell "Full token spectrum" [ref=e326]
+            - cell "Selective" [ref=e327]
+            - cell "Basic tokens only" [ref=e328]
+          - row "Layout Analysis Multi-page DNA Not feasible Single page only" [ref=e329]:
+            - cell "Layout Analysis" [ref=e330]
+            - cell "Multi-page DNA" [ref=e331]
+            - cell "Not feasible" [ref=e332]
+            - cell "Single page only" [ref=e333]
+          - row "AI Integration Native MCP tools None Limited or none" [ref=e334]:
+            - cell "AI Integration" [ref=e335]
+            - cell "Native MCP tools" [ref=e336]
+            - cell "None" [ref=e337]
+            - cell "Limited or none" [ref=e338]
+    - generic [ref=e340]:
+      - generic [ref=e341]:
+        - heading "Advanced Technical Architecture" [level=2] [ref=e342]
+        - paragraph [ref=e343]: Enterprise-grade performance with cutting-edge algorithms
+      - generic [ref=e344]:
+        - generic [ref=e346]:
+          - img [ref=e348]
+          - heading "Parallel Processing Engine" [level=3] [ref=e350]
+          - paragraph [ref=e351]: Orchestrated pipeline processing 5+ analysis tasks simultaneously with intelligent batching.
+          - list [ref=e352]:
+            - listitem [ref=e353]: • Sub-30s analysis time
+            - listitem [ref=e354]: • Promise.allSettled optimization
+            - listitem [ref=e355]: • Database transaction batching
+            - listitem [ref=e356]: • Background task processing
+        - generic [ref=e358]:
+          - img [ref=e360]
+          - heading "Multi-Layer AI Analysis" [level=3] [ref=e368]
+          - paragraph [ref=e369]: GPT-4o with structured outputs, semantic token clustering, and brand personality detection.
+          - list [ref=e370]:
+            - listitem [ref=e371]: • Zod schema validation
+            - listitem [ref=e372]: • Design maturity scoring
+            - listitem [ref=e373]: • Anti-pattern detection
+            - listitem [ref=e374]: • Comprehensive fallbacks
+        - generic [ref=e376]:
+          - img [ref=e378]
+          - heading "Computer Vision Pipeline" [level=3] [ref=e381]
+          - paragraph [ref=e382]: Advanced visual analysis using Playwright browser automation and canvas pixel analysis.
+          - list [ref=e383]:
+            - listitem [ref=e384]: • Multi-viewport capture
+            - listitem [ref=e385]: • Color extraction algorithms
+            - listitem [ref=e386]: • Layout zone detection
+            - listitem [ref=e387]: • Accessibility scanning
+        - generic [ref=e389]:
+          - img [ref=e391]
+          - heading "Neural Token Networks" [level=3] [ref=e394]
+          - paragraph [ref=e395]: Real-time relationship discovery with semantic clustering and interactive visualization.
+          - list [ref=e396]:
+            - listitem [ref=e397]: • Dynamic network generation
+            - listitem [ref=e398]: • Similarity algorithms
+            - listitem [ref=e399]: • Progressive discovery
+            - listitem [ref=e400]: • Interactive exploration
+        - generic [ref=e402]:
+          - img [ref=e404]
+          - heading "Layout DNA Analysis" [level=3] [ref=e408]
+          - paragraph [ref=e409]: Multi-page, multi-viewport analysis revealing design system patterns and archetypes.
+          - list [ref=e410]:
+            - listitem [ref=e411]: • Archetype classification
+            - listitem [ref=e412]: • Spacing scale detection
+            - listitem [ref=e413]: • Grid system analysis
+            - listitem [ref=e414]: • Responsive patterns
+        - generic [ref=e416]:
+          - img [ref=e418]
+          - heading "Advanced Component Detection" [level=3] [ref=e420]
+          - paragraph [ref=e421]: Revolutionary 8-strategy weighted detection (100% scoring) with behavioral analysis, framework intelligence across 21 libraries, and cross-element validation.
+          - list [ref=e422]:
+            - listitem [ref=e423]: "• 8 detection strategies: CSS, ARIA, Framework, Behavioral (17 patterns)"
+            - listitem [ref=e424]: "• 21 framework detectors: shadcn, Radix, MUI, Chakra, Bootstrap, Vuetify, Shoelace"
+            - listitem [ref=e425]: • Cross-element clustering with confidence boosting
+            - listitem [ref=e426]: • 51 component types with variant family detection
+    - generic [ref=e428]:
+      - generic [ref=e429]:
+        - heading "Performance Engineering" [level=2] [ref=e430]
+        - paragraph [ref=e431]: Optimized for speed, scale, and reliability
+      - generic [ref=e432]:
+        - generic [ref=e434]:
+          - generic [ref=e435]: <30s
+          - generic [ref=e436]: Full analysis time
+        - generic [ref=e438]:
+          - generic [ref=e439]: 5x
+          - generic [ref=e440]: Parallel task execution
+        - generic [ref=e442]:
+          - generic [ref=e443]: 95%+
+          - generic [ref=e444]: Token accuracy rate
+        - generic [ref=e446]:
+          - generic [ref=e447]: 50ms
+          - generic [ref=e448]: Database batch inserts
+    - generic [ref=e450]:
+      - generic [ref=e451]:
+        - heading "Algorithmic Innovation" [level=2] [ref=e452]
+        - paragraph [ref=e453]: Cutting-edge algorithms powering next-generation design analysis
+      - generic [ref=e454]:
+        - generic [ref=e457]:
+          - img [ref=e459]
+          - generic [ref=e467]:
+            - heading "Semantic Token Clustering" [level=3] [ref=e468]
+            - paragraph [ref=e469]: Advanced similarity algorithms group related tokens using semantic analysis, HSL color space calculations, and usage pattern recognition to identify design system relationships automatically.
+            - generic [ref=e470]:
+              - generic [ref=e471]:
+                - strong [ref=e472]: "Color Analysis:"
+                - generic [ref=e473]: HSL distance calculation, saturation grouping, hue relationships
+              - generic [ref=e474]:
+                - strong [ref=e475]: "Typography:"
+                - generic [ref=e476]: Font family clustering, size scale detection, weight consistency
+              - generic [ref=e477]:
+                - strong [ref=e478]: "Spacing:"
+                - generic [ref=e479]: Base unit detection, modular scale analysis, rhythm scoring
+        - generic [ref=e482]:
+          - img [ref=e484]
+          - generic [ref=e488]:
+            - heading "Layout DNA Sequencing" [level=3] [ref=e489]
+            - paragraph [ref=e490]: Multi-dimensional analysis extracting the genetic code of design systems through cross-page pattern detection, responsive behavior analysis, and component archetype classification using computer vision and DOM analysis.
+            - generic [ref=e491]:
+              - generic [ref=e492]:
+                - strong [ref=e493]: "Archetype Detection:"
+                - generic [ref=e494]: Hero patterns, feature grids, navigation styles, footer layouts
+              - generic [ref=e495]:
+                - strong [ref=e496]: "Grid Analysis:"
+                - generic [ref=e497]: CSS Grid vs Flexbox usage, column detection, alignment patterns
+              - generic [ref=e498]:
+                - strong [ref=e499]: "Responsive DNA:"
+                - generic [ref=e500]: Breakpoint analysis, layout shifts, mobile-first vs desktop-first
+        - generic [ref=e503]:
+          - img [ref=e505]
+          - generic [ref=e508]:
+            - heading "Computer Vision Analysis" [level=3] [ref=e509]
+            - paragraph [ref=e510]: Advanced visual analysis using Playwright browser automation, canvas pixel sampling, and machine learning algorithms to extract insights from actual rendered pages that CSS analysis alone cannot reveal.
+            - generic [ref=e511]:
+              - generic [ref=e512]:
+                - strong [ref=e513]: "Color Extraction:"
+                - generic [ref=e514]: Pixel sampling, dominance calculation, context classification
+              - generic [ref=e515]:
+                - strong [ref=e516]: "Layout Zones:"
+                - generic [ref=e517]: Header detection, content area mapping, sidebar identification
+              - generic [ref=e518]:
+                - strong [ref=e519]: "Visual Elements:"
+                - generic [ref=e520]: Button detection, card patterns, image analysis, icon recognition
+        - generic [ref=e523]:
+          - img [ref=e525]
+          - generic [ref=e528]:
+            - heading "Industry-Leading Component Detection System" [level=3] [ref=e529]
+            - paragraph [ref=e530]: Revolutionary 8-strategy weighted detection system combining CSS analysis, ARIA patterns, framework intelligence, and behavioral analysis to identify and classify 51 component types with unprecedented accuracy across 21 UI frameworks.
+            - generic [ref=e531]:
+              - generic [ref=e532]:
+                - heading "Multi-Strategy Detection Architecture (100% Weighted Scoring)" [level=4] [ref=e533]
+                - generic [ref=e534]:
+                  - generic [ref=e535]:
+                    - strong [ref=e536]: "1. CSS Selector Analysis (12%):"
+                    - generic [ref=e537]: Class names, data attributes, BEM patterns, utility classes
+                  - generic [ref=e538]:
+                    - strong [ref=e539]: "2. Computed Style Matching (8%):"
+                    - generic [ref=e540]: Visual properties, layout characteristics, positioning patterns
+                  - generic [ref=e541]:
+                    - strong [ref=e542]: "3. ARIA Pattern Recognition (18%):"
+                    - generic [ref=e543]: Accessibility roles, labels, states, relationships
+                  - generic [ref=e544]:
+                    - strong [ref=e545]: "4. Semantic HTML Detection (8%):"
+                    - generic [ref=e546]: Native element types, form controls, structural tags
+                  - generic [ref=e547]:
+                    - strong [ref=e548]: "5. Composition Analysis (8%):"
+                    - generic [ref=e549]: Parent-child patterns, structural relationships, nesting
+                  - generic [ref=e550]:
+                    - strong [ref=e551]: "6. Visual Signature Matching (12%):"
+                    - generic [ref=e552]: Advanced visual fingerprints, pixel patterns, rendered appearance
+                  - generic [ref=e553]:
+                    - strong [ref=e554]: "7. Framework Pattern Detection (17%):"
+                    - generic [ref=e555]: Library-specific signatures across 21 frameworks
+                  - generic [ref=e556]:
+                    - strong [ref=e557]: "8. Behavioral Analysis (17%):"
+                    - generic [ref=e558]: Interaction patterns, animations, state changes (17 analyzers)
+              - generic [ref=e559]:
+                - heading "21 Framework Intelligence Detectors" [level=4] [ref=e560]
+                - generic [ref=e562]: "Framework Detection System: React Libraries: • shadcn/ui, Radix UI, Material UI (MUI), Chakra UI • Ant Design, Mantine, NextUI, PrimeReact • Headless UI, TailwindUI CSS Frameworks: • Bootstrap, DaisyUI, Semantic UI, Fomantic UI Enterprise Systems: • Blueprint.js (Palantir), Fluent UI (Microsoft) • Carbon Design System (IBM) Other Frameworks: • Web Components: Shoelace • Vue: Vuetify, Element Plus, Quasar • Mobile: Ionic • Custom: Utility-first CSS, Custom Design Systems Detection Strategy: → Class pattern matching using regex → Data attribute scanning → Component structure validation → Computed style fingerprinting"
+              - generic [ref=e563]:
+                - heading "17 Behavioral Pattern Analyzers" [level=4] [ref=e564]
+                - generic [ref=e566]: "Behavioral Pattern Detection: Transitions: • Instant: transitionDuration = 0s • Smooth: transitionDuration greater than 0 • Elastic: cubic-bezier or spring timing functions Animations: • Pulse/Beat patterns • Spin/Rotate patterns • Bounce/Jump patterns • Fade/Opacity patterns • Slide/Translate patterns Cursor Interactions: • Pointer (clickable elements) • Grab/Grabbing (draggable elements) • Text (editable content) • Move (movable elements) • Resize (resizable elements) Transform Interactions: • Scale transforms • Rotate transforms • Translate transforms • Skew transforms State Change Detection: • hover, focus, active, disabled, checked states • Material Design ripple effects • Loading patterns: skeleton, shimmer, pulse, spinner • Focus trap detection • Drag behavior patterns • Scroll behavior patterns Example - Ripple Detection: → Check for ripple child elements → Detect ripple animation names → Verify overflow:hidden for effect containment"
+              - generic [ref=e567]:
+                - heading "Cross-Element Pattern Matching & Validation" [level=4] [ref=e568]
+                - generic [ref=e570]: "Cross-Element Pattern Validation: Component Clustering Process: 1. Generate unique signature for each element 2. Find similar components using signature matching 3. Group elements into clusters 4. Return analysis with: • Component type inference • Element instances • Confidence score • Detected variants • Consistency score Confidence Calculation: Base confidence: 0.5 Boost factors: • 3+ instances: +0.15 (repetition increases confidence) • 5+ instances: +0.10 (strong pattern) • High consistency: +0.15 (based on similarity score) • 2+ variants: +0.10 (indicates intentional design) • 10+ instances: +0.05 (statistical significance) Maximum confidence: 1.0 Variant Detection: → Extract variant keys from each element → Group elements by variant type → Track variant types, instances, and counts → Common variants: size, color, state variations Outlier Detection: → Compare each instance to cluster average → Flag instances with less than 30% similarity → Helps identify misclassified or inconsistent elements 51 Detected Component Types: accordion, alert, alert-dialog, aspect-ratio, avatar, badge, breadcrumb, button, calendar, card, carousel, chart, checkbox, collapsible, combobox, command, context-menu, data-table, date-picker, dialog, drawer, dropdown-menu, form, hover-card, input, input-otp, label, menubar, navigation-menu, pagination, popover, progress, radio-group, resizable, scroll-area, select, separator, sheet, sidebar, skeleton, slider, sonner, switch, table, tabs, textarea, toast, toggle, toggle-group, tooltip, typography"
+              - generic [ref=e571]:
+                - generic [ref=e572]:
+                  - strong [ref=e573]: "Detection Accuracy:"
+                  - generic [ref=e574]: 95%+ with confidence scoring and outlier flagging
+                - generic [ref=e575]:
+                  - strong [ref=e576]: "Performance:"
+                  - generic [ref=e577]: Sub-second analysis for 1000+ elements with parallel processing
+                - generic [ref=e578]:
+                  - strong [ref=e579]: "Coverage:"
+                  - generic [ref=e580]: 51 component types × 21 frameworks = 1071 pattern combinations
+    - generic [ref=e582]:
+      - generic [ref=e583]:
+        - heading "Engineering Excellence" [level=2] [ref=e584]
+        - paragraph [ref=e585]: Ultra-deep technical implementation details that make developers say "wow"
+      - generic [ref=e586]:
+        - generic [ref=e587]:
+          - heading "Data Structure Engineering" [level=3] [ref=e588]
+          - generic [ref=e589]:
+            - generic [ref=e591]:
+              - heading "Normalized Token Storage" [level=4] [ref=e592]
+              - generic [ref=e595]:
+                - generic [ref=e596]: // Optimized for memory and query performance
+                - generic [ref=e597]: "TokenNode Data Structure:"
+                - generic [ref=e598]: "- id: UUID v7 for time-ordered indexing"
+                - generic [ref=e599]: "- value: string | number | TokenValue"
+                - generic [ref=e600]: "- type: TokenType classification"
+                - generic [ref=e601]: "- category: TokenCategory grouping"
+                - generic [ref=e602]: "- relationships: WeakRef array (prevents memory leaks)"
+                - generic [ref=e603]: "- metadata object with:"
+                - generic [ref=e604]: "* extractedAt: Unix timestamp"
+                - generic [ref=e605]: "* confidence: 0-1 float32 scoring"
+                - generic [ref=e606]: "* sourceLocation: SourceMap reference"
+                - generic [ref=e607]: "* usageCount: performance tracking"
+                - generic [ref=e608]: // Spatial indexing for color similarity
+                - generic [ref=e609]: "ColorIndex extends RBTree with:"
+                - generic [ref=e610]: "- spatialHash: Map for nearest neighbor searches"
+                - generic [ref=e611]: "- insert(): O(log n) color insertion with hashing"
+              - list [ref=e612]:
+                - listitem [ref=e613]: • Red-Black Trees for O(log n) color similarity queries
+                - listitem [ref=e614]: • WeakRef for garbage collection optimization
+                - listitem [ref=e615]: • UUID v7 for distributed time-ordered indexing
+                - listitem [ref=e616]: • Spatial hashing for nearest neighbor searches
+            - generic [ref=e618]:
+              - heading "Memory Pool Management" [level=4] [ref=e619]
+              - generic [ref=e622]:
+                - generic [ref=e623]: // Pre-allocated object pools prevent GC pressure
+                - generic [ref=e624]: "TokenPool Management System:"
+                - generic [ref=e625]: "- static pools: Map<TokenType, TokenNode[]>"
+                - generic [ref=e626]: "- maxPoolSize: 1000 objects per type"
+                - generic [ref=e627]: "Pool Operations:"
+                - generic [ref=e628]: "- acquire(type): Get pooled object or create new"
+                - generic [ref=e629]: "- release(token): Return object to pool after reset"
+                - generic [ref=e630]: "- createNew(): Factory method for new instances"
+                - generic [ref=e631]: // String interning for memory optimization
+                - generic [ref=e632]: "String Intern System:"
+                - generic [ref=e633]: "- stringInterner: WeakMap<string, WeakRef<string>>"
+                - generic [ref=e634]: "- intern(str): Deduplicate string references"
+                - generic [ref=e635]: "- WeakRef prevents memory leaks for unused strings"
+              - list [ref=e636]:
+                - listitem [ref=e637]: • Object pooling reduces GC pressure by 85%
+                - listitem [ref=e638]: • String interning saves 40% memory on duplicates
+                - listitem [ref=e639]: • Weak references prevent memory leaks
+                - listitem [ref=e640]: • Type-specific pools optimize allocation patterns
+        - generic [ref=e641]:
+          - heading "AI Token Optimization Strategies" [level=3] [ref=e642]
+          - generic [ref=e643]:
+            - generic [ref=e645]:
+              - heading "Context Window Engineering" [level=4] [ref=e646]
+              - generic [ref=e649]:
+                - generic [ref=e650]: // Intelligent context window utilization
+                - generic [ref=e651]: "ContextOptimizer System:"
+                - generic [ref=e652]: "- MAX_TOKENS: 128,000 (GPT-4o limit)"
+                - generic [ref=e653]: "- RESERVED_OUTPUT: 4,096 tokens"
+                - generic [ref=e654]: "Core Methods:"
+                - generic [ref=e655]: "- optimizePrompt(): Smart token management"
+                - generic [ref=e656]: "- compressCss(): Semantic compression with token prioritization"
+                - generic [ref=e657]: "- estimateTokens(): ~4 characters per token approximation"
+                - generic [ref=e658]: "- enrichWithContext(): Context enhancement strategies"
+                - generic [ref=e659]: "Features:"
+                - generic [ref=e660]: "- Prioritizes design token selectors"
+                - generic [ref=e661]: "- Removes comments and deduplicates rules"
+                - generic [ref=e662]: "- Compresses to exact token limits"
+              - list [ref=e663]:
+                - listitem [ref=e664]: • Semantic CSS compression reduces tokens by 60%
+                - listitem [ref=e665]: • Dynamic context window optimization
+                - listitem [ref=e666]: • Prioritized token extraction preserves quality
+                - listitem [ref=e667]: • Batch processing reduces API calls by 75%
+            - generic [ref=e669]:
+              - heading "Prompt Engineering Optimization" [level=4] [ref=e670]
+              - generic [ref=e672]:
+                - paragraph [ref=e673]:
+                  - strong [ref=e674]: Few-shot learning
+                  - text: with dynamic examples improves accuracy by 23%
+                - paragraph [ref=e675]:
+                  - strong [ref=e676]: Vector similarity search
+                  - text: selects domain-relevant examples (similarity > 0.7)
+                - paragraph [ref=e677]:
+                  - strong [ref=e678]: Compressed JSON format
+                  - text: reduces output tokens by 45%
+                - paragraph [ref=e679]:
+                  - strong [ref=e680]: Example selection
+                  - text: based on performance scoring and domain relevance
+              - list [ref=e681]:
+                - listitem [ref=e682]: • Few-shot learning improves accuracy by 23%
+                - listitem [ref=e683]: • Vector similarity for example selection
+                - listitem [ref=e684]: • Compressed JSON reduces output tokens by 45%
+                - listitem [ref=e685]: • Domain-specific prompt optimization
+        - generic [ref=e686]:
+          - heading "Advanced Database Design Patterns" [level=3] [ref=e687]
+          - generic [ref=e688]:
+            - generic [ref=e690]:
+              - heading "Temporal Data Modeling" [level=4] [ref=e691]
+              - generic [ref=e693]: "-- Bitemporal tracking for design system evolution CREATE TABLE token_versions ( id UUID PRIMARY KEY DEFAULT gen_random_uuid(), token_id UUID NOT NULL, value JSONB NOT NULL, valid_from TIMESTAMPTZ NOT NULL, valid_to TIMESTAMPTZ DEFAULT 'infinity', transaction_from TIMESTAMPTZ DEFAULT NOW(), transaction_to TIMESTAMPTZ DEFAULT 'infinity', -- Partial indexes for hot queries CONSTRAINT valid_period CHECK (valid_from < valid_to), CONSTRAINT tx_period CHECK (transaction_from < transaction_to) ); -- Covering index for time-travel queries CREATE INDEX CONCURRENTLY idx_token_versions_temporal ON token_versions (token_id, valid_from, valid_to) INCLUDE (value, transaction_from); -- Materialized view for current state (hot path optimization) CREATE MATERIALIZED VIEW current_tokens AS SELECT DISTINCT ON (token_id) token_id, value, valid_from FROM token_versions WHERE NOW() BETWEEN valid_from AND valid_to AND NOW() BETWEEN transaction_from AND transaction_to ORDER BY token_id, valid_from DESC;"
+              - list [ref=e694]:
+                - listitem [ref=e695]: • Bitemporal design tracks both valid and transaction time
+                - listitem [ref=e696]: • Materialized views accelerate current state queries
+                - listitem [ref=e697]: • Partial indexes reduce storage by 60%
+                - listitem [ref=e698]: • Time-travel queries enable design system archaeology
+            - generic [ref=e700]:
+              - heading "CQRS with Event Sourcing" [level=4] [ref=e701]
+              - generic [ref=e703]: "// Command Query Responsibility Segregation interface TokenEvent { id: string; aggregateId: string; type: 'TOKEN_EXTRACTED' | 'TOKEN_UPDATED' | 'TOKEN_DELETED'; data: unknown; metadata: { userId?: string; timestamp: number; version: number; }; } class TokenAggregate { private events: TokenEvent[] = []; private version = 0; applyEvent(event: TokenEvent): void { switch (event.type) { case 'TOKEN_EXTRACTED': this.handleTokenExtracted(event.data as TokenExtractedData); break; // ... other handlers } this.events.push(event); this.version++; } // Snapshot optimization for large aggregates createSnapshot(): TokenSnapshot { return { aggregateId: this.id, data: this.getCurrentState(), version: this.version, timestamp: Date.now() }; } } // Read model optimization with denormalization CREATE TABLE token_read_model ( id UUID PRIMARY KEY, site_id UUID NOT NULL, category TEXT NOT NULL, data JSONB NOT NULL, search_vector tsvector GENERATED ALWAYS AS ( to_tsvector('english', data->>'name' || ' ' || data->>'description') ) STORED, updated_at TIMESTAMPTZ DEFAULT NOW() );"
+              - list [ref=e704]:
+                - listitem [ref=e705]: • Event sourcing provides complete audit trail
+                - listitem [ref=e706]: • CQRS separates read/write optimization
+                - listitem [ref=e707]: • Snapshots reduce replay time for large aggregates
+                - listitem [ref=e708]: • Full-text search with tsvector for semantic queries
+        - generic [ref=e709]:
+          - heading "Performance Micro-optimizations" [level=3] [ref=e710]
+          - generic [ref=e711]:
+            - generic [ref=e713]:
+              - heading "CSS Parsing Optimization" [level=4] [ref=e714]
+              - generic [ref=e716]: "// Zero-copy CSS parsing with SIMD acceleration class SIMDCSSParser { private static readonly SIMD_CHUNK_SIZE = 16; parseColors(css: Uint8Array): ColorToken[] { const results: ColorToken[] = []; const hexPattern = new Uint8Array([0x23, 0x00]); // '#' pattern // SIMD pattern matching for hex colors for (let i = 0; i < css.length - this.SIMD_CHUNK_SIZE; i += 16) { const chunk = css.subarray(i, i + this.SIMD_CHUNK_SIZE); const matches = this.simdFind(chunk, hexPattern); for (const match of matches) { const color = this.extractHexColor(css, i + match); if (color) results.push(color); } } return results; } private simdFind(haystack: Uint8Array, needle: Uint8Array): number[] { // WebAssembly SIMD implementation for 16x parallel comparison return wasmSIMDSearch(haystack, needle); } } // Memory-mapped file processing for large CSS files class MemoryMappedCSS { private buffer: SharedArrayBuffer; private view: Uint8Array; constructor(filepath: string) { const fd = fs.openSync(filepath, 'r'); const stats = fs.fstatSync(fd); this.buffer = new SharedArrayBuffer(stats.size); this.view = new Uint8Array(this.buffer); fs.readSync(fd, this.view, 0, stats.size, 0); fs.closeSync(fd); } parseInWorker(): Promise<TokenResult[]> { return new Promise((resolve) => { const worker = new Worker('./css-parser-worker.js'); worker.postMessage({ buffer: this.buffer }); worker.onmessage = (e) => resolve(e.data); }); } }"
+              - list [ref=e717]:
+                - listitem [ref=e718]: • SIMD acceleration for 16x parallel pattern matching
+                - listitem [ref=e719]: • Memory-mapped files reduce I/O overhead
+                - listitem [ref=e720]: • Zero-copy parsing eliminates string allocations
+                - listitem [ref=e721]: • WebAssembly SIMD for CPU-intensive operations
+            - generic [ref=e723]:
+              - heading "Network & Caching Optimizations" [level=4] [ref=e724]
+              - generic [ref=e726]: "// Multi-tier caching with intelligent prefetching class IntelligentCache { private l1 = new Map<string, CacheEntry>(); // Memory private l2: Redis; // Distributed private l3: Database; // Persistent private prefetcher = new PredictivePrefetcher(); async get<T>(key: string): Promise<T | null> { // L1: Memory cache (sub-microsecond) const l1Result = this.l1.get(key); if (l1Result?.isValid()) { this.prefetcher.recordHit(key); return l1Result.value as T; } // L2: Redis (sub-millisecond) const l2Result = await this.l2.get(key); if (l2Result) { this.l1.set(key, new CacheEntry(l2Result)); return JSON.parse(l2Result); } // L3: Database (milliseconds) const l3Result = await this.l3.get(key); if (l3Result) { await this.l2.setex(key, 3600, JSON.stringify(l3Result)); this.l1.set(key, new CacheEntry(l3Result)); } // Predictive prefetching based on access patterns this.prefetcher.scheduleRelatedKeys(key); return l3Result; } } // HTTP/2 Server Push optimization class SmartServerPush { private dependencyGraph = new Map<string, string[]>(); async handleRequest(req: Request): Promise<Response> { const url = new URL(req.url); const dependencies = this.dependencyGraph.get(url.pathname); if (dependencies && req.headers.get('accept-push-policy') !== 'none') { for (const dep of dependencies) { this.pushResource(dep, req); } } return this.processRequest(req); } private pushResource(path: string, originalReq: Request): void { // Intelligent resource pushing based on user behavior const priority = this.calculatePushPriority(path, originalReq); if (priority > 0.7) { this.serverPush(path, originalReq); } } }"
+              - list [ref=e727]:
+                - listitem [ref=e728]: • 3-tier caching reduces response time by 95%
+                - listitem [ref=e729]: • Predictive prefetching based on ML patterns
+                - listitem [ref=e730]: • HTTP/2 Server Push for critical resources
+                - listitem [ref=e731]: • Intelligent cache invalidation with dependency tracking
+        - generic [ref=e732]:
+          - heading "Observability & Performance Monitoring" [level=3] [ref=e733]
+          - generic [ref=e734]:
+            - generic [ref=e736]:
+              - heading "Real-time Performance Telemetry" [level=4] [ref=e737]
+              - generic [ref=e739]: "// High-resolution performance tracking class PerformanceCollector { private metrics = new CircularBuffer<Metric>(10000); private sampler = new AdaptiveSampler(); @instrument({ sample: 'adaptive' }) async extractTokens(url: string): Promise<TokenResult> { const span = trace.startSpan('extract_tokens'); const startMemory = process.memoryUsage(); try { const result = await this.performExtraction(url); // Sub-millisecond precision timing const timing = performance.measureUserAgentSpecificMemory(); this.metrics.push({ operation: 'extract_tokens', duration: span.duration, memoryDelta: this.calculateMemoryDelta(startMemory), cpuUsage: process.cpuUsage(), tokenCount: result.tokens.length, accuracy: result.confidence, timestamp: performance.timeOrigin + performance.now() }); return result; } finally { span.end(); } } // Adaptive sampling reduces overhead while maintaining accuracy shouldSample(operation: string): boolean { const recentErrors = this.getRecentErrors(operation); const baseRate = 0.01; // 1% base sampling const errorMultiplier = Math.min(recentErrors * 0.1, 1.0); return Math.random() < (baseRate + errorMultiplier); } }"
+              - list [ref=e740]:
+                - listitem [ref=e741]: • Sub-millisecond precision with performance.now()
+                - listitem [ref=e742]: • Adaptive sampling reduces overhead by 99%
+                - listitem [ref=e743]: • Memory delta tracking prevents memory leaks
+                - listitem [ref=e744]: • Distributed tracing with OpenTelemetry
+            - generic [ref=e746]:
+              - heading "Anomaly Detection & Auto-remediation" [level=4] [ref=e747]
+              - generic [ref=e749]: "// ML-powered anomaly detection with auto-remediation class AnomalyDetector { private model = new IsolationForest({ contamination: 0.1, features: ['latency', 'memory', 'cpu', 'errorRate'] }); private remediator = new AutoRemediator(); async detectAnomalies(metrics: Metric[]): Promise<Anomaly[]> { const features = metrics.map(m => [ m.duration, m.memoryDelta, m.cpuUsage.system + m.cpuUsage.user, m.errorRate ]); const predictions = await this.model.predict(features); const anomalies: Anomaly[] = []; predictions.forEach((score, index) => { if (score < -0.5) { // Anomaly threshold const anomaly = { metric: metrics[index], score, type: this.classifyAnomaly(metrics[index]), severity: this.calculateSeverity(score) }; anomalies.push(anomaly); this.remediator.handle(anomaly); } }); return anomalies; } private classifyAnomaly(metric: Metric): AnomalyType { if (metric.memoryDelta > this.memoryThreshold) return 'MEMORY_LEAK'; if (metric.duration > this.latencyThreshold) return 'PERFORMANCE_DEGRADATION'; if (metric.errorRate > this.errorThreshold) return 'ERROR_SPIKE'; return 'UNKNOWN'; } } // Auto-remediation strategies class AutoRemediator { async handle(anomaly: Anomaly): Promise<void> { switch (anomaly.type) { case 'MEMORY_LEAK': await this.triggerGarbageCollection(); await this.restartWorkerProcesses(); break; case 'PERFORMANCE_DEGRADATION': await this.scaleHorizontally(); await this.enableFallbackMode(); break; case 'ERROR_SPIKE': await this.activateCircuitBreaker(); await this.rollbackToLastKnownGood(); break; } } }"
+              - list [ref=e750]:
+                - listitem [ref=e751]: • Isolation Forest ML for real-time anomaly detection
+                - listitem [ref=e752]: • Auto-remediation reduces MTTR by 80%
+                - listitem [ref=e753]: • Predictive scaling based on traffic patterns
+                - listitem [ref=e754]: • Self-healing system with automated rollbacks
+        - generic [ref=e755]:
+          - heading "MCP Server Integration & AI Design Generation" [level=3] [ref=e756]
+          - generic [ref=e757]:
+            - generic [ref=e759]:
+              - heading "Model Context Protocol Server" [level=4] [ref=e760]
+              - generic [ref=e762]: "// MCP Server exposes design tokens to AI agents class ContextDSMCPServer implements MCPServer { private tools = [ 'scan_tokens', 'get_layout_dna', 'analyze_brand', 'generate_variations', 'compose_design_system' ]; async handleToolCall(name: string, args: MCPArgs): Promise<MCPResult> { switch (name) { case 'scan_tokens': return await this.scanTokensWithContext(args); case 'get_layout_dna': return await this.getLayoutDNAWithArchetype(args); case 'generate_variations': return await this.generateDesignVariations(args); } } // Enhanced token extraction with AI-optimized metadata private async scanTokensWithContext(args: ScanArgs): Promise<TokenResult> { const tokens = await this.extractTokens(args.url); // Enrich with AI-consumable context const enriched = await this.enrichTokensForAI(tokens, { semanticCategories: await this.categorizeTokens(tokens), usagePatterns: await this.analyzeUsagePatterns(args.url), brandContext: await this.extractBrandContext(args.url), designIntent: await this.inferDesignIntent(tokens) }); return { tokens: enriched, metadata: { extractionMethod: 'semantic-analysis', confidenceScore: this.calculateConfidence(enriched), aiOptimized: true, consumptionHints: this.generateConsumptionHints(enriched) } }; } }"
+              - list [ref=e763]:
+                - listitem [ref=e764]: • Real-time MCP tool exposure to Claude Code and other AI agents
+                - listitem [ref=e765]: • Semantic categorization for intelligent token grouping
+                - listitem [ref=e766]: • AI-optimized metadata with consumption hints
+                - listitem [ref=e767]: • Brand context extraction for design coherence
+            - generic [ref=e769]:
+              - heading "AI Design Generation Pipeline" [level=4] [ref=e770]
+              - generic [ref=e772]: "// AI agents consume tokens to generate designs class AIDesignGenerator { async generateFromTokens( tokens: EnrichedTokens, userIntent: DesignIntent ): Promise<GeneratedDesign> { // 1. Token Analysis & Semantic Understanding const analysis = await this.analyzeTokenSemantics(tokens); // 2. Design Pattern Recognition const patterns = await this.identifyDesignPatterns(analysis); // 3. Intent-to-Token Mapping const mapping = await this.mapIntentToTokens(userIntent, patterns); // 4. Design Generation with Constraints return await this.generateDesign({ colorPalette: this.selectOptimalColors(mapping.colors), typography: this.createTypeScale(mapping.typography), spacing: this.deriveSpacingSystem(mapping.spacing), layout: this.inferLayoutPatterns(mapping.layout), components: this.synthesizeComponents(mapping.patterns) }); } private async analyzeTokenSemantics(tokens: EnrichedTokens) { return { // Semantic color relationships colorRelationships: this.analyzeColorHarmony(tokens.colors), // Typography hierarchy and pairing typographyHierarchy: this.inferTypeHierarchy(tokens.typography), // Spacing rhythm and scale spacingRhythm: this.analyzeSpacingRhythm(tokens.spacing), // Component composition patterns componentPatterns: this.extractComponentPatterns(tokens.components) }; } }"
+              - list [ref=e773]:
+                - listitem [ref=e774]: • Semantic token analysis for design pattern recognition
+                - listitem [ref=e775]: • Intent-to-token mapping for contextual design generation
+                - listitem [ref=e776]: • Multi-stage design synthesis with constraint satisfaction
+                - listitem [ref=e777]: • Component pattern extraction and recomposition
+        - generic [ref=e778]:
+          - heading "Design Token Transformation Pipeline" [level=3] [ref=e779]
+          - generic [ref=e780]:
+            - generic [ref=e782]:
+              - heading "Multi-Format Token Synthesis" [level=4] [ref=e783]
+              - generic [ref=e785]: "// Transform tokens for different AI consumption patterns class TokenTransformationEngine { // Generate AI-consumable design guidance async synthesizeDesignGuidance( tokens: TokenSet, layoutDNA: LayoutDNA, brandContext: BrandContext ): Promise<AIDesignGuidance> { return { // Color guidance with semantic meaning colorGuidance: { primary: { value: tokens.colors.primary.value, semantics: \"Trustworthy, professional, action-oriented\", usage: \"CTAs, links, active states\", accessibility: this.analyzeColorAccessibility(tokens.colors.primary), variations: this.generateColorVariations(tokens.colors.primary) }, palette: this.generateSemanticPalette(tokens.colors, brandContext) }, // Typography system with hierarchy typographyGuidance: { scale: this.generateTypeScale(tokens.typography), pairing: this.analyzeTypePairings(tokens.typography), hierarchy: this.inferContentHierarchy(layoutDNA), usage: this.generateUsageGuidelines(tokens.typography) }, // Layout patterns with responsive behavior layoutGuidance: { patterns: this.extractLayoutPatterns(layoutDNA), grid: this.inferGridSystem(layoutDNA), spacing: this.deriveSpacingGuidelines(tokens.spacing), responsive: this.analyzeResponsiveBehavior(layoutDNA) }, // Component composition rules componentGuidance: this.synthesizeComponentRules( tokens, layoutDNA, brandContext ) }; } // Generate format-specific outputs for different AI consumers private generateFormatSpecificOutputs(guidance: AIDesignGuidance) { return { // For code generation AIs (Claude Code, Cursor, etc.) codeGeneration: { cssVariables: this.generateCSSVariables(guidance), tailwindConfig: this.generateTailwindConfig(guidance), designTokens: this.generateDesignTokens(guidance), componentTemplates: this.generateComponentTemplates(guidance) }, // For design AIs (Figma plugins, design tools) designTooling: { figmaTokens: this.generateFigmaTokens(guidance), sketchSymbols: this.generateSketchSymbols(guidance), designSystemSpec: this.generateDesignSystemSpec(guidance) }, // For natural language processing naturalLanguage: { designPrinciples: this.generateDesignPrinciples(guidance), usageGuidelines: this.generateUsageGuidelines(guidance), accessibilityNotes: this.generateAccessibilityNotes(guidance) } }; } }"
+              - list [ref=e786]:
+                - listitem [ref=e787]: • Multi-format token synthesis for different AI consumers
+                - listitem [ref=e788]: • Semantic meaning extraction with usage guidelines
+                - listitem [ref=e789]: • Accessibility analysis and compliance recommendations
+                - listitem [ref=e790]: • Format-specific outputs (CSS, Tailwind, Figma, Sketch)
+            - generic [ref=e792]:
+              - heading "Contextual Design Intelligence" [level=4] [ref=e793]
+              - generic [ref=e795]: "// AI consumes contextual intelligence for informed design decisions class ContextualDesignIntelligence { async generateContextualRecommendations( userRequest: string, extractedTokens: TokenSet, brandAnalysis: BrandAnalysis ): Promise<DesignRecommendations> { // Parse user intent using NLP const intent = await this.parseDesignIntent(userRequest); // Match intent to appropriate token combinations const tokenMapping = await this.mapIntentToTokens(intent, extractedTokens); // Generate contextual recommendations return { colorRecommendations: await this.generateColorRecommendations( intent.colorPreferences, extractedTokens.colors, brandAnalysis.brandPersonality ), layoutRecommendations: await this.generateLayoutRecommendations( intent.layoutType, extractedTokens.layoutDNA, brandAnalysis.industryContext ), componentRecommendations: await this.generateComponentRecommendations( intent.functionality, extractedTokens.components, brandAnalysis.maturityLevel ), // Intelligent design warnings and optimizations designWarnings: this.analyzeDesignCompatibility(tokenMapping), optimizations: this.suggestDesignOptimizations(tokenMapping), // A/B testing suggestions based on industry patterns abTestSuggestions: this.generateABTestSuggestions( intent, extractedTokens, brandAnalysis ) }; } // Real-time design validation and feedback async validateDesignChoices( proposedDesign: ProposedDesign, originalTokens: TokenSet ): Promise<ValidationResult> { return { // Accessibility compliance checking accessibility: { colorContrast: this.validateColorContrast(proposedDesign.colors), fontSizes: this.validateFontSizes(proposedDesign.typography), spacing: this.validateTouchTargets(proposedDesign.spacing) }, // Brand consistency validation brandConsistency: { colorHarmony: this.validateColorHarmony( proposedDesign.colors, originalTokens.colors ), typographyAlignment: this.validateTypographyAlignment( proposedDesign.typography, originalTokens.typography ), overallCohesion: this.calculateCohesionScore( proposedDesign, originalTokens ) }, // Performance impact analysis performance: { renderingComplexity: this.analyzeRenderingComplexity(proposedDesign), bundleSize: this.estimateBundleSize(proposedDesign), loadingPerformance: this.estimateLoadingPerformance(proposedDesign) }, // Improvement suggestions suggestions: this.generateImprovementSuggestions(proposedDesign) }; } }"
+              - list [ref=e796]:
+                - listitem [ref=e797]: • NLP-powered intent parsing for design context understanding
+                - listitem [ref=e798]: • Real-time design validation with accessibility compliance
+                - listitem [ref=e799]: • Brand consistency scoring and cohesion analysis
+                - listitem [ref=e800]: • Performance impact prediction and optimization suggestions
+        - generic [ref=e801]:
+          - heading "AI Agent Orchestration & Design Workflow" [level=3] [ref=e802]
+          - generic [ref=e803]:
+            - generic [ref=e805]:
+              - heading "Multi-Agent Design Collaboration" [level=4] [ref=e806]
+              - generic [ref=e808]: "// Orchestrate multiple AI agents for comprehensive design generation class AIAgentOrchestrator { private agents = { colorSpecialist: new ColorTheoryAgent(), typographyExpert: new TypographyAgent(), layoutArchitect: new LayoutAgent(), accessibilityAuditor: new AccessibilityAgent(), brandConsultant: new BrandAgent(), performanceOptimizer: new PerformanceAgent() }; async orchestrateDesignGeneration( userRequest: DesignRequest, extractedTokens: TokenSet ): Promise<CollaborativeDesign> { // Phase 1: Individual agent analysis const analyses = await Promise.allSettled([ this.agents.colorSpecialist.analyze(extractedTokens.colors, userRequest), this.agents.typographyExpert.analyze(extractedTokens.typography, userRequest), this.agents.layoutArchitect.analyze(extractedTokens.layout, userRequest), this.agents.accessibilityAuditor.audit(extractedTokens, userRequest), this.agents.brandConsultant.evaluate(extractedTokens, userRequest), this.agents.performanceOptimizer.optimize(extractedTokens, userRequest) ]); // Phase 2: Cross-agent collaboration and consensus building const collaborativeDesign = await this.buildConsensus(analyses, userRequest); // Phase 3: Conflict resolution and optimization const resolvedDesign = await this.resolveDesignConflicts(collaborativeDesign); // Phase 4: Final validation and refinement return await this.validateAndRefine(resolvedDesign, extractedTokens); } private async buildConsensus( analyses: PromiseSettledResult<AgentAnalysis>[], request: DesignRequest ): Promise<ConsensusDesign> { const validAnalyses = analyses .filter(result => result.status === 'fulfilled') .map(result => result.value); // Weighted voting system based on agent confidence and expertise relevance const consensus = { colors: this.voteOnColors(validAnalyses, request.colorImportance), typography: this.voteOnTypography(validAnalyses, request.typographyImportance), layout: this.voteOnLayout(validAnalyses, request.layoutImportance), accessibility: this.consolidateAccessibility(validAnalyses), performance: this.optimizeForPerformance(validAnalyses) }; return consensus; } }"
+              - list [ref=e809]:
+                - listitem [ref=e810]: • Multi-agent collaboration with specialized expertise areas
+                - listitem [ref=e811]: • Consensus building through weighted voting systems
+                - listitem [ref=e812]: • Conflict resolution and design optimization
+                - listitem [ref=e813]: • Cross-domain validation and refinement
+            - generic [ref=e815]:
+              - heading "Design Generation Workflow" [level=4] [ref=e816]
+              - generic [ref=e818]: "// End-to-end workflow from token extraction to design generation class DesignGenerationWorkflow { async executeWorkflow( sourceUrl: string, userPrompt: string, designConstraints: DesignConstraints ): Promise<GeneratedDesignSystem> { // Stage 1: Token Extraction with Context const extractionResult = await this.extractTokensWithContext(sourceUrl); // Stage 2: AI Enhancement and Enrichment const enrichedTokens = await this.enrichTokensForAI( extractionResult.tokens, extractionResult.context ); // Stage 3: Intent Analysis and Requirement Extraction const designIntent = await this.parseDesignIntent( userPrompt, designConstraints ); // Stage 4: Multi-Agent Design Generation const designProposal = await this.orchestrateDesignGeneration( designIntent, enrichedTokens ); // Stage 5: Validation and Optimization const validatedDesign = await this.validateDesign( designProposal, designConstraints ); // Stage 6: Multi-Format Output Generation const outputs = await this.generateMultiFormatOutputs(validatedDesign); // Stage 7: Documentation and Guidelines Generation const documentation = await this.generateDesignDocumentation( validatedDesign, enrichedTokens, designIntent ); return { designSystem: validatedDesign, outputs: outputs, documentation: documentation, implementationGuide: await this.generateImplementationGuide(validatedDesign), testingSuite: await this.generateTestingSuite(validatedDesign), // AI-generated variations and alternatives variations: await this.generateDesignVariations(validatedDesign), alternatives: await this.generateAlternativeApproaches(validatedDesign), // Performance and accessibility reports reports: { performance: await this.generatePerformanceReport(validatedDesign), accessibility: await this.generateAccessibilityReport(validatedDesign), brandCompliance: await this.generateBrandComplianceReport(validatedDesign) } }; } // Real-time design iteration based on user feedback async iterateDesign( currentDesign: GeneratedDesignSystem, userFeedback: UserFeedback, iterationConstraints: IterationConstraints ): Promise<IteratedDesign> { // Analyze feedback sentiment and specific change requests const feedbackAnalysis = await this.analyzeFeedback(userFeedback); // Generate targeted modifications const modifications = await this.generateModifications( currentDesign, feedbackAnalysis, iterationConstraints ); // Apply modifications with validation const updatedDesign = await this.applyModifications( currentDesign, modifications ); return { design: updatedDesign, changes: modifications, reasoning: await this.explainDesignDecisions(modifications), confidence: this.calculateIterationConfidence(updatedDesign) }; } }"
+              - list [ref=e819]:
+                - listitem [ref=e820]: • End-to-end workflow from extraction to implementation
+                - listitem [ref=e821]: • Real-time design iteration based on user feedback
+                - listitem [ref=e822]: • Multi-format output generation (code, design files, docs)
+                - listitem [ref=e823]: • Comprehensive testing and validation suite generation
+    - generic [ref=e825]:
+      - generic [ref=e826]:
+        - heading "Real-World Implementation Examples" [level=2] [ref=e827]
+        - paragraph [ref=e828]: See how developers integrate ContextDS into their actual workflows
+      - generic [ref=e829]:
+        - generic [ref=e830]:
+          - heading "Claude Code Integration Examples" [level=3] [ref=e831]
+          - generic [ref=e832]:
+            - generic [ref=e834]:
+              - heading "Extract and Apply Design System" [level=4] [ref=e835]
+              - generic [ref=e837]: "// User prompt to Claude Code: \"Extract the design tokens from stripe.com and create a React component library with their color palette and typography\" // Claude Code automatically calls MCP tools: const tokens = await scan_tokens('https://stripe.com', { include_layout: true, extract_components: true }); const layoutDNA = await get_layout_dna('https://stripe.com', { pages: ['/', '/pricing', '/docs'], viewports: ['mobile', 'tablet', 'desktop'] }); // AI generates complete implementation: // 1. CSS custom properties :root { --color-primary: #635bff; --color-primary-hover: #5a52e5; --font-family-sans: \"Inter\", sans-serif; --spacing-base: 8px; --border-radius-md: 6px; } // 2. Tailwind config module.exports = { theme: { colors: { primary: 'var(--color-primary)', 'primary-hover': 'var(--color-primary-hover)' }, fontFamily: { sans: ['Inter', 'sans-serif'] } } } // 3. React components with full TypeScript interface ButtonProps { variant?: 'primary' | 'secondary'; size?: 'sm' | 'md' | 'lg'; } export const Button: React.FC<ButtonProps> = ({ variant = 'primary', size = 'md', children }) => { return ( <button className={`btn btn-${variant} btn-${size}`}> {children} </button> ); }"
+              - list [ref=e838]:
+                - listitem [ref=e839]: • One prompt generates complete component library
+                - listitem [ref=e840]: • Automatic MCP tool integration
+                - listitem [ref=e841]: • CSS variables, Tailwind config, and React components
+                - listitem [ref=e842]: • Full TypeScript support with proper typing
+            - generic [ref=e844]:
+              - heading "Brand-Consistent Design Generation" [level=4] [ref=e845]
+              - generic [ref=e847]: "// User prompt to Claude Code: \"Create a dashboard interface inspired by Linear's design system but for a fintech app\" // Claude Code workflow: 1. const linearTokens = await scan_tokens('https://linear.app'); 2. const brandAnalysis = await analyze_brand(linearTokens); 3. const variations = await generate_variations(linearTokens, { industry: 'fintech', personality: ['trustworthy', 'professional', 'secure'] }); // AI adapts the design system: // Color palette adjusted for fintech trust signals const fintechColors = { primary: '#2563eb', // Trust-inducing blue vs Linear's purple success: '#059669', // Financial green for positive numbers warning: '#d97706', // Conservative orange vs bright yellow danger: '#dc2626', // Professional red for alerts } // Layout patterns adapted for financial data const dashboardLayout = { grid: '12-column', // Linear's flexible grid spacing: 'compact', // Denser for data-heavy interfaces cards: { elevation: 'subtle', // Professional vs consumer corners: 'rounded-lg', // Trustworthy vs playful }, typography: { scale: 'conservative', // Readable financial data hierarchy: 'clear', // Important for financial UX } } // Generated React dashboard components <DashboardCard value=\"$1,234,567\" change=\"+5.2%\" trend=\"up\" period=\"30d\" accessible={true} fintechOptimized={true} />"
+              - list [ref=e848]:
+                - listitem [ref=e849]: • Industry-specific design system adaptation
+                - listitem [ref=e850]: • Brand personality-driven color palette generation
+                - listitem [ref=e851]: • Layout pattern optimization for use case
+                - listitem [ref=e852]: • Accessibility and compliance considerations
+        - generic [ref=e853]:
+          - heading "API Integration Workflows" [level=3] [ref=e854]
+          - generic [ref=e855]:
+            - generic [ref=e857]:
+              - heading "Automated Design System Updates" [level=4] [ref=e858]
+              - generic [ref=e860]: "// CI/CD Pipeline Integration // .github/workflows/design-system-sync.yml name: Design System Sync on: schedule: - cron: '0 9 * * 1' # Weekly Monday morning workflow_dispatch: jobs: sync-design-tokens: runs-on: ubuntu-latest steps: - uses: actions/checkout@v4 - name: Extract Latest Design Tokens run: | curl -X POST \"https://api.contextds.com/v1/scan\" \\ -H \"Authorization: Bearer ${{ secrets.CONTEXTDS_API_KEY }}\" \\ -H \"Content-Type: application/json\" \\ -d '{ \"url\": \"https://our-design-system.com\", \"options\": { \"include_layout\": true, \"format\": \"w3c\", \"comparison_baseline\": \"previous_scan\" } }' > tokens.json - name: Generate Updated Components run: | # AI-powered component generation npx @contextds/cli generate-components \\ --tokens tokens.json \\ --framework react \\ --typescript \\ --output src/components/design-system - name: Update Documentation run: | # Auto-generate Storybook stories and docs npx @contextds/cli generate-docs \\ --tokens tokens.json \\ --format storybook \\ --output stories/ - name: Create Pull Request uses: peter-evans/create-pull-request@v5 with: title: \"🎨 Automated design system update\" body: | ## Design System Changes ${{ steps.extract.outputs.changes_summary }} ### New Tokens - ${{ steps.extract.outputs.new_tokens }} ### Modified Tokens - ${{ steps.extract.outputs.modified_tokens }} ### Breaking Changes - ${{ steps.extract.outputs.breaking_changes }} 🤖 Generated by ContextDS CI/CD integration"
+              - list [ref=e861]:
+                - listitem [ref=e862]: • Automated weekly design system synchronization
+                - listitem [ref=e863]: • Change detection and impact analysis
+                - listitem [ref=e864]: • Automatic component and documentation generation
+                - listitem [ref=e865]: • Pull request creation with detailed change summaries
+            - generic [ref=e867]:
+              - heading "Multi-Brand Design System Management" [level=4] [ref=e868]
+              - generic [ref=e870]: "// Enterprise multi-brand workflow class MultiSass Enterprise DesignManager { private brands = [ { name: 'primary', url: 'https://primary-brand.com' }, { name: 'subsidiary-a', url: 'https://subsidiary-a.com' }, { name: 'subsidiary-b', url: 'https://subsidiary-b.com' } ]; async syncAllBrands() { const results = await Promise.allSettled( this.brands.map(async (brand) => { // Extract tokens for each brand const tokens = await this.contextDS.scan({ url: brand.url, options: { include_layout: true, extract_components: true, ai_analysis: true } }); // Generate brand-specific design system const designSystem = await this.contextDS.generateDesignSystem({ tokens, brand: brand.name, constraints: await this.getBrandConstraints(brand.name), outputFormats: ['css', 'figma', 'sketch', 'tailwind'] }); // Analyze cross-brand consistency const consistency = await this.analyzeCrossBrandConsistency( designSystem, this.masterBrandGuidelines ); return { brand: brand.name, designSystem, consistency }; }) ); // Generate consolidated brand guidelines const consolidatedGuidelines = await this.generateConsolidatedGuidelines( results.filter(r => r.status === 'fulfilled').map(r => r.value) ); // Deploy to design system repository await this.deployToRepository(consolidatedGuidelines); return consolidatedGuidelines; } async generateBrandVariant(sourceBrand: string, targetBrand: string) { const sourceTokens = await this.getTokens(sourceBrand); // AI-powered brand adaptation const adaptedTokens = await this.contextDS.adaptBrand({ sourceTokens, targetPersonality: await this.getBrandPersonality(targetBrand), constraints: await this.getBrandConstraints(targetBrand), preserveUsability: true, maintainAccessibility: true }); return adaptedTokens; } }"
+              - list [ref=e871]:
+                - listitem [ref=e872]: • Multi-brand design system synchronization
+                - listitem [ref=e873]: • Cross-brand consistency analysis and enforcement
+                - listitem [ref=e874]: • AI-powered brand adaptation and variant generation
+                - listitem [ref=e875]: • Consolidated guidelines and repository deployment
+        - generic [ref=e876]:
+          - heading "Real-time Design Collaboration" [level=3] [ref=e877]
+          - generic [ref=e879]:
+            - heading "Live Design Session with AI Assistant" [level=4] [ref=e880]
+            - generic [ref=e882]: "// Real-time collaboration workflow // Designer: \"I need a card component similar to GitHub's repository cards but for e-commerce products\" // 1. AI extracts GitHub's card patterns const githubTokens = await scan_tokens('https://github.com', { component_focus: 'repository-cards', extract_patterns: true }); // 2. AI analyzes the specific component pattern const cardPattern = await analyze_component_pattern(githubTokens, { component_type: 'card', selector: '[data-testid=\"repository-card\"]', extract_variants: true }); // 3. AI adapts for e-commerce context const ecommerceCardPattern = await adapt_pattern(cardPattern, { context: 'e-commerce', required_elements: ['product-image', 'title', 'price', 'rating', 'add-to-cart'], accessibility_requirements: 'WCAG-AA', performance_budget: 'mobile-first' }); // 4. AI generates implementation options const implementations = await generate_implementations(ecommerceCardPattern, { frameworks: ['react', 'vue', 'svelte'], styling: ['tailwind', 'styled-components', 'css-modules'], variants: ['compact', 'detailed', 'featured'] }); // 5. Real-time preview generation const previews = await generate_previews(implementations, { sample_data: 'e-commerce-products', viewports: ['mobile', 'tablet', 'desktop'], themes: ['light', 'dark'], interactive: true }); // Designer can iterate in real-time: // \"Make the price more prominent and add a wishlist button\" const iteratedDesign = await iterate_design(previews.react.tailwind, { modifications: [ { element: 'price', change: 'increase font-weight to semibold, add color accent' }, { element: 'new', type: 'wishlist-button', position: 'top-right' } ], maintain_accessibility: true, preserve_brand_consistency: true }); // Final output: Production-ready component with documentation export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onAddToWishlist, variant = 'default' }) => { return ( <article className=\"group relative bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow\" role=\"article\" aria-labelledby={`product-${product.id}-title`} > <button onClick={() => onAddToWishlist(product.id)} className=\"absolute top-2 right-2 p-2 rounded-full bg-white/80 hover:bg-white transition-colors\" aria-label={`Add ${product.title} to wishlist`} > <HeartIcon className=\"w-4 h-4\" /> </button> <img src={product.image} alt={product.title} className=\"w-full h-48 object-cover rounded-t-lg\" loading=\"lazy\" /> <div className=\"p-4\"> <h3 id={`product-${product.id}-title`} className=\"font-medium text-gray-900 truncate\" > {product.title} </h3> <div className=\"mt-2 flex items-center justify-between\"> <span className=\"text-lg font-semibold text-blue-600\"> ${product.price} </span> <div className=\"flex items-center\"> <StarRating rating={product.rating} /> <span className=\"ml-1 text-sm text-gray-500\"> ({product.reviewCount}) </span> </div> </div> <button onClick={() => onAddToCart(product.id)} className=\"mt-3 w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2\" > Add to Cart </button> </div> </article> ); };"
+            - list [ref=e883]:
+              - listitem [ref=e884]: • Natural language component requests with context adaptation
+              - listitem [ref=e885]: • Real-time pattern extraction and framework-specific generation
+              - listitem [ref=e886]: • Interactive preview generation with multiple variants
+              - listitem [ref=e887]: • Live iteration with accessibility and brand consistency preservation
+              - listitem [ref=e888]: • Production-ready code with documentation and TypeScript support
+    - generic [ref=e890]:
+      - generic [ref=e891]:
+        - heading "Algorithmic Transparency" [level=2] [ref=e892]
+        - paragraph [ref=e893]: Complete transparency into how our algorithms work - every calculation, every decision tree, every optimization
+      - generic [ref=e894]:
+        - generic [ref=e895]:
+          - heading "Color Analysis Algorithms" [level=3] [ref=e896]
+          - generic [ref=e897]:
+            - generic [ref=e899]:
+              - heading "Perceptual Color Extraction" [level=4] [ref=e900]
+              - generic [ref=e902]: "// Multi-stage color extraction with perceptual uniformity class PerceptualColorExtractor { // Stage 1: CSS Color Harvesting extractCSSColors(stylesheet: string): RawColorData[] { const patterns = [ /rgb\\(([^)]+)\\)/g, // RGB values /rgba\\(([^)]+)\\)/g, // RGBA values /hsl\\(([^)]+)\\)/g, // HSL values /#([0-9a-fA-F]{3,8})/g, // Hex values /--[\\w-]+\\s*:\\s*([^;]+)/g // CSS custom properties ]; return patterns.flatMap(pattern => Array.from(stylesheet.matchAll(pattern), match => ({ value: match[0], context: this.extractContext(stylesheet, match.index), usage: this.determineUsage(match[0], match.index, stylesheet) })) ); } // Stage 2: Perceptual Color Space Conversion convertToPerceptualSpace(colors: RawColorData[]): PerceptualColor[] { return colors.map(color => { const rgb = this.parseToRGB(color.value); // Convert to LAB color space for perceptual uniformity const lab = this.rgbToLab(rgb); // Calculate perceptual properties const perceptual = { lightness: lab.l, chroma: Math.sqrt(lab.a * lab.a + lab.b * lab.b), hue: Math.atan2(lab.b, lab.a) * (180 / Math.PI), // Perceptual brightness using ITU-R BT.709 perceivedBrightness: ( 0.2126 * Math.pow(rgb.r / 255, 2.2) + 0.7152 * Math.pow(rgb.g / 255, 2.2) + 0.0722 * Math.pow(rgb.b / 255, 2.2) ), // Color temperature estimation colorTemperature: this.estimateColorTemperature(rgb) }; return { ...color, rgb, lab, perceptual }; }); } // Stage 3: Semantic Color Clustering clusterSemanticColors(colors: PerceptualColor[]): ColorCluster[] { // DBSCAN clustering in LAB space for perceptual similarity const clusters = this.dbscanCluster(colors, { epsilon: 12, // LAB distance threshold minPoints: 2, distanceFunction: this.deltaE2000Distance }); return clusters.map(cluster => ({ representative: this.selectRepresentative(cluster.colors), variants: cluster.colors, semanticRole: this.inferSemanticRole(cluster), usagePatterns: this.analyzeUsagePatterns(cluster), accessibility: this.analyzeAccessibility(cluster) })); } // Delta E 2000 - Industry standard perceptual color difference private deltaE2000Distance(color1: PerceptualColor, color2: PerceptualColor): number { const { l: l1, a: a1, b: b1 } = color1.lab; const { l: l2, a: a2, b: b2 } = color2.lab; // Simplified Delta E 2000 calculation const deltaL = l1 - l2; const deltaA = a1 - a2; const deltaB = b1 - b2; const c1 = Math.sqrt(a1 * a1 + b1 * b1); const c2 = Math.sqrt(a2 * a2 + b2 * b2); const deltaC = c1 - c2; const deltaH = Math.sqrt( Math.max(0, deltaA * deltaA + deltaB * deltaB - deltaC * deltaC) ); // Weighting functions for perceptual uniformity const sl = 1 + (0.015 * Math.pow(l1 - 50, 2)) / Math.sqrt(20 + Math.pow(l1 - 50, 2)); const sc = 1 + 0.045 * c1; const sh = 1 + 0.015 * c1; return Math.sqrt( Math.pow(deltaL / sl, 2) + Math.pow(deltaC / sc, 2) + Math.pow(deltaH / sh, 2) ); } }"
+              - list [ref=e903]:
+                - listitem [ref=e904]: • CSS regex patterns with context extraction and usage determination
+                - listitem [ref=e905]: • LAB color space conversion for perceptual uniformity
+                - listitem [ref=e906]: • DBSCAN clustering with Delta E 2000 distance for semantic grouping
+                - listitem [ref=e907]: • ITU-R BT.709 perceptual brightness calculation
+            - generic [ref=e909]:
+              - heading "Color Harmony Analysis" [level=4] [ref=e910]
+              - generic [ref=e912]: "// Mathematical color harmony detection class ColorHarmonyAnalyzer { // Analyze color relationships using color theory mathematics analyzeHarmonyRelationships(colors: PerceptualColor[]): HarmonyAnalysis { const hslColors = colors.map(c => this.rgbToHsl(c.rgb)); return { complementary: this.detectComplementary(hslColors), triadic: this.detectTriadic(hslColors), analogous: this.detectAnalogous(hslColors), tetradic: this.detectTetradic(hslColors), monochromatic: this.detectMonochromatic(hslColors), splitComplementary: this.detectSplitComplementary(hslColors) }; } // Complementary colors: 180° apart on color wheel private detectComplementary(colors: HSLColor[]): ComplementaryPair[] { const pairs: ComplementaryPair[] = []; for (let i = 0; i < colors.length; i++) { for (let j = i + 1; j < colors.length; j++) { const hue1 = colors[i].h; const hue2 = colors[j].h; // Calculate angular difference on color wheel const angleDiff = Math.min( Math.abs(hue1 - hue2), 360 - Math.abs(hue1 - hue2) ); // Check if approximately 180° apart (±15° tolerance) if (Math.abs(angleDiff - 180) <= 15) { pairs.push({ color1: colors[i], color2: colors[j], accuracy: 1 - (Math.abs(angleDiff - 180) / 15), harmonyStrength: this.calculateHarmonyStrength(colors[i], colors[j]) }); } } } return pairs.sort((a, b) => b.harmonyStrength - a.harmonyStrength); } // Triadic colors: 120° apart on color wheel private detectTriadic(colors: HSLColor[]): TriadicGroup[] { const groups: TriadicGroup[] = []; for (let i = 0; i < colors.length; i++) { for (let j = i + 1; j < colors.length; j++) { for (let k = j + 1; k < colors.length; k++) { const hues = [colors[i].h, colors[j].h, colors[k].h].sort((a, b) => a - b); // Calculate angular differences const diff1 = hues[1] - hues[0]; const diff2 = hues[2] - hues[1]; const diff3 = (360 + hues[0]) - hues[2]; // Check if approximately 120° apart (±20° tolerance) const idealDiff = 120; const tolerance = 20; if (Math.abs(diff1 - idealDiff) <= tolerance && Math.abs(diff2 - idealDiff) <= tolerance && Math.abs(diff3 - idealDiff) <= tolerance) { const accuracy = 1 - ( Math.abs(diff1 - idealDiff) + Math.abs(diff2 - idealDiff) + Math.abs(diff3 - idealDiff) ) / (3 * tolerance); groups.push({ colors: [colors[i], colors[j], colors[k]], accuracy, balance: this.calculateTriadicBalance(colors[i], colors[j], colors[k]) }); } } } } return groups.sort((a, b) => b.balance - a.balance); } // Analogous colors: Adjacent on color wheel (within 30°) private detectAnalogous(colors: HSLColor[]): AnalogousGroup[] { const groups: AnalogousGroup[] = []; const processed = new Set<number>(); for (let i = 0; i < colors.length; i++) { if (processed.has(i)) continue; const group = [colors[i]]; const groupIndices = [i]; processed.add(i); // Find all colors within 30° of this color for (let j = 0; j < colors.length; j++) { if (i === j || processed.has(j)) continue; const angleDiff = this.calculateHueDistance(colors[i].h, colors[j].h); if (angleDiff <= 30) { group.push(colors[j]); groupIndices.push(j); processed.add(j); } } if (group.length >= 2) { groups.push({ colors: group, cohesion: this.calculateAnalogousCohesion(group), spread: this.calculateHueSpread(group) }); } } return groups.sort((a, b) => b.cohesion - a.cohesion); } // Calculate perceptual harmony strength using saturation and lightness private calculateHarmonyStrength(color1: HSLColor, color2: HSLColor): number { // Harmony is stronger when saturation and lightness are balanced const saturationDiff = Math.abs(color1.s - color2.s); const lightnessDiff = Math.abs(color1.l - color2.l); // Normalized scores (0-1, where 1 is perfect harmony) const saturationScore = 1 - (saturationDiff / 100); const lightnessScore = 1 - (lightnessDiff / 100); // Weighted combination return (saturationScore * 0.4) + (lightnessScore * 0.6); } }"
+              - list [ref=e913]:
+                - listitem [ref=e914]: • Mathematical color wheel calculations with angular distance
+                - listitem [ref=e915]: • Complementary detection using 180° ±15° tolerance
+                - listitem [ref=e916]: • Triadic analysis with 120° intervals and balance scoring
+                - listitem [ref=e917]: • Analogous grouping within 30° with cohesion metrics
+        - generic [ref=e918]:
+          - heading "Typography Analysis Algorithms" [level=3] [ref=e919]
+          - generic [ref=e920]:
+            - generic [ref=e922]:
+              - heading "Font Detection & Classification" [level=4] [ref=e923]
+              - generic [ref=e925]: "// Advanced font detection using computed styles and heuristics class FontDetectionEngine { // Multi-strategy font detection async detectFonts(element: Element): Promise<FontAnalysis> { const computedStyle = getComputedStyle(element); return { primary: await this.detectPrimaryFont(element, computedStyle), fallbacks: this.extractFallbackChain(computedStyle.fontFamily), characteristics: await this.analyzeFontCharacteristics(element), usage: this.analyzeFontUsage(element), hierarchy: this.inferTypographicHierarchy(element) }; } // Primary font detection using canvas text metrics private async detectPrimaryFont(element: Element, style: CSSStyleDeclaration): Promise<FontInfo> { const fontFamily = style.fontFamily; const fontSize = parseFloat(style.fontSize); const fontWeight = style.fontWeight; // Canvas-based font detection for accurate measurement const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d')!; // Test string with specific character widths const testString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'; // Font signature creation const fontSignature = await this.createFontSignature(ctx, { fontFamily, fontSize, fontWeight, testString }); // Match against known font database const matchedFont = await this.matchFontSignature(fontSignature); return { name: matchedFont?.name || this.extractPrimaryFontName(fontFamily), category: this.classifyFontCategory(matchedFont), metrics: { xHeight: fontSignature.xHeight, capHeight: fontSignature.capHeight, ascender: fontSignature.ascender, descender: fontSignature.descender, characterWidth: fontSignature.averageCharWidth }, properties: { weight: this.normalizeWeight(fontWeight), style: style.fontStyle, stretch: style.fontStretch, variant: style.fontVariant } }; } // Create unique font signature using glyph measurements private async createFontSignature(ctx: CanvasRenderingContext2D, config: FontConfig): Promise<FontSignature> { ctx.font = `${config.fontWeight} ${config.fontSize}px ${config.fontFamily}`; // Measure specific characters for unique identification const measurements = { // Character widths for identification M: ctx.measureText('M').width, i: ctx.measureText('i').width, l: ctx.measureText('l').width, W: ctx.measureText('W').width, // Special characters at: ctx.measureText('@').width, ampersand: ctx.measureText('&').width, // Full test string fullString: ctx.measureText(config.testString).width }; // Calculate font metrics const textMetrics = ctx.measureText('Hgpqy'); return { characterWidths: measurements, xHeight: this.estimateXHeight(ctx), capHeight: this.estimateCapHeight(ctx), ascender: textMetrics.actualBoundingBoxAscent, descender: textMetrics.actualBoundingBoxDescent, averageCharWidth: measurements.fullString / config.testString.length, aspectRatio: measurements.M / config.fontSize, uniqueIdentifier: this.generateFontHash(measurements) }; } // Typography hierarchy inference using mathematical analysis inferTypographicHierarchy(rootElement: Element): TypographicHierarchy { const textElements = this.getAllTextElements(rootElement); // Collect font size and weight data const fontData = textElements.map(el => { const style = getComputedStyle(el); return { element: el, fontSize: parseFloat(style.fontSize), fontWeight: this.normalizeWeight(style.fontWeight), lineHeight: parseFloat(style.lineHeight), textContent: el.textContent?.length || 0 }; }); // Statistical analysis for hierarchy levels const fontSizes = fontData.map(d => d.fontSize); const sizeStats = { min: Math.min(...fontSizes), max: Math.max(...fontSizes), mean: fontSizes.reduce((a, b) => a + b, 0) / fontSizes.length, median: this.calculateMedian(fontSizes), stdDev: this.calculateStdDev(fontSizes) }; // Cluster sizes into hierarchy levels using k-means const sizeClusters = this.kMeansCluster(fontSizes, 6); // H1-H6 + body // Assign semantic roles based on size, weight, and usage const hierarchy = sizeClusters.map((cluster, index) => ({ level: this.assignHierarchyLevel(cluster, index, sizeClusters.length), averageSize: cluster.centroid, elements: fontData.filter(d => cluster.points.includes(d.fontSize)), semanticRole: this.inferSemanticRole(cluster, fontData), usageFrequency: cluster.points.length / fontData.length })); return { levels: hierarchy.sort((a, b) => b.averageSize - a.averageSize), scaleRatio: this.calculateScaleRatio(hierarchy), consistency: this.calculateHierarchyConsistency(hierarchy), accessibility: this.assessAccessibility(hierarchy) }; } // Mathematical scale ratio calculation (golden ratio, perfect fourth, etc.) private calculateScaleRatio(hierarchy: HierarchyLevel[]): ScaleAnalysis { const sizes = hierarchy.map(h => h.averageSize).sort((a, b) => b - a); const ratios = []; for (let i = 0; i < sizes.length - 1; i++) { ratios.push(sizes[i] / sizes[i + 1]); } const averageRatio = ratios.reduce((a, b) => a + b, 0) / ratios.length; // Check against common typographic scales const knownScales = { goldenRatio: 1.618, perfectFourth: 1.333, augmentedFourth: 1.414, perfectFifth: 1.5, majorSecond: 1.125, minorThird: 1.2, majorThird: 1.25 }; const closestScale = Object.entries(knownScales).reduce((closest, [name, ratio]) => { const diff = Math.abs(averageRatio - ratio); return diff < closest.difference ? { name, ratio, difference: diff } : closest; }, { name: 'custom', ratio: averageRatio, difference: Infinity }); return { detectedRatio: averageRatio, closestKnownScale: closestScale.name, consistency: 1 - (this.calculateStdDev(ratios) / averageRatio), ratios }; } }"
+              - list [ref=e926]:
+                - listitem [ref=e927]: • Canvas-based font signature creation using glyph measurements
+                - listitem [ref=e928]: • Statistical analysis with k-means clustering for hierarchy detection
+                - listitem [ref=e929]: • Mathematical scale ratio calculation (golden ratio, perfect fourth)
+                - listitem [ref=e930]: • Typography accessibility assessment with WCAG compliance
+            - generic [ref=e932]:
+              - heading "Font Pairing Analysis" [level=4] [ref=e933]
+              - generic [ref=e935]: "// Scientific font pairing analysis using typographic principles class FontPairingAnalyzer { // Analyze font combinations using typography science analyzeFontPairings(fonts: FontInfo[]): PairingAnalysis { const pairs = this.generateFontPairs(fonts); return pairs.map(pair => ({ primary: pair.primary, secondary: pair.secondary, compatibility: this.calculateCompatibility(pair), contrast: this.calculateContrast(pair), harmony: this.calculateHarmony(pair), readability: this.assessReadability(pair), recommendation: this.generateRecommendation(pair) })); } // Mathematical compatibility scoring using font metrics private calculateCompatibility(pair: FontPair): CompatibilityScore { const primary = pair.primary; const secondary = pair.secondary; // X-height ratio analysis (ideal: 0.8-1.2 ratio) const xHeightRatio = primary.metrics.xHeight / secondary.metrics.xHeight; const xHeightScore = this.scoreRatio(xHeightRatio, 0.8, 1.2, 1.0); // Character width ratio (ideal: 0.7-1.3 ratio) const charWidthRatio = primary.metrics.characterWidth / secondary.metrics.characterWidth; const charWidthScore = this.scoreRatio(charWidthRatio, 0.7, 1.3, 1.0); // Aspect ratio compatibility const aspectRatio1 = primary.metrics.capHeight / primary.metrics.characterWidth; const aspectRatio2 = secondary.metrics.capHeight / secondary.metrics.characterWidth; const aspectRatioScore = 1 - Math.abs(aspectRatio1 - aspectRatio2) / Math.max(aspectRatio1, aspectRatio2); // Category compatibility matrix const categoryScore = this.getCategoryCompatibility(primary.category, secondary.category); // Weight harmony (avoid too similar weights) const weightDiff = Math.abs(primary.properties.weight - secondary.properties.weight); const weightScore = this.scoreWeightDifference(weightDiff); return { overall: (xHeightScore * 0.25 + charWidthScore * 0.2 + aspectRatioScore * 0.2 + categoryScore * 0.25 + weightScore * 0.1), breakdown: { xHeight: xHeightScore, characterWidth: charWidthScore, aspectRatio: aspectRatioScore, category: categoryScore, weight: weightScore } }; } // Contrast analysis using perceptual differences private calculateContrast(pair: FontPair): ContrastAnalysis { const primary = pair.primary; const secondary = pair.secondary; // Structural contrast (serif vs sans-serif) const structuralContrast = this.calculateStructuralContrast(primary.category, secondary.category); // Weight contrast const weightContrast = Math.abs(primary.properties.weight - secondary.properties.weight) / 900; // Size contrast (when used together) const sizeContrast = this.calculateOptimalSizeContrast(primary, secondary); // Style contrast (italic vs normal) const styleContrast = primary.properties.style !== secondary.properties.style ? 0.5 : 0; return { structural: structuralContrast, weight: weightContrast, size: sizeContrast, style: styleContrast, overall: (structuralContrast * 0.4 + weightContrast * 0.3 + sizeContrast * 0.2 + styleContrast * 0.1) }; } // Harmony analysis using mathematical relationships private calculateHarmony(pair: FontPair): HarmonyAnalysis { const primary = pair.primary; const secondary = pair.secondary; // Proportional harmony using geometric relationships const proportionalHarmony = this.analyzeProportionalHarmony(primary, secondary); // Historical harmony (fonts from same era/movement) const historicalHarmony = this.analyzeHistoricalHarmony(primary, secondary); // Optical harmony (visual balance) const opticalHarmony = this.analyzeOpticalHarmony(primary, secondary); return { proportional: proportionalHarmony, historical: historicalHarmony, optical: opticalHarmony, overall: (proportionalHarmony * 0.4 + historicalHarmony * 0.3 + opticalHarmony * 0.3) }; } // Proportional harmony using golden ratio and musical intervals private analyzeProportionalHarmony(font1: FontInfo, font2: FontInfo): number { const ratio1 = font1.metrics.capHeight / font1.metrics.xHeight; const ratio2 = font2.metrics.capHeight / font2.metrics.xHeight; // Musical interval ratios in typography const harmonicRatios = [ 1.0, // Unison 1.125, // Major second 1.25, // Major third 1.333, // Perfect fourth 1.5, // Perfect fifth 1.618, // Golden ratio 1.667, // Minor sixth 2.0 // Octave ]; const actualRatio = Math.max(ratio1, ratio2) / Math.min(ratio1, ratio2); // Find closest harmonic ratio const closestRatio = harmonicRatios.reduce((closest, ratio) => { const diff = Math.abs(actualRatio - ratio); return diff < Math.abs(actualRatio - closest) ? ratio : closest; }); // Score based on proximity to harmonic ratio const deviation = Math.abs(actualRatio - closestRatio); return Math.max(0, 1 - (deviation / 0.2)); // 20% tolerance } // Readability assessment using scientific metrics private assessReadability(pair: FontPair): ReadabilityAssessment { const primary = pair.primary; const secondary = pair.secondary; // Character recognition analysis const characterRecognition = this.analyzeCharacterRecognition(primary, secondary); // Eye movement efficiency const eyeMovementEfficiency = this.analyzeEyeMovementEfficiency(primary, secondary); // Cognitive load assessment const cognitiveLoad = this.analyzeCognitiveLoad(primary, secondary); // Accessibility compliance const accessibility = this.analyzeAccessibility(primary, secondary); return { characterRecognition, eyeMovementEfficiency, cognitiveLoad: 1 - cognitiveLoad, // Invert so higher is better accessibility, overall: (characterRecognition * 0.3 + eyeMovementEfficiency * 0.3 + (1 - cognitiveLoad) * 0.2 + accessibility * 0.2) }; } // Character recognition using glyph distinctiveness private analyzeCharacterRecognition(font1: FontInfo, font2: FontInfo): number { // Analyze glyph distinctiveness for common confusable characters const confusableChars = [ ['l', 'I', '1'], // l, I, 1 ['0', 'O'], // 0, O ['6', 'b'], // 6, b ['p', 'q'], // p, q ['n', 'u'], // n, u ['rn', 'm'] // rn, m ]; // This would require actual glyph analysis in a real implementation // For now, we use category-based heuristics const serif1 = font1.category === 'serif'; const serif2 = font2.category === 'serif'; // Serif fonts generally have better character recognition const recognitionScore1 = serif1 ? 0.9 : 0.8; const recognitionScore2 = serif2 ? 0.9 : 0.8; return (recognitionScore1 + recognitionScore2) / 2; } }"
+              - list [ref=e936]:
+                - listitem [ref=e937]: • Mathematical compatibility using x-height and character width ratios
+                - listitem [ref=e938]: • Proportional harmony analysis using golden ratio and musical intervals
+                - listitem [ref=e939]: • Scientific readability assessment with eye movement efficiency
+                - listitem [ref=e940]: • Character recognition analysis for glyph distinctiveness
+        - generic [ref=e941]:
+          - heading "Layout DNA Sequencing Algorithms" [level=3] [ref=e942]
+          - generic [ref=e943]:
+            - generic [ref=e945]:
+              - heading "DOM Tree Analysis" [level=4] [ref=e946]
+              - generic [ref=e948]: "// Deep DOM analysis with pattern recognition class LayoutDNASequencer { // Multi-dimensional DOM analysis sequenceLayoutDNA(document: Document): LayoutDNA { const domTree = this.buildDOMTree(document.body); return { structure: this.analyzeStructuralPatterns(domTree), hierarchy: this.analyzeHierarchicalPatterns(domTree), spacing: this.analyzeSpacingPatterns(domTree), grid: this.analyzeGridPatterns(domTree), components: this.detectComponentPatterns(domTree), archetypes: this.classifyLayoutArchetypes(domTree) }; } // Recursive DOM tree construction with layout data private buildDOMTree(element: Element): DOMNode { const computedStyle = getComputedStyle(element); const rect = element.getBoundingClientRect(); const node: DOMNode = { tagName: element.tagName.toLowerCase(), className: element.className, id: element.id, // Layout properties layout: { display: computedStyle.display, position: computedStyle.position, flexDirection: computedStyle.flexDirection, gridTemplateColumns: computedStyle.gridTemplateColumns, gridTemplateRows: computedStyle.gridTemplateRows, justifyContent: computedStyle.justifyContent, alignItems: computedStyle.alignItems }, // Box model box: { width: rect.width, height: rect.height, padding: this.parseBoxValues(computedStyle.padding), margin: this.parseBoxValues(computedStyle.margin), border: this.parseBoxValues(computedStyle.borderWidth) }, // Positioning position: { x: rect.x, y: rect.y, zIndex: parseInt(computedStyle.zIndex) || 0 }, // Visual properties visual: { backgroundColor: computedStyle.backgroundColor, borderRadius: computedStyle.borderRadius, boxShadow: computedStyle.boxShadow, opacity: parseFloat(computedStyle.opacity) }, // Recursively process children children: Array.from(element.children).map(child => this.buildDOMTree(child)) }; // Calculate derived properties node.derived = this.calculateDerivedProperties(node); return node; } // Structural pattern recognition using graph theory private analyzeStructuralPatterns(domTree: DOMNode): StructuralAnalysis { // Convert DOM to graph for analysis const graph = this.domToGraph(domTree); return { depth: this.calculateTreeDepth(domTree), width: this.calculateTreeWidth(domTree), branching: this.analyzeBranchingFactor(domTree), symmetry: this.analyzeSymmetry(domTree), patterns: this.detectStructuralPatterns(graph), complexity: this.calculateStructuralComplexity(graph) }; } // Grid pattern detection using mathematical analysis private analyzeGridPatterns(domTree: DOMNode): GridAnalysis { const gridElements = this.findGridElements(domTree); return gridElements.map(element => { const gridAnalysis = this.analyzeGridElement(element); return { element: element.id || element.className, type: this.classifyGridType(gridAnalysis), columns: this.detectColumnPattern(gridAnalysis), rows: this.detectRowPattern(gridAnalysis), gaps: this.analyzeGridGaps(gridAnalysis), alignment: this.analyzeGridAlignment(gridAnalysis), responsiveness: this.analyzeGridResponsiveness(element) }; }); } // Mathematical column detection using positional analysis private detectColumnPattern(gridAnalysis: GridElementAnalysis): ColumnPattern { const children = gridAnalysis.children; // Group children by Y position (same row) const rows = this.groupByYPosition(children); // Analyze column patterns across rows const columnCounts = rows.map(row => row.length); const dominantColumnCount = this.findDominantValue(columnCounts); // Calculate column widths const columnWidths = this.calculateColumnWidths(rows, dominantColumnCount); // Detect column type (equal, proportional, or mixed) const columnType = this.classifyColumnType(columnWidths); return { count: dominantColumnCount, widths: columnWidths, type: columnType, consistency: this.calculateColumnConsistency(columnWidths), symmetry: this.calculateColumnSymmetry(columnWidths) }; } // Spacing pattern analysis using statistical methods private analyzeSpacingPatterns(domTree: DOMNode): SpacingAnalysis { const spacingData = this.extractSpacingData(domTree); // Collect all spacing values const margins = spacingData.flatMap(d => Object.values(d.margin)); const paddings = spacingData.flatMap(d => Object.values(d.padding)); const gaps = spacingData.map(d => d.gap).filter(g => g > 0); return { baseUnit: this.detectBaseSpacingUnit([...margins, ...paddings, ...gaps]), scale: this.detectSpacingScale(margins, paddings), consistency: this.calculateSpacingConsistency(spacingData), rhythm: this.analyzeVerticalRhythm(spacingData), patterns: this.detectSpacingPatterns(spacingData) }; } // Base spacing unit detection using GCD and frequency analysis private detectBaseSpacingUnit(spacingValues: number[]): SpacingUnitAnalysis { // Filter out 0 values and convert to integers const validValues = spacingValues.filter(v => v > 0).map(v => Math.round(v)); if (validValues.length === 0) return { unit: 8, confidence: 0 }; // Calculate GCD of all spacing values const gcd = this.calculateGCDArray(validValues); // Frequency analysis for common units const commonUnits = [4, 8, 12, 16, 20, 24]; const unitFrequencies = commonUnits.map(unit => ({ unit, frequency: validValues.filter(v => v % unit === 0).length / validValues.length })); // Find unit with highest frequency const bestFrequencyUnit = unitFrequencies.reduce((best, current) => current.frequency > best.frequency ? current : best ); // Choose between GCD and frequency-based unit const chosenUnit = bestFrequencyUnit.frequency > 0.7 ? bestFrequencyUnit.unit : gcd; return { unit: chosenUnit, confidence: Math.max(bestFrequencyUnit.frequency, gcd > 0 ? 0.8 : 0.3), alternatives: unitFrequencies.filter(u => u.frequency > 0.5) }; } // Archetype classification using machine learning patterns private classifyLayoutArchetypes(domTree: DOMNode): ArchetypeClassification { const features = this.extractLayoutFeatures(domTree); // Feature vector for ML classification const featureVector = [ features.headerHeight / features.totalHeight, features.sidebarWidth / features.totalWidth, features.contentAreaRatio, features.navigationComplexity, features.gridUsageRatio, features.componentDensity, features.verticalSpacing.average, features.horizontalSpacing.average ]; // Classification using predefined archetype patterns const archetypes = this.getArchetypePatterns(); const scores = archetypes.map(archetype => ({ name: archetype.name, score: this.calculateArchetypeScore(featureVector, archetype.pattern), confidence: this.calculateClassificationConfidence(featureVector, archetype.pattern) })); // Sort by score and return top matches scores.sort((a, b) => b.score - a.score); return { primary: scores[0], alternatives: scores.slice(1, 4), features: features, certainty: scores[0].confidence }; } }"
+              - list [ref=e949]:
+                - listitem [ref=e950]: • Recursive DOM tree construction with comprehensive layout data
+                - listitem [ref=e951]: • Mathematical grid detection using positional and statistical analysis
+                - listitem [ref=e952]: • GCD-based spacing unit detection with frequency validation
+                - listitem [ref=e953]: • ML-powered archetype classification using feature vectors
+            - generic [ref=e955]:
+              - heading "Component Pattern Recognition" [level=4] [ref=e956]
+              - generic [ref=e958]: "// Advanced component detection using multiple strategies class ComponentPatternDetector { // Multi-strategy component detection detectComponents(domTree: DOMNode): ComponentAnalysis[] { return [ ...this.detectByStructuralSimilarity(domTree), ...this.detectByVisualSimilarity(domTree), ...this.detectBySemanticPatterns(domTree), ...this.detectByBehavioralPatterns(domTree) ].filter(this.removeDuplicates); } // Structural similarity using tree edit distance private detectByStructuralSimilarity(domTree: DOMNode): ComponentCandidate[] { const allNodes = this.getAllNodes(domTree); const candidates: ComponentCandidate[] = []; // Compare all nodes for structural similarity for (let i = 0; i < allNodes.length; i++) { for (let j = i + 1; j < allNodes.length; j++) { const node1 = allNodes[i]; const node2 = allNodes[j]; // Calculate structural similarity using tree edit distance const similarity = this.calculateStructuralSimilarity(node1, node2); if (similarity > 0.8) { // High similarity threshold candidates.push({ type: 'structural', nodes: [node1, node2], similarity, pattern: this.extractStructuralPattern(node1, node2), confidence: similarity * 0.9 // Slight discount for structural-only detection }); } } } return this.clusterSimilarComponents(candidates); } // Tree edit distance calculation using dynamic programming private calculateStructuralSimilarity(node1: DOMNode, node2: DOMNode): number { // Simplified tree edit distance algorithm const memo = new Map<string, number>(); const editDistance = (n1: DOMNode | null, n2: DOMNode | null): number => { const key = `${n1?.id || 'null'}-${n2?.id || 'null'}`; if (memo.has(key)) return memo.get(key)!; // Base cases if (!n1 && !n2) return 0; if (!n1) return this.treeSize(n2!); if (!n2) return this.treeSize(n1); // Node comparison const nodeCost = this.compareNodes(n1, n2) ? 0 : 1; // Calculate costs for operations const substitutionCost = nodeCost + this.editDistanceChildren(n1.children, n2.children); const deletionCost = 1 + editDistance(null, n2); const insertionCost = 1 + editDistance(n1, null); const result = Math.min(substitutionCost, deletionCost, insertionCost); memo.set(key, result); return result; }; const distance = editDistance(node1, node2); const maxSize = Math.max(this.treeSize(node1), this.treeSize(node2)); // Convert distance to similarity (0-1 scale) return 1 - (distance / maxSize); } // Visual similarity using computed style comparison private detectByVisualSimilarity(domTree: DOMNode): ComponentCandidate[] { const visuallyDistinctNodes = this.getVisuallyDistinctNodes(domTree); const candidates: ComponentCandidate[] = []; // Group nodes by visual characteristics const visualGroups = this.groupByVisualCharacteristics(visuallyDistinctNodes); visualGroups.forEach(group => { if (group.length >= 2) { const pattern = this.extractVisualPattern(group); const similarity = this.calculateVisualSimilarity(group); candidates.push({ type: 'visual', nodes: group, similarity, pattern, confidence: similarity * 0.85 // Visual patterns can be less reliable }); } }); return candidates; } // Visual characteristics clustering using feature vectors private groupByVisualCharacteristics(nodes: DOMNode[]): DOMNode[][] { // Extract visual features for each node const features = nodes.map(node => this.extractVisualFeatures(node)); // Normalize features const normalizedFeatures = this.normalizeFeatures(features); // K-means clustering for visual grouping const clusters = this.kMeansCluster(normalizedFeatures, Math.min(10, Math.floor(nodes.length / 2))); // Convert clusters back to node groups return clusters.map(cluster => cluster.points.map(pointIndex => nodes[pointIndex]) ); } // Extract comprehensive visual features private extractVisualFeatures(node: DOMNode): VisualFeatures { return { // Dimensional features aspectRatio: node.box.width / node.box.height, area: node.box.width * node.box.height, // Color features (converted to LAB for perceptual uniformity) backgroundColor: this.colorToLab(node.visual.backgroundColor), // Typography features fontSize: this.extractFontSize(node), fontWeight: this.extractFontWeight(node), // Spacing features paddingUniformity: this.calculatePaddingUniformity(node.box.padding), marginUniformity: this.calculateMarginUniformity(node.box.margin), // Border features borderRadius: this.parseBorderRadius(node.visual.borderRadius), borderWidth: this.calculateAverageBorderWidth(node.box.border), // Shadow features shadowComplexity: this.analyzeShadowComplexity(node.visual.boxShadow), // Layout features displayType: this.encodeDisplayType(node.layout.display), positionType: this.encodePositionType(node.layout.position) }; } // Semantic pattern detection using element context private detectBySemanticPatterns(domTree: DOMNode): ComponentCandidate[] { const semanticPatterns = [ this.detectCardPatterns(domTree), this.detectButtonPatterns(domTree), this.detectFormPatterns(domTree), this.detectNavigationPatterns(domTree), this.detectModalPatterns(domTree), this.detectListPatterns(domTree) ]; return semanticPatterns.flat(); } // Card pattern detection using heuristics private detectCardPatterns(domTree: DOMNode): ComponentCandidate[] { const potentialCards = this.findNodesByPattern(domTree, { hasBackground: true, hasBorder: true, hasBoxShadow: true, containsText: true, hasChildren: true, minAspectRatio: 0.5, maxAspectRatio: 4.0 }); return potentialCards.map(node => ({ type: 'semantic-card', nodes: [node], similarity: 1.0, pattern: this.extractCardPattern(node), confidence: this.calculateCardConfidence(node) })); } // Calculate card confidence using multiple factors private calculateCardConfidence(node: DOMNode): number { let confidence = 0.5; // Base confidence // Visual characteristics if (node.visual.backgroundColor !== 'transparent') confidence += 0.1; if (node.visual.borderRadius && parseFloat(node.visual.borderRadius) > 0) confidence += 0.1; if (node.visual.boxShadow && node.visual.boxShadow !== 'none') confidence += 0.15; // Content characteristics const hasImage = this.hasChildOfType(node, 'img'); const hasHeading = this.hasChildOfType(node, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']); const hasText = this.hasTextContent(node); const hasAction = this.hasChildOfType(node, ['a', 'button']); if (hasImage) confidence += 0.1; if (hasHeading) confidence += 0.1; if (hasText) confidence += 0.05; if (hasAction) confidence += 0.1; // Layout characteristics if (node.layout.display === 'flex') confidence += 0.05; if (node.box.padding.top > 0 && node.box.padding.bottom > 0) confidence += 0.05; return Math.min(confidence, 1.0); } }"
+              - list [ref=e959]:
+                - listitem [ref=e960]: "• Multi-strategy detection: structural, visual, semantic, and behavioral"
+                - listitem [ref=e961]: • Tree edit distance calculation using dynamic programming
+                - listitem [ref=e962]: • K-means clustering for visual characteristic grouping
+                - listitem [ref=e963]: • Semantic pattern detection with confidence scoring for cards, buttons, forms
+        - generic [ref=e964]:
+          - heading "Brand Analysis & AI Scoring Algorithms" [level=3] [ref=e965]
+          - generic [ref=e966]:
+            - generic [ref=e968]:
+              - heading "Brand Personality Inference" [level=4] [ref=e969]
+              - generic [ref=e971]: "// Multi-dimensional brand personality analysis class BrandPersonalityAnalyzer { // Comprehensive brand analysis using design elements analyzeBrandPersonality(tokens: TokenSet, layoutDNA: LayoutDNA): BrandPersonality { return { dimensions: this.analyzeBrandDimensions(tokens, layoutDNA), personality: this.inferPersonalityTraits(tokens, layoutDNA), industry: this.classifyIndustryContext(tokens, layoutDNA), maturity: this.assessDesignMaturity(tokens, layoutDNA), emotional: this.analyzeEmotionalResponse(tokens) }; } // Five-factor brand personality model analysis private analyzeBrandDimensions(tokens: TokenSet, layoutDNA: LayoutDNA): BrandDimensions { // Based on Aaker's Brand Personality Scale with design-specific adaptations return { sincerity: this.calculateSincerityScore(tokens, layoutDNA), excitement: this.calculateExcitementScore(tokens, layoutDNA), competence: this.calculateCompetenceScore(tokens, layoutDNA), sophistication: this.calculateSophisticationScore(tokens, layoutDNA), ruggedness: this.calculateRuggednessScore(tokens, layoutDNA) }; } // Excitement scoring using color vibrancy and typography energy private calculateExcitementScore(tokens: TokenSet, layoutDNA: LayoutDNA): number { let score = 0.5; // Base score // Color analysis const colors = tokens.colors; const avgSaturation = this.calculateAverageSaturation(colors); const colorVariety = this.calculateColorVariety(colors); const warmColorRatio = this.calculateWarmColorRatio(colors); // High saturation indicates excitement score += Math.min(avgSaturation / 100 * 0.3, 0.3); // Color variety indicates playfulness score += Math.min(colorVariety / 20 * 0.2, 0.2); // Warm colors indicate energy score += warmColorRatio * 0.25; // Typography analysis const typography = tokens.typography; const fontEnergyScore = this.calculateFontEnergyScore(typography); score += fontEnergyScore * 0.2; // Layout analysis const layoutComplexity = this.calculateLayoutComplexity(layoutDNA); const animationUsage = this.detectAnimationUsage(layoutDNA); // Complex layouts can indicate dynamism score += Math.min(layoutComplexity / 10 * 0.15, 0.15); // Animation usage indicates excitement score += animationUsage * 0.1; return Math.min(Math.max(score, 0), 1); } // Competence scoring using design system maturity private calculateCompetenceScore(tokens: TokenSet, layoutDNA: LayoutDNA): number { let score = 0.5; // Base score // Color system analysis const colorSystemScore = this.analyzeColorSystemMaturity(tokens.colors); score += colorSystemScore * 0.25; // Typography system analysis const typographySystemScore = this.analyzeTypographySystemMaturity(tokens.typography); score += typographySystemScore * 0.25; // Spacing consistency const spacingConsistency = this.analyzeSpacingConsistency(tokens.spacing); score += spacingConsistency * 0.2; // Component system maturity const componentMaturity = this.analyzeComponentMaturity(layoutDNA.components); score += componentMaturity * 0.2; // Grid usage sophistication const gridSophistication = this.analyzeGridSophistication(layoutDNA.grid); score += gridSophistication * 0.1; return Math.min(Math.max(score, 0), 1); } // Design system maturity assessment using complexity metrics private assessDesignMaturity(tokens: TokenSet, layoutDNA: LayoutDNA): MaturityAssessment { const scores = { tokenization: this.assessTokenizationMaturity(tokens), consistency: this.assessConsistencyMaturity(tokens, layoutDNA), scalability: this.assessScalabilityMaturity(tokens, layoutDNA), accessibility: this.assessAccessibilityMaturity(tokens), documentation: this.inferDocumentationMaturity(layoutDNA) }; const overallScore = Object.values(scores).reduce((sum, score) => sum + score, 0) / Object.keys(scores).length; return { level: this.classifyMaturityLevel(overallScore), score: overallScore, breakdown: scores, recommendations: this.generateMaturityRecommendations(scores) }; } // Tokenization maturity using semantic analysis private assessTokenizationMaturity(tokens: TokenSet): number { let score = 0; // Semantic token usage (30% weight) const semanticTokenRatio = this.calculateSemanticTokenRatio(tokens); score += semanticTokenRatio * 0.3; // Token hierarchy depth (25% weight) const hierarchyDepth = this.calculateTokenHierarchyDepth(tokens); const normalizedDepth = Math.min(hierarchyDepth / 4, 1); // 4+ levels is mature score += normalizedDepth * 0.25; // Alias usage (20% weight) const aliasUsage = this.calculateAliasUsage(tokens); score += aliasUsage * 0.2; // Contextual tokens (15% weight) const contextualTokens = this.calculateContextualTokenUsage(tokens); score += contextualTokens * 0.15; // Token naming consistency (10% weight) const namingConsistency = this.assessTokenNamingConsistency(tokens); score += namingConsistency * 0.1; return Math.min(score, 1); } // Industry classification using design pattern recognition private classifyIndustryContext(tokens: TokenSet, layoutDNA: LayoutDNA): IndustryClassification { const features = this.extractIndustryFeatures(tokens, layoutDNA); // Industry classification patterns const industryPatterns = { technology: { colorPreferences: ['blues', 'grays', 'whites'], fontPreferences: ['sans-serif', 'modern'], layoutCharacteristics: ['clean', 'minimal', 'geometric'], weights: [0.25, 0.2, 0.35, 0.2] // color, font, layout, spacing }, finance: { colorPreferences: ['blues', 'greens', 'navy'], fontPreferences: ['serif', 'conservative'], layoutCharacteristics: ['structured', 'trustworthy', 'formal'], weights: [0.3, 0.25, 0.3, 0.15] }, healthcare: { colorPreferences: ['blues', 'greens', 'whites'], fontPreferences: ['serif', 'readable'], layoutCharacteristics: ['accessible', 'clean', 'trustworthy'], weights: [0.2, 0.2, 0.4, 0.2] }, creative: { colorPreferences: ['vibrant', 'varied', 'expressive'], fontPreferences: ['display', 'creative', 'varied'], layoutCharacteristics: ['dynamic', 'expressive', 'unconventional'], weights: [0.35, 0.3, 0.25, 0.1] }, ecommerce: { colorPreferences: ['varied', 'conversion-focused', 'trust-signals'], fontPreferences: ['readable', 'clear'], layoutCharacteristics: ['conversion-optimized', 'product-focused'], weights: [0.25, 0.15, 0.45, 0.15] } }; // Calculate scores for each industry const industryScores = Object.entries(industryPatterns).map(([industry, pattern]) => ({ industry, score: this.calculateIndustryScore(features, pattern), confidence: this.calculateClassificationConfidence(features, pattern) })); // Sort by score industryScores.sort((a, b) => b.score - a.score); return { primary: industryScores[0], alternatives: industryScores.slice(1, 3), certainty: industryScores[0].confidence }; } // Extract industry-specific features private extractIndustryFeatures(tokens: TokenSet, layoutDNA: LayoutDNA): IndustryFeatures { return { // Color features dominantColors: this.extractDominantColors(tokens.colors), colorTemperature: this.calculateOverallColorTemperature(tokens.colors), colorSaturation: this.calculateAverageSaturation(tokens.colors), colorContrast: this.calculateOverallContrast(tokens.colors), // Typography features fontCategories: this.categorizeFont(tokens.typography), readabilityScore: this.calculateReadabilityScore(tokens.typography), modernityScore: this.calculateFontModernityScore(tokens.typography), // Layout features layoutComplexity: this.calculateLayoutComplexity(layoutDNA), navigationStyle: this.classifyNavigationStyle(layoutDNA), contentDensity: this.calculateContentDensity(layoutDNA), interactionPatterns: this.analyzeInteractionPatterns(layoutDNA), // Spacing features spacingStyle: this.classifySpacingStyle(tokens.spacing), whitespaceUsage: this.calculateWhitespaceUsage(layoutDNA) }; } }"
+              - list [ref=e972]:
+                - listitem [ref=e973]: • Five-factor brand personality model (Aaker's Brand Personality Scale)
+                - listitem [ref=e974]: • Multi-dimensional scoring using color vibrancy, typography energy, layout complexity
+                - listitem [ref=e975]: • Design system maturity assessment with tokenization depth analysis
+                - listitem [ref=e976]: • Industry classification using pattern recognition and weighted feature vectors
+            - generic [ref=e978]:
+              - heading "AI Confidence Scoring" [level=4] [ref=e979]
+              - generic [ref=e981]: "// Comprehensive confidence scoring for AI recommendations class AIConfidenceScorer { // Multi-factor confidence calculation calculateConfidenceScore( extractionResults: ExtractionResults, analysisResults: AnalysisResults, metadata: ScanMetadata ): ConfidenceScore { return { overall: this.calculateOverallConfidence(extractionResults, analysisResults, metadata), breakdown: { dataQuality: this.assessDataQuality(extractionResults), algorithmicCertainty: this.assessAlgorithmicCertainty(analysisResults), crossValidation: this.performCrossValidation(extractionResults, analysisResults), contextualRelevance: this.assessContextualRelevance(metadata), temporalStability: this.assessTemporalStability(extractionResults) } }; } // Data quality assessment using multiple metrics private assessDataQuality(results: ExtractionResults): DataQualityScore { const quality = { completeness: this.calculateCompleteness(results), consistency: this.calculateConsistency(results), accuracy: this.estimateAccuracy(results), coverage: this.calculateCoverage(results) }; return { score: Object.values(quality).reduce((sum, score) => sum + score, 0) / 4, breakdown: quality, factors: this.identifyQualityFactors(quality) }; } // Completeness using expected vs actual token counts private calculateCompleteness(results: ExtractionResults): number { const expectedTokens = { colors: { min: 5, ideal: 15, max: 50 }, typography: { min: 3, ideal: 8, max: 20 }, spacing: { min: 4, ideal: 10, max: 25 }, components: { min: 5, ideal: 20, max: 100 } }; let completenessScore = 0; let totalCategories = 0; Object.entries(expectedTokens).forEach(([category, thresholds]) => { const actualCount = results[category]?.length || 0; if (actualCount >= thresholds.min) { const normalizedScore = Math.min( (actualCount - thresholds.min) / (thresholds.ideal - thresholds.min), 1 ); completenessScore += normalizedScore; } totalCategories++; }); return completenessScore / totalCategories; } // Algorithmic certainty using statistical confidence intervals private assessAlgorithmicCertainty(results: AnalysisResults): AlgorithmicCertainty { const uncertainties = { colorClustering: this.calculateClusteringUncertainty(results.colorClusters), typographyHierarchy: this.calculateHierarchyUncertainty(results.typographyHierarchy), layoutClassification: this.calculateClassificationUncertainty(results.layoutClassification), componentDetection: this.calculateDetectionUncertainty(results.componentDetection) }; // Calculate overall certainty using harmonic mean (more conservative) const certaintyValues = Object.values(uncertainties); const harmonicMean = certaintyValues.length / certaintyValues.reduce((sum, val) => sum + (1 / val), 0); return { overall: harmonicMean, breakdown: uncertainties, confidenceInterval: this.calculateConfidenceInterval(uncertainties), reliability: this.assessReliability(uncertainties) }; } // Color clustering uncertainty using silhouette analysis private calculateClusteringUncertainty(clusters: ColorCluster[]): number { if (clusters.length === 0) return 0; // Calculate silhouette score for clustering quality const silhouetteScores = clusters.map(cluster => { return this.calculateSilhouetteScore(cluster, clusters); }); const avgSilhouette = silhouetteScores.reduce((sum, score) => sum + score, 0) / silhouetteScores.length; // Convert silhouette score (-1 to 1) to certainty (0 to 1) return (avgSilhouette + 1) / 2; } // Cross-validation using multiple analysis approaches private performCrossValidation( extraction: ExtractionResults, analysis: AnalysisResults ): CrossValidationScore { const validations = { colorValidation: this.validateColorAnalysis(extraction.colors, analysis.colorAnalysis), typographyValidation: this.validateTypographyAnalysis(extraction.typography, analysis.typographyAnalysis), layoutValidation: this.validateLayoutAnalysis(extraction.layout, analysis.layoutAnalysis), consistencyValidation: this.validateCrossComponentConsistency(extraction, analysis) }; const avgValidation = Object.values(validations).reduce((sum, score) => sum + score, 0) / Object.keys(validations).length; return { score: avgValidation, breakdown: validations, consensus: this.calculateConsensusLevel(validations), discrepancies: this.identifyDiscrepancies(validations) }; } // Color analysis validation using perceptual models private validateColorAnalysis(colors: ColorToken[], analysis: ColorAnalysis): number { let validationScore = 0; let totalValidations = 0; // Validate color harmony relationships if (analysis.harmony) { const harmonyValidation = this.validateColorHarmony(colors, analysis.harmony); validationScore += harmonyValidation; totalValidations++; } // Validate color accessibility if (analysis.accessibility) { const accessibilityValidation = this.validateColorAccessibility(colors, analysis.accessibility); validationScore += accessibilityValidation; totalValidations++; } // Validate semantic categorization if (analysis.semantic) { const semanticValidation = this.validateSemanticCategorization(colors, analysis.semantic); validationScore += semanticValidation; totalValidations++; } return totalValidations > 0 ? validationScore / totalValidations : 0; } // Temporal stability assessment for design system evolution private assessTemporalStability(results: ExtractionResults): TemporalStability { // This would compare against historical scans in a real implementation // For now, we use structural indicators of stability const stabilityIndicators = { tokenMaturity: this.assessTokenMaturity(results), systemConsistency: this.assessSystemConsistency(results), semanticDepth: this.assessSemanticDepth(results), architecturalSoundness: this.assessArchitecturalSoundness(results) }; const stability = Object.values(stabilityIndicators).reduce((sum, score) => sum + score, 0) / 4; return { score: stability, indicators: stabilityIndicators, volatility: 1 - stability, // Inverse relationship evolutionLikelihood: this.predictEvolutionLikelihood(stabilityIndicators) }; } // Token maturity assessment using naming conventions and hierarchy private assessTokenMaturity(results: ExtractionResults): number { let maturityScore = 0; // Naming convention consistency const namingConsistency = this.assessNamingConsistency(results); maturityScore += namingConsistency * 0.3; // Hierarchical organization const hierarchicalOrganization = this.assessHierarchicalOrganization(results); maturityScore += hierarchicalOrganization * 0.25; // Semantic clarity const semanticClarity = this.assessSemanticClarity(results); maturityScore += semanticClarity * 0.25; // Reference usage (aliases and references) const referenceUsage = this.assessReferenceUsage(results); maturityScore += referenceUsage * 0.2; return Math.min(maturityScore, 1); } // Confidence interval calculation using bootstrap sampling private calculateConfidenceInterval(uncertainties: Record<string, number>): ConfidenceInterval { const values = Object.values(uncertainties); const mean = values.reduce((sum, val) => sum + val, 0) / values.length; const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length; const stdDev = Math.sqrt(variance); // 95% confidence interval assuming normal distribution const marginOfError = 1.96 * (stdDev / Math.sqrt(values.length)); return { mean, lower: Math.max(mean - marginOfError, 0), upper: Math.min(mean + marginOfError, 1), marginOfError, confidence: 0.95 }; } }"
+              - list [ref=e982]:
+                - listitem [ref=e983]: • Multi-factor confidence calculation with data quality assessment
+                - listitem [ref=e984]: • Silhouette analysis for clustering quality validation
+                - listitem [ref=e985]: • Cross-validation using multiple analysis approaches and consensus scoring
+                - listitem [ref=e986]: • Temporal stability assessment with design system evolution prediction
+        - generic [ref=e987]:
+          - heading "Performance Optimization Algorithms" [level=3] [ref=e988]
+          - generic [ref=e990]:
+            - heading "Parallel Processing Architecture" [level=4] [ref=e991]
+            - generic [ref=e993]: "// Intelligent parallel processing with dynamic load balancing class ParallelProcessingOrchestrator { // Orchestrate parallel analysis with dependency management async orchestrateAnalysis(url: string, options: AnalysisOptions): Promise<ComprehensiveResults> { // Stage 1: Independent extraction tasks const extractionTasks = this.createExtractionTasks(url, options); // Stage 2: Dependent analysis tasks const analysisTasks = this.createAnalysisTasks(options); // Stage 3: AI enhancement tasks const aiTasks = this.createAITasks(options); // Execute with intelligent scheduling return await this.executeWithDependencyResolution([ ...extractionTasks, ...analysisTasks, ...aiTasks ]); } // Task dependency resolution using topological sorting private async executeWithDependencyResolution(tasks: Task[]): Promise<ComprehensiveResults> { // Build dependency graph const dependencyGraph = this.buildDependencyGraph(tasks); // Topological sort for execution order const executionOrder = this.topologicalSort(dependencyGraph); // Execute tasks in parallel where possible const results = new Map<string, any>(); const executing = new Set<string>(); while (executionOrder.length > 0 || executing.size > 0) { // Find tasks ready to execute (dependencies satisfied) const readyTasks = executionOrder.filter(taskId => { const task = this.getTaskById(taskId, tasks); return task.dependencies.every(dep => results.has(dep)); }); // Remove ready tasks from queue readyTasks.forEach(taskId => { const index = executionOrder.indexOf(taskId); executionOrder.splice(index, 1); }); // Execute ready tasks in parallel const taskPromises = readyTasks.map(async (taskId) => { executing.add(taskId); const task = this.getTaskById(taskId, tasks); try { // Gather dependency results const dependencyResults = task.dependencies.map(dep => results.get(dep)); // Execute task with timeout and retry logic const result = await this.executeTaskWithResilience(task, dependencyResults); results.set(taskId, result); return { taskId, result, success: true }; } catch (error) { console.error(`Task ${taskId} failed:`, error); return { taskId, error, success: false }; } finally { executing.delete(taskId); } }); // Wait for current batch to complete await Promise.allSettled(taskPromises); } return this.aggregateResults(results); } // Dynamic load balancing using worker pools private createWorkerPool(): WorkerPool { const cpuCount = navigator.hardwareConcurrency || 4; const optimalWorkerCount = Math.min(cpuCount, 8); // Cap at 8 workers return new WorkerPool({ workerCount: optimalWorkerCount, workerScript: '/workers/analysis-worker.js', taskQueue: new PriorityQueue((a, b) => a.priority - b.priority), loadBalancer: new RoundRobinBalancer(), healthMonitor: new WorkerHealthMonitor({ memoryThreshold: 100 * 1024 * 1024, // 100MB responseTimeThreshold: 5000, // 5 seconds errorRateThreshold: 0.1 // 10% error rate }) }); } // Adaptive caching with intelligent invalidation private implementAdaptiveCache(): AdaptiveCache { return new AdaptiveCache({ levels: [ // L1: In-memory cache for hot data new MemoryCache({ maxSize: 50 * 1024 * 1024, // 50MB ttl: 5 * 60 * 1000, // 5 minutes evictionPolicy: 'LRU' }), // L2: IndexedDB for persistent cache new IndexedDBCache({ maxSize: 500 * 1024 * 1024, // 500MB ttl: 24 * 60 * 60 * 1000, // 24 hours compressionEnabled: true }), // L3: Service Worker cache for offline support new ServiceWorkerCache({ cacheName: 'contextds-analysis-cache', strategy: 'cache-first-then-network' }) ], // Intelligent cache invalidation invalidationStrategy: new SmartInvalidation({ // URL-based invalidation patterns urlPatterns: [ { pattern: /css$/, ttl: 60 * 60 * 1000 }, // CSS files: 1 hour { pattern: /.(png|jpg|svg)$/, ttl: 24 * 60 * 60 * 1000 }, // Images: 24 hours { pattern: /api//, ttl: 5 * 60 * 1000 } // API calls: 5 minutes ], // Content-based invalidation contentHashValidation: true, // Dependency tracking dependencyInvalidation: true }), // Cache warming strategies warmingStrategy: new PredictiveWarming({ // Pre-fetch related URLs based on user patterns predictivePatterns: [ { source: /homepage/, targets: ['/about', '/features', '/pricing'] }, { source: /documentation/, targets: ['related-apis', 'examples'] } ], // Popularity-based warming popularityThreshold: 0.7, // Time-based warming (pre-fetch during low usage) offPeakWarming: true }) }); } // Performance monitoring and optimization private implementPerformanceMonitoring(): PerformanceMonitor { return new PerformanceMonitor({ metrics: { // Core Web Vitals largestContentfulPaint: { threshold: 2500, weight: 0.3 }, firstInputDelay: { threshold: 100, weight: 0.3 }, cumulativeLayoutShift: { threshold: 0.1, weight: 0.2 }, // Custom metrics tokenExtractionTime: { threshold: 5000, weight: 0.1 }, aiAnalysisTime: { threshold: 10000, weight: 0.1 } }, // Real-time optimization autoOptimization: { // Adaptive quality settings qualityAdjustment: true, qualityThresholds: { excellent: 0.9, good: 0.7, poor: 0.5 }, // Dynamic resource allocation resourceScaling: { cpuThreshold: 0.8, memoryThreshold: 0.7, networkThreshold: 0.6 }, // Progressive enhancement progressiveEnhancement: { baseFeatures: ['color-extraction', 'basic-typography'], enhancedFeatures: ['layout-dna', 'component-detection'], premiumFeatures: ['ai-analysis', 'brand-inference'] } }, // Performance budgets budgets: { jsBundle: 170 * 1024, // 170KB cssBundle: 50 * 1024, // 50KB totalPageSize: 1024 * 1024, // 1MB analysisTime: 30 * 1000, // 30 seconds memoryUsage: 200 * 1024 * 1024 // 200MB } }); } }"
+            - list [ref=e994]:
+              - listitem [ref=e995]: • Dependency-aware task orchestration with topological sorting
+              - listitem [ref=e996]: • Dynamic load balancing using CPU-optimized worker pools
+              - listitem [ref=e997]: • Multi-tier adaptive caching with intelligent invalidation strategies
+              - listitem [ref=e998]: • Real-time performance monitoring with Core Web Vitals and auto-optimization
+              - listitem [ref=e999]: • Progressive enhancement with performance budgets and resource scaling
+    - generic [ref=e1001]:
+      - heading "Ready to extract your first tokens?" [level=2] [ref=e1002]
+      - paragraph [ref=e1003]: Start with our free tier and see the power of AI-driven design token extraction.
+      - generic [ref=e1004]:
+        - link "Try it now" [ref=e1005] [cursor=pointer]:
+          - /url: /
+        - link "View pricing" [ref=e1006] [cursor=pointer]:
+          - /url: /pricing
+  - contentinfo [ref=e1007]:
+    - generic [ref=e1008]:
+      - generic [ref=e1009]:
+        - generic [ref=e1010]:
+          - heading "Product" [level=3] [ref=e1011]
+          - list [ref=e1012]:
+            - listitem [ref=e1013]:
+              - link "Token Scanner" [ref=e1014] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e1015]:
+              - link "Community" [ref=e1016] [cursor=pointer]:
+                - /url: /community
+            - listitem [ref=e1017]:
+              - link "Metrics" [ref=e1018] [cursor=pointer]:
+                - /url: /metrics
+            - listitem [ref=e1019]:
+              - link "Pricing" [ref=e1020] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=e1021]:
+          - heading "Resources" [level=3] [ref=e1022]
+          - list [ref=e1023]:
+            - listitem [ref=e1024]:
+              - link "Documentation" [ref=e1025] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e1026]:
+              - link "API Reference" [ref=e1027] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e1028]:
+              - link "Guides" [ref=e1029] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e1030]:
+              - link "Examples" [ref=e1031] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=e1032]:
+          - heading "Company" [level=3] [ref=e1033]
+          - list [ref=e1034]:
+            - listitem [ref=e1035]:
+              - link "About" [ref=e1036] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e1037]:
+              - link "Blog" [ref=e1038] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e1039]:
+              - link "Careers" [ref=e1040] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e1041]:
+              - link "Contact" [ref=e1042] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=e1043]:
+          - heading "Legal" [level=3] [ref=e1044]
+          - list [ref=e1045]:
+            - listitem [ref=e1046]:
+              - link "Privacy" [ref=e1047] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e1048]:
+              - link "Terms" [ref=e1049] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e1050]:
+              - link "License" [ref=e1051] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e1052]:
+              - link "Security" [ref=e1053] [cursor=pointer]:
+                - /url: "#"
+      - generic [ref=e1054]:
+        - paragraph [ref=e1055]: © 2025 ContextDS. All rights reserved.
+        - generic [ref=e1056]:
+          - link [ref=e1057] [cursor=pointer]:
+            - /url: https://github.com
+            - img [ref=e1058] [cursor=pointer]
+          - link [ref=e1061] [cursor=pointer]:
+            - /url: https://twitter.com
+            - img [ref=e1062] [cursor=pointer]
+  - button "Open Next.js Dev Tools" [ref=e1069] [cursor=pointer]:
+    - img [ref=e1070] [cursor=pointer]
+  - alert [ref=e1073]
+```

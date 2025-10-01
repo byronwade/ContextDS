@@ -1,4 +1,5 @@
-import { chromium, type Browser, type Page } from 'playwright'
+import { chromium, type Browser, type Page } from 'playwright-core'
+import chromiumPkg from '@sparticuz/chromium'
 
 export interface ScreenshotOptions {
   url: string
@@ -26,10 +27,40 @@ const DEFAULT_VIEWPORTS = {
   desktop: { width: 1920, height: 1080 },
 }
 
+// Determine if running in serverless environment (Vercel)
+const isServerless = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_NAME
+
 let browserInstance: Browser | null = null
 
 async function getBrowser(): Promise<Browser> {
+  // In serverless, don't reuse browser instances due to cold starts
+  // Always create fresh browser for each invocation
+  if (isServerless) {
+    console.log('[screenshot] Running in serverless mode, launching fresh browser')
+
+    // Use @sparticuz/chromium for serverless environments
+    const executablePath = await chromiumPkg.executablePath()
+
+    return await chromium.launch({
+      executablePath,
+      headless: chromiumPkg.headless,
+      args: [
+        ...chromiumPkg.args,
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process', // Critical for serverless
+        '--disable-gpu',
+      ],
+    })
+  }
+
+  // In non-serverless (local dev), reuse browser instance
   if (!browserInstance || !browserInstance.isConnected()) {
+    console.log('[screenshot] Running in local mode, launching persistent browser')
     browserInstance = await chromium.launch({
       headless: true,
       args: [
@@ -60,9 +91,10 @@ export async function captureScreenshot(
   } = options
 
   let page: Page | null = null
+  let browser: Browser | null = null
 
   try {
-    const browser = await getBrowser()
+    browser = await getBrowser()
     page = await browser.newPage({
       viewport,
       deviceScaleFactor: 2, // Retina quality
@@ -114,11 +146,17 @@ export async function captureScreenshot(
       viewport,
     }
   } catch (error) {
-    console.error('Screenshot capture failed:', error)
+    console.error('[screenshot] Capture failed:', error)
     throw error
   } finally {
     if (page) {
       await page.close()
+    }
+    // In serverless, always close browser to free memory
+    // In local dev, keep browser instance alive for reuse
+    if (isServerless && browser) {
+      await browser.close()
+      console.log('[screenshot] Browser closed (serverless mode)')
     }
   }
 }

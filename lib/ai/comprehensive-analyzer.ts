@@ -4,13 +4,13 @@
  */
 
 import { generateText, generateObject } from 'ai'
-import { createOpenAI } from '@ai-sdk/openai'
+import { createGateway } from 'ai'
 import { z } from 'zod'
 import type { CuratedTokenSet } from '@/lib/analyzers/token-curator'
 
-// Configure Vercel AI Gateway with GPT-4o for advanced reasoning
-const openai = createOpenAI({
-  apiKey: process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_AI_API_KEY || process.env.OPENAI_API_KEY,
+// Configure Vercel AI Gateway
+const gateway = createGateway({
+  apiKey: process.env.AI_GATEWAY_API_KEY ?? '',
 })
 
 // Comprehensive analysis schema
@@ -60,16 +60,16 @@ const AnalysisSchema = z.object({
       token: z.string(),
       rating: z.enum(['excellent', 'good', 'poor']),
       suggestion: z.string().optional()
-    })),
+    })).optional(),
     consistencyScore: z.number().min(0).max(100),
     recommendations: z.array(z.string())
   }),
 
   designPatterns: z.object({
     identified: z.array(z.object({
-      pattern: z.string(),
+      pattern: z.string().optional(),
       confidence: z.number(),
-      examples: z.array(z.string())
+      examples: z.array(z.string()).optional()
     })),
     antiPatterns: z.array(z.object({
       issue: z.string(),
@@ -83,11 +83,7 @@ const AnalysisSchema = z.object({
     colorPersonality: z.string(),
     typographicVoice: z.string(),
     visualStyle: z.array(z.string()),
-    industryAlignment: z.string(),
-    competitorSimilarity: z.array(z.object({
-      brand: z.string(),
-      similarity: z.number()
-    })).optional()
+    industryAlignment: z.string()
   }),
 
   recommendations: z.object({
@@ -133,7 +129,7 @@ export async function analyzeDesignSystemComprehensive(
 
     // Use GPT-4o for advanced reasoning and structured output
     const { object } = await generateObject({
-      model: openai('gpt-4o'), // Most capable model for deep analysis
+      model: gateway('openai/gpt-4o'), // Most capable model for deep analysis
       schema: AnalysisSchema,
       prompt,
       temperature: 0.4, // Balanced creativity and consistency
@@ -357,10 +353,10 @@ function generateEnhancedFallback(tokens: CuratedTokenSet, metadata: { domain: s
 
   return {
     designSystemScore: {
-      overall: Math.round((consistencyScore + accessibilityScore + (totalTokens * 2)) / 3),
+      overall: Math.min(100, Math.round((consistencyScore + accessibilityScore + (totalTokens * 2)) / 3)),
       maturity,
       completeness: Math.min(100, totalTokens * 3),
-      consistency: consistencyScore,
+      consistency: Math.min(100, consistencyScore),
       scalability: tokens.spacing.length >= 8 ? 90 : 70
     },
 
@@ -416,8 +412,7 @@ function generateEnhancedFallback(tokens: CuratedTokenSet, metadata: { domain: s
       colorPersonality: inferColorPersonality(tokens.colors),
       typographicVoice: inferTypographicVoice(tokens.typography),
       visualStyle: inferVisualStyle(tokens),
-      industryAlignment: inferIndustry(metadata.domain),
-      competitorSimilarity: []
+      industryAlignment: inferIndustry(metadata.domain)
     },
 
     recommendations: {

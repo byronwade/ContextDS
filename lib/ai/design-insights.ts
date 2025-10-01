@@ -4,13 +4,12 @@
  */
 
 import { generateText } from 'ai'
-import { createOpenAI } from '@ai-sdk/openai'
+import { createGateway } from 'ai'
 import type { CuratedTokenSet } from '@/lib/analyzers/token-curator'
 
 // Configure Vercel AI Gateway
-// Note: Vercel AI Gateway format is handled automatically by the SDK with the API key
-const openai = createOpenAI({
-  apiKey: process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_AI_API_KEY || process.env.OPENAI_API_KEY,
+const gateway = createGateway({
+  apiKey: process.env.AI_GATEWAY_API_KEY ?? '',
 })
 
 export interface DesignInsights {
@@ -60,7 +59,7 @@ export async function generateDesignInsights(
   try {
     // Use Vercel AI Gateway with fast model for analysis
     const { text } = await generateText({
-      model: openai('gpt-4o-mini'), // Fast, cost-effective model via AI Gateway
+      model: gateway('openai/gpt-4o-mini'), // Fast, cost-effective model via AI Gateway
       prompt,
       temperature: 0.3, // Lower temperature for consistent analysis
       maxTokens: 1000

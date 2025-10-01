@@ -52,7 +52,14 @@ if (process.env.DATABASE_URL) {
 export const db = client ? drizzle(client, {
   schema,
   logger: process.env.NODE_ENV === 'development'
-}) : null as any
+}) : {
+  // Placeholder for build-time when no DATABASE_URL is available
+  select: () => ({ from: () => ({ where: () => ({ limit: () => [] }) }) }),
+  insert: () => ({ values: () => ({ returning: () => [] }) }),
+  update: () => ({ set: () => ({ where: () => ({ returning: () => [] }) }) }),
+  execute: () => Promise.resolve([]),
+  transaction: () => Promise.resolve([])
+} as any
 
 // Connection health monitoring
 const connectionHealth = {
@@ -137,7 +144,7 @@ export async function queryWithMetrics<T>(
   }
 }
 
-// Initialize database optimization
+// Initialize database optimization with ultra-fast performance enhancements
 async function initializeOptimization() {
   try {
     if (!db) {
@@ -159,6 +166,16 @@ async function initializeOptimization() {
     if (hasOptimization && hasOptimization.length > 0) {
       console.log('✅ Database tables confirmed')
 
+      // Initialize ultra-fast performance optimizations
+      try {
+        const { initializeDatabaseOptimizations } = await import('./optimizations')
+        await initializeDatabaseOptimizations()
+        console.log('🚀 Ultra-fast database optimizations initialized')
+      } catch (error) {
+        console.warn('⚠️ Could not initialize ultra-fast optimizations:', error)
+        // Continue with basic initialization
+      }
+
       // Run initial health check
       await checkDatabaseHealth()
 
@@ -176,8 +193,9 @@ async function initializeOptimization() {
   }
 }
 
-// Initialize on import (server-side only)
-if (typeof window === 'undefined' && process.env.DATABASE_URL) {
+// Initialize on import (server-side only, but not during build)
+if (typeof window === 'undefined' && process.env.DATABASE_URL && process.env.NODE_ENV !== 'production') {
+  // Only initialize in development, not during build
   initializeOptimization()
 }
 

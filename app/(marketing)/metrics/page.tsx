@@ -5,6 +5,11 @@ import Link from "next/link"
 import { Activity, TrendingUp, Search, Zap, Clock, CheckCircle, XCircle, BarChart3, Globe, Palette } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useRealtimeStore } from "@/stores/realtime-store"
+import { LiveActivityFeed } from "@/components/molecules/live-activity-feed"
+import { LiveMetricsDashboard } from "@/components/molecules/live-metrics-dashboard"
+import { LiveScanQueue } from "@/components/molecules/live-scan-queue"
+import { LiveUserPresence } from "@/components/molecules/live-user-presence"
 import { MarketingHeader } from "@/components/organisms/marketing-header"
 import { MarketingFooter } from "@/components/organisms/marketing-footer"
 
@@ -57,6 +62,9 @@ export default function MetricsPage() {
   const [recentScans, setRecentScans] = useState<RecentScan[]>([])
   const [selectedMetric, setSelectedMetric] = useState<'page_views' | 'api_requests' | 'scans'>('page_views')
   const [timeRange, setTimeRange] = useState<'1' | '12' | '24'>('24')
+
+  // Real-time store for live updates
+  const { metrics: liveMetrics, isConnected, activities, lastUpdate } = useRealtimeStore()
 
   // Fetch realtime stats
   useEffect(() => {
@@ -171,9 +179,38 @@ export default function MetricsPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <MarketingHeader currentPage="metrics" />
+      <MarketingHeader currentPage="metrics" showSearch={true} />
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Page Header with Live Status */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Real-Time Metrics</h1>
+            <p className="text-sm text-grep-9 mt-1">Live platform performance and usage analytics</p>
+          </div>
+
+          {/* Connection Status */}
+          <div className="flex items-center gap-2">
+            <div className={cn(
+              "w-2 h-2 rounded-full",
+              isConnected ? "bg-emerald-500 animate-pulse" : "bg-red-500"
+            )} />
+            <span className="text-sm text-grep-9">
+              {isConnected ? 'Live Data Stream' : 'Disconnected'}
+            </span>
+            {lastUpdate && (
+              <span className="text-xs text-grep-9 font-mono ml-2">
+                Updated {Math.floor((Date.now() - lastUpdate) / 1000)}s ago
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Live Metrics Dashboard */}
+        <div className="mb-8">
+          <LiveMetricsDashboard layout="grid" />
+        </div>
+
         {/* Stats Grid - Grep Terminal Style */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
           <div className="rounded-md border border-grep-2 bg-background p-4 font-mono">
@@ -381,39 +418,106 @@ export default function MetricsPage() {
           </div>
         </div>
 
-        {/* Recent Scans */}
-        <div className="rounded-md border border-grep-2 bg-grep-0 overflow-hidden mt-4">
-          <div className="px-4 py-3 border-b border-grep-2 bg-background">
-            <h2 className="text-xs font-semibold text-grep-9 uppercase tracking-wide flex items-center gap-2">
-              <Activity className="h-4 w-4" />
-              Recent Scans
-            </h2>
-          </div>
-          <div className="divide-y divide-grep-2">
-            {recentScans.map((scan, index) => (
-              <div key={index} className="px-4 py-3 hover:bg-background transition-colors flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {scan.status === 'completed' ? (
-                    <CheckCircle className="h-3.5 w-3.5 text-green-500" />
-                  ) : scan.status === 'failed' ? (
-                    <XCircle className="h-3.5 w-3.5 text-red-500" />
-                  ) : (
-                    <Clock className="h-3.5 w-3.5 text-yellow-500" />
-                  )}
-                  <div>
-                    <code className="text-xs text-foreground font-mono">{scan.domain}</code>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] text-grep-9">{scan.tokens_extracted} tokens</span>
-                      <span className="text-[10px] text-grep-9">{scan.confidence}% confidence</span>
-                      <span className="text-[10px] text-grep-9">{scan.processing_time_ms}ms</span>
+        {/* Enhanced Real-Time Dashboard Grid */}
+        <div className="space-y-6 mt-4">
+          {/* Two Column: Recent Scans + Live Activity */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Recent Scans */}
+            <div className="rounded-md border border-grep-2 bg-grep-0 overflow-hidden">
+              <div className="px-4 py-3 border-b border-grep-2 bg-background">
+                <h2 className="text-xs font-semibold text-grep-9 uppercase tracking-wide flex items-center gap-2">
+                  <Activity className="h-4 w-4" />
+                  Recent Scans
+                </h2>
+              </div>
+              <div className="divide-y divide-grep-2">
+                {recentScans.map((scan, index) => (
+                  <div key={index} className="px-4 py-3 hover:bg-background transition-colors flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {scan.status === 'completed' ? (
+                        <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+                      ) : scan.status === 'failed' ? (
+                        <XCircle className="h-3.5 w-3.5 text-red-500" />
+                      ) : (
+                        <Clock className="h-3.5 w-3.5 text-yellow-500" />
+                      )}
+                      <div>
+                        <code className="text-xs text-foreground font-mono">{scan.domain}</code>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] text-grep-9">{scan.tokens_extracted} tokens</span>
+                          <span className="text-[10px] text-grep-9">{scan.confidence}% confidence</span>
+                          <span className="text-[10px] text-grep-9">{scan.processing_time_ms}ms</span>
+                        </div>
+                      </div>
                     </div>
+                    <span className="text-[10px] text-grep-9 font-mono">
+                      {new Date(scan.created_at).toLocaleTimeString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Live Activity Feed */}
+            <div className="rounded-md border border-grep-2 bg-grep-0 overflow-hidden">
+              <div className="px-4 py-3 border-b border-grep-2 bg-background">
+                <h2 className="text-xs font-semibold text-grep-9 uppercase tracking-wide flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Live Activity Stream
+                </h2>
+              </div>
+              <div className="p-4">
+                <LiveActivityFeed limit={8} className="border-0 bg-transparent p-0" />
+              </div>
+            </div>
+          </div>
+
+          {/* Three Column: Scan Queue + User Presence + Performance */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <LiveScanQueue />
+            <LiveUserPresence />
+
+            {/* Performance Monitoring */}
+            <div className="rounded-md border border-grep-2 bg-grep-0 overflow-hidden">
+              <div className="px-4 py-3 border-b border-grep-2 bg-background">
+                <h2 className="text-xs font-semibold text-grep-9 uppercase tracking-wide flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Performance
+                </h2>
+              </div>
+              <div className="p-4 space-y-4">
+                <div className="text-center">
+                  <div className="text-2xl font-mono font-bold text-blue-600 dark:text-blue-400 mb-1">
+                    {liveMetrics?.avgProcessingTime || stats?.avg_response_time || 0}ms
+                  </div>
+                  <div className="text-xs text-neutral-600 dark:text-neutral-400">
+                    Avg Response Time
                   </div>
                 </div>
-                <span className="text-[10px] text-grep-9 font-mono">
-                  {new Date(scan.created_at).toLocaleTimeString()}
-                </span>
+
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div className="space-y-1">
+                    <div className="text-lg font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                      {((stats?.successful_scans || 0) / Math.max(stats?.scans || 1, 1) * 100).toFixed(1)}%
+                    </div>
+                    <div className="text-xs text-neutral-600 dark:text-neutral-400">Success Rate</div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-lg font-mono font-bold text-orange-600 dark:text-orange-400">
+                      {stats?.failed_scans || 0}
+                    </div>
+                    <div className="text-xs text-neutral-600 dark:text-neutral-400">Failed</div>
+                  </div>
+                </div>
+
+                {isConnected && (
+                  <div className="flex items-center justify-center gap-2 text-xs text-emerald-600 dark:text-emerald-400">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Live Performance Monitoring
+                  </div>
+                )}
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </div>
