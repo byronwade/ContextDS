@@ -30,13 +30,32 @@ import { cn } from "@/lib/utils"
 import { useState, useEffect, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { ComprehensiveAnalysisDisplay } from "./comprehensive-analysis-display"
+import { DesignSystemSpecDisplay } from "./design-system-spec-display"
 import { TokenResultsDisplay } from "./token-results-display"
 import { TokenDiffViewer } from "./token-diff-viewer"
 import { ScreenshotGallery } from "@/components/molecules/screenshot-gallery"
 import { TypographySection } from "./typography-section"
 import { LayoutPatternsSection } from "./layout-patterns-section"
 import { BrandAnalysisSection } from "./brand-analysis-section"
-import { ComponentLibrarySection } from "./component-library-section"
+import { AdvancedComponentLibrary } from "./advanced-component-library"
+import {
+  OverviewSkeleton,
+  ScreenshotsSkeleton,
+  AnalysisSkeleton,
+  TokensSkeleton,
+  TypographySkeleton,
+  BrandSkeleton,
+  LayoutSkeleton,
+  ComponentsSkeleton
+} from "@/components/molecules/section-skeletons"
+import { RealtimeScanningOverview } from "@/components/molecules/realtime-scanning-skeleton"
+import { RealtimeTokensSkeleton } from "@/components/molecules/realtime-tokens-skeleton"
+import { AIReasoningDisplay } from "@/components/molecules/ai-reasoning-display"
+import { LiveDOMScanner } from "@/components/molecules/live-dom-scanner"
+import { DesignDNAHelix } from "@/components/molecules/design-dna-helix"
+import { NeuralTokenNetwork } from "@/components/molecules/neural-token-network"
+import { AIInsightsStream } from "@/components/molecules/ai-insights-stream"
+import { ScanningRadar } from "@/components/molecules/scanning-radar"
 
 type ScanResult = any // Import from scan-store if needed
 
@@ -56,6 +75,7 @@ interface ScanResultsLayoutProps {
   isLoading: boolean
   scanId?: string | null
   progress?: ScanProgress | null
+  metrics?: any | null
   onCopy: (value: string) => void
   onExport: (format: string) => void
   onShare: () => void
@@ -81,6 +101,7 @@ export function ScanResultsLayout({
   isLoading,
   scanId,
   progress,
+  metrics,
   onCopy,
   onExport,
   onShare,
@@ -286,6 +307,42 @@ export function ScanResultsLayout({
       {/* Main Content Area */}
       <main ref={mainContentRef} className="flex-1 overflow-y-auto bg-background">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 md:px-12 md:py-10">
+
+          {/* Show detailed skeletons when loading */}
+          {isLoading && !result ? (
+            <>
+              <RealtimeScanningOverview
+                ref={(el) => { sectionRefs.current['overview'] = el }}
+                domain={searchParams.get('domain') || undefined}
+                progress={progress || undefined}
+              />
+
+              {/* Advanced AI Scanning Visualizations */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <AIReasoningDisplay isActive={true} progress={progress} metrics={metrics} />
+                <LiveDOMScanner isActive={true} progress={progress} metrics={metrics} />
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <DesignDNAHelix isActive={true} progress={progress} metrics={metrics} />
+                <NeuralTokenNetwork isActive={true} />
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <AIInsightsStream isActive={true} progress={progress} metrics={metrics} />
+                <ScanningRadar isActive={true} progress={progress} metrics={metrics} />
+              </div>
+
+              <ScreenshotsSkeleton ref={(el) => { sectionRefs.current['screenshots'] = el }} />
+              <AnalysisSkeleton ref={(el) => { sectionRefs.current['analysis'] = el }} />
+              <ComponentsSkeleton ref={(el) => { sectionRefs.current['components'] = el }} />
+              <RealtimeTokensSkeleton ref={(el) => { sectionRefs.current['tokens'] = el }} />
+              <TypographySkeleton ref={(el) => { sectionRefs.current['typography'] = el }} />
+              <BrandSkeleton ref={(el) => { sectionRefs.current['brand'] = el }} />
+              <LayoutSkeleton ref={(el) => { sectionRefs.current['layout'] = el }} />
+            </>
+          ) : (
+            <>
 
 
           {/* Overview Section */}
@@ -614,7 +671,7 @@ export function ScanResultsLayout({
           )}
 
           {/* AI Analysis Section */}
-          {isLoading && !result?.comprehensiveAnalysis ? (
+          {isLoading && !result?.designSystemSpec ? (
             <section
               id="analysis"
               ref={(el) => { sectionRefs.current['analysis'] = el }}
@@ -626,13 +683,13 @@ export function ScanResultsLayout({
                 <div className="h-24 bg-grep-2 animate-pulse rounded" />
               </div>
             </section>
-          ) : result?.comprehensiveAnalysis && (
+          ) : result?.designSystemSpec && (
             <section
               id="analysis"
               ref={(el) => { sectionRefs.current['analysis'] = el }}
               className="mb-8"
             >
-              <ComprehensiveAnalysisDisplay analysis={result.comprehensiveAnalysis} />
+              <DesignSystemSpecDisplay spec={result.designSystemSpec} onCopy={onCopy} />
             </section>
           )}
 
@@ -657,9 +714,9 @@ export function ScanResultsLayout({
             >
               <h2 className="text-lg font-semibold font-mono text-foreground mb-4 flex items-center gap-2">
                 <Code2 className="h-5 w-5" />
-                Component Library
+                Advanced Component Library
               </h2>
-              <ComponentLibrarySection componentLibrary={result.componentLibrary} onCopy={onCopy} />
+              <AdvancedComponentLibrary componentLibrary={result.componentLibrary} onCopy={onCopy} />
             </section>
           )}
 
@@ -788,6 +845,9 @@ export function ScanResultsLayout({
               </h2>
               <LayoutPatternsSection layoutDNA={result.layoutDNA} />
             </section>
+          )}
+
+            </>
           )}
 
         </div>
