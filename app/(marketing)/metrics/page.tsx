@@ -5,6 +5,8 @@ import Link from "next/link"
 import { Activity, TrendingUp, Search, Zap, Clock, CheckCircle, XCircle, BarChart3, Globe, Palette } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { MarketingHeader } from "@/components/organisms/marketing-header"
+import { MarketingFooter } from "@/components/organisms/marketing-footer"
 
 interface RealtimeStats {
   page_views: number
@@ -168,39 +170,8 @@ export default function MetricsPage() {
   const maxValue = Math.max(...timeSeriesData.map(d => d.value), 1)
 
   return (
-    <div className="min-h-screen w-full bg-grep-0">
-      {/* Grep-style Header */}
-      <header className="flex min-h-[64px] w-full shrink-0 items-center justify-between border-b border-grep-2">
-        {/* Left: Brand */}
-        <div className="flex items-center pl-4 md:pl-6">
-          <Link href="/" className="outline-offset-4 flex items-center gap-2">
-            <Palette className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            <span className="text-lg font-semibold text-black dark:text-white">ContextDS</span>
-            <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900">Beta</span>
-          </Link>
-        </div>
-
-        {/* Center: Page Title */}
-        <div className="flex-1 text-center">
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <h1 className="text-sm font-medium text-foreground font-mono">Real-time Metrics</h1>
-          </div>
-        </div>
-
-        {/* Right: Navigation */}
-        <div className="flex min-h-[64px] items-center gap-2 pr-4 md:pr-6">
-          <Button variant="ghost" size="sm" asChild className="h-8 px-3 text-xs font-medium text-grep-9 hover:text-foreground">
-            <Link href="/">Home</Link>
-          </Button>
-          <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex h-8 px-3 text-xs font-medium text-grep-9 hover:text-foreground">
-            <Link href="/directory">Directory</Link>
-          </Button>
-          <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex h-8 px-3 text-xs font-medium text-grep-9 hover:text-foreground">
-            <Link href="/docs">Docs</Link>
-          </Button>
-        </div>
-      </header>
+    <div className="flex min-h-screen flex-col bg-background">
+      <MarketingHeader currentPage="metrics" />
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Stats Grid - Grep Terminal Style */}
@@ -446,6 +417,8 @@ export default function MetricsPage() {
           </div>
         </div>
       </div>
+
+      <MarketingFooter />
     </div>
   )
 }

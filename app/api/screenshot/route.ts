@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { promises as dns } from 'dns'
+import { createHash } from 'crypto'
 import { captureScreenshot, captureMultiViewport } from '@/lib/utils/screenshot'
 import { uploadScreenshot } from '@/lib/storage/blob-storage'
-import { db, screenshots } from '@/lib/db'
-import { eq, asc } from 'drizzle-orm'
+import { db, screenshots, screenshotContent } from '@/lib/db'
+import { eq, asc, sql } from 'drizzle-orm'
 
 export const maxDuration = 60 // Vercel Pro: 60 second timeout
 
@@ -121,6 +122,7 @@ async function validateSSRF(url: URL): Promise<string | null> {
 
 interface ScreenshotRequest {
   url: string
+  siteId: string
   scanId: string
   viewports?: ('mobile' | 'tablet' | 'desktop')[]
   fullPage?: boolean
@@ -130,10 +132,12 @@ interface ScreenshotRequest {
 
 /**
  * POST /api/screenshot - Capture screenshots for a URL
+ * Replaces existing screenshots for the site (keeps only latest per viewport)
  *
  * Body:
  * {
  *   url: string
+ *   siteId: string
  *   scanId: string
  *   viewports?: ['mobile', 'tablet', 'desktop']
  *   fullPage?: boolean
@@ -144,11 +148,11 @@ interface ScreenshotRequest {
 export async function POST(request: NextRequest) {
   try {
     const body: ScreenshotRequest = await request.json()
-    const { url, scanId, viewports = ['desktop'], fullPage = false, selector, label } = body
+    const { url, siteId, scanId, viewports = ['desktop'], fullPage = false, selector, label } = body
 
-    if (!url || !scanId) {
+    if (!url || !siteId || !scanId) {
       return NextResponse.json(
-        { error: 'Missing required fields: url, scanId' },
+        { error: 'Missing required fields: url, siteId, scanId' },
         { status: 400 }
       )
     }
@@ -202,34 +206,94 @@ export async function POST(request: NextRequest) {
           waitForTimeout: 2000,
         })
 
-        // Upload to Supabase Storage
-        const uploaded = await uploadScreenshot({
-          scanId,
-          viewport,
-          buffer: screenshot.buffer,
-          label,
-        })
+        // Calculate SHA-256 hash of screenshot buffer
+        const sha = createHash('sha256').update(screenshot.buffer).digest('hex')
 
-        // Save metadata to database
-        await db.insert(screenshots).values({
-          scanId,
-          url: uploaded.url,
-          viewport,
-          width: screenshot.width,
-          height: screenshot.height,
-          fileSize: uploaded.size,
-          selector,
-          label,
-        })
+        // Check if this screenshot content already exists
+        const existing = await db
+          .select()
+          .from(screenshotContent)
+          .where(eq(screenshotContent.sha, sha))
+          .limit(1)
+
+        let screenshotUrl: string
+        let screenshotWidth: number
+        let screenshotHeight: number
+        let screenshotSize: number
+
+        if (existing.length > 0) {
+          // Reuse existing screenshot
+          screenshotUrl = existing[0].url
+          screenshotWidth = existing[0].width
+          screenshotHeight = existing[0].height
+          screenshotSize = existing[0].fileSize
+
+          // Update last accessed time
+          await db
+            .update(screenshotContent)
+            .set({ lastAccessed: sql`NOW()` })
+            .where(eq(screenshotContent.sha, sha))
+
+          console.log(`♻️  Screenshot reused: ${viewport} (SHA: ${sha.substring(0, 8)}...)`)
+        } else {
+          // Upload new screenshot to storage
+          const uploaded = await uploadScreenshot({
+            scanId,
+            viewport,
+            buffer: screenshot.buffer,
+            label,
+          })
+
+          screenshotUrl = uploaded.url
+          screenshotWidth = screenshot.width
+          screenshotHeight = screenshot.height
+          screenshotSize = uploaded.size
+
+          // Save content to deduplication table
+          await db.insert(screenshotContent).values({
+            sha,
+            url: uploaded.url,
+            width: screenshot.width,
+            height: screenshot.height,
+            fileSize: uploaded.size,
+            referenceCount: 0, // Will be incremented by trigger
+          })
+
+          console.log(`✅ Screenshot uploaded: ${viewport} (${uploaded.size} bytes, SHA: ${sha.substring(0, 8)}...)`)
+        }
+
+        // UPSERT: Replace existing screenshot for this site+viewport, or insert new
+        // This ensures we always keep the latest screenshot per site
+        await db
+          .insert(screenshots)
+          .values({
+            siteId,
+            scanId,
+            sha,
+            viewport,
+            selector,
+            label,
+          })
+          .onConflictDoUpdate({
+            target: [screenshots.siteId, screenshots.viewport],
+            set: {
+              scanId,
+              sha,
+              capturedAt: sql`NOW()`,
+              selector,
+              label,
+            },
+          })
 
         results.push({
           viewport,
-          url: uploaded.url,
-          width: screenshot.width,
-          height: screenshot.height,
+          url: screenshotUrl,
+          width: screenshotWidth,
+          height: screenshotHeight,
         })
 
-        console.log(`✅ Screenshot captured: ${viewport} (${uploaded.size} bytes)`)
+        console.log(`✨ Screenshot saved for site (latest): ${viewport}`)
+
       } catch (error) {
         console.error(`Failed to capture ${viewport} screenshot:`, error)
         // Continue with other viewports even if one fails
@@ -275,10 +339,22 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Fetch screenshots from database
+    // Fetch screenshots with content data joined
     const results = await db
-      .select()
+      .select({
+        id: screenshots.id,
+        scanId: screenshots.scanId,
+        viewport: screenshots.viewport,
+        capturedAt: screenshots.capturedAt,
+        selector: screenshots.selector,
+        label: screenshots.label,
+        url: screenshotContent.url,
+        width: screenshotContent.width,
+        height: screenshotContent.height,
+        fileSize: screenshotContent.fileSize,
+      })
       .from(screenshots)
+      .innerJoin(screenshotContent, eq(screenshots.sha, screenshotContent.sha))
       .where(eq(screenshots.scanId, scanId))
       .orderBy(asc(screenshots.capturedAt))
 

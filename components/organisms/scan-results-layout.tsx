@@ -65,13 +65,13 @@ interface ScanResultsLayoutProps {
 }
 
 const sections = [
+  { id: 'screenshots', label: 'Screenshots', icon: Eye },
   { id: 'overview', label: 'Overview', icon: BarChart3 },
   { id: 'analysis', label: 'AI Analysis', icon: Zap },
   { id: 'tokens', label: 'Design Tokens', icon: Palette },
   { id: 'typography', label: 'Typography', icon: Type },
   { id: 'brand', label: 'Brand Analysis', icon: Box },
   { id: 'layout', label: 'Layout Patterns', icon: Grid3x3 },
-  { id: 'screenshots', label: 'Screenshots', icon: Eye },
 ] as const
 
 export function ScanResultsLayout({
@@ -591,6 +591,26 @@ export function ScanResultsLayout({
             )}
           </section>
 
+          {/* Screenshots Section - Moved to Top */}
+          {isLoading && !result ? (
+            <section
+              id="screenshots"
+              ref={(el) => { sectionRefs.current['screenshots'] = el }}
+              className="mb-8"
+            >
+              <div className="h-5 w-32 bg-grep-2 animate-pulse rounded mb-4" />
+              <div className="aspect-video bg-grep-2 animate-pulse rounded" />
+            </section>
+          ) : result && scanId && (
+            <section
+              id="screenshots"
+              ref={(el) => { sectionRefs.current['screenshots'] = el }}
+              className="mb-8"
+            >
+              <ScreenshotGallery scanId={scanId} />
+            </section>
+          )}
+
           {/* AI Analysis Section */}
           {isLoading && !result?.comprehensiveAnalysis ? (
             <section
@@ -738,30 +758,6 @@ export function ScanResultsLayout({
                 Layout Patterns
               </h2>
               <LayoutPatternsSection layoutDNA={result.layoutDNA} />
-            </section>
-          )}
-
-          {/* Screenshots Section */}
-          {isLoading && !result ? (
-            <section
-              id="screenshots"
-              ref={(el) => { sectionRefs.current['screenshots'] = el }}
-              className="mb-8"
-            >
-              <div className="h-5 w-32 bg-grep-2 animate-pulse rounded mb-4" />
-              <div className="aspect-video bg-grep-2 animate-pulse rounded" />
-            </section>
-          ) : result && scanId && (
-            <section
-              id="screenshots"
-              ref={(el) => { sectionRefs.current['screenshots'] = el }}
-              className="mb-8"
-            >
-              <h2 className="text-lg font-semibold font-mono text-foreground mb-4 flex items-center gap-2">
-                <Eye className="h-5 w-5" />
-                Component Screenshots
-              </h2>
-              <ScreenshotGallery scanId={scanId} />
             </section>
           )}
 

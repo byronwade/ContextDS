@@ -91,15 +91,28 @@ export const cssSources = pgTable('css_sources', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 
-// Screenshots table - multi-viewport component screenshots
-export const screenshots = pgTable('screenshots', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  scanId: uuid('scan_id').notNull().references(() => scans.id, { onDelete: 'cascade' }),
+// Screenshot Content table - deduplicated screenshot storage by SHA hash
+// Multiple scans of same site at same viewport share screenshot data
+export const screenshotContent = pgTable('screenshot_content', {
+  sha: varchar('sha', { length: 64 }).primaryKey(), // Content hash (SHA-256)
   url: text('url').notNull(), // Screenshot URL in Supabase Storage
-  viewport: varchar('viewport', { length: 50 }).notNull(), // mobile, tablet, desktop
   width: integer('width').notNull(),
   height: integer('height').notNull(),
   fileSize: integer('file_size').notNull(), // bytes
+  referenceCount: integer('reference_count').notNull().default(0), // How many scans reference this
+  ttlDays: integer('ttl_days').notNull().default(90), // Delete screenshot after N days
+  firstSeen: timestamp('first_seen').notNull().defaultNow(),
+  lastAccessed: timestamp('last_accessed').notNull().defaultNow(),
+})
+
+// Screenshots table - references to deduplicated screenshot content
+// Each site keeps only the LATEST screenshot per viewport (replaced on every scan)
+export const screenshots = pgTable('screenshots', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  siteId: uuid('site_id').notNull().references(() => sites.id, { onDelete: 'cascade' }),
+  scanId: uuid('scan_id').notNull().references(() => scans.id, { onDelete: 'cascade' }),
+  sha: varchar('sha', { length: 64 }).notNull().references(() => screenshotContent.sha, { onDelete: 'cascade' }), // Reference to deduplicated content
+  viewport: varchar('viewport', { length: 50 }).notNull(), // mobile, tablet, desktop
   capturedAt: timestamp('captured_at').notNull().defaultNow(),
   selector: text('selector'), // Optional: specific component selector
   label: varchar('label', { length: 100 }), // e.g., "Hero Section", "Navigation"

@@ -18,6 +18,7 @@
     "db:reset": "bun run scripts/reset-database.ts",
     "db:health": "bun run scripts/health-check.ts",
     "db:stats": "bun run scripts/database-stats.ts",
+    "db:cleanup:screenshots": "bun run scripts/cleanup-orphaned-screenshots.ts",
     "test": "bunx playwright test",
     "test:ui": "bunx playwright test --ui",
     "test:headed": "bunx playwright test --headed",

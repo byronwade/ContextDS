@@ -430,19 +430,35 @@ export async function runScanJob({ url, prettify, includeComputed, mode = 'accur
 
   // Trigger screenshot capture in background (don't await to avoid blocking response)
   // Screenshots are captured async and stored separately
+  console.log('[scan-orchestrator] ENABLE_SCREENSHOTS:', process.env.ENABLE_SCREENSHOTS)
+  console.log('[scan-orchestrator] NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL)
   if (process.env.ENABLE_SCREENSHOTS !== '0') {
-    fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/screenshot`, {
+    const screenshotUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/screenshot`
+    console.log('[scan-orchestrator] Triggering screenshot capture:', {
+      url: target.toString(),
+      scanId: scanRecord.id,
+      screenshotUrl
+    })
+    fetch(screenshotUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         url: target.toString(),
+        siteId: siteRecord.id,
         scanId: scanRecord.id,
         viewports: ['mobile', 'tablet', 'desktop'],
-        fullPage: false
+        fullPage: true
       })
+    }).then(response => {
+      console.log('[scan-orchestrator] Screenshot API response status:', response.status)
+      return response.json()
+    }).then(data => {
+      console.log('[scan-orchestrator] Screenshot API response data:', data)
     }).catch(error => {
-      console.warn('Screenshot capture failed (non-blocking):', error)
+      console.warn('[scan-orchestrator] Screenshot capture failed (non-blocking):', error)
     })
+  } else {
+    console.log('[scan-orchestrator] Screenshots disabled via ENABLE_SCREENSHOTS=0')
   }
 
   return {

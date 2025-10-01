@@ -28,7 +28,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "stripe.com", pathname: "/**" },
       { protocol: "https", hostname: "github.com", pathname: "/**" },
       { protocol: "https", hostname: "figma.com", pathname: "/**" },
-      { protocol: "https", hostname: "vercel.com", pathname: "/**" }
+      { protocol: "https", hostname: "vercel.com", pathname: "/**" },
+      { protocol: "https", hostname: "*.public.blob.vercel-storage.com", pathname: "/**" }
     ],
     domains: ["stripe.com", "github.com", "figma.com", "vercel.com"]
   },
