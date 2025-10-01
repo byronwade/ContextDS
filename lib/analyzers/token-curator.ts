@@ -226,7 +226,7 @@ function curateColors(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTok
 }
 
 /**
- * Curate typography tokens
+ * Curate typography tokens with smart ranking
  */
 function curateTypography(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTokenSet['typography'] {
   if (!tokenSet.typography) {
@@ -322,15 +322,123 @@ function curateTypography(tokenSet: W3CTokenSet, config: CurationConfig): Curate
   sizes.forEach(t => t.percentage = totalSizeUsage > 0 ? Math.round((t.usage / totalSizeUsage) * 100) : 0)
   weights.forEach(t => t.percentage = totalWeightUsage > 0 ? Math.round((t.usage / totalWeightUsage) * 100) : 0)
 
-  const sortedFamilies = families.sort((a, b) => b.usage - a.usage)
-  const sortedSizes = sizes.sort((a, b) => b.usage - a.usage)
-  const sortedWeights = weights.sort((a, b) => b.usage - a.usage)
+  // SMART FONT RANKING: Prioritize brand fonts over generic fallbacks
+  const sortedFamilies = families.sort((a, b) => {
+    const aScore = calculateFontBrandScore(a)
+    const bScore = calculateFontBrandScore(b)
+    return bScore - aScore
+  })
+
+  // SMART SIZE RANKING: Detect type scale and prioritize important sizes
+  const sortedSizes = sizes.sort((a, b) => {
+    const aScore = calculateSizeImportance(a, sizes)
+    const bScore = calculateSizeImportance(b, sizes)
+    return bScore - aScore
+  })
+
+  // SMART WEIGHT RANKING: Prioritize common design system weights
+  const sortedWeights = weights.sort((a, b) => {
+    const aScore = calculateWeightImportance(a)
+    const bScore = calculateWeightImportance(b)
+    return bScore - aScore
+  })
 
   return {
     families: config.maxFonts && !config.returnAllFiltered ? sortedFamilies.slice(0, config.maxFonts) : sortedFamilies,
     sizes: config.maxSizes && !config.returnAllFiltered ? sortedSizes.slice(0, config.maxSizes) : sortedSizes,
     weights: config.returnAllFiltered ? sortedWeights : sortedWeights.slice(0, 4)
   }
+}
+
+/**
+ * Calculate brand score for fonts
+ * Prioritizes brand fonts over generic system fonts
+ */
+function calculateFontBrandScore(token: CuratedToken): number {
+  const fontName = String(token.value).toLowerCase()
+  const name = token.name.toLowerCase()
+  let score = token.usage * 10 // Base score from usage
+
+  // BRAND FONTS (high boost)
+  if (!fontName.includes('arial') && !fontName.includes('helvetica') &&
+      !fontName.includes('times') && !fontName.includes('georgia') &&
+      !fontName.includes('courier') && !fontName.includes('verdana') &&
+      !fontName.includes('sans-serif') && !fontName.includes('serif') &&
+      !fontName.includes('monospace') && !fontName.includes('system')) {
+    score += 100 // Custom brand font
+  }
+
+  // Boost for semantic names
+  if (name.includes('heading') || name.includes('display')) score += 50
+  if (name.includes('primary') || name.includes('brand')) score += 60
+  if (name.includes('body') || name.includes('text')) score += 30
+
+  // Penalty for generic fallbacks
+  if (fontName.includes('arial') || fontName.includes('helvetica')) score -= 80
+  if (fontName.includes('sans-serif') || fontName.includes('serif')) score -= 90
+  if (fontName.includes('system')) score -= 70
+
+  return score
+}
+
+/**
+ * Calculate importance score for font sizes
+ * Detects type scale and prioritizes key sizes
+ */
+function calculateSizeImportance(token: CuratedToken, allSizes: CuratedToken[]): number {
+  const value = String(token.value)
+  const match = value.match(/^([\d.]+)(px|rem|em)$/)
+  if (!match) return token.usage
+
+  const num = parseFloat(match[1])
+  const unit = match[2]
+  const pixels = unit === 'rem' || unit === 'em' ? num * 16 : num
+
+  let score = token.usage * 10
+
+  // Boost for common design system sizes
+  const commonSizes = [12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 64]
+  if (commonSizes.some(size => Math.abs(pixels - size) < 2)) {
+    score += 50
+  }
+
+  // Boost for base body text size (14-18px)
+  if (pixels >= 14 && pixels <= 18) score += 40
+
+  // Boost for heading sizes (24px+)
+  if (pixels >= 24 && pixels <= 72) score += 30
+
+  // Penalty for odd/uncommon sizes
+  if (pixels % 2 !== 0 && pixels > 20) score -= 20
+
+  // Boost for rem units (modern design systems)
+  if (unit === 'rem') score += 25
+
+  return score
+}
+
+/**
+ * Calculate importance score for font weights
+ * Prioritizes common design system weights
+ */
+function calculateWeightImportance(token: CuratedToken): number {
+  const weight = parseInt(String(token.value))
+  let score = token.usage * 10
+
+  // Common design system weights
+  const commonWeights = [300, 400, 500, 600, 700]
+  if (commonWeights.includes(weight)) {
+    score += 60
+  }
+
+  // Extra boost for most common weights
+  if (weight === 400 || weight === 700) score += 40
+  if (weight === 500 || weight === 600) score += 30
+
+  // Penalty for rare weights
+  if (weight < 300 || weight > 800) score -= 40
+
+  return score
 }
 
 /**
@@ -498,8 +606,67 @@ function curateSpacing(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTo
   const dedupedTotal = dedupedTokens.reduce((sum, t) => sum + t.usage, 0)
   dedupedTokens.forEach(t => t.percentage = dedupedTotal > 0 ? Math.round((t.usage / dedupedTotal) * 100) : 0)
 
-  const sorted = dedupedTokens.sort((a, b) => b.usage - a.usage)
+  // SMART SPACING RANKING: Detect spacing scale and prioritize system values
+  const sorted = dedupedTokens.sort((a, b) => {
+    const aScore = calculateSpacingSystemScore(a, dedupedTokens)
+    const bScore = calculateSpacingSystemScore(b, dedupedTokens)
+    return bScore - aScore
+  })
+
   return config.maxSpacing && !config.returnAllFiltered ? sorted.slice(0, config.maxSpacing) : sorted
+}
+
+/**
+ * Calculate spacing system score
+ * Detects 4px/8px base grids and prioritizes systematic values
+ */
+function calculateSpacingSystemScore(token: CuratedToken, allSpacing: CuratedToken[]): number {
+  const value = String(token.value)
+  const match = value.match(/^([\d.]+)(px|rem|em)$/)
+  if (!match) return token.usage
+
+  const num = parseFloat(match[1])
+  const unit = match[2]
+  const pixels = unit === 'rem' || unit === 'em' ? num * 16 : num
+
+  let score = token.usage * 10
+
+  // Detect base grid (4px or 8px)
+  const spacingValues = allSpacing.map(t => {
+    const m = String(t.value).match(/^([\d.]+)(px|rem|em)$/)
+    if (!m) return 0
+    const n = parseFloat(m[1])
+    const u = m[2]
+    return u === 'rem' || u === 'em' ? n * 16 : n
+  }).filter(v => v > 0)
+
+  const is4pxGrid = spacingValues.some(v => v % 4 === 0 && v < 100)
+  const is8pxGrid = spacingValues.some(v => v % 8 === 0 && v < 100)
+
+  // Boost for values that fit the grid
+  if (is8pxGrid && pixels % 8 === 0) {
+    score += 60 // 8px grid: 8, 16, 24, 32, 40, 48, 64, 80, 96
+  } else if (is4pxGrid && pixels % 4 === 0) {
+    score += 50 // 4px grid: 4, 8, 12, 16, 20, 24, 28, 32
+  }
+
+  // Boost for common design system values
+  const commonSpacing = [4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96, 128]
+  if (commonSpacing.includes(pixels)) {
+    score += 40
+  }
+
+  // Extra boost for most common spacing values
+  if (pixels === 16 || pixels === 24 || pixels === 32) score += 30
+  if (pixels === 8 || pixels === 12 || pixels === 48) score += 20
+
+  // Boost for rem units (modern design systems)
+  if (unit === 'rem') score += 25
+
+  // Penalty for odd non-systematic values (5px, 7px, 13px, etc.)
+  if (pixels % 4 !== 0 && pixels > 4) score -= 30
+
+  return score
 }
 
 /**
@@ -618,8 +785,55 @@ function curateShadows(tokenSet: W3CTokenSet, config: CurationConfig): CuratedTo
   const dedupedTotal = dedupedTokens.reduce((sum, t) => sum + t.usage, 0)
   dedupedTokens.forEach(t => t.percentage = dedupedTotal > 0 ? Math.round((t.usage / dedupedTotal) * 100) : 0)
 
-  const sorted = dedupedTokens.sort((a, b) => b.usage - a.usage)
+  // SMART SHADOW RANKING: Prioritize design system shadows over browser defaults
+  const sorted = dedupedTokens.sort((a, b) => {
+    const aScore = calculateShadowQualityScore(a)
+    const bScore = calculateShadowQualityScore(b)
+    return bScore - aScore
+  })
+
   return config.maxShadows && !config.returnAllFiltered ? sorted.slice(0, config.maxShadows) : sorted
+}
+
+/**
+ * Calculate shadow quality score
+ * Prioritizes intentional design system shadows over default/weak shadows
+ */
+function calculateShadowQualityScore(token: CuratedToken): number {
+  const shadowCSS = String(token.value).toLowerCase()
+  let score = token.usage * 10
+
+  // Parse shadow components
+  const hasMultipleLayers = shadowCSS.split(',').length > 1
+  const hasColor = shadowCSS.includes('rgba') || shadowCSS.includes('rgb') || shadowCSS.includes('#')
+  const hasBlur = /\d+px\s+\d+px\s+(\d+)px/.exec(shadowCSS)
+  const blurAmount = hasBlur ? parseInt(hasBlur[1]) : 0
+
+  // Boost for multi-layer shadows (sophisticated design systems)
+  if (hasMultipleLayers) score += 50
+
+  // Boost for shadows with meaningful blur
+  if (blurAmount >= 4 && blurAmount <= 40) {
+    score += 40 // Good design system blur range
+  }
+
+  // Boost for shadows with alpha transparency (proper shadows)
+  if (shadowCSS.includes('rgba')) score += 30
+
+  // Boost for named semantic shadows
+  const name = token.name.toLowerCase()
+  if (name.includes('elevation') || name.includes('depth')) score += 35
+  if (name.includes('sm') || name.includes('small')) score += 25
+  if (name.includes('md') || name.includes('medium')) score += 30
+  if (name.includes('lg') || name.includes('large')) score += 25
+  if (name.includes('xl')) score += 20
+
+  // Penalty for weak/default shadows
+  if (blurAmount < 3) score -= 40 // Too subtle
+  if (blurAmount > 50) score -= 30 // Too extreme
+  if (shadowCSS.includes('0px 0px 0px')) score -= 60 // No shadow at all
+
+  return score
 }
 
 /**
