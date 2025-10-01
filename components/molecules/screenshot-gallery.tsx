@@ -37,9 +37,17 @@ export function ScreenshotGallery({ scanId, className }: ScreenshotGalleryProps)
   const [loading, setLoading] = useState(true)
   const [selectedViewport, setSelectedViewport] = useState<'mobile' | 'tablet' | 'desktop'>('desktop')
 
+  console.log('[ScreenshotGallery] Rendered with scanId:', scanId, 'type:', typeof scanId)
+
   useEffect(() => {
     async function fetchScreenshots() {
       console.log('[ScreenshotGallery] Fetching screenshots for scanId:', scanId)
+
+      if (!scanId) {
+        console.error('[ScreenshotGallery] No scanId provided!')
+        setLoading(false)
+        return
+      }
       try {
         const response = await fetch(`/api/scans/${scanId}/screenshots`)
         console.log('[ScreenshotGallery] API response status:', response.status)
