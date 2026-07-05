@@ -24,7 +24,12 @@ export async function GET(request: NextRequest) {
     const startTime = Date.now()
 
     // First select rows to gather storage stats before deletion
-    const toDelete = await db.execute(sql`
+    const rows = await db.all<{
+      sha: string
+      bytes: number
+      compressed_bytes: number
+      reference_count: number
+    }>(sql`
       SELECT sha, bytes, compressed_bytes, reference_count
       FROM css_content
       WHERE (
@@ -34,10 +39,7 @@ export async function GET(request: NextRequest) {
       AND content IS NOT NULL
     `)
 
-    // Delete CSS content that:
-    // 1. Is older than TTL days since last access
-    // 2. Has zero references (or is orphaned)
-    await db.execute(sql`
+    await db.run(sql`
       DELETE FROM css_content
       WHERE (
         last_accessed < datetime('now', '-' || CAST(ttl_days AS TEXT) || ' days')
@@ -45,8 +47,6 @@ export async function GET(request: NextRequest) {
       )
       AND content IS NOT NULL
     `)
-
-    const rows = Array.isArray(toDelete) ? toDelete : (toDelete as any).rows ?? []
     const deletedCount = rows.length
     const duration = Date.now() - startTime
 

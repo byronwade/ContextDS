@@ -1,23 +1,13 @@
 import { defineConfig } from 'drizzle-kit'
-import * as dotenv from 'dotenv'
-
-// Load environment variables
-dotenv.config({ path: '.env.local' })
-
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL environment variable is required')
-}
 
 export default defineConfig({
   schema: './lib/db/schema.ts',
-  out: './lib/db/migrations',
-  dialect: 'postgresql',
+  out: './lib/db/migrations/d1',
+  dialect: 'sqlite',
+  driver: 'd1-http',
   dbCredentials: {
-    url: process.env.DATABASE_URL,
-  },
-  verbose: true,
-  strict: true,
-  migrations: {
-    prefix: 'supabase',
+    accountId: process.env.CLOUDFLARE_ACCOUNT_ID ?? 'local',
+    databaseId: process.env.CLOUDFLARE_D1_DATABASE_ID ?? 'local-contextds-db',
+    token: process.env.CLOUDFLARE_API_TOKEN ?? 'local',
   },
 })

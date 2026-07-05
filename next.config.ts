@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['wrangler'],
   // TypeScript strictness - 48 remaining non-critical errors:
   // ✅ FIXED: Redis export, vote route null handling
   //

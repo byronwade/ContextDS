@@ -23,7 +23,7 @@ export async function GET(
       return NextResponse.json({ error: "Domain is required" }, { status: 400 })
     }
 
-    if (!process.env.DATABASE_URL) {
+    if (process.env.CONTEXTDS_USE_BUILD_STUB === 'true') {
       return NextResponse.json(
         { error: "Database not available" },
         { status: 503 }

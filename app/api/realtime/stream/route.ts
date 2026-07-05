@@ -20,7 +20,7 @@ const activities: Array<any> = []
 async function fetchRealMetrics() {
   try {
     // Skip during build time
-    if (!process.env.DATABASE_URL && !process.env.DB) {
+    if (process.env.CONTEXTDS_USE_BUILD_STUB === 'true') {
       return currentMetrics
     }
 

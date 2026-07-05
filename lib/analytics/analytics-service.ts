@@ -409,8 +409,7 @@ export async function getTokenDistribution() {
 // ============================================================================
 
 export async function refreshAnalyticsViews() {
-  const db = await getDb()
-  await db.execute(sql`SELECT refresh_analytics_views()`)
+  // D1 has no materialized views; analytics queries run directly against tables.
 }
 
 // ============================================================================

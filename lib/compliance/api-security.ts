@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { rateLimit } from 'express-rate-limit'
 import { z } from 'zod'
 import { securityMonitor } from './security-monitor'
-import { db } from '@/lib/db'
+import { getDb } from '@/lib/db'
 import { apiKeys, mcpUsage } from '@/lib/db/schema'
 import { eq, and, gte, count, desc } from 'drizzle-orm'
 import crypto from 'crypto'
@@ -238,6 +238,7 @@ class APISecurityFramework {
     }
 
     try {
+      const db = await getDb()
       // Check key in database
       const [keyRecord] = await db
         .select({
@@ -382,6 +383,7 @@ class APISecurityFramework {
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
 
     try {
+      const db = await getDb()
       // Check requests in the last minute
       const [recentRequests] = await db
         .select({ count: count() })
@@ -490,6 +492,7 @@ class APISecurityFramework {
    * Generate API security report
    */
   async generateSecurityReport(startDate: Date, endDate: Date): Promise<any> {
+    const db = await getDb()
     const apiRequests = await db
       .select()
       .from(mcpUsage)

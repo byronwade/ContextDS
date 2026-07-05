@@ -5,7 +5,7 @@
  */
 
 import { NextRequest } from 'next/server'
-import { db } from '@/lib/db'
+import { getDb } from '@/lib/db'
 import { auditLog } from '@/lib/db/schema'
 import { eq, and, gte, desc } from 'drizzle-orm'
 
@@ -54,6 +54,7 @@ class SecurityMonitor {
    */
   async logSecurityEvent(event: SecurityEvent): Promise<void> {
     try {
+      const db = await getDb()
       // Store in audit log
       await db.insert(auditLog).values({
         userId: event.user_id || null,
@@ -320,6 +321,7 @@ class SecurityMonitor {
     }
 
     // Store alert in audit log
+    const db = await getDb()
     await db.insert(auditLog).values({
       userId: null,
       action: 'security_alert',

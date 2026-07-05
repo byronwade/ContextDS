@@ -7,7 +7,7 @@ import { securityMonitor } from './security-monitor'
 import { gdprController } from './gdpr-controller'
 import { soc2Framework } from './soc2-controls'
 import { apiSecurity } from './api-security'
-import { db } from '@/lib/db'
+import { getDb } from '@/lib/db'
 import { auditLog } from '@/lib/db/schema'
 import { gte, and, eq, desc } from 'drizzle-orm'
 

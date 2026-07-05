@@ -1,4 +1,4 @@
-import { db, sites, scans, tokenSets, cssSources, cssContent, layoutProfiles, tokenVersions, tokenChanges } from '@/lib/db'
+import { getDb, sites, scans, tokenSets, cssSources, cssContent, layoutProfiles, tokenVersions, tokenChanges } from '@/lib/db'
 import { eq, desc } from 'drizzle-orm'
 import { collectStaticCss, type CssSource } from '@/lib/extractors/static-css'
 import { collectComputedCss } from '@/lib/extractors/computed-css'
@@ -141,6 +141,7 @@ export async function runScanJob({
   ultraProfiler.start()
 
   return withTimeout(async () => {
+    const db = await getDb()
 
     // PERFORMANCE: Fast mode skips browser automation entirely
     const isFastMode = mode === 'fast'

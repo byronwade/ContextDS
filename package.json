@@ -4,13 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "CONTEXTDS_USE_BUILD_STUB=true next build",
     "start": "next start",
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "wrangler d1 migrations apply contextds --local",
+    "db:migrate:remote": "wrangler d1 migrations apply contextds --remote",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "worker:dev": "wrangler dev",
+    "worker:deploy": "wrangler deploy",
     "db:optimize": "bun run scripts/optimize-database.ts",
     "db:optimize:indexes": "bun run scripts/apply-db-optimizations.ts",
     "db:analytics": "bun run scripts/apply-analytics-migration.ts",
@@ -83,8 +86,6 @@
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@sparticuz/chromium": "^138.0.2",
-    "@supabase/ssr": "^0.7.0",
-    "@supabase/supabase-js": "^2.58.0",
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.4",
     "@vercel/analytics": "^1.5.0",
@@ -99,6 +100,7 @@
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.38.4",
     "drizzle-zod": "^0.8.3",
+    "hono": "^4.9.6",
     "embla-carousel-react": "^8.6.0",
     "esbuild": "^0.25.10",
     "extract-css-core": "^3.0.0",
@@ -154,6 +156,7 @@
     "tailwindcss": "^4.1.13",
     "tw-animate-css": "^1.4.0",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "wrangler": "^4.34.0"
   }
 }

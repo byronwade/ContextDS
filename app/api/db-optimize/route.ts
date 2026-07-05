@@ -8,10 +8,10 @@ import {
   initializeDatabaseOptimizations,
   createPerformanceIndexes,
   analyzeSlowQueries,
-  checkDatabaseHealth,
   getDatabaseMetrics,
   resetDatabaseMetrics
 } from '@/lib/db/optimizations'
+import { checkDatabaseHealth } from '@/lib/db'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60

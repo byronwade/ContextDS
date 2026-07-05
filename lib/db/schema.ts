@@ -1,388 +1,434 @@
+import { sql } from 'drizzle-orm'
 import {
-  pgTable,
-  uuid,
+  sqliteTable,
   text,
-  timestamp,
   integer,
-  boolean,
-  jsonb,
-  varchar,
-  decimal,
-  pgEnum,
-  unique
-} from 'drizzle-orm/pg-core'
+  real,
+  uniqueIndex,
+  index,
+} from 'drizzle-orm/sqlite-core'
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 
-// Enums
-export const scanStatusEnum = pgEnum('scan_status', ['queued', 'scanning', 'completed', 'failed'])
-export const scanMethodEnum = pgEnum('scan_method', ['static', 'computed'])
-export const cssSourceKindEnum = pgEnum('css_source_kind', ['link', 'inline', 'computed'])
-export const submissionStatusEnum = pgEnum('submission_status', ['queued', 'scanning', 'done', 'rejected'])
-export const voteTypeEnum = pgEnum('vote_type', ['correct', 'alias', 'duplicate', 'low_contrast', 'rename'])
-export const robotsStatusEnum = pgEnum('robots_status', ['allowed', 'disallowed', 'unknown'])
-export const changeTypeEnum = pgEnum('change_type', ['added', 'removed', 'modified'])
+const id = () => text('id').primaryKey().$defaultFn(() => crypto.randomUUID())
+const timestamp = () =>
+  integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date())
+const updatedAt = () =>
+  integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date())
 
-// Sites table - tracks domains and their scanning status
-export const sites = pgTable('sites', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  domain: varchar('domain', { length: 255 }).notNull().unique(),
-  status: scanStatusEnum('status').notNull().default('queued'),
-  robotsStatus: robotsStatusEnum('robots_status').notNull().default('unknown'),
-  ownerOptout: boolean('owner_optout').notNull().default(false),
-  firstSeen: timestamp('first_seen').notNull().defaultNow(),
-  lastScanned: timestamp('last_scanned'),
-  popularity: integer('popularity').notNull().default(0),
-  favicon: text('favicon'),
-  title: text('title'),
-  description: text('description'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+export const users = sqliteTable('users', {
+  id: id(),
+  email: text('email').notNull().unique(),
+  name: text('name'),
+  avatarUrl: text('avatar_url'),
+  passwordHash: text('password_hash'),
+  role: text('role').notNull().default('user'),
+  emailVerified: integer('email_verified', { mode: 'boolean' }).notNull().default(false),
+  createdAt: timestamp(),
+  updatedAt: updatedAt(),
 })
 
-// Scans table - individual scanning jobs
-export const scans = pgTable('scans', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  siteId: uuid('site_id').notNull().references(() => sites.id, { onDelete: 'cascade' }),
-  method: scanMethodEnum('method').notNull().default('computed'),
-  cssSourceCount: integer('css_source_count').notNull().default(0),
-  sha: varchar('sha', { length: 64 }), // CSS content hash
-  startedAt: timestamp('started_at').notNull().defaultNow(),
-  finishedAt: timestamp('finished_at'),
-  error: text('error'),
-  prettify: boolean('prettify').notNull().default(false),
-  metricsJson: jsonb('metrics_json'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-})
+export const sites = sqliteTable(
+  'sites',
+  {
+    id: id(),
+    domain: text('domain').notNull().unique(),
+    status: text('status').notNull().default('queued'),
+    robotsStatus: text('robots_status').notNull().default('unknown'),
+    ownerOptout: integer('owner_optout', { mode: 'boolean' }).notNull().default(false),
+    firstSeen: integer('first_seen', { mode: 'timestamp' })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    lastScanned: integer('last_scanned', { mode: 'timestamp' }),
+    popularity: integer('popularity').notNull().default(0),
+    favicon: text('favicon'),
+    title: text('title'),
+    description: text('description'),
+    createdAt: timestamp(),
+    updatedAt: updatedAt(),
+  },
+  (table) => ({
+    domainIdx: index('sites_domain_idx').on(table.domain),
+    statusIdx: index('sites_status_idx').on(table.status),
+  })
+)
 
-// Pages table - individual pages within a scan
-export const pages = pgTable('pages', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  scanId: uuid('scan_id').notNull().references(() => scans.id, { onDelete: 'cascade' }),
+export const scans = sqliteTable(
+  'scans',
+  {
+    id: id(),
+    siteId: text('site_id')
+      .notNull()
+      .references(() => sites.id, { onDelete: 'cascade' }),
+    method: text('method').notNull().default('computed'),
+    cssSourceCount: integer('css_source_count').notNull().default(0),
+    sha: text('sha'),
+    startedAt: integer('started_at', { mode: 'timestamp' })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    finishedAt: integer('finished_at', { mode: 'timestamp' }),
+    error: text('error'),
+    prettify: integer('prettify', { mode: 'boolean' }).notNull().default(false),
+    metricsJson: text('metrics_json', { mode: 'json' }).$type<Record<string, unknown>>(),
+    createdAt: timestamp(),
+  },
+  (table) => ({
+    siteIdx: index('scans_site_id_idx').on(table.siteId),
+  })
+)
+
+export const pages = sqliteTable('pages', {
+  id: id(),
+  scanId: text('scan_id')
+    .notNull()
+    .references(() => scans.id, { onDelete: 'cascade' }),
   url: text('url').notNull(),
-  viewport: varchar('viewport', { length: 50 }), // e.g., '1280x720'
-  status: scanStatusEnum('status').notNull().default('queued'),
+  viewport: text('viewport'),
+  status: text('status').notNull().default('queued'),
   screenshotUrl: text('screenshot_url'),
   htmlSize: integer('html_size'),
-  loadTime: integer('load_time'), // milliseconds
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+  loadTime: integer('load_time'),
+  createdAt: timestamp(),
 })
 
-// CSS Content table - deduplicated CSS storage by SHA hash
-// Multiple sites using same framework (Tailwind, Bootstrap, etc) share CSS
-export const cssContent = pgTable('css_content', {
-  sha: varchar('sha', { length: 64 }).primaryKey(), // Content hash (SHA-256)
-  content: text('content').notNull(), // Raw CSS content (gzip compressed as base64)
-  contentCompressed: boolean('content_compressed').notNull().default(true),
-  bytes: integer('bytes').notNull().default(0), // Original uncompressed size
-  compressedBytes: integer('compressed_bytes').notNull().default(0), // Compressed size
-  referenceCount: integer('reference_count').notNull().default(0), // How many scans reference this
-  ttlDays: integer('ttl_days').notNull().default(30), // Delete CSS after N days
-  firstSeen: timestamp('first_seen').notNull().defaultNow(),
-  lastAccessed: timestamp('last_accessed').notNull().defaultNow(),
-})
-
-// CSS Sources table - tracks individual CSS files/sources
-export const cssSources = pgTable('css_sources', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  scanId: uuid('scan_id').notNull().references(() => scans.id, { onDelete: 'cascade' }),
-  url: text('url'),
-  kind: cssSourceKindEnum('kind').notNull(),
+export const cssContent = sqliteTable('css_content', {
+  sha: text('sha').primaryKey(),
+  content: text('content').notNull(),
+  contentCompressed: integer('content_compressed', { mode: 'boolean' }).notNull().default(true),
   bytes: integer('bytes').notNull().default(0),
-  sha: varchar('sha', { length: 64 }).notNull().references(() => cssContent.sha, { onDelete: 'set null' }), // Reference to deduplicated content
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+  compressedBytes: integer('compressed_bytes').notNull().default(0),
+  referenceCount: integer('reference_count').notNull().default(0),
+  ttlDays: integer('ttl_days').notNull().default(30),
+  firstSeen: integer('first_seen', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  lastAccessed: integer('last_accessed', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
 })
 
-// Screenshot Content table - deduplicated screenshot storage by SHA hash
-// Multiple scans of same site at same viewport share screenshot data
-export const screenshotContent = pgTable('screenshot_content', {
-  sha: varchar('sha', { length: 64 }).primaryKey(), // Content hash (SHA-256)
-  url: text('url').notNull(), // Screenshot URL in Supabase Storage
+export const cssSources = sqliteTable('css_sources', {
+  id: id(),
+  scanId: text('scan_id')
+    .notNull()
+    .references(() => scans.id, { onDelete: 'cascade' }),
+  url: text('url'),
+  kind: text('kind').notNull(),
+  bytes: integer('bytes').notNull().default(0),
+  sha: text('sha').references(() => cssContent.sha, { onDelete: 'set null' }),
+  createdAt: timestamp(),
+})
+
+export const screenshotContent = sqliteTable('screenshot_content', {
+  sha: text('sha').primaryKey(),
+  url: text('url').notNull(),
   width: integer('width').notNull(),
   height: integer('height').notNull(),
-  fileSize: integer('file_size').notNull(), // bytes
-  referenceCount: integer('reference_count').notNull().default(0), // How many scans reference this
-  ttlDays: integer('ttl_days').notNull().default(90), // Delete screenshot after N days
-  firstSeen: timestamp('first_seen').notNull().defaultNow(),
-  lastAccessed: timestamp('last_accessed').notNull().defaultNow(),
+  fileSize: integer('file_size').notNull(),
+  referenceCount: integer('reference_count').notNull().default(0),
+  ttlDays: integer('ttl_days').notNull().default(90),
+  firstSeen: integer('first_seen', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  lastAccessed: integer('last_accessed', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
 })
 
-// Screenshots table - references to deduplicated screenshot content
-// Each site keeps only the LATEST screenshot per viewport (replaced on every scan)
-export const screenshots = pgTable('screenshots', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  siteId: uuid('site_id').notNull().references(() => sites.id, { onDelete: 'cascade' }),
-  scanId: uuid('scan_id').notNull().references(() => scans.id, { onDelete: 'cascade' }),
-  sha: varchar('sha', { length: 64 }).notNull().references(() => screenshotContent.sha, { onDelete: 'cascade' }), // Reference to deduplicated content
-  viewport: varchar('viewport', { length: 50 }).notNull(), // mobile, tablet, desktop
-  capturedAt: timestamp('captured_at').notNull().defaultNow(),
-  selector: text('selector'), // Optional: specific component selector
-  label: varchar('label', { length: 100 }), // e.g., "Hero Section", "Navigation"
-}, (table) => ({
-  // Unique constraint: one screenshot per site per viewport
-  uniqueSiteViewport: unique('screenshots_site_viewport_unique').on(table.siteId, table.viewport)
-}))
+export const screenshots = sqliteTable(
+  'screenshots',
+  {
+    id: id(),
+    siteId: text('site_id')
+      .notNull()
+      .references(() => sites.id, { onDelete: 'cascade' }),
+    scanId: text('scan_id')
+      .notNull()
+      .references(() => scans.id, { onDelete: 'cascade' }),
+    sha: text('sha')
+      .notNull()
+      .references(() => screenshotContent.sha, { onDelete: 'cascade' }),
+    viewport: text('viewport').notNull(),
+    capturedAt: integer('captured_at', { mode: 'timestamp' })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    selector: text('selector'),
+    label: text('label'),
+  },
+  (table) => ({
+    siteViewportUnique: uniqueIndex('screenshots_site_viewport_unique').on(
+      table.siteId,
+      table.viewport
+    ),
+  })
+)
 
-// Token Sets table - W3C design tokens with metadata
-export const tokenSets = pgTable('token_sets', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  siteId: uuid('site_id').references(() => sites.id, { onDelete: 'cascade' }), // Nullable for remixes
-  scanId: uuid('scan_id').references(() => scans.id, { onDelete: 'cascade' }),
-  version: varchar('version', { length: 50 }).notNull().default('1.0.0'),
-  versionNumber: integer('version_number').notNull().default(1), // Sequential version number
-  tokensJson: jsonb('tokens_json').notNull(), // W3C design tokens format
-  packJson: jsonb('pack_json'), // AI prompt pack
-  consensusScore: decimal('consensus_score', { precision: 3, scale: 2 }).default('0.00'),
-  isPublic: boolean('is_public').notNull().default(true),
-  createdBy: uuid('created_by').references(() => users.id),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-})
+export const tokenSets = sqliteTable(
+  'token_sets',
+  {
+    id: id(),
+    siteId: text('site_id').references(() => sites.id, { onDelete: 'cascade' }),
+    scanId: text('scan_id').references(() => scans.id, { onDelete: 'cascade' }),
+    version: text('version').notNull().default('1.0.0'),
+    versionNumber: integer('version_number').notNull().default(1),
+    tokensJson: text('tokens_json', { mode: 'json' }).notNull().$type<Record<string, unknown>>(),
+    packJson: text('pack_json', { mode: 'json' }).$type<Record<string, unknown>>(),
+    consensusScore: real('consensus_score').default(0),
+    isPublic: integer('is_public', { mode: 'boolean' }).notNull().default(true),
+    createdBy: text('created_by').references(() => users.id),
+    createdAt: timestamp(),
+    updatedAt: updatedAt(),
+  },
+  (table) => ({
+    siteIdx: index('token_sets_site_id_idx').on(table.siteId),
+  })
+)
 
-// Token Versions table - Track all historical versions for a site
-export const tokenVersions = pgTable('token_versions', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  siteId: uuid('site_id').notNull().references(() => sites.id, { onDelete: 'cascade' }),
-  tokenSetId: uuid('token_set_id').notNull().references(() => tokenSets.id, { onDelete: 'cascade' }),
+export const tokenVersions = sqliteTable('token_versions', {
+  id: id(),
+  siteId: text('site_id')
+    .notNull()
+    .references(() => sites.id, { onDelete: 'cascade' }),
+  tokenSetId: text('token_set_id')
+    .notNull()
+    .references(() => tokenSets.id, { onDelete: 'cascade' }),
   versionNumber: integer('version_number').notNull(),
-  previousVersionId: uuid('previous_version_id').references(() => tokenVersions.id),
-  changelogJson: jsonb('changelog_json'), // Structured diff/changelog
-  diffSummary: jsonb('diff_summary'), // Added, removed, changed counts
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+  previousVersionId: text('previous_version_id'),
+  changelogJson: text('changelog_json', { mode: 'json' }).$type<Record<string, unknown>>(),
+  diffSummary: text('diff_summary', { mode: 'json' }).$type<Record<string, unknown>>(),
+  createdAt: timestamp(),
 })
 
-// Token Changes table - Granular change tracking
-export const tokenChanges = pgTable('token_changes', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  versionId: uuid('version_id').notNull().references(() => tokenVersions.id, { onDelete: 'cascade' }),
-  tokenPath: varchar('token_path', { length: 255 }).notNull(), // e.g., 'color.primary.500'
-  changeType: changeTypeEnum('change_type').notNull(),
-  oldValue: jsonb('old_value'),
-  newValue: jsonb('new_value'),
-  category: varchar('category', { length: 50 }), // color, typography, spacing, etc.
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+export const tokenChanges = sqliteTable('token_changes', {
+  id: id(),
+  versionId: text('version_id')
+    .notNull()
+    .references(() => tokenVersions.id, { onDelete: 'cascade' }),
+  tokenPath: text('token_path').notNull(),
+  changeType: text('change_type').notNull(),
+  oldValue: text('old_value', { mode: 'json' }).$type<unknown>(),
+  newValue: text('new_value', { mode: 'json' }).$type<unknown>(),
+  category: text('category'),
+  createdAt: timestamp(),
 })
 
-// Layout Profiles table - layout DNA analysis
-export const layoutProfiles = pgTable('layout_profiles', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  siteId: uuid('site_id').references(() => sites.id, { onDelete: 'cascade' }),
-  scanId: uuid('scan_id').references(() => scans.id, { onDelete: 'cascade' }),
-  profileJson: jsonb('profile_json').notNull(), // Layout DNA data
-  archetypes: jsonb('archetypes'), // Page archetypes detected
-  containers: jsonb('containers'), // Container width analysis
-  gridFlex: jsonb('grid_flex'), // Grid/flex usage patterns
-  spacingScale: jsonb('spacing_scale'), // Spacing scale analysis
-  radiiTaxonomy: jsonb('radii_taxonomy'), // Border radius patterns
-  shadowsTaxonomy: jsonb('shadows_taxonomy'), // Shadow patterns
-  motion: jsonb('motion'), // Animation/transition patterns
-  accessibility: jsonb('accessibility'), // A11y analysis
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+export const layoutProfiles = sqliteTable('layout_profiles', {
+  id: id(),
+  siteId: text('site_id').references(() => sites.id, { onDelete: 'cascade' }),
+  scanId: text('scan_id').references(() => scans.id, { onDelete: 'cascade' }),
+  profileJson: text('profile_json', { mode: 'json' }).notNull().$type<Record<string, unknown>>(),
+  archetypes: text('archetypes', { mode: 'json' }).$type<unknown>(),
+  containers: text('containers', { mode: 'json' }).$type<unknown>(),
+  gridFlex: text('grid_flex', { mode: 'json' }).$type<unknown>(),
+  spacingScale: text('spacing_scale', { mode: 'json' }).$type<unknown>(),
+  radiiTaxonomy: text('radii_taxonomy', { mode: 'json' }).$type<unknown>(),
+  shadowsTaxonomy: text('shadows_taxonomy', { mode: 'json' }).$type<unknown>(),
+  motion: text('motion', { mode: 'json' }).$type<unknown>(),
+  accessibility: text('accessibility', { mode: 'json' }).$type<unknown>(),
+  createdAt: timestamp(),
 })
 
-// Organization Artifacts table - company design system discovery
-export const orgArtifacts = pgTable('org_artifacts', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  siteId: uuid('site_id').notNull().references(() => sites.id, { onDelete: 'cascade' }),
-  docsUrls: jsonb('docs_urls'), // Array of documentation URLs
+export const orgArtifacts = sqliteTable('org_artifacts', {
+  id: id(),
+  siteId: text('site_id')
+    .notNull()
+    .references(() => sites.id, { onDelete: 'cascade' }),
+  docsUrls: text('docs_urls', { mode: 'json' }).$type<string[]>(),
   storybookUrl: text('storybook_url'),
   figmaUrl: text('figma_url'),
-  githubOrg: varchar('github_org', { length: 255 }),
-  reposJson: jsonb('repos_json'), // GitHub repos analysis
-  lastChecked: timestamp('last_checked').notNull().defaultNow(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+  githubOrg: text('github_org'),
+  reposJson: text('repos_json', { mode: 'json' }).$type<unknown>(),
+  lastChecked: integer('last_checked', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  createdAt: timestamp(),
 })
 
-// Submissions table - user-submitted URLs for scanning
-export const submissions = pgTable('submissions', {
-  id: uuid('id').primaryKey().defaultRandom(),
+export const submissions = sqliteTable('submissions', {
+  id: id(),
   url: text('url').notNull(),
-  submittedBy: uuid('submitted_by').references(() => users.id),
-  status: submissionStatusEnum('status').notNull().default('queued'),
-  reason: text('reason'), // Rejection reason if applicable
-  estimatedQueue: integer('estimated_queue'), // Queue position estimate
-  notifyEmail: varchar('notify_email', { length: 255 }),
-  priority: integer('priority').notNull().default(0), // Higher for paid users
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  submittedBy: text('submitted_by').references(() => users.id),
+  status: text('status').notNull().default('queued'),
+  reason: text('reason'),
+  estimatedQueue: integer('estimated_queue'),
+  notifyEmail: text('notify_email'),
+  priority: integer('priority').notNull().default(0),
+  createdAt: timestamp(),
+  updatedAt: updatedAt(),
 })
 
-// Token Votes table - community voting on token accuracy
-export const tokenVotes = pgTable('token_votes', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  tokenSetId: uuid('token_set_id').notNull().references(() => tokenSets.id, { onDelete: 'cascade' }),
-  tokenKey: varchar('token_key', { length: 255 }).notNull(), // e.g., 'color.primary'
-  voteType: voteTypeEnum('vote_type').notNull(),
+export const tokenVotes = sqliteTable('token_votes', {
+  id: id(),
+  tokenSetId: text('token_set_id')
+    .notNull()
+    .references(() => tokenSets.id, { onDelete: 'cascade' }),
+  tokenKey: text('token_key').notNull(),
+  voteType: text('vote_type').notNull(),
   note: text('note'),
-  userId: uuid('user_id').notNull().references(() => users.id),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp(),
 })
 
-// Remixes table - combined token sets
-export const remixes = pgTable('remixes', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  sourceTokenSetIds: jsonb('source_token_set_ids').notNull(), // Array of source IDs
-  constraintsJson: jsonb('constraints_json'), // Remix constraints
-  outputTokenSetId: uuid('output_token_set_id').references(() => tokenSets.id),
-  name: varchar('name', { length: 255 }),
+export const remixes = sqliteTable('remixes', {
+  id: id(),
+  sourceTokenSetIds: text('source_token_set_ids', { mode: 'json' })
+    .notNull()
+    .$type<string[]>(),
+  constraintsJson: text('constraints_json', { mode: 'json' }).$type<Record<string, unknown>>(),
+  outputTokenSetId: text('output_token_set_id').references(() => tokenSets.id),
+  name: text('name'),
   description: text('description'),
-  isPublic: boolean('is_public').notNull().default(false),
-  createdBy: uuid('created_by').notNull().references(() => users.id),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  isPublic: integer('is_public', { mode: 'boolean' }).notNull().default(false),
+  createdBy: text('created_by')
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp(),
+  updatedAt: updatedAt(),
 })
 
-// Users table - authentication and user management
-export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  email: varchar('email', { length: 255 }).notNull().unique(),
-  name: varchar('name', { length: 255 }),
-  avatarUrl: text('avatar_url'),
-  role: varchar('role', { length: 50 }).notNull().default('user'), // user, moderator, admin
-  emailVerified: boolean('email_verified').notNull().default(false),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-})
-
-// Subscriptions table - billing and plan management
-export const subscriptions = pgTable('subscriptions', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  plan: varchar('plan', { length: 50 }).notNull().default('free'), // free, pro
-  status: varchar('status', { length: 50 }).notNull(), // active, cancelled, past_due
-  stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
-  stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }),
-  currentPeriodStart: timestamp('current_period_start'),
-  currentPeriodEnd: timestamp('current_period_end'),
-  cancelAtPeriodEnd: boolean('cancel_at_period_end').notNull().default(false),
-  scansQuota: integer('scans_quota').notNull().default(3), // Monthly scan limit
-  remixesQuota: integer('remixes_quota').notNull().default(0), // Monthly remix limit
+export const subscriptions = sqliteTable('subscriptions', {
+  id: id(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  plan: text('plan').notNull().default('free'),
+  status: text('status').notNull(),
+  stripeCustomerId: text('stripe_customer_id'),
+  stripeSubscriptionId: text('stripe_subscription_id'),
+  currentPeriodStart: integer('current_period_start', { mode: 'timestamp' }),
+  currentPeriodEnd: integer('current_period_end', { mode: 'timestamp' }),
+  cancelAtPeriodEnd: integer('cancel_at_period_end', { mode: 'boolean' }).notNull().default(false),
+  scansQuota: integer('scans_quota').notNull().default(3),
+  remixesQuota: integer('remixes_quota').notNull().default(0),
   privatePacksQuota: integer('private_packs_quota').notNull().default(0),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdAt: timestamp(),
+  updatedAt: updatedAt(),
 })
 
-// API Keys table - authentication for MCP and API access
-export const apiKeys = pgTable('api_keys', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  name: varchar('name', { length: 255 }).notNull(),
-  keyHash: varchar('key_hash', { length: 255 }).notNull().unique(), // Hashed API key
-  prefix: varchar('prefix', { length: 10 }).notNull(), // First few chars for display
-  permissions: jsonb('permissions'), // Scoped permissions array
-  lastUsed: timestamp('last_used'),
-  expiresAt: timestamp('expires_at'),
-  isActive: boolean('is_active').notNull().default(true),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+export const apiKeys = sqliteTable('api_keys', {
+  id: id(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  keyHash: text('key_hash').notNull().unique(),
+  prefix: text('prefix').notNull(),
+  permissions: text('permissions', { mode: 'json' }).$type<string[]>(),
+  lastUsed: integer('last_used', { mode: 'timestamp' }),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }),
+  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  createdAt: timestamp(),
 })
 
-// MCP Usage table - tracking API and tool usage
-export const mcpUsage = pgTable('mcp_usage', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id),
-  apiKeyId: uuid('api_key_id').references(() => apiKeys.id),
-  tool: varchar('tool', { length: 100 }).notNull(), // scan_tokens, get_tokens, etc.
-  parameters: jsonb('parameters'), // Tool parameters (no PII)
-  responseSize: integer('response_size'), // Response size in bytes
-  latency: integer('latency'), // Response time in ms
-  success: boolean('success').notNull(),
-  errorType: varchar('error_type', { length: 100 }),
-  rateLimited: boolean('rate_limited').notNull().default(false),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+export const mcpUsage = sqliteTable('mcp_usage', {
+  id: id(),
+  userId: text('user_id').references(() => users.id),
+  apiKeyId: text('api_key_id').references(() => apiKeys.id),
+  tool: text('tool').notNull(),
+  parameters: text('parameters', { mode: 'json' }).$type<Record<string, unknown>>(),
+  responseSize: integer('response_size'),
+  latency: integer('latency'),
+  success: integer('success', { mode: 'boolean' }).notNull(),
+  errorType: text('error_type'),
+  rateLimited: integer('rate_limited', { mode: 'boolean' }).notNull().default(false),
+  createdAt: timestamp(),
 })
 
-// Audit Log table - system events and changes
-export const auditLog = pgTable('audit_log', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id),
-  action: varchar('action', { length: 100 }).notNull(),
-  resourceType: varchar('resource_type', { length: 100 }).notNull(),
-  resourceId: uuid('resource_id'),
-  details: jsonb('details'),
-  ipAddress: varchar('ip_address', { length: 45 }),
+export const auditLog = sqliteTable('audit_log', {
+  id: id(),
+  userId: text('user_id').references(() => users.id),
+  action: text('action').notNull(),
+  resourceType: text('resource_type').notNull(),
+  resourceId: text('resource_id'),
+  details: text('details', { mode: 'json' }).$type<Record<string, unknown>>(),
+  ipAddress: text('ip_address'),
   userAgent: text('user_agent'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+  createdAt: timestamp(),
 })
 
-// Zod schemas for validation
+export const statsCache = sqliteTable('stats_cache', {
+  id: id(),
+  key: text('key').notNull().unique(),
+  data: text('data', { mode: 'json' }).notNull().$type<Record<string, unknown>>(),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  createdAt: timestamp(),
+  updatedAt: updatedAt(),
+})
+
+export const popularSitesCache = sqliteTable('popular_sites_cache', {
+  id: id(),
+  siteId: text('site_id')
+    .notNull()
+    .references(() => sites.id, { onDelete: 'cascade' }),
+  domain: text('domain').notNull(),
+  popularity: integer('popularity').notNull().default(0),
+  tokens: integer('tokens').notNull().default(0),
+  lastScanned: integer('last_scanned', { mode: 'timestamp' }),
+  rank: integer('rank').notNull(),
+  cacheDate: integer('cache_date', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+})
+
+export const recentActivityCache = sqliteTable('recent_activity_cache', {
+  id: id(),
+  domain: text('domain').notNull(),
+  scanId: text('scan_id')
+    .notNull()
+    .references(() => scans.id, { onDelete: 'cascade' }),
+  tokens: integer('tokens').notNull().default(0),
+  scannedAt: integer('scanned_at', { mode: 'timestamp' }).notNull(),
+  rank: integer('rank').notNull(),
+  cacheDate: integer('cache_date', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+})
+
+export const sessions = sqliteTable(
+  'sessions',
+  {
+    id: id(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    tokenHash: text('token_hash').notNull().unique(),
+    expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+    createdAt: timestamp(),
+  },
+  (table) => ({
+    userIdx: index('sessions_user_id_idx').on(table.userId),
+  })
+)
+
 export const insertSiteSchema = createInsertSchema(sites)
 export const selectSiteSchema = createSelectSchema(sites)
-
 export const insertScanSchema = createInsertSchema(scans)
 export const selectScanSchema = createSelectSchema(scans)
-
-export const insertScreenshotSchema = createInsertSchema(screenshots)
-export const selectScreenshotSchema = createSelectSchema(screenshots)
-
 export const insertTokenSetSchema = createInsertSchema(tokenSets)
 export const selectTokenSetSchema = createSelectSchema(tokenSets)
-
-export const insertLayoutProfileSchema = createInsertSchema(layoutProfiles)
-export const selectLayoutProfileSchema = createSelectSchema(layoutProfiles)
-
 export const insertUserSchema = createInsertSchema(users)
 export const selectUserSchema = createSelectSchema(users)
 
-export const insertSubmissionSchema = createInsertSchema(submissions)
-export const selectSubmissionSchema = createSelectSchema(submissions)
-
-// Type exports
 export type Site = typeof sites.$inferSelect
 export type NewSite = typeof sites.$inferInsert
-
 export type Scan = typeof scans.$inferSelect
 export type NewScan = typeof scans.$inferInsert
-
 export type TokenSet = typeof tokenSets.$inferSelect
 export type NewTokenSet = typeof tokenSets.$inferInsert
-
 export type LayoutProfile = typeof layoutProfiles.$inferSelect
 export type NewLayoutProfile = typeof layoutProfiles.$inferInsert
-
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
-
 export type Submission = typeof submissions.$inferSelect
 export type NewSubmission = typeof submissions.$inferInsert
-
 export type Screenshot = typeof screenshots.$inferSelect
 export type NewScreenshot = typeof screenshots.$inferInsert
+export type Session = typeof sessions.$inferSelect
+export type NewSession = typeof sessions.$inferInsert
 
-// Cache Tables for Performance
-export const statsCache = pgTable('stats_cache', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  key: varchar('key', { length: 100 }).notNull().unique(),
-  data: jsonb('data').notNull(),
-  expiresAt: timestamp('expires_at').notNull(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-})
-
-export const popularSitesCache = pgTable('popular_sites_cache', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  siteId: uuid('site_id').notNull().references(() => sites.id, { onDelete: 'cascade' }),
-  domain: varchar('domain', { length: 255 }).notNull(),
-  popularity: integer('popularity').notNull().default(0),
-  tokens: integer('tokens').notNull().default(0),
-  lastScanned: timestamp('last_scanned'),
-  rank: integer('rank').notNull(),
-  cacheDate: timestamp('cache_date').notNull().defaultNow(),
-})
-
-export const recentActivityCache = pgTable('recent_activity_cache', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  domain: varchar('domain', { length: 255 }).notNull(),
-  scanId: uuid('scan_id').notNull().references(() => scans.id, { onDelete: 'cascade' }),
-  tokens: integer('tokens').notNull().default(0),
-  scannedAt: timestamp('scanned_at').notNull(),
-  rank: integer('rank').notNull(),
-  cacheDate: timestamp('cache_date').notNull().defaultNow(),
-})
-
-export type StatsCache = typeof statsCache.$inferSelect
-export type NewStatsCache = typeof statsCache.$inferInsert
-
-export type PopularSitesCache = typeof popularSitesCache.$inferSelect
-export type NewPopularSitesCache = typeof popularSitesCache.$inferInsert
-
-export type RecentActivityCache = typeof recentActivityCache.$inferSelect
-export type NewRecentActivityCache = typeof recentActivityCache.$inferInsert
+export { sql }

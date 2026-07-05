@@ -4,7 +4,7 @@
  */
 
 import { NextRequest } from 'next/server'
-import { db } from '@/lib/db'
+import { getDb } from '@/lib/db'
 import { users, sites, scans, tokenSets, layoutProfiles, submissions, tokenVotes, remixes, apiKeys, mcpUsage, auditLog } from '@/lib/db/schema'
 import { eq, and, or, inArray } from 'drizzle-orm'
 import { securityMonitor } from './security-monitor'
@@ -430,6 +430,7 @@ class GDPRController {
     subjectRequest: DataSubjectRequest,
     additionalData?: Record<string, any>
   ): Promise<void> {
+    const db = await getDb()
     await db.insert(auditLog).values({
       userId: subjectRequest.userId,
       action: `gdpr_${requestType}`,
@@ -448,6 +449,7 @@ class GDPRController {
    * Record consent decisions
    */
   private async recordConsentWithdrawal(consent: ConsentRecord): Promise<void> {
+    const db = await getDb()
     await db.insert(auditLog).values({
       userId: consent.userId,
       action: 'consent_withdrawal',

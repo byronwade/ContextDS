@@ -4,7 +4,7 @@
  */
 
 import { NextRequest } from 'next/server'
-import { db } from '@/lib/db'
+import { getDb } from '@/lib/db'
 import { auditLog, users, apiKeys } from '@/lib/db/schema'
 import { eq, and, gte, desc, count } from 'drizzle-orm'
 import { securityMonitor } from './security-monitor'
@@ -243,6 +243,7 @@ class SOC2ComplianceFramework {
     let exceptions = 0
 
     try {
+      const db = await getDb()
       // Test 1: Verify all users have valid authentication
       const usersWithoutEmail = await db
         .select({ count: count() })
@@ -300,6 +301,7 @@ class SOC2ComplianceFramework {
     let exceptions = 0
 
     try {
+      const db = await getDb()
       // Test role-based access control implementation
       const usersWithInvalidRoles = await db
         .select({ count: count() })
@@ -349,6 +351,7 @@ class SOC2ComplianceFramework {
     let exceptions = 0
 
     try {
+      const db = await getDb()
       // Test API key lifecycle management
       const expiredActiveKeys = await db
         .select({ count: count() })
@@ -401,6 +404,7 @@ class SOC2ComplianceFramework {
     let exceptions = 0
 
     try {
+      const db = await getDb()
       // Verify audit logging is functioning
       const recentAuditEvents = await db
         .select({ count: count() })

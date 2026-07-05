@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ratelimit } from '@/lib/ratelimit'
+import { updateSession } from '@/lib/auth/middleware'
 
 // Pre-compute static security headers (performance optimization)
 const SECURITY_HEADERS = {
@@ -61,6 +62,14 @@ export async function middleware(request: NextRequest) {
 
   // Metrics tracking moved to client-side (non-blocking)
   // See: components/atoms/web-vitals-reporter.tsx
+
+  if (
+    request.nextUrl.pathname.startsWith('/dashboard') ||
+    request.nextUrl.pathname === '/login' ||
+    request.nextUrl.pathname === '/signup'
+  ) {
+    return updateSession(request)
+  }
 
   return response
 }

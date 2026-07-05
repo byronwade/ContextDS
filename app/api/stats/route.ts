@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const db = await getDb()
 
     // Skip during build time
-    if (!process.env.DATABASE_URL && !process.env.DB) {
+    if (process.env.CONTEXTDS_USE_BUILD_STUB === 'true') {
       return NextResponse.json({
         sites: 0,
         tokens: 0,

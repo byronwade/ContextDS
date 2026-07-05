@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   const startTime = Date.now()
 
   // Skip during build time
-  if (!process.env.DATABASE_URL) {
+  if (process.env.CONTEXTDS_USE_BUILD_STUB === 'true') {
     return NextResponse.json({
       status: 'build-time',
       message: 'Health check skipped during build',
@@ -88,15 +88,19 @@ export async function GET(request: NextRequest) {
     // 3. Database statistics
     let dbStats: any = {}
     try {
-      const statsQuery = await db.execute(sql`
+      const rows = await db.all<{
+        sites_count: number
+        public_tokens: number
+        recent_scans: number
+        database_size: string
+      }>(sql`
         SELECT
           (SELECT COUNT(*) FROM sites) as sites_count,
-          (SELECT COUNT(*) FROM token_sets WHERE is_public = true) as public_tokens,
+          (SELECT COUNT(*) FROM token_sets WHERE is_public = 1) as public_tokens,
           (SELECT COUNT(*) FROM scans WHERE finished_at > datetime('now', '-24 hours')) as recent_scans,
           'N/A' as database_size
       `)
 
-      const rows = Array.isArray(statsQuery) ? statsQuery : (statsQuery as any).rows ?? []
       dbStats = rows[0] || {}
 
     } catch (error) {
@@ -122,8 +126,7 @@ export async function GET(request: NextRequest) {
         connection: {
           status: 'pass',
           responseTime: connectionHealth.responseTime,
-          queryCount: connectionHealth.queryCount,
-          errorCount: connectionHealth.errorCount
+          provider: connectionHealth.provider,
         },
         ...testResults
       },

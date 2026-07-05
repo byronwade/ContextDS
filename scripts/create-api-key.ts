@@ -11,7 +11,7 @@
  */
 
 import { createHash, randomBytes } from 'node:crypto'
-import { db } from '../lib/db'
+import { getDb } from '../lib/db'
 import { apiKeys } from '../lib/db/schema'
 
 async function createApiKey(options: {
@@ -30,6 +30,7 @@ async function createApiKey(options: {
     expiresAt.setDate(expiresAt.getDate() + (options.expiresInDays || 365))
 
     // Insert into database
+    const db = await getDb()
     const [newKey] = await db.insert(apiKeys).values({
       userId: options.userId || null,
       name: options.name,
