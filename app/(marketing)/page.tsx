@@ -4,16 +4,12 @@ import Link from "next/link"
 
 import { useEffect, useMemo, useState, Suspense } from "react"
 import { useRouter } from "next/navigation"
-import {
-  Palette,
-} from "lucide-react"
-import { ThemeToggle } from "@/components/atoms/theme-toggle"
-import { cn } from "@/lib/utils"
 import { useRealtimeStats } from "@/hooks/use-realtime-stats"
 import { useRealtimeStore } from "@/stores/realtime-store"
 import { LiveActivityFeed } from "@/components/molecules/live-activity-feed"
 import { RealtimeTokenPreview } from "@/components/molecules/realtime-token-preview"
 import { VercelHeader } from "@/components/organisms/vercel-header"
+import { MarketingFooter } from "@/components/organisms/marketing-footer"
 import { useStatsStore } from "@/stores/stats-store"
 
 
@@ -316,7 +312,7 @@ function HomePageContent() {
   }, [stats])
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-between overflow-hidden antialiased">
+    <div className="flex h-full w-full flex-col overflow-hidden">
       {/* Unified Vercel-Style Header with Search */}
       <VercelHeader
         currentPage="home"
@@ -332,19 +328,25 @@ function HomePageContent() {
         }))}
       />
 
-      {/* Home View - Minimal ContextDS */}
-      <main id="main-content" className="absolute top-[64px] flex h-[calc(100dvh-64px)] w-full flex-col items-center justify-between overflow-y-auto" role="main" aria-label="Main content">
-        <div className="flex min-h-full w-full shrink-0 select-none flex-col items-center justify-center px-4 py-12">
+      <main id="main-content" className="flex flex-1 flex-col" role="main" aria-label="Main content">
+        <div className="flex w-full flex-col items-center px-4 py-16 sm:py-24">
 
-          {/* Hero Content */}
-          <div className="max-w-3xl mx-auto text-center space-y-6">
+          <div className="mx-auto max-w-3xl space-y-8 text-center">
 
-            {/* Headline - SEO optimized heading hierarchy */}
-            <div className="space-y-4">
-              <h1 className="text-[2.5rem]/[3rem] sm:text-6xl font-bold tracking-tight text-foreground">
-                Extract Design Tokens<br />from Any Website
+            <div className="space-y-5">
+              <div className="hero-badge mx-auto w-fit">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+                </span>
+                AI-powered design token extraction
+              </div>
+              <h1 className="text-[2.5rem]/[3rem] font-bold tracking-tight text-foreground sm:text-6xl sm:leading-[1.1]">
+                Extract design tokens
+                <br />
+                <span className="text-gradient-brand">from any website</span>
               </h1>
-              <p className="text-base sm:text-lg text-grep-9 max-w-2xl mx-auto leading-relaxed">
+              <p className="mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
                 AI-powered CSS analysis and design token extraction. Scan sites like{" "}
                 <button
                   onClick={() => handleScan('stripe.com')}
@@ -379,117 +381,75 @@ function HomePageContent() {
               <RealtimeTokenPreview />
             </div>
 
-            {/* Grep.app Style Action Section */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 pb-8">
-              <button
-                onClick={() => {
-                  window.open('https://github.com/anthropics/claude-code#contextds-mcp-server', '_blank')
-                }}
-                className="group inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-grep-1 hover:bg-grep-2 border border-grep-3 hover:border-grep-4 transition-all duration-200 text-sm font-medium text-foreground"
+            {/* CTA row */}
+            <div className="flex flex-col items-center justify-center gap-3 pt-2 pb-4 sm:flex-row">
+              <Link
+                href="/scan"
+                className="inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 hover:shadow-md"
               >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7,10 12,15 17,10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
+                Start scanning
+              </Link>
+              <a
+                href="https://github.com/byronwade/ContextDS"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="surface-interactive inline-flex h-11 items-center gap-2 px-5"
+              >
                 Install MCP Server
-                <span className="text-xs text-grep-9 font-mono">for Claude</span>
-              </button>
-              <div className="text-xs text-grep-8 hidden sm:block">or</div>
-              <div className="text-xs text-grep-8 font-mono">
-                Extract tokens from any website instantly
-              </div>
+                <span className="font-mono text-xs text-muted-foreground">for Claude</span>
+              </a>
             </div>
 
-            {/* Compact Metrics Grid - No Horizontal Scroll */}
-            <div className="w-full max-w-5xl px-4">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                {/* Total Scans */}
-                <div className="flex flex-col gap-3 rounded-lg py-4 px-3 sm:px-4 border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30">
-                  <div className="flex items-center justify-between">
-                    <div className="text-[10px] sm:text-xs text-blue-500 font-medium uppercase tracking-wide">Scans</div>
-                    <svg className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>
-                    </svg>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <div className="text-xl sm:text-2xl font-mono font-bold text-foreground">
-                      {realtimeStats?.scans || liveMetrics?.totalScans || 102}
+            {/* Metrics */}
+            <div className="w-full max-w-5xl px-0">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+                {[
+                  { label: "Scans", value: realtimeStats?.scans || liveMetrics?.totalScans || 102, suffix: "live", accent: "text-chart-2" },
+                  { label: "Tokens", value: `${((realtimeStats?.tokens || liveMetrics?.totalTokens || 62300) / 1000).toFixed(1)}K`, suffix: "+8%", accent: "text-chart-3" },
+                  { label: "Sites", value: realtimeStats?.sites || liveMetrics?.totalSites || 38, suffix: "+24%", accent: "text-chart-5" },
+                  { label: "Active", value: liveMetrics?.activeScans || 0, suffix: "live", accent: "text-chart-4", pulse: true },
+                ].map((stat) => (
+                  <div key={stat.label} className="stat-card relative overflow-hidden">
+                    <div className="stat-card-accent" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-xs">
+                        {stat.label}
+                      </span>
+                      <span className={`text-[10px] font-medium ${stat.accent}`}>{stat.suffix}</span>
                     </div>
-                    <div className="text-[10px] text-blue-600 dark:text-blue-400">live</div>
-                  </div>
-                </div>
-
-                {/* Design Tokens */}
-                <div className="flex flex-col gap-3 rounded-lg py-4 px-3 sm:px-4 border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30">
-                  <div className="flex items-center justify-between">
-                    <div className="text-[10px] sm:text-xs text-emerald-500 font-medium uppercase tracking-wide">Tokens</div>
-                    <svg className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path d="M16 7h6v6"/>
-                      <path d="m22 7-8.5 8.5-5-5L2 17"/>
-                    </svg>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <div className="text-xl sm:text-2xl font-mono font-bold text-foreground">
-                      {((realtimeStats?.tokens || liveMetrics?.totalTokens || 62300) / 1000).toFixed(1)}K
-                    </div>
-                    <div className="text-[10px] text-emerald-600 dark:text-emerald-400">+8%</div>
-                  </div>
-                </div>
-
-                {/* Sites Analyzed */}
-                <div className="flex flex-col gap-3 rounded-lg py-4 px-3 sm:px-4 border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/30">
-                  <div className="flex items-center justify-between">
-                    <div className="text-[10px] sm:text-xs text-purple-500 font-medium uppercase tracking-wide">Sites</div>
-                    <svg className="w-3 h-3 sm:w-4 sm:h-4 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10"/>
-                      <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
-                      <path d="M2 12h20"/>
-                    </svg>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <div className="text-xl sm:text-2xl font-mono font-bold text-foreground">
-                      {realtimeStats?.sites || liveMetrics?.totalSites || 38}
-                    </div>
-                    <div className="text-[10px] text-purple-600 dark:text-purple-400">+24%</div>
-                  </div>
-                </div>
-
-                {/* Active Status */}
-                <div className="flex flex-col gap-3 rounded-lg py-4 px-3 sm:px-4 border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30">
-                  <div className="flex items-center justify-between">
-                    <div className="text-[10px] sm:text-xs text-orange-500 font-medium uppercase tracking-wide">Active</div>
-                    <svg className="w-3 h-3 sm:w-4 sm:h-4 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/>
-                    </svg>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <div className="text-xl sm:text-2xl font-mono font-bold text-foreground">
-                      {liveMetrics?.activeScans || 0}
-                    </div>
-                    <div className="flex items-center text-[10px] text-emerald-600 dark:text-emerald-400">
-                      Live
-                      <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse ml-1"></div>
+                    <div className="flex items-end justify-between">
+                      <span className="font-mono text-xl font-bold text-foreground sm:text-2xl">
+                        {stat.value}
+                      </span>
+                      {stat.pulse && (
+                        <span className="flex items-center gap-1 text-[10px] text-success">
+                          Live
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" />
+                        </span>
+                      )}
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
 
             {/* Popular Sites - Interactive Examples */}
             {popularSites.length > 0 && (
-              <div className="pt-8">
-                <p className="text-xs text-grep-9 uppercase tracking-wide font-semibold mb-3">Try scanning</p>
-                <div className="flex items-center justify-center gap-2 flex-wrap">
+              <div className="pt-6">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Try scanning
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-2">
                   {popularSites.slice(0, 6).map((site) => (
                     <button
                       key={site.domain}
-                      onClick={() => handleScan(site.domain || '')}
-                      className="group px-4 py-2 rounded-lg border border-grep-3 bg-grep-0 hover:border-foreground hover:bg-grep-1 transition-all text-sm text-foreground font-medium flex items-center gap-2"
+                      type="button"
+                      onClick={() => handleScan(site.domain || "")}
+                      className="surface-interactive group flex items-center gap-2"
                     >
-                      <div className="w-2 h-2 rounded-full bg-grep-9 group-hover:bg-emerald-500 transition-colors" />
+                      <span className="h-2 w-2 rounded-full bg-muted-foreground transition-colors group-hover:bg-primary" />
                       {site.domain}
-                      <span className="text-xs text-grep-9">{site.tokens}</span>
+                      <span className="text-xs text-muted-foreground">{site.tokens}</span>
                     </button>
                   ))}
                 </div>
@@ -505,45 +465,7 @@ function HomePageContent() {
           </div>
         </div>
 
-          {/* Footer with Theme Toggle */}
-          <footer className="w-full select-none border-t border-grep-2 px-4 py-6 text-sm text-grep-9 sm:px-12 sm:py-8" role="contentinfo" aria-label="Site footer">
-            <div className="relative flex flex-col gap-6">
-              <div className="flex min-h-8 w-full flex-wrap items-center gap-6">
-                <div className="max-sm:w-full">
-                  <Link href="/">
-                    <div className="flex items-center gap-2">
-                      <Palette className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                      <span className="font-medium text-black dark:text-white">ContextDS</span>
-                    </div>
-                  </Link>
-                </div>
-                <div className="max-sm:w-36">
-                  <Link className="text-grep-9 hover:text-foreground" href="/docs">Docs</Link>
-                </div>
-                <div className="max-sm:w-36">
-                  <Link className="text-grep-9 hover:text-foreground" href="/docs#api">API</Link>
-                </div>
-                <div className="max-sm:w-36">
-                  <Link className="text-grep-9 hover:text-foreground" href="/community">Community</Link>
-                </div>
-                <div className="max-sm:w-36">
-                  <Link className="text-grep-9 hover:text-foreground" href="/pricing">Pricing</Link>
-                </div>
-                <div className="max-sm:w-36">
-                  <Link className="text-grep-9 hover:text-foreground" href="/privacy">Privacy</Link>
-                </div>
-                <div className="max-sm:w-36">
-                  <Link className="text-grep-9 hover:text-foreground" href="/terms">Terms</Link>
-                </div>
-              </div>
-              <div className="flex items-center max-sm:h-8">© 2025, ContextDS Inc.</div>
-
-              {/* Theme Toggle - Exact Grep.app Style */}
-              <div className="absolute right-0 max-sm:bottom-0">
-                <ThemeToggle />
-              </div>
-            </div>
-          </footer>
+        <MarketingFooter />
       </main>
     </div>
   )
@@ -553,10 +475,10 @@ function HomePageContent() {
 export default function HomePage() {
   return (
     <Suspense fallback={
-      <div className="flex h-screen w-full items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-8 h-8 border-2 border-neutral-200 dark:border-neutral-800 border-t-blue-500 rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">Loading ContextDS...</p>
+      <div className="flex min-h-[50vh] w-full items-center justify-center">
+        <div className="space-y-4 text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary" />
+          <p className="text-sm text-muted-foreground">Loading ContextDS...</p>
         </div>
       </div>
     }>

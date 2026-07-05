@@ -34,7 +34,7 @@ export default function LoginPage() {
         throw new Error(data.error || "Login failed")
       }
 
-      router.push("/scan")
+      router.push("/dashboard")
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed")
@@ -46,13 +46,18 @@ export default function LoginPage() {
   return (
     <>
       <MarketingHeader showSearch={false} />
-      <main className="flex min-h-[70vh] items-center justify-center px-4 py-16">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-6">
-            <h1 className="mb-2 text-2xl font-bold">Sign in</h1>
-            <p className="mb-6 text-sm text-muted-foreground">
-              Access your ContextDS dashboard and API keys.
-            </p>
+      <main className="flex flex-1 items-center justify-center px-4 py-16">
+        <Card className="w-full max-w-md border-border/70 bg-card/80 backdrop-blur-sm">
+          <CardContent className="p-8">
+            <div className="mb-6 space-y-2 text-center">
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+                Welcome back
+              </p>
+              <h1 className="text-2xl font-bold tracking-tight">Sign in</h1>
+              <p className="text-sm text-muted-foreground">
+                Access your dashboard, API keys, and saved scans.
+              </p>
+            </div>
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div>
                 <Label htmlFor="email">Email</Label>
@@ -76,14 +81,14 @@ export default function LoginPage() {
                   className="mt-1"
                 />
               </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
+              {error && <p className="text-sm text-destructive">{error}</p>}
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Signing in..." : "Sign in"}
               </Button>
             </form>
-            <p className="mt-4 text-center text-sm text-muted-foreground">
+            <p className="mt-6 text-center text-sm text-muted-foreground">
               No account?{" "}
-              <Link href="/signup" className="text-blue-600 hover:underline">
+              <Link href="/signup" className="font-medium text-primary hover:underline">
                 Create one
               </Link>
             </p>

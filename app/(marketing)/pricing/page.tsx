@@ -142,30 +142,30 @@ const faqs = [
 export default function PricingPage() {
   return (
     <>
-      <MarketingHeader currentPage="pricing" showSearch={true} />
+      <MarketingHeader currentPage="pricing" showSearch />
 
-      <main className="min-h-screen bg-background">
-        {/* Hero Section */}
-        <section className="py-20 px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-              Simple, transparent{" "}
-              <span className="text-blue-600 dark:text-blue-400">pricing</span>
+      <main className="flex-1">
+        <section className="px-4 py-20 sm:py-24">
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="hero-badge mx-auto mb-6 w-fit">Transparent pricing</p>
+            <h1 className="mb-6 text-4xl font-bold tracking-tight md:text-6xl">
+              Simple plans for{" "}
+              <span className="text-gradient-brand">every team</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
               Start free and scale as you grow. No hidden fees, no surprises.
             </p>
-            <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
-                <Check className="h-4 w-4 text-green-500" />
+                <Check className="h-4 w-4 text-success" />
                 14-day free trial
               </span>
               <span className="flex items-center gap-1">
-                <Check className="h-4 w-4 text-green-500" />
+                <Check className="h-4 w-4 text-success" />
                 Cancel anytime
               </span>
               <span className="flex items-center gap-1">
-                <Check className="h-4 w-4 text-green-500" />
+                <Check className="h-4 w-4 text-success" />
                 No setup fees
               </span>
             </div>
@@ -179,16 +179,18 @@ export default function PricingPage() {
               {plans.map((plan) => (
                 <Card
                   key={plan.name}
-                  className={`relative ${plan.popular ? 'border-blue-500 shadow-lg scale-105' : 'border-muted'}`}
+                  className={`relative overflow-hidden border-border/70 bg-card/60 backdrop-blur-sm ${
+                    plan.popular ? "border-primary/40 shadow-lg ring-1 ring-primary/20" : ""
+                  }`}
                 >
                   {plan.popular && (
-                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white">
+                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground">
                       Most Popular
                     </Badge>
                   )}
 
                   <CardHeader className="text-center pb-4">
-                    <plan.icon className="h-8 w-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
+                    <plan.icon className="mx-auto mb-2 h-8 w-8 text-primary" />
                     <h3 className="text-lg font-semibold">{plan.name}</h3>
                     <div className="mt-2">
                       <span className="text-3xl font-bold">{plan.price}</span>
@@ -201,7 +203,7 @@ export default function PricingPage() {
 
                   <CardContent className="pt-0">
                     <Button
-                      className={`w-full mb-6 ${plan.popular ? "bg-blue-600 hover:bg-blue-700" : ""}`}
+                      className="mb-6 w-full"
                       variant={plan.popular ? "default" : "outline"}
                       asChild
                     >
@@ -211,7 +213,7 @@ export default function PricingPage() {
                     <div className="space-y-3">
                       {plan.features.map((feature, index) => (
                         <div key={index} className="flex items-start gap-2">
-                          <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                          <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-success" />
                           <span className="text-sm">{feature}</span>
                         </div>
                       ))}
@@ -233,7 +235,7 @@ export default function PricingPage() {
         </section>
 
         {/* Feature Comparison */}
-        <section className="py-16 px-4 bg-muted/30">
+        <section className="bg-muted/20 px-4 py-16">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold mb-4">Compare plans</h2>
@@ -248,7 +250,7 @@ export default function PricingPage() {
                   <tr className="border-b">
                     <th className="text-left py-4 px-4 font-medium">Feature</th>
                     <th className="text-center py-4 px-4 font-medium">Free</th>
-                    <th className="text-center py-4 px-4 font-medium text-blue-600">Pro</th>
+                    <th className="py-4 px-4 text-center font-medium text-primary">Pro</th>
                     <th className="text-center py-4 px-4 font-medium">Team</th>
                     <th className="text-center py-4 px-4 font-medium">Enterprise</th>
                   </tr>
@@ -257,21 +259,21 @@ export default function PricingPage() {
                   <tr className="border-b border-muted">
                     <td className="py-4 px-4">Monthly extractions</td>
                     <td className="py-4 px-4 text-center">10</td>
-                    <td className="py-4 px-4 text-center text-blue-600">Unlimited</td>
+                    <td className="py-4 px-4 text-center text-primary">Unlimited</td>
                     <td className="py-4 px-4 text-center">Unlimited</td>
                     <td className="py-4 px-4 text-center">Unlimited</td>
                   </tr>
                   <tr className="border-b border-muted">
                     <td className="py-4 px-4">Layout DNA analysis</td>
                     <td className="py-4 px-4 text-center">—</td>
-                    <td className="py-4 px-4 text-center text-blue-600">✓</td>
+                    <td className="py-4 px-4 text-center text-primary">✓</td>
                     <td className="py-4 px-4 text-center">✓</td>
                     <td className="py-4 px-4 text-center">✓</td>
                   </tr>
                   <tr className="border-b border-muted">
                     <td className="py-4 px-4">API access</td>
                     <td className="py-4 px-4 text-center">—</td>
-                    <td className="py-4 px-4 text-center text-blue-600">✓</td>
+                    <td className="py-4 px-4 text-center text-primary">✓</td>
                     <td className="py-4 px-4 text-center">✓</td>
                     <td className="py-4 px-4 text-center">✓</td>
                   </tr>
@@ -333,7 +335,7 @@ export default function PricingPage() {
               Start with our free plan and upgrade when you need more power.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="px-8 py-3 bg-blue-600 hover:bg-blue-700" asChild>
+              <Button className="px-8 py-3" asChild>
                 <Link href="/scan">Start free trial</Link>
               </Button>
               <Button variant="outline" className="px-8 py-3" asChild>

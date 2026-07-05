@@ -11,7 +11,7 @@ import { useRealtimeStore } from "@/stores/realtime-store"
 import { useStatsStore } from "@/stores/stats-store"
 import { cn } from "@/lib/utils"
 
-interface VercelHeaderProps {
+export interface VercelHeaderProps {
   currentPage?: "home" | "features" | "pricing" | "docs" | "about" | "community" | "metrics" | "scan" | "site" | "contact"
   showSearch?: boolean
   searchValue?: string
@@ -182,24 +182,36 @@ export function VercelHeader({
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation" role="navigation">
-              <Link href="/features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Features
-              </Link>
-              <Link href="/community" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Community
-              </Link>
-              <Link href="/docs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Docs
-              </Link>
-              <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Pricing
-              </Link>
-              <Link href="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                About
-              </Link>
+              {([
+                { href: "/features", label: "Features", page: "features" },
+                { href: "/community", label: "Community", page: "community" },
+                { href: "/docs", label: "Docs", page: "docs" },
+                { href: "/pricing", label: "Pricing", page: "pricing" },
+                { href: "/about", label: "About", page: "about" },
+              ] as const).map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "nav-link",
+                    currentPage === item.page && "nav-link-active"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              ))}
             </nav>
 
-            <div className="w-px h-4 bg-border" />
+            <div className="w-px h-4 bg-border hidden sm:block" />
+            <Link
+              href="/login"
+              className="hidden sm:inline-flex nav-link text-sm"
+            >
+              Sign in
+            </Link>
+            <Button size="sm" className="hidden sm:inline-flex" asChild>
+              <Link href="/scan">Scan a site</Link>
+            </Button>
             <ThemeToggle />
           </div>
         </div>

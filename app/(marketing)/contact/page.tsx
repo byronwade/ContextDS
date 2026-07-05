@@ -99,7 +99,7 @@ export default function ContactPage() {
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
               Get in{" "}
-              <span className="text-blue-600 dark:text-blue-400">touch</span>
+              <span className="text-primary">touch</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
               Have questions, feedback, or need help? We're here to support you.
@@ -115,7 +115,7 @@ export default function ContactPage() {
               {contactTypes.map((contact) => (
                 <Card key={contact.title} className="border-muted">
                   <CardHeader>
-                    <contact.icon className="h-8 w-8 text-blue-600 dark:text-blue-400 mb-2" />
+                    <contact.icon className="h-8 w-8 text-primary mb-2" />
                     <h3 className="font-semibold">{contact.title}</h3>
                     <p className="text-muted-foreground text-sm">{contact.description}</p>
                   </CardHeader>
@@ -125,7 +125,7 @@ export default function ContactPage() {
                         <div className="text-sm font-medium">Email</div>
                         <a
                           href={`mailto:${contact.email}`}
-                          className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                          className="text-sm text-primary hover:underline"
                         >
                           {contact.email}
                         </a>
@@ -190,7 +190,7 @@ export default function ContactPage() {
             <div className="grid md:grid-cols-2 gap-6">
               <Card className="border-muted">
                 <CardContent className="p-6">
-                  <MessageSquare className="h-8 w-8 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+                  <MessageSquare className="h-8 w-8 text-primary mx-auto mb-4" />
                   <h3 className="font-semibold mb-2">Discord Community</h3>
                   <p className="text-muted-foreground mb-4 text-sm">
                     Join our Discord server for real-time discussions, help, and community support.
@@ -205,7 +205,7 @@ export default function ContactPage() {
 
               <Card className="border-muted">
                 <CardContent className="p-6">
-                  <Users className="h-8 w-8 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+                  <Users className="h-8 w-8 text-primary mx-auto mb-4" />
                   <h3 className="font-semibold mb-2">GitHub Discussions</h3>
                   <p className="text-muted-foreground mb-4 text-sm">
                     Participate in feature discussions, report issues, and contribute to our roadmap.

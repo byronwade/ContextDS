@@ -35,7 +35,7 @@ export default function SignupPage() {
         throw new Error(data.error || "Signup failed")
       }
 
-      router.push("/scan")
+      router.push("/dashboard")
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed")
@@ -47,13 +47,18 @@ export default function SignupPage() {
   return (
     <>
       <MarketingHeader showSearch={false} />
-      <main className="flex min-h-[70vh] items-center justify-center px-4 py-16">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-6">
-            <h1 className="mb-2 text-2xl font-bold">Create account</h1>
-            <p className="mb-6 text-sm text-muted-foreground">
-              Start scanning sites and exporting design tokens.
-            </p>
+      <main className="flex flex-1 items-center justify-center px-4 py-16">
+        <Card className="w-full max-w-md border-border/70 bg-card/80 backdrop-blur-sm">
+          <CardContent className="p-8">
+            <div className="mb-6 space-y-2 text-center">
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+                Get started free
+              </p>
+              <h1 className="text-2xl font-bold tracking-tight">Create account</h1>
+              <p className="text-sm text-muted-foreground">
+                Start scanning sites and exporting design tokens.
+              </p>
+            </div>
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div>
                 <Label htmlFor="name">Name</Label>
@@ -87,14 +92,14 @@ export default function SignupPage() {
                   className="mt-1"
                 />
               </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
+              {error && <p className="text-sm text-destructive">{error}</p>}
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Creating account..." : "Create account"}
               </Button>
             </form>
-            <p className="mt-4 text-center text-sm text-muted-foreground">
+            <p className="mt-6 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link href="/login" className="text-blue-600 hover:underline">
+              <Link href="/login" className="font-medium text-primary hover:underline">
                 Sign in
               </Link>
             </p>
