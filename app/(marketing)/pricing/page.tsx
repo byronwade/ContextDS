@@ -1,4 +1,5 @@
 import { Metadata } from "next"
+import Link from "next/link"
 import { Check, Star, Zap, Users, Building2 } from "lucide-react"
 import { MarketingHeader } from "@/components/organisms/marketing-header"
 import { MarketingFooter } from "@/components/organisms/marketing-footer"
@@ -37,6 +38,7 @@ const plans = [
       "No priority support"
     ],
     cta: "Start free",
+    href: "/scan",
     popular: false
   },
   {
@@ -59,6 +61,7 @@ const plans = [
     ],
     limitations: [],
     cta: "Start Pro trial",
+    href: "/contact?subject=sales",
     popular: true
   },
   {
@@ -81,6 +84,7 @@ const plans = [
     ],
     limitations: [],
     cta: "Contact sales",
+    href: "/contact?subject=sales",
     popular: false
   },
   {
@@ -103,6 +107,7 @@ const plans = [
     ],
     limitations: [],
     cta: "Contact sales",
+    href: "/contact?subject=sales",
     popular: false
   }
 ]
@@ -196,10 +201,11 @@ export default function PricingPage() {
 
                   <CardContent className="pt-0">
                     <Button
-                      className={`w-full mb-6 ${plan.popular ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                      className={`w-full mb-6 ${plan.popular ? "bg-blue-600 hover:bg-blue-700" : ""}`}
                       variant={plan.popular ? "default" : "outline"}
+                      asChild
                     >
-                      {plan.cta}
+                      <Link href={plan.href}>{plan.cta}</Link>
                     </Button>
 
                     <div className="space-y-3">
@@ -327,11 +333,11 @@ export default function PricingPage() {
               Start with our free plan and upgrade when you need more power.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="px-8 py-3 bg-blue-600 hover:bg-blue-700">
-                Start free trial
+              <Button className="px-8 py-3 bg-blue-600 hover:bg-blue-700" asChild>
+                <Link href="/scan">Start free trial</Link>
               </Button>
-              <Button variant="outline" className="px-8 py-3">
-                Contact sales
+              <Button variant="outline" className="px-8 py-3" asChild>
+                <Link href="/contact?subject=sales">Contact sales</Link>
               </Button>
             </div>
           </div>

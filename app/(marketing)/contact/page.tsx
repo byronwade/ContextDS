@@ -13,10 +13,7 @@ import { MarketingHeader } from "@/components/organisms/marketing-header"
 import { MarketingFooter } from "@/components/organisms/marketing-footer"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ContactForm } from "@/components/molecules/contact-form"
 
 export const metadata: Metadata = {
   title: "Contact - ContextDS",
@@ -155,58 +152,7 @@ export default function ContactPage() {
               </p>
             </div>
 
-            <Card className="border-muted">
-              <CardContent className="p-6">
-                <form className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="name">Name</Label>
-                      <Input id="name" placeholder="Your name" className="mt-1" />
-                    </div>
-                    <div>
-                      <Label htmlFor="email">Email</Label>
-                      <Input id="email" type="email" placeholder="your.email@example.com" className="mt-1" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="subject">Subject</Label>
-                    <Select>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="What's this about?" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="support">General Support</SelectItem>
-                        <SelectItem value="sales">Sales & Enterprise</SelectItem>
-                        <SelectItem value="bug">Bug Report</SelectItem>
-                        <SelectItem value="feature">Feature Request</SelectItem>
-                        <SelectItem value="legal">Privacy & Legal</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="company">Company (optional)</Label>
-                    <Input id="company" placeholder="Your company name" className="mt-1" />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="message">Message</Label>
-                    <Textarea
-                      id="message"
-                      placeholder="Tell us how we can help..."
-                      className="mt-1 min-h-[120px]"
-                    />
-                  </div>
-
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                    <Mail className="h-4 w-4 mr-2" />
-                    Send Message
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+            <ContactForm />
           </div>
         </section>
 
@@ -249,7 +195,11 @@ export default function ContactPage() {
                   <p className="text-muted-foreground mb-4 text-sm">
                     Join our Discord server for real-time discussions, help, and community support.
                   </p>
-                  <Button variant="outline">Join Discord</Button>
+                  <Button variant="outline" asChild>
+                    <a href="https://discord.gg/contextds" target="_blank" rel="noopener noreferrer">
+                      Join Discord
+                    </a>
+                  </Button>
                 </CardContent>
               </Card>
 
@@ -260,7 +210,15 @@ export default function ContactPage() {
                   <p className="text-muted-foreground mb-4 text-sm">
                     Participate in feature discussions, report issues, and contribute to our roadmap.
                   </p>
-                  <Button variant="outline">View Discussions</Button>
+                  <Button variant="outline" asChild>
+                    <a
+                      href="https://github.com/contextds/contextds/discussions"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View Discussions
+                    </a>
+                  </Button>
                 </CardContent>
               </Card>
             </div>

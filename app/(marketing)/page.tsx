@@ -6,10 +6,8 @@ import { useEffect, useMemo, useState, Suspense } from "react"
 import { useRouter } from "next/navigation"
 import {
   Palette,
-  Monitor,
-  Sun,
-  Moon
 } from "lucide-react"
+import { ThemeToggle } from "@/components/atoms/theme-toggle"
 import { cn } from "@/lib/utils"
 import { useRealtimeStats } from "@/hooks/use-realtime-stats"
 import { useRealtimeStore } from "@/stores/realtime-store"
@@ -523,7 +521,7 @@ function HomePageContent() {
                   <Link className="text-grep-9 hover:text-foreground" href="/docs">Docs</Link>
                 </div>
                 <div className="max-sm:w-36">
-                  <Link className="text-grep-9 hover:text-foreground" href="/api">API</Link>
+                  <Link className="text-grep-9 hover:text-foreground" href="/docs#api">API</Link>
                 </div>
                 <div className="max-sm:w-36">
                   <Link className="text-grep-9 hover:text-foreground" href="/community">Community</Link>
@@ -542,18 +540,7 @@ function HomePageContent() {
 
               {/* Theme Toggle - Exact Grep.app Style */}
               <div className="absolute right-0 max-sm:bottom-0">
-                <div className="relative flex h-8 w-[96px] items-center justify-between rounded-full border border-grep-2">
-                  <div className="absolute h-8 w-8 rounded-full border border-grep-3" style={{transform: 'translateX(calc(-1px))'}}></div>
-                  <button className="relative z-10 mx-[-1px] flex h-8 w-8 items-center justify-center transition-colors duration-200 text-foreground" aria-label="Switch to system theme">
-                    <Monitor className="h-4 w-4" />
-                  </button>
-                  <button className="relative z-10 mx-[-1px] flex h-8 w-8 items-center justify-center transition-colors duration-200 text-grep-9 hover:text-foreground" aria-label="Switch to light theme">
-                    <Sun className="h-4 w-4" />
-                  </button>
-                  <button className="relative z-10 mx-[-1px] flex h-8 w-8 items-center justify-center transition-colors duration-200 text-grep-9 hover:text-foreground" aria-label="Switch to dark theme">
-                    <Moon className="h-4 w-4" />
-                  </button>
-                </div>
+                <ThemeToggle />
               </div>
             </div>
           </footer>

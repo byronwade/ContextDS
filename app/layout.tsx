@@ -4,6 +4,7 @@ import { SkipLinks } from "@/components/atoms/skip-links";
 import { ErrorBoundary } from "@/components/atoms/error-boundary";
 import { WebVitalsReporter } from "@/components/atoms/web-vitals-reporter";
 import { ComprehensiveSEOTracking } from "@/components/atoms/seo-analytics";
+import { Toaster } from "@/components/ui/sonner";
 import { generateHomepageMetadata } from "@/lib/seo/meta-tags";
 import { generateOrganizationSchema, generateWebsiteSchema, generateSoftwareApplicationSchema } from "@/lib/seo/structured-data";
 import { RESOURCE_HINTS } from "@/lib/seo/performance";
@@ -172,6 +173,7 @@ export default function RootLayout({
         <ErrorBoundary>
           {children}
         </ErrorBoundary>
+        <Toaster richColors closeButton />
       </body>
     </html>
   );

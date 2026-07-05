@@ -379,7 +379,7 @@ export default function CommunityClient() {
 
                     {/* Actions */}
                     <div className="flex gap-2">
-                      <Link href={`/site/${site.domain}`} className="flex-1">
+                      <Link href={`/community/${site.domain}`} className="flex-1">
                         <Button variant="outline" size="sm" className="w-full text-xs">
                           View Tokens
                         </Button>
