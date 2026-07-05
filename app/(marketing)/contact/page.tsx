@@ -99,7 +99,7 @@ export default function ContactPage() {
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
               Get in{" "}
-              <span className="text-primary">touch</span>
+              <span className="text-gradient-brand">touch</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
               Have questions, feedback, or need help? We're here to support you.
