@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db, cssContent } from '@/lib/db'
-import { sql } from 'drizzle-orm'
+import { getDb, cssContent } from '@/lib/db'
+import { sql, or, eq, isNotNull } from 'drizzle-orm'
 
 /**
  * Cron job to cleanup old CSS content (keep tokens forever, delete CSS after TTL)
@@ -20,32 +20,41 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const db = await getDb()
     const startTime = Date.now()
+
+    // First select rows to gather storage stats before deletion
+    const toDelete = await db.execute(sql`
+      SELECT sha, bytes, compressed_bytes, reference_count
+      FROM css_content
+      WHERE (
+        last_accessed < datetime('now', '-' || CAST(ttl_days AS TEXT) || ' days')
+        OR reference_count = 0
+      )
+      AND content IS NOT NULL
+    `)
 
     // Delete CSS content that:
     // 1. Is older than TTL days since last access
     // 2. Has zero references (or is orphaned)
-    // Uses idx_css_content_cleanup index for performance
-    const result = await db.execute(sql`
+    await db.execute(sql`
       DELETE FROM css_content
       WHERE (
-        last_accessed < NOW() - INTERVAL '1 day' * ttl_days
+        last_accessed < datetime('now', '-' || CAST(ttl_days AS TEXT) || ' days')
         OR reference_count = 0
       )
       AND content IS NOT NULL
-      RETURNING sha, bytes, compressed_bytes, reference_count
     `)
 
-    const deletedCount = result.rowCount || 0
+    const rows = Array.isArray(toDelete) ? toDelete : (toDelete as any).rows ?? []
+    const deletedCount = rows.length
     const duration = Date.now() - startTime
 
     // Calculate storage freed
     let bytesFreed = 0
     let compressedBytesFreed = 0
-    if (result.rows) {
-      bytesFreed = result.rows.reduce((sum: number, row: any) => sum + (row.bytes || 0), 0)
-      compressedBytesFreed = result.rows.reduce((sum: number, row: any) => sum + (row.compressed_bytes || 0), 0)
-    }
+    bytesFreed = rows.reduce((sum: number, row: any) => sum + (row.bytes || 0), 0)
+    compressedBytesFreed = rows.reduce((sum: number, row: any) => sum + (row.compressed_bytes || 0), 0)
 
     console.log(`✅ CSS cleanup completed:`)
     console.log(`   Deleted: ${deletedCount} deduplicated CSS files`)
@@ -74,7 +83,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Allow manual cleanup via POST (for testing/emergency)
 export async function POST(request: NextRequest) {
   return GET(request)
 }

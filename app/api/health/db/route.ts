@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { checkDatabaseHealth, queryWithMetrics, db, sites, tokenSets, scans, sql } from '@/lib/db'
+import { checkDatabaseHealth, queryWithMetrics, getDb, sites, tokenSets, scans, sql } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   const startTime = Date.now()
@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const db = await getDb()
     console.log('🏥 API health check initiated...')
 
     // 1. Basic connection health
@@ -91,11 +92,12 @@ export async function GET(request: NextRequest) {
         SELECT
           (SELECT COUNT(*) FROM sites) as sites_count,
           (SELECT COUNT(*) FROM token_sets WHERE is_public = true) as public_tokens,
-          (SELECT COUNT(*) FROM scans WHERE finished_at > NOW() - INTERVAL '24 hours') as recent_scans,
-          pg_size_pretty(pg_database_size(current_database())) as database_size
+          (SELECT COUNT(*) FROM scans WHERE finished_at > datetime('now', '-24 hours')) as recent_scans,
+          'N/A' as database_size
       `)
 
-      dbStats = statsQuery[0] || {}
+      const rows = Array.isArray(statsQuery) ? statsQuery : (statsQuery as any).rows ?? []
+      dbStats = rows[0] || {}
 
     } catch (error) {
       console.warn('Statistics query failed:', error)

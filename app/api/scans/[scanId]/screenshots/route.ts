@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db, screenshots, screenshotContent } from '@/lib/db'
+import { getDb, screenshots, screenshotContent } from '@/lib/db'
 import { eq, asc } from 'drizzle-orm'
 
 export const runtime = 'nodejs'
@@ -14,6 +14,7 @@ export async function GET(
   { params }: { params: Promise<{ scanId: string }> }
 ) {
   try {
+    const db = await getDb()
     const { scanId } = await params
 
     console.log('[Screenshots API] Fetching screenshots for scanId:', scanId)

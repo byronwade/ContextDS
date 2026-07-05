@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db, tokenSets } from '@/lib/db'
+import { getDb, tokenSets } from '@/lib/db'
 import { eq } from 'drizzle-orm'
 import { compareTokenSets, generateChangelog } from '@/lib/analyzers/version-diff'
 
@@ -9,6 +9,7 @@ import { compareTokenSets, generateChangelog } from '@/lib/analyzers/version-dif
  */
 export async function POST(request: NextRequest) {
   try {
+    const db = await getDb()
     const body = await request.json()
     const { oldVersionId, newVersionId } = body
 

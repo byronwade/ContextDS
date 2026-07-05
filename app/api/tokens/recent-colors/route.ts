@@ -1,47 +1,50 @@
 import { NextResponse } from 'next/server'
-import { db, tokenSets } from '@/lib/db'
-import { sql, desc, isNotNull } from 'drizzle-orm'
+import { getDb, tokenSets, sites } from '@/lib/db'
+import { desc, isNotNull, eq } from 'drizzle-orm'
 
 // Removed edge runtime to support database connections
 
 export async function GET() {
   try {
+    const db = await getDb()
+
     // Skip during build time
-    if (!process.env.DATABASE_URL) {
+    if (!process.env.DATABASE_URL && !process.env.DB) {
       return NextResponse.json([])
     }
 
-    // Get recent color tokens from the database
-    const recentColors = await db.execute(sql`
-      SELECT DISTINCT
-        key,
-        value,
-        created_at,
-        site_domain
-      FROM (
-        SELECT
-          jsonb_object_keys(tokens_json->'color') as key,
-          tokens_json->'color'->jsonb_object_keys(tokens_json->'color') as value,
-          ts.created_at,
-          s.domain as site_domain
-        FROM token_sets ts
-        JOIN sites s ON s.id = ts.site_id
-        WHERE ts.tokens_json->'color' IS NOT NULL
-        AND jsonb_typeof(tokens_json->'color') = 'object'
-        ORDER BY ts.created_at DESC
-        LIMIT 50
-      ) recent_tokens
-      WHERE value::text LIKE '#%'
-      ORDER BY created_at DESC
-      LIMIT 20
-    `)
+    // Fetch recent token sets with site domain, then extract colors in JS
+    const tokenSetRows = await db
+      .select({
+        tokensJson: tokenSets.tokensJson,
+        createdAt: tokenSets.createdAt,
+        domain: sites.domain,
+      })
+      .from(tokenSets)
+      .innerJoin(sites, eq(tokenSets.siteId, sites.id))
+      .where(isNotNull(tokenSets.tokensJson))
+      .orderBy(desc(tokenSets.createdAt))
+      .limit(50)
 
-    const colors = recentColors.map((row: any) => ({
-      name: row.key,
-      value: row.value?.replace(/"/g, ''), // Remove quotes from JSON string
-      siteDomain: row.site_domain,
-      createdAt: row.created_at
-    })).filter(color => color.value && color.value.match(/^#[0-9A-Fa-f]{6}$/))
+    const hexColorRe = /^#[0-9A-Fa-f]{6}$/
+    const colorMap = new Map<string, { name: string; value: string; siteDomain: string | null; createdAt: Date | null }>()
+
+    for (const row of tokenSetRows) {
+      const tj = row.tokensJson as any
+      const colorObj = tj?.color
+      if (!colorObj || typeof colorObj !== 'object') continue
+      for (const [key, val] of Object.entries(colorObj)) {
+        const rawValue = typeof val === 'string' ? val : (val as any)?.$value
+        if (typeof rawValue === 'string' && hexColorRe.test(rawValue)) {
+          if (!colorMap.has(key)) {
+            colorMap.set(key, { name: key, value: rawValue, siteDomain: row.domain, createdAt: row.createdAt })
+          }
+        }
+      }
+      if (colorMap.size >= 20) break
+    }
+
+    const colors = Array.from(colorMap.values()).slice(0, 20)
 
     return NextResponse.json(colors, {
       headers: {

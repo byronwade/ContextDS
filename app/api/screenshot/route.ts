@@ -3,7 +3,7 @@ import { promises as dns } from 'dns'
 import { createHash } from 'crypto'
 import { captureScreenshot, captureMultiViewport } from '@/lib/utils/screenshot'
 import { uploadScreenshot } from '@/lib/storage/blob-storage'
-import { db, screenshots, screenshotContent } from '@/lib/db'
+import { getDb, screenshots, screenshotContent } from '@/lib/db'
 import { eq, asc, sql } from 'drizzle-orm'
 
 export const maxDuration = 60 // Vercel Pro: 60 second timeout
@@ -147,6 +147,7 @@ interface ScreenshotRequest {
  */
 export async function POST(request: NextRequest) {
   try {
+    const db = await getDb()
     const body: ScreenshotRequest = await request.json()
     const { url, siteId, scanId, viewports = ['desktop'], fullPage = false, selector, label } = body
 
@@ -231,7 +232,7 @@ export async function POST(request: NextRequest) {
           // Update last accessed time
           await db
             .update(screenshotContent)
-            .set({ lastAccessed: sql`NOW()` })
+            .set({ lastAccessed: new Date() })
             .where(eq(screenshotContent.sha, sha))
 
           console.log(`♻️  Screenshot reused: ${viewport} (SHA: ${sha.substring(0, 8)}...)`)
@@ -279,7 +280,7 @@ export async function POST(request: NextRequest) {
             set: {
               scanId,
               sha,
-              capturedAt: sql`NOW()`,
+              capturedAt: new Date(),
               selector,
               label,
             },
@@ -329,6 +330,7 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
+    const db = await getDb()
     const searchParams = request.nextUrl.searchParams
     const scanId = searchParams.get('scanId')
 

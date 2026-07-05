@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { getDb } from '@/lib/db'
 import { sites, tokenSets, scans, layoutProfiles, cssSources, cssContent } from '@/lib/db/schema'
-import { eq, and, or, like, ilike, sql, desc } from 'drizzle-orm'
+import { eq, and, or, like, sql, desc } from 'drizzle-orm'
 import { z } from 'zod'
 import { searchRatelimit } from '@/lib/ratelimit'
 
@@ -185,6 +185,7 @@ export async function GET(request: NextRequest) {
 }
 
 async function searchSites(pattern: string, params: SearchParams): Promise<SiteSearchResult[]> {
+  const db = await getDb()
   const rows = await db
     .select({
       id: sites.id,
@@ -211,15 +212,9 @@ async function searchSites(pattern: string, params: SearchParams): Promise<SiteS
       and(
         eq(sites.ownerOptout, false),
         or(
-          params.caseInsensitive
-            ? ilike(sites.domain, pattern)
-            : like(sites.domain, pattern),
-          params.caseInsensitive
-            ? ilike(sites.title, pattern)
-            : like(sites.title, pattern),
-          params.caseInsensitive
-            ? ilike(sites.description, pattern)
-            : like(sites.description, pattern)
+          like(sites.domain, pattern),
+          like(sites.title, pattern),
+          like(sites.description, pattern)
         ),
         params.popularityMin > 0
           ? sql`${sites.popularity} >= ${params.popularityMin}`
@@ -245,184 +240,76 @@ async function searchSites(pattern: string, params: SearchParams): Promise<SiteS
 }
 
 async function searchTokens(pattern: string, params: SearchParams): Promise<TokenSearchResult[]> {
-  console.log(`🔍 Optimized database token search for: "${params.query}"`)
+  const db = await getDb()
+  console.log(`🔍 Token search for: "${params.query}"`)
 
-  try {
-    const searchQuery = params.caseInsensitive ? params.query.toLowerCase() : params.query
+  const searchQuery = params.caseInsensitive ? params.query.toLowerCase() : params.query
 
-    const tokenResults = await db.execute(sql`
-      WITH token_matches AS (
-        SELECT
-          ts.id,
-          ts.site_id,
-          ts.tokens_json,
-          ts.consensus_score,
-          ts.created_at,
-          s.domain,
-          s.title,
-          token_category.key as category,
-          token_item.key as token_name,
-          token_item.value as token_data
-        FROM token_sets ts
-        LEFT JOIN sites s ON ts.site_id = s.id
-        CROSS JOIN LATERAL jsonb_each(ts.tokens_json) AS token_category(key, value)
-        CROSS JOIN LATERAL jsonb_each(token_category.value) AS token_item(key, value)
-        WHERE ts.is_public = true
-          AND token_category.key != '$schema'
-          AND token_category.key != '$metadata'
-          AND jsonb_typeof(token_item.value) = 'object'
-          AND (
-            ${params.caseInsensitive ? sql`
-              LOWER(token_item.key) LIKE ${'%' + searchQuery + '%'}
-              OR LOWER(COALESCE(token_item.value->>'$value', '')) LIKE ${'%' + searchQuery + '%'}
-              OR LOWER(COALESCE(token_item.value->>'$description', '')) LIKE ${'%' + searchQuery + '%'}
-            ` : sql`
-              token_item.key LIKE ${pattern}
-              OR COALESCE(token_item.value->>'$value', '') LIKE ${pattern}
-              OR COALESCE(token_item.value->>'$description', '') LIKE ${pattern}
-            `}
-          )
-          ${params.tokenType && params.tokenType !== 'all' ? sql`
-            AND (
-              token_category.key = ${params.tokenType}
-              OR token_item.value->>'$type' = ${params.tokenType}
-            )
-          ` : sql``}
-          ${params.confidenceMin > 0 ? sql`
-            AND COALESCE(
-              CAST(token_item.value->'$extensions'->>'contextds.confidence' AS INTEGER),
-              CAST(ts.consensus_score AS INTEGER),
-              0
-            ) >= ${params.confidenceMin}
-          ` : sql``}
-      )
-      SELECT
-        tm.id || '-' || tm.token_name as id,
-        'token' as type,
-        tm.token_name as name,
-        COALESCE(tm.token_data->>'$value', tm.token_data->>'value', '') as value,
-        tm.category,
-        tm.domain as site,
-        COALESCE(
-          CAST(tm.token_data->'$extensions'->>'contextds.confidence' AS INTEGER),
-          CAST(tm.consensus_score AS INTEGER),
-          80
-        ) as confidence,
-        COALESCE(
-          CAST(tm.token_data->'$extensions'->>'contextds.usage' AS INTEGER),
-          1
-        ) as usage,
-        tm.domain || '/' || tm.category || '/' || tm.token_name as source,
-        tm.created_at
-      FROM token_matches tm
-      ORDER BY
-        confidence DESC,
-        tm.created_at DESC
-      LIMIT ${params.limit}
-      OFFSET ${params.offset}
-    `)
-
-    type TokenSearchRow = {
-      id: string
-      type: 'token'
-      name: string
-      value: string | null
-      category: string
-      site: string | null
-      confidence: number | string | null
-      usage: number | string | null
-      source: string | null
-    }
-
-    const tokenRows = tokenResults as unknown as TokenSearchRow[]
-
-    const results = tokenRows.map<TokenSearchResult>((row) => {
-      const confidence = toNumber(row.confidence, 80)
-      const usage = toNumber(row.usage, 1)
-      const fallbackSource = row.site ? `${row.site}/${row.category}/${row.name}` : `${row.category}/${row.name}`
-
-      return {
-        id: row.id,
-        type: 'token',
-        name: row.name,
-        value: row.value ?? '',
-        category: row.category,
-        site: row.site,
-        confidence,
-        usage,
-        source: row.source ?? fallbackSource
-      }
+  // Fetch token sets with site domain, then search in JS (SQLite has no jsonb lateral joins)
+  const tokenSetRows = await db
+    .select({
+      id: tokenSets.id,
+      tokensJson: tokenSets.tokensJson,
+      consensusScore: tokenSets.consensusScore,
+      createdAt: tokenSets.createdAt,
+      domain: sites.domain
     })
+    .from(tokenSets)
+    .leftJoin(sites, eq(tokenSets.siteId, sites.id))
+    .where(and(eq(tokenSets.isPublic, true), sql`${tokenSets.tokensJson} IS NOT NULL`))
+    .orderBy(desc(tokenSets.createdAt))
+    .limit(200)
 
-    console.log(`✅ Database search completed: ${results.length} tokens found`)
-    return results
+  const processedResults: TokenSearchResult[] = []
 
-  } catch (error) {
-    console.error('❌ Optimized token search failed, falling back to simple search:', error)
+  for (const tokenSet of tokenSetRows) {
+    if (!isRecord(tokenSet.tokensJson)) continue
 
-    const fallbackResults = await db
-      .select({
-        id: tokenSets.id,
-        tokensJson: tokenSets.tokensJson,
-        consensusScore: tokenSets.consensusScore,
-        domain: sites.domain
-      })
-      .from(tokenSets)
-      .leftJoin(sites, eq(tokenSets.siteId, sites.id))
-      .where(
-        and(
-          eq(tokenSets.isPublic, true),
-          sql`${tokenSets.tokensJson}::text ILIKE ${'%' + params.query + '%'}`
-        )
-      )
-      .orderBy(desc(tokenSets.consensusScore))
-      .limit(params.limit)
+    for (const [category, categoryTokens] of Object.entries(tokenSet.tokensJson as Record<string, unknown>)) {
+      if (category.startsWith('$') || !isRecord(categoryTokens)) continue
+      if (params.tokenType && params.tokenType !== 'all' && category !== params.tokenType) continue
 
-    type FallbackRow = {
-      id: string
-      tokensJson: unknown
-      consensusScore: string | number | null
-      domain: string | null
-    }
-
-    const processedResults: TokenSearchResult[] = []
-
-    ;(fallbackResults as FallbackRow[]).forEach((tokenSet) => {
-      if (!isRecord(tokenSet.tokensJson)) {
-        return
-      }
-
-      Object.entries(tokenSet.tokensJson as Record<string, unknown>).forEach(([category, categoryTokens]) => {
-        if (category.startsWith('$') || !isRecord(categoryTokens)) {
-          return
-        }
-
-        const [tokenName, tokenData] = Object.entries(categoryTokens)[0] ?? []
-        if (!tokenName || !isRecord(tokenData)) {
-          return
-        }
+      for (const [tokenName, tokenData] of Object.entries(categoryTokens as Record<string, unknown>)) {
+        if (!isRecord(tokenData)) continue
 
         const entry = tokenData as TokenEntry
+        const entryValue = getTokenEntryValue(entry)
+        const entryDesc = typeof entry.$description === 'string' ? entry.$description : ''
+
+        const nameToCheck = params.caseInsensitive ? tokenName.toLowerCase() : tokenName
+        const valueToCheck = params.caseInsensitive ? entryValue.toLowerCase() : entryValue
+        const descToCheck = params.caseInsensitive ? entryDesc.toLowerCase() : entryDesc
+
+        if (!nameToCheck.includes(searchQuery) && !valueToCheck.includes(searchQuery) && !descToCheck.includes(searchQuery)) continue
+
+        const confidence = toNumber(tokenSet.consensusScore, 80)
+        if (params.confidenceMin > 0 && confidence < params.confidenceMin) continue
 
         processedResults.push({
           id: `${tokenSet.id}-${tokenName}`,
           type: 'token',
           name: tokenName,
-          value: getTokenEntryValue(entry),
+          value: entryValue,
           category,
-          site: tokenSet.domain,
-          confidence: toNumber(tokenSet.consensusScore, 80),
+          site: tokenSet.domain ?? null,
+          confidence,
           usage: 1,
           source: tokenSet.domain ? `${tokenSet.domain}/${category}/${tokenName}` : `${category}/${tokenName}`
         })
-      })
-    })
 
-    return processedResults.slice(0, params.limit)
+        if (processedResults.length >= params.limit + params.offset) break
+      }
+      if (processedResults.length >= params.limit + params.offset) break
+    }
+    if (processedResults.length >= params.limit + params.offset) break
   }
+
+  console.log(`✅ Token search completed: ${processedResults.length} tokens found`)
+  return processedResults.slice(params.offset, params.offset + params.limit)
 }
 
 async function searchLayouts(params: SearchParams): Promise<LayoutSearchResult[]> {
+  const db = await getDb()
   const layoutRows = await db
     .select({
       id: layoutProfiles.id,
@@ -509,6 +396,7 @@ function getTokenEntryValue(entry: TokenEntry): string {
 }
 
 async function searchCode(params: SearchParams): Promise<CodeSearchResult[]> {
+  const db = await getDb()
   const cssRows = await db
     .select({
       id: cssSources.id,

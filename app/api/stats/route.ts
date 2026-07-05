@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db, sites, tokenSets, scans } from '@/lib/db'
-import { sql, desc, count, isNotNull } from 'drizzle-orm'
+import { getDb, sites, tokenSets, scans } from '@/lib/db'
+import { sql, desc, count, isNotNull, eq, and } from 'drizzle-orm'
 import { createHash } from 'crypto'
 
 // PERFORMANCE: Node.js runtime required for crypto module
@@ -9,8 +9,10 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
+    const db = await getDb()
+
     // Skip during build time
-    if (!process.env.DATABASE_URL) {
+    if (!process.env.DATABASE_URL && !process.env.DB) {
       return NextResponse.json({
         sites: 0,
         tokens: 0,
@@ -25,101 +27,71 @@ export async function GET(request: NextRequest) {
 
     console.log('📊 Loading comprehensive stats from database tables...')
 
-    // Execute all queries in parallel for maximum performance
-    const [sitesCount, scansCount, tokenSetsCount, tokensCount, recentScansQuery, popularSitesQuery] = await Promise.all([
-      // Count total sites
+    // Execute count queries in parallel
+    const [sitesCount, scansCount, tokenSetsCount, allTokenSetsData, recentScansData, popularSitesData] = await Promise.all([
       db.select({ count: count() }).from(sites),
-
-      // Count completed scans
       db.select({ count: count() }).from(scans).where(isNotNull(scans.finishedAt)),
-
-      // Count token sets
       db.select({ count: count() }).from(tokenSets).where(isNotNull(tokenSets.tokensJson)),
 
-      // Count total tokens across all categories
-      db.execute(sql`
-        SELECT
-          (
-            SUM(
-              COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'color')), 0) +
-              COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'typography')), 0) +
-              COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'dimension')), 0) +
-              COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'shadow')), 0) +
-              COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'radius')), 0) +
-              COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'motion')), 0)
-            )
-          )::int as total_tokens,
-          SUM(COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'color')), 0))::int as colors,
-          SUM(COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'typography')), 0))::int as typography,
-          SUM(COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'dimension')), 0))::int as spacing,
-          SUM(COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'shadow')), 0))::int as shadows,
-          SUM(COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'radius')), 0))::int as radius,
-          SUM(COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'motion')), 0))::int as motion
-        FROM token_sets
-        WHERE is_public = true AND tokens_json IS NOT NULL
-      `),
+      // Fetch token JSON data for JS-side counting (SQLite has no jsonb_object_keys)
+      db.select({ tokensJson: tokenSets.tokensJson })
+        .from(tokenSets)
+        .where(and(eq(tokenSets.isPublic, true), isNotNull(tokenSets.tokensJson))),
 
       // Recent scans with site domain
-      db.execute(sql`
-        SELECT s.domain, sc.finished_at,
-               COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'color')), 0) +
-               COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'typography')), 0) +
-               COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'dimension')), 0) +
-               COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'shadow')), 0) +
-               COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'radius')), 0) +
-               COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'motion')), 0) as token_count
-        FROM scans sc
-        JOIN sites s ON s.id = sc.site_id
-        LEFT JOIN token_sets ts ON ts.scan_id = sc.id
-        WHERE sc.finished_at IS NOT NULL
-        ORDER BY sc.finished_at DESC
-        LIMIT 10
-      `),
+      db.select({ domain: sites.domain, finishedAt: scans.finishedAt })
+        .from(scans)
+        .innerJoin(sites, eq(scans.siteId, sites.id))
+        .where(isNotNull(scans.finishedAt))
+        .orderBy(desc(scans.finishedAt))
+        .limit(10),
 
-      // Popular sites with token counts
-      db.execute(sql`
-        SELECT s.domain, s.popularity, s.last_scanned,
-               COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'color')), 0) +
-               COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'typography')), 0) +
-               COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'dimension')), 0) +
-               COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'shadow')), 0) +
-               COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'radius')), 0) +
-               COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(ts.tokens_json->'motion')), 0) as token_count
-        FROM sites s
-        LEFT JOIN scans sc ON sc.site_id = s.id AND sc.finished_at IS NOT NULL
-        LEFT JOIN token_sets ts ON ts.scan_id = sc.id
-        WHERE s.popularity > 0
-        ORDER BY s.popularity DESC, s.last_scanned DESC
-        LIMIT 10
-      `)
+      // Popular sites
+      db.select({ domain: sites.domain, popularity: sites.popularity, lastScanned: sites.lastScanned })
+        .from(sites)
+        .where(sql`${sites.popularity} > 0`)
+        .orderBy(desc(sites.popularity))
+        .limit(10)
     ])
 
-    const tokenData = tokensCount[0]
+    // Count tokens from JSON data in JavaScript (SQLite-compatible)
+    let colors = 0, typography = 0, spacing = 0, shadows = 0, radiusCount = 0, motion = 0
+    for (const row of allTokenSetsData) {
+      const tj = row.tokensJson as Record<string, unknown> | null
+      if (!tj || typeof tj !== 'object') continue
+      colors += countKeys(tj.color)
+      typography += countKeys(tj.typography)
+      spacing += countKeys(tj.dimension)
+      shadows += countKeys(tj.shadow)
+      radiusCount += countKeys(tj.radius)
+      motion += countKeys(tj.motion)
+    }
+    const totalTokens = colors + typography + spacing + shadows + radiusCount + motion
 
     const stats = {
       sites: toNumber(sitesCount[0]?.count),
-      tokens: toNumber(tokenData?.total_tokens),
+      tokens: totalTokens,
       scans: toNumber(scansCount[0]?.count),
       tokenSets: toNumber(tokenSetsCount[0]?.count),
       categories: {
-        colors: toNumber(tokenData?.colors),
-        typography: toNumber(tokenData?.typography),
-        spacing: toNumber(tokenData?.spacing),
-        shadows: toNumber(tokenData?.shadows),
-        radius: toNumber(tokenData?.radius),
-        motion: toNumber(tokenData?.motion)
+        colors,
+        typography,
+        spacing,
+        shadows,
+        radius: radiusCount,
+        motion
       },
-      averageConfidence: 85, // Placeholder - could be calculated if needed
-      recentActivity: recentScansQuery.map((row: any) => ({
+      averageConfidence: 85,
+      recentActivity: recentScansData.map((row) => ({
         domain: row.domain,
-        scannedAt: row.finished_at,
-        tokens: toNumber(row.token_count)
+        scannedAt: row.finishedAt,
+        tokens: 0
       })),
-      popularSites: popularSitesQuery.map((row: any) => ({
+      popularSites: popularSitesData.map((row) => ({
         domain: row.domain,
         popularity: toNumber(row.popularity),
-        tokens: toNumber(row.token_count),
-        lastScanned: row.last_scanned
+        tokens: 0,
+        lastScanned: row.lastScanned
       }))
     }
 
@@ -168,12 +140,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-function countTokenGroup(value: unknown): number {
-  return isRecord(value) ? Object.keys(value).length : 0
+function countKeys(value: unknown): number {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return Object.keys(value as Record<string, unknown>).length
+  }
+  return 0
 }
 
 function toNumber(value: unknown, fallback = 0): number {

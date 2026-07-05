@@ -1,8 +1,8 @@
 import { createHash } from 'crypto'
 import { captureScreenshot } from './screenshot'
 import { uploadScreenshot } from '@/lib/storage/blob-storage'
-import { db, screenshots, screenshotContent } from '@/lib/db'
-import { eq, sql } from 'drizzle-orm'
+import { getDb, screenshots, screenshotContent } from '@/lib/db'
+import { eq } from 'drizzle-orm'
 
 interface CaptureScreenshotsOptions {
   url: string
@@ -28,6 +28,7 @@ interface ScreenshotResult {
 export async function captureScreenshotsForScan(
   options: CaptureScreenshotsOptions
 ): Promise<{ success: boolean; screenshots: ScreenshotResult[]; count: number; error?: string }> {
+  const db = await getDb()
   const { url, siteId, scanId, viewports = ['desktop'], fullPage = false, selector, label } = options
 
   console.log('[screenshot-capture] Starting capture for:', { url, scanId, viewports })
@@ -81,7 +82,7 @@ export async function captureScreenshotsForScan(
         // Update last accessed time
         await db
           .update(screenshotContent)
-          .set({ lastAccessed: sql`NOW()` })
+          .set({ lastAccessed: new Date() })
           .where(eq(screenshotContent.sha, sha))
 
         console.log(`[screenshot-capture] ♻️  Screenshot reused: ${viewport} (SHA: ${sha.substring(0, 8)}...)`)
@@ -132,7 +133,7 @@ export async function captureScreenshotsForScan(
           set: {
             scanId,
             sha,
-            capturedAt: sql`NOW()`,
+            capturedAt: new Date(),
             selector,
             label,
           },

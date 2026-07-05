@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db, tokenSets, tokenVersions, sites } from '@/lib/db'
+import { getDb, tokenSets, sites } from '@/lib/db'
 import { eq, desc } from 'drizzle-orm'
 
 /**
@@ -11,6 +11,7 @@ export async function GET(
   { params }: { params: Promise<{ domain: string }> }
 ) {
   try {
+    const db = await getDb()
     const { domain: rawDomain } = await params
     const domain = decodeURIComponent(rawDomain)
 

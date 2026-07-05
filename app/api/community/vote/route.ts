@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/lib/db"
+import { getDb } from "@/lib/db"
 import { sites } from "@/lib/db/schema"
 import { eq, sql } from "drizzle-orm"
 import { redis } from "@/lib/ratelimit"
@@ -7,6 +7,7 @@ import { createHash } from "crypto"
 
 export async function POST(request: NextRequest) {
   try {
+    const db = await getDb()
     const { siteId, voteType } = await request.json()
 
     // Validate input

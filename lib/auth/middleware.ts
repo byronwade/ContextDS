@@ -89,9 +89,11 @@ export async function authenticateApiKey(request: NextRequest): Promise<string |
 
   try {
     // Import here to avoid circular dependencies
-    const { db } = await import('@/lib/db')
+    const { getDb } = await import('@/lib/db')
     const { apiKeys } = await import('@/lib/db/schema')
     const { eq, and, gt } = await import('drizzle-orm')
+
+    const db = await getDb()
 
     // Query database for API key
     const [keyRecord] = await db

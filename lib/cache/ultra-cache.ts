@@ -4,7 +4,7 @@
  */
 
 import { LRUCache } from 'lru-cache'
-import { db, sites, scans, tokenSets, layoutProfiles } from '@/lib/db'
+import { getDb, sites, scans, tokenSets, layoutProfiles } from '@/lib/db'
 import { eq, desc } from 'drizzle-orm'
 import { hash } from 'crypto'
 
@@ -315,6 +315,7 @@ export class UltraCache {
 
   // Try to get recent scan from database (medium path - 50-150ms)
   async tryDatabaseCache(params: CacheKey): Promise<CachedScanResult | null> {
+    const db = await getDb()
     const domain = new URL(params.url).hostname
 
     console.log(`🗄️ Checking database cache for ${domain}`)

@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { db, scans, sites } from '@/lib/db'
+import { getDb, scans, sites } from '@/lib/db'
 import { eq, desc } from 'drizzle-orm'
 import { exportForLLM } from '@/lib/exporters/llm-format'
 
@@ -13,6 +13,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
+    const db = await getDb()
     const { searchParams } = new URL(request.url)
     const domain = searchParams.get('domain')
     const scanId = searchParams.get('scanId')
@@ -97,6 +98,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const db = await getDb()
     const body = await request.json()
     const { domain, format = 'json' } = body
 

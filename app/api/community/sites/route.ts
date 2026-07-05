@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/lib/db"
+import { getDb } from "@/lib/db"
 import { sites, tokenSets, scans } from "@/lib/db/schema"
 import { desc, sql, count, eq } from "drizzle-orm"
 
@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic"
 
 export async function GET(request: NextRequest) {
   try {
+    const db = await getDb()
     const { searchParams } = new URL(request.url)
     const sortBy = searchParams.get("sort") || "votes"
     const limit = parseInt(searchParams.get("limit") || "50")

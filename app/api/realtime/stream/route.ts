@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { addConnection, removeConnection, broadcast } from '@/lib/realtime/connections'
-import { db, sites, tokenSets, scans } from '@/lib/db'
-import { sql, count, isNotNull } from 'drizzle-orm'
+import { getDb, sites, tokenSets, scans } from '@/lib/db'
+import { sql, count, isNotNull, eq, and } from 'drizzle-orm'
 
 export const runtime = 'nodejs'
 let currentMetrics = {
@@ -20,44 +20,37 @@ const activities: Array<any> = []
 async function fetchRealMetrics() {
   try {
     // Skip during build time
-    if (!process.env.DATABASE_URL) {
+    if (!process.env.DATABASE_URL && !process.env.DB) {
       return currentMetrics
     }
 
+    const db = await getDb()
+
     // Execute queries in parallel for maximum performance
-    const [sitesCount, scansCount, tokenSetsCount, tokensCount] = await Promise.all([
-      // Count total sites
+    const [sitesCount, scansCount, tokenSetsCount, tokenSetRows] = await Promise.all([
       db.select({ count: count() }).from(sites),
-
-      // Count completed scans
       db.select({ count: count() }).from(scans).where(isNotNull(scans.finishedAt)),
-
-      // Count token sets
       db.select({ count: count() }).from(tokenSets).where(isNotNull(tokenSets.tokensJson)),
-
-      // Count total tokens across all categories
-      db.execute(sql`
-        SELECT
-          (
-            SUM(
-              COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'color')), 0) +
-              COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'typography')), 0) +
-              COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'dimension')), 0) +
-              COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'shadow')), 0) +
-              COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'radius')), 0) +
-              COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'motion')), 0)
-            )
-          )::int as total_tokens
-        FROM token_sets
-        WHERE is_public = true AND tokens_json IS NOT NULL
-      `)
+      db.select({ tokensJson: tokenSets.tokensJson })
+        .from(tokenSets)
+        .where(and(eq(tokenSets.isPublic, true), isNotNull(tokenSets.tokensJson)))
     ])
 
-    const tokenData = tokensCount[0]
+    // Count tokens in JS (SQLite has no jsonb_object_keys)
+    let totalTokenCount = 0
+    for (const row of tokenSetRows) {
+      const tj = row.tokensJson as any
+      if (!tj || typeof tj !== 'object') continue
+      for (const cat of ['color', 'typography', 'dimension', 'shadow', 'radius', 'motion']) {
+        if (tj[cat] && typeof tj[cat] === 'object') {
+          totalTokenCount += Object.keys(tj[cat]).length
+        }
+      }
+    }
 
     return {
       totalScans: toNumber(scansCount[0]?.count),
-      totalTokens: toNumber(tokenData?.total_tokens),
+      totalTokens: totalTokenCount,
       totalSites: toNumber(sitesCount[0]?.count),
       activeScans: 0, // This would come from active scan tracking
       queueLength: 0, // This would come from queue system

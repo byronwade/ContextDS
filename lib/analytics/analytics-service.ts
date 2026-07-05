@@ -3,7 +3,7 @@
  * Easy-to-use functions for extracting any metric from any corner of the database
  */
 
-import { db } from '@/lib/db'
+import { getDb } from '@/lib/db'
 import { sql, eq, desc, and, gte, lte, count, avg, sum } from 'drizzle-orm'
 import {
   analyticsEvents,
@@ -21,6 +21,7 @@ import { sites, tokenSets, scans } from '@/lib/db/schema'
 // ============================================================================
 
 export async function trackEvent(event: NewAnalyticsEvent) {
+  const db = await getDb()
   return await db.insert(analyticsEvents).values(event).returning()
 }
 
@@ -35,6 +36,7 @@ export async function trackPageView(url: string, sessionId: string, properties?:
 }
 
 export async function trackSearch(query: string, sessionId: string, userId?: string) {
+  const db = await getDb()
   const normalized = query.toLowerCase().trim()
 
   return await db.insert(searchAnalytics).values({
@@ -53,6 +55,7 @@ export async function trackSearch(query: string, sessionId: string, userId?: str
  * Get sites with neutral colors
  */
 export async function getSitesWithNeutralColors(minCount: number = 5) {
+  const db = await getDb()
   return await db
     .select({
       domain: sites.domain,
@@ -70,6 +73,7 @@ export async function getSitesWithNeutralColors(minCount: number = 5) {
  * Get sites with specific color (e.g., blue)
  */
 export async function getSitesByColorType(colorType: 'blue' | 'red' | 'green', minCount: number = 1) {
+  const db = await getDb()
   const colorField = colorType === 'blue' ? tokenAnalytics.blueColors :
                      colorType === 'red' ? tokenAnalytics.redColors :
                      tokenAnalytics.greenColors
@@ -91,6 +95,7 @@ export async function getSitesByColorType(colorType: 'blue' | 'red' | 'green', m
  * Get sites with rounded corners
  */
 export async function getSitesWithRoundedCorners() {
+  const db = await getDb()
   return await db
     .select({
       domain: sites.domain,
@@ -109,6 +114,7 @@ export async function getSitesWithRoundedCorners() {
  * Get design system maturity scores
  */
 export async function getDesignSystemMaturity() {
+  const db = await getDb()
   return await db
     .select({
       domain: sites.domain,
@@ -129,6 +135,7 @@ export async function getDesignSystemMaturity() {
  * Get domains by TLD (e.g., .com, .org)
  */
 export async function getDomainsByTLD(tld: string) {
+  const db = await getDb()
   return await db
     .select()
     .from(domainAnalytics)
@@ -140,6 +147,7 @@ export async function getDomainsByTLD(tld: string) {
  * Get all TLD statistics
  */
 export async function getTLDStatistics() {
+  const db = await getDb()
   return await db
     .select({
       tld: domainAnalytics.tld,
@@ -156,6 +164,7 @@ export async function getTLDStatistics() {
  * Get most searched websites
  */
 export async function getMostSearchedWebsites(limit: number = 100) {
+  const db = await getDb()
   return await db
     .select()
     .from(domainAnalytics)
@@ -167,6 +176,7 @@ export async function getMostSearchedWebsites(limit: number = 100) {
  * Get most viewed websites
  */
 export async function getMostViewedWebsites(limit: number = 100) {
+  const db = await getDb()
   return await db
     .select()
     .from(domainAnalytics)
@@ -182,6 +192,7 @@ export async function getMostViewedWebsites(limit: number = 100) {
  * Get search trends for a period
  */
 export async function getSearchTrends(days: number = 30) {
+  const db = await getDb()
   const since = new Date()
   since.setDate(since.getDate() - days)
 
@@ -191,7 +202,7 @@ export async function getSearchTrends(days: number = 30) {
       searchCount: count(),
       avgResults: avg(searchAnalytics.resultsCount),
       clickThroughRate: sql<number>`
-        ROUND((COUNT(*) FILTER (WHERE ${searchAnalytics.clickedSiteId} IS NOT NULL)::DECIMAL / COUNT(*)) * 100, 2)
+        ROUND(CAST(SUM(CASE WHEN ${searchAnalytics.clickedSiteId} IS NOT NULL THEN 1 ELSE 0 END) AS REAL) / COUNT(*) * 100, 2)
       `
     })
     .from(searchAnalytics)
@@ -205,6 +216,7 @@ export async function getSearchTrends(days: number = 30) {
  * Get searches for a specific website
  */
 export async function getSearchesForWebsite(domain: string) {
+  const db = await getDb()
   return await db
     .select({
       query: searchAnalytics.query,
@@ -212,7 +224,7 @@ export async function getSearchesForWebsite(domain: string) {
       lastSearched: sql<Date>`MAX(${searchAnalytics.createdAt})`
     })
     .from(searchAnalytics)
-    .where(sql`${searchAnalytics.query} ILIKE ${'%' + domain + '%'}`)
+    .where(sql`LOWER(${searchAnalytics.query}) LIKE LOWER(${'%' + domain + '%'})`)
     .groupBy(searchAnalytics.query)
     .orderBy(desc(count()))
 }
@@ -225,6 +237,7 @@ export async function getSearchesForWebsite(domain: string) {
  * Get performance metrics for a page
  */
 export async function getPagePerformanceMetrics(pageUrl: string, days: number = 30) {
+  const db = await getDb()
   const since = new Date()
   since.setDate(since.getDate() - days)
 
@@ -248,6 +261,7 @@ export async function getPagePerformanceMetrics(pageUrl: string, days: number = 
  * Get geographic distribution
  */
 export async function getGeographicDistribution(days: number = 30) {
+  const db = await getDb()
   const since = new Date()
   since.setDate(since.getDate() - days)
 
@@ -267,6 +281,7 @@ export async function getGeographicDistribution(days: number = 30) {
  * Get device distribution
  */
 export async function getDeviceDistribution(days: number = 30) {
+  const db = await getDb()
   const since = new Date()
   since.setDate(since.getDate() - days)
 
@@ -291,6 +306,7 @@ export async function getDeviceDistribution(days: number = 30) {
  * Get comprehensive site analytics
  */
 export async function getSiteAnalytics(domain: string) {
+  const db = await getDb()
   const [siteData] = await db
     .select()
     .from(sites)
@@ -327,6 +343,7 @@ export async function getSiteAnalytics(domain: string) {
  * Get dashboard overview statistics
  */
 export async function getDashboardOverview() {
+  const db = await getDb()
   const [totalSites] = await db.select({ count: count() }).from(sites)
   const [totalScans] = await db.select({ count: count() }).from(scans)
   const [totalTokenSets] = await db.select({ count: count() }).from(tokenSets)
@@ -363,12 +380,13 @@ export async function getDashboardOverview() {
  * Get token distribution statistics
  */
 export async function getTokenDistribution() {
+  const db = await getDb()
   const colorStats = await db
     .select({
       avg: avg(tokenAnalytics.totalColors),
       min: sql<number>`MIN(${tokenAnalytics.totalColors})`,
       max: sql<number>`MAX(${tokenAnalytics.totalColors})`,
-      stddev: sql<number>`STDDEV(${tokenAnalytics.totalColors})`
+      stddev: sql<number>`NULL`
     })
     .from(tokenAnalytics)
 
@@ -391,6 +409,7 @@ export async function getTokenDistribution() {
 // ============================================================================
 
 export async function refreshAnalyticsViews() {
+  const db = await getDb()
   await db.execute(sql`SELECT refresh_analytics_views()`)
 }
 

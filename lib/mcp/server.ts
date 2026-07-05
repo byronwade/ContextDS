@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { db, sites, scans, tokenSets, layoutProfiles, queryWithMetrics } from '../db'
+import { getDb, sites, scans, tokenSets, layoutProfiles, orgArtifacts, tokenVotes, queryWithMetrics } from '../db'
 import { eq, desc, and, or, sql } from 'drizzle-orm'
 import { intelligentCache } from '../cache/intelligent-cache'
 
@@ -219,25 +219,29 @@ export class MCPServer {
 
   async layoutProfile(params: z.infer<typeof layoutProfileSchema>) {
     try {
+      const db = await getDb()
       const domain = new URL(params.url).hostname
 
-      const site = await db.query.sites.findFirst({
-        where: (sites, { eq }) => eq(sites.domain, domain),
-        with: {
-          layoutProfiles: {
-            orderBy: (profiles, { desc }) => desc(profiles.createdAt),
-            limit: 1
-          }
-        }
-      })
+      const [site] = await db
+        .select({ id: sites.id })
+        .from(sites)
+        .where(eq(sites.domain, domain))
+        .limit(1)
 
-      if (!site || site.layoutProfiles.length === 0) {
-        return {
-          error: 'No layout profile found for this site.'
-        }
+      if (!site) {
+        return { error: 'No layout profile found for this site.' }
       }
 
-      const profile = site.layoutProfiles[0]
+      const [profile] = await db
+        .select()
+        .from(layoutProfiles)
+        .where(eq(layoutProfiles.siteId, site.id))
+        .orderBy(desc(layoutProfiles.createdAt))
+        .limit(1)
+
+      if (!profile) {
+        return { error: 'No layout profile found for this site.' }
+      }
 
       return profile.profileJson
 
@@ -251,26 +255,34 @@ export class MCPServer {
 
   async researchCompanyArtifacts(params: z.infer<typeof researchCompanyArtifactsSchema>) {
     try {
+      const db = await getDb()
       const domain = new URL(params.url).hostname
 
-      // Check for existing artifacts
-      const site = await db.query.sites.findFirst({
-        where: (sites, { eq }) => eq(sites.domain, domain),
-        with: {
-          orgArtifacts: true
-        }
-      })
+      // Find site
+      const [site] = await db
+        .select({ id: sites.id })
+        .from(sites)
+        .where(eq(sites.domain, domain))
+        .limit(1)
 
-      if (site?.orgArtifacts.length) {
-        const artifacts = site.orgArtifacts[0]
-        return {
-          docs: artifacts.docsUrls || [],
-          storybook: artifacts.storybookUrl,
-          figma: artifacts.figmaUrl,
-          github: artifacts.githubOrg ? {
-            org: artifacts.githubOrg,
-            repos: artifacts.reposJson || []
-          } : undefined
+      // Check for existing artifacts
+      if (site) {
+        const [existingArtifact] = await db
+          .select()
+          .from(orgArtifacts)
+          .where(eq(orgArtifacts.siteId, site.id))
+          .limit(1)
+
+        if (existingArtifact) {
+          return {
+            docs: existingArtifact.docsUrls || [],
+            storybook: existingArtifact.storybookUrl,
+            figma: existingArtifact.figmaUrl,
+            github: existingArtifact.githubOrg ? {
+              org: existingArtifact.githubOrg,
+              repos: existingArtifact.reposJson || []
+            } : undefined
+          }
         }
       }
 
@@ -279,7 +291,7 @@ export class MCPServer {
 
       // Store results
       if (site) {
-        await db.insert(db.orgArtifacts).values({
+        await db.insert(orgArtifacts).values({
           siteId: site.id,
           docsUrls: artifacts.docs,
           storybookUrl: artifacts.storybook,
@@ -352,8 +364,10 @@ The site uses a ${params.layout_profile?.containers?.maxWidth || 'unknown'} max-
 
   async voteToken(params: z.infer<typeof voteTokenSchema>, userId: string) {
     try {
+      const db = await getDb()
+
       // Store vote
-      await db.insert(db.tokenVotes).values({
+      await db.insert(tokenVotes).values({
         tokenSetId: params.token_set_id,
         tokenKey: params.token_key,
         voteType: params.vote_type,
@@ -362,12 +376,13 @@ The site uses a ${params.layout_profile?.containers?.maxWidth || 'unknown'} max-
       })
 
       // Calculate new confidence score (simplified)
-      const votes = await db.query.tokenVotes.findMany({
-        where: (votes, { eq, and }) => and(
-          eq(votes.tokenSetId, params.token_set_id),
-          eq(votes.tokenKey, params.token_key)
-        )
-      })
+      const votes = await db
+        .select()
+        .from(tokenVotes)
+        .where(and(
+          eq(tokenVotes.tokenSetId, params.token_set_id),
+          eq(tokenVotes.tokenKey, params.token_key)
+        ))
 
       const correctVotes = votes.filter(v => v.voteType === 'correct').length
       const totalVotes = votes.length
@@ -443,6 +458,7 @@ The site uses a ${params.layout_profile?.containers?.maxWidth || 'unknown'} max-
   // Optimized database operations with performance monitoring
   private async upsertSite(domain: string, result: any): Promise<any> {
     return queryWithMetrics(async () => {
+      const db = await getDb()
       try {
         // Check if site exists using optimized query
         const existing = await db.select()
@@ -488,6 +504,7 @@ The site uses a ${params.layout_profile?.containers?.maxWidth || 'unknown'} max-
 
   private async storeScanResult(siteId: string, result: any, userId?: string): Promise<void> {
     return queryWithMetrics(async () => {
+      const db = await getDb()
       try {
         // Create comprehensive scan record
         const [scanRecord] = await db.insert(scans).values({
@@ -562,6 +579,7 @@ The site uses a ${params.layout_profile?.containers?.maxWidth || 'unknown'} max-
 
     // Query database with performance monitoring
     const siteData = await queryWithMetrics(async () => {
+      const db = await getDb()
       const result = await db.select({
         id: sites.id,
         domain: sites.domain,
@@ -604,6 +622,7 @@ The site uses a ${params.layout_profile?.containers?.maxWidth || 'unknown'} max-
 
     // Optimized database query
     const tokenData = await queryWithMetrics(async () => {
+      const db = await getDb()
       const results = await db.select({
         id: tokenSets.id,
         tokensJson: tokenSets.tokensJson,

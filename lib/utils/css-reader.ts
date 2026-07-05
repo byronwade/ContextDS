@@ -1,5 +1,5 @@
-import { db, cssContent, cssSources } from '@/lib/db'
-import { eq } from 'drizzle-orm'
+import { getDb, cssContent, cssSources } from '@/lib/db'
+import { eq, count, sql } from 'drizzle-orm'
 import { decompressCss } from './css-compression'
 
 /**
@@ -9,9 +9,7 @@ import { decompressCss } from './css-compression'
  * @returns Decompressed CSS string or null if not found
  */
 export async function readCssBySha(sha: string): Promise<string | null> {
-  if (!db) {
-    throw new Error('Database not initialized')
-  }
+  const db = await getDb()
 
   const records = await db
     .select()
@@ -50,9 +48,7 @@ export async function readCssForScan(scanId: string): Promise<Array<{
   kind: string
   content: string | null
 }>> {
-  if (!db) {
-    throw new Error('Database not initialized')
-  }
+  const db = await getDb()
 
   // Get all CSS source references for this scan
   const sources = await db
@@ -88,31 +84,23 @@ export async function getDeduplicationStats(): Promise<{
   uniqueBytes: number
   storageEfficiency: number
 }> {
-  if (!db) {
-    throw new Error('Database not initialized')
-  }
+  const db = await getDb()
 
   // Count total CSS sources
-  const totalSourcesResult = await db.execute<{ count: number }>(
-    'SELECT COUNT(*) as count FROM css_sources'
-  )
-  const totalSources = Number(totalSourcesResult.rows[0]?.count || 0)
+  const [totalSourcesResult] = await db.select({ count: count() }).from(cssSources)
+  const totalSources = Number(totalSourcesResult?.count || 0)
 
   // Count unique CSS content
-  const uniqueContentResult = await db.execute<{ count: number }>(
-    'SELECT COUNT(*) as count FROM css_content'
-  )
-  const uniqueContent = Number(uniqueContentResult.rows[0]?.count || 0)
+  const [uniqueContentResult] = await db.select({ count: count() }).from(cssContent)
+  const uniqueContent = Number(uniqueContentResult?.count || 0)
 
-  // Calculate total bytes if stored separately
-  const totalBytes = totalSources > 0 ? await db.execute<{ sum: number }>(
-    'SELECT SUM(bytes) as sum FROM css_sources'
-  ).then(r => Number(r.rows[0]?.sum || 0)) : 0
+  // Calculate total bytes
+  const [totalBytesResult] = await db.select({ sum: sql<number>`SUM(bytes)` }).from(cssSources)
+  const totalBytes = Number(totalBytesResult?.sum || 0)
 
   // Calculate actual storage used (deduplicated)
-  const uniqueBytes = uniqueContent > 0 ? await db.execute<{ sum: number }>(
-    'SELECT SUM(compressed_bytes) as sum FROM css_content'
-  ).then(r => Number(r.rows[0]?.sum || 0)) : 0
+  const [uniqueBytesResult] = await db.select({ sum: sql<number>`SUM(compressed_bytes)` }).from(cssContent)
+  const uniqueBytes = Number(uniqueBytesResult?.sum || 0)
 
   const deduplicationRate = totalSources > 0
     ? Math.round(((totalSources - uniqueContent) / totalSources) * 100)

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { getDb } from '@/lib/db'
 import { sites, tokenSets, scans } from '@/lib/db/schema'
-import { count, sql } from 'drizzle-orm'
+import { count, sql, isNotNull, eq, and } from 'drizzle-orm'
 
 /**
  * Ultra-fast real-time stats endpoint
@@ -10,8 +10,10 @@ import { count, sql } from 'drizzle-orm'
  */
 export async function GET() {
   try {
+    const db = await getDb()
+
     // Skip during build time
-    if (!process.env.DATABASE_URL) {
+    if (!process.env.DATABASE_URL && !process.env.DB) {
       return NextResponse.json({
         sites: 0,
         tokens: 0,
@@ -23,37 +25,32 @@ export async function GET() {
     const startTime = Date.now()
 
     // Parallel queries for maximum speed
-    const [siteCount, scanCount, tokenCount] = await Promise.all([
-      // Count sites
+    const [siteCount, scanCount, tokenSetRows] = await Promise.all([
       db.select({ count: count() }).from(sites),
-
-      // Count scans
       db.select({ count: count() }).from(scans),
-
-      // Fast token count using database aggregation
-      db.execute(sql`
-        SELECT
-          (
-            SUM(
-              COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'color')), 0) +
-              COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'typography')), 0) +
-              COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'dimension')), 0) +
-              COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'shadow')), 0) +
-              COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'radius')), 0) +
-              COALESCE((SELECT COUNT(*) FROM jsonb_object_keys(tokens_json->'motion')), 0)
-            )
-          )::int as total_tokens
-        FROM token_sets
-        WHERE is_public = true AND tokens_json IS NOT NULL
-      `)
+      db.select({ tokensJson: tokenSets.tokensJson })
+        .from(tokenSets)
+        .where(and(eq(tokenSets.isPublic, true), isNotNull(tokenSets.tokensJson)))
     ])
+
+    // Count tokens in JS (SQLite has no jsonb_object_keys)
+    let totalTokens = 0
+    for (const row of tokenSetRows) {
+      const tj = row.tokensJson as any
+      if (!tj || typeof tj !== 'object') continue
+      for (const cat of ['color', 'typography', 'dimension', 'shadow', 'radius', 'motion']) {
+        if (tj[cat] && typeof tj[cat] === 'object') {
+          totalTokens += Object.keys(tj[cat]).length
+        }
+      }
+    }
 
     const queryTime = Date.now() - startTime
 
     const result = {
       sites: Number(siteCount[0]?.count || 0),
       scans: Number(scanCount[0]?.count || 0),
-      tokens: Number(tokenCount[0]?.total_tokens || 0),
+      tokens: totalTokens,
       queryTime,
       timestamp: new Date().toISOString()
     }

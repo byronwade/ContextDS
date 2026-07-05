@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
-import { db, scans, sites } from '@/lib/db'
+import { getDb, scans, sites } from '@/lib/db'
 import { desc, eq } from 'drizzle-orm'
 
 export async function GET() {
+  const db = await getDb()
   const latestScans = await db
     .select({
       id: scans.id,
