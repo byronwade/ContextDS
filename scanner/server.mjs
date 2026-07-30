@@ -26,7 +26,9 @@ async function collectPage(url) {
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 DesignContractsBot/1.0 (+https://designcontracts.sh)',
     })
 
-    await page.goto(url, { waitUntil: 'networkidle', timeout: 45000 })
+    // Prefer domcontentloaded — networkidle hangs on modern SPAs with open sockets.
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 })
+    await new Promise((resolve) => setTimeout(resolve, 1500))
 
     const payload = await page.evaluate(() => {
       const sheets = []

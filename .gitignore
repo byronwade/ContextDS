@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Scanner service local install
+scanner/node_modules/
+scanner/bun.lock
