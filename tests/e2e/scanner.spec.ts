@@ -9,28 +9,19 @@ import { test, expect } from '@playwright/test';
 test.describe('Scanner Basic Functionality', () => {
 	test('should load the homepage successfully', async ({ page }) => {
 		await page.goto('/');
-		await expect(page).toHaveTitle(/ContextDS/i);
+		await expect(page).toHaveTitle(/Design Contracts/i);
 	});
 
-	test('should scan a simple website successfully', async ({ page }) => {
-		test.slow(); // Mark as slow test (3x timeout)
-
+	test('should route homepage URL into the agent', async ({ page }) => {
 		await page.goto('/');
 
-		// Find and fill the URL input
-		const urlInput = page.getByPlaceholder(/enter a website url/i);
+		const urlInput = page.getByPlaceholder('stripe.com');
 		await expect(urlInput).toBeVisible();
-		await urlInput.fill('https://example.com');
+		await urlInput.fill('example.com');
 
-		// Submit the scan
-		const scanButton = page.getByRole('button', { name: /scan/i });
-		await scanButton.click();
-
-		// Wait for results - should see progress or results
-		await expect(page.getByText(/analyzing/i).or(page.getByText(/tokens/i))).toBeVisible({ timeout: 60000 });
-
-		// Verify we got some token results
-		await expect(page.getByText(/colors|typography|spacing/i)).toBeVisible({ timeout: 60000 });
+		await page.getByRole('button', { name: /ask agent/i }).click();
+		await expect(page).toHaveURL(/\/agent\?url=example\.com/);
+		await expect(page.getByText(/scanner as a tool/i)).toBeVisible();
 	});
 
 	test('should show error for invalid URL', async ({ page }) => {
