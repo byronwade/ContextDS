@@ -27,8 +27,8 @@ function StatItem({
   return (
     <div
       className={cn(
-        'relative flex items-baseline gap-1.5 whitespace-nowrap rounded-md px-1.5 py-0.5 transition-colors duration-300',
-        bumped && 'bg-primary/10'
+        'relative flex items-baseline gap-1.5 whitespace-nowrap rounded-[6px] px-1.5 py-0.5 transition-colors duration-300',
+        bumped && 'bg-[var(--ui-accent-soft)]'
       )}
     >
       <AnimatedCounter
@@ -38,16 +38,16 @@ function StatItem({
         emptyLabel={emptyLabel}
         showZero={!emptyLabel}
         className={cn(
-          'font-mono text-[11px] font-semibold tracking-tight',
-          emphasize || bumped ? 'text-primary' : 'text-foreground'
+          'font-mono text-[11px] font-semibold tracking-tight font-tabular',
+          emphasize || bumped ? 'text-[var(--ui-accent)]' : 'text-[var(--ui-ink)]'
         )}
       />
-      <span className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+      <span className="text-[10px] uppercase tracking-[0.08em] text-[var(--ui-ink-muted)]">
         {label}
       </span>
       {bumped ? (
         <span
-          className="pointer-events-none absolute -right-0.5 -top-1 font-mono text-[9px] font-semibold text-primary animate-in fade-in-0 zoom-in-95 duration-300"
+          className="pointer-events-none absolute -right-0.5 -top-1 font-mono text-[9px] font-semibold text-[var(--ui-accent)] animate-in fade-in-0 zoom-in-95 duration-300"
           aria-hidden
         >
           +
@@ -58,7 +58,7 @@ function StatItem({
 }
 
 /**
- * Live Redis-backed platform counters with tick-up animations.
+ * Live Redis-backed platform counters — integrated paper toolbar strip.
  */
 export function AppStatsHeader({ className }: { className?: string }) {
   const stats = useStatsStore((s) => s.stats)
@@ -68,7 +68,6 @@ export function AppStatsHeader({ className }: { className?: string }) {
 
   useEffect(() => startPolling(4_000), [startPolling])
 
-  // Optimistic bumps when this tab tracks an event
   useEffect(() => {
     const onBump = (event: Event) => {
       const detail = (event as CustomEvent<StatsBumpDetail>).detail
@@ -100,7 +99,7 @@ export function AppStatsHeader({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'flex h-9 shrink-0 items-center gap-2 overflow-x-auto border-b border-border bg-[var(--sidebar)]/40 px-2 scrollbar-none sm:gap-3 sm:px-3',
+        'flex h-9 w-full items-center gap-1.5 overflow-x-auto px-2 scrollbar-none sm:gap-2 sm:px-3',
         className
       )}
       aria-label="Platform stats"
@@ -124,25 +123,25 @@ export function AppStatsHeader({ className }: { className?: string }) {
         className="ml-auto hidden items-center gap-1.5 sm:flex"
         title={
           redisLive
-            ? 'Live counters from Upstash Redis — updates every few seconds'
+            ? 'Live counters from Upstash Redis'
             : 'Redis not configured — set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN'
         }
       >
         <span className="relative flex size-1.5">
           <span
             className={cn(
-              'absolute inline-flex size-full animate-ping rounded-full opacity-60',
-              redisLive ? 'bg-emerald-500' : 'bg-amber-400'
+              'absolute inline-flex size-full animate-ping rounded-full opacity-50',
+              redisLive ? 'bg-[var(--ui-success)]' : 'bg-[var(--ui-warning)]'
             )}
           />
           <span
             className={cn(
               'relative inline-flex size-1.5 rounded-full',
-              redisLive ? 'bg-emerald-600' : 'bg-amber-500'
+              redisLive ? 'bg-[var(--ui-success)]' : 'bg-[var(--ui-warning)]'
             )}
           />
         </span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+        <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--ui-ink-muted)]">
           {mode}
         </span>
       </div>

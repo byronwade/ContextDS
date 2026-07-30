@@ -33,19 +33,26 @@ export default function DocsPage() {
   return (
     <AppShell currentPage="docs">
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-12">
-          <h1 className="font-normal tracking-tight text-3xl tracking-tight text-foreground sm:text-4xl">Docs</h1>
-          <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
+        <div className="mx-auto max-w-[760px] px-4 py-8 sm:px-6 sm:py-10">
+          <h1 className="text-[22px] font-semibold tracking-tight text-[var(--ui-ink)] sm:text-[26px]">
+            Docs
+          </h1>
+          <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-[var(--ui-ink-secondary)]">
             Turn any public website into an installable Design Contract — tokens, layout DNA, a
             semantic graph, and agent-ready guidance.
           </p>
 
           <section className="mt-10 space-y-4">
-            <h2 className="text-sm font-medium tracking-tight text-foreground">Quick start</h2>
-            <ol className="list-decimal space-y-3 pl-5 text-sm text-muted-foreground">
+            <h2 className="text-[13px] font-semibold tracking-tight text-[var(--ui-ink)]">
+              Quick start
+            </h2>
+            <ol className="list-decimal space-y-2.5 pl-5 text-[13px] leading-relaxed text-[var(--ui-ink-secondary)]">
               <li>
                 Open{' '}
-                <Link href="/" className="text-foreground underline-offset-4 hover:underline">
+                <Link
+                  href="/"
+                  className="text-[var(--ui-ink)] underline-offset-4 hover:underline"
+                >
                   Chat
                 </Link>{' '}
                 and paste a public URL.
@@ -56,25 +63,28 @@ export default function DocsPage() {
               </li>
               <li>Download the pack and install it with the Design CLI.</li>
             </ol>
-            <pre className="overflow-x-auto rounded-2xl border border-[color:var(--soft-border)] bg-card/60 p-4 font-mono text-xs leading-relaxed">
+            <pre className="overflow-x-auto rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] p-3.5 font-mono text-[12px] leading-relaxed shadow-[var(--shadow-paper)]">
               {`npx --yes github:byronwade/Design init
 npx --yes github:byronwade/Design resolve --request "rebuild the hero"`}
             </pre>
           </section>
 
-          <section className="mt-12 space-y-5">
-            <h2 className="text-sm font-medium tracking-tight text-foreground">HTTP API</h2>
+          <section className="mt-12 space-y-3">
+            <h2 className="text-[13px] font-semibold tracking-tight text-[var(--ui-ink)]">
+              HTTP API
+            </h2>
             {endpoints.map((endpoint) => (
               <article
                 key={endpoint.path}
-                className="space-y-2 rounded-2xl border border-[color:var(--soft-border)] bg-card/40 px-4 py-4"
+                className="space-y-2 rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper)] px-3.5 py-3 shadow-[var(--shadow-paper)]"
               >
-                <p className="font-mono text-sm text-foreground">
-                  <span className="text-muted-foreground">{endpoint.method}</span> {endpoint.path}
+                <p className="font-mono text-[13px] text-[var(--ui-ink)]">
+                  <span className="text-[var(--ui-ink-muted)]">{endpoint.method}</span>{' '}
+                  {endpoint.path}
                 </p>
-                <p className="text-sm text-muted-foreground">{endpoint.note}</p>
+                <p className="text-[13px] text-[var(--ui-ink-secondary)]">{endpoint.note}</p>
                 {endpoint.body ? (
-                  <pre className="overflow-x-auto rounded-xl bg-muted/40 p-3 font-mono text-xs">
+                  <pre className="overflow-x-auto rounded-[8px] bg-[var(--ui-paper-subtle)] p-2.5 font-mono text-[11px]">
                     {endpoint.body}
                   </pre>
                 ) : null}
@@ -83,15 +93,17 @@ npx --yes github:byronwade/Design resolve --request "rebuild the hero"`}
           </section>
 
           <section className="mt-12 space-y-3">
-            <h2 className="text-sm font-medium tracking-tight text-foreground">Chat agent</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="text-[13px] font-semibold tracking-tight text-[var(--ui-ink)]">
+              Chat agent
+            </h2>
+            <p className="text-[13px] leading-relaxed text-[var(--ui-ink-secondary)]">
               Chat uses the Vercel AI SDK + AI Gateway (`ToolLoopAgent`) with tools{' '}
-              <code className="text-foreground">scan_site</code>,{' '}
-              <code className="text-foreground">get_tokens</code>,{' '}
-              <code className="text-foreground">resolve_graph</code>, and{' '}
-              <code className="text-foreground">get_contract_download</code>.
+              <code className="text-[var(--ui-ink)]">scan_site</code>,{' '}
+              <code className="text-[var(--ui-ink)]">get_tokens</code>,{' '}
+              <code className="text-[var(--ui-ink)]">resolve_graph</code>, and{' '}
+              <code className="text-[var(--ui-ink)]">get_contract_download</code>.
             </p>
-            <pre className="overflow-x-auto rounded-2xl border border-[color:var(--soft-border)] bg-card/60 p-4 font-mono text-xs leading-relaxed">
+            <pre className="overflow-x-auto rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] p-3.5 font-mono text-[12px] leading-relaxed shadow-[var(--shadow-paper)]">
               {`POST /api/agent/chat
 { "messages": [ /* UIMessage[] from useChat */ ] }
 
@@ -102,10 +114,12 @@ SCANNER_SERVICE_URL=https://designcontracts-scanner.vercel.app`}
           </section>
 
           <section className="mt-12 space-y-3 pb-16">
-            <h2 className="text-sm font-medium tracking-tight text-foreground">Accurate scans</h2>
-            <p className="text-sm text-muted-foreground">
-              When <code className="text-foreground">SCANNER_SERVICE_URL</code> is set, chat defaults
-              to accurate browser capture via the Vercel Chromium scanner.
+            <h2 className="text-[13px] font-semibold tracking-tight text-[var(--ui-ink)]">
+              Accurate scans
+            </h2>
+            <p className="text-[13px] leading-relaxed text-[var(--ui-ink-secondary)]">
+              When <code className="text-[var(--ui-ink)]">SCANNER_SERVICE_URL</code> is set, chat
+              defaults to accurate browser capture via the Vercel Chromium scanner.
             </p>
           </section>
         </div>

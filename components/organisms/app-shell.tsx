@@ -71,23 +71,21 @@ function SidebarBody({
       <Link
         href="/"
         onClick={onNavigate}
-        className="mb-2 flex items-baseline gap-0.5 rounded-lg px-2 py-1.5 outline-offset-4 transition-opacity hover:opacity-90"
+        className="mb-1 flex items-baseline gap-0.5 rounded-[7px] px-2 py-1.5 outline-offset-4 transition-colors hover:bg-[var(--ui-paper-hover)]"
         aria-label="designcontracts.sh home"
       >
-        <span className="text-[15px] font-normal tracking-tight text-sidebar-foreground">
+        <span className="text-[15px] font-medium tracking-tight text-[var(--ui-ink)]">
           designcontracts
         </span>
-        <span className="font-mono text-[10px] text-primary">.sh</span>
+        <span className="font-mono text-[10px] text-[var(--ui-accent)]">.sh</span>
       </Link>
 
-      <Link
-        href="/"
-        onClick={onNavigate}
-        className="mb-2 inline-flex items-center gap-2 rounded-lg bg-primary px-2.5 py-2 text-sm font-medium text-primary-foreground transition hover:bg-[var(--primary-active)]"
-      >
-        <Plus className="size-3.5 opacity-90" aria-hidden />
-        New chat
-      </Link>
+      <Button asChild size="sm" className="mb-2 w-full justify-start gap-2">
+        <Link href="/" onClick={onNavigate}>
+          <Plus className="size-3.5 opacity-90" aria-hidden />
+          New chat
+        </Link>
+      </Button>
 
       <nav className="flex flex-col gap-0.5" aria-label="Primary">
         {PRIMARY_NAV.map((item) => {
@@ -99,14 +97,14 @@ function SidebarBody({
               href={item.href}
               onClick={onNavigate}
               className={cn(
-                'flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors',
+                'flex h-8 items-center gap-2.5 rounded-[7px] px-2.5 text-[13px] transition-colors',
                 active
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                  : 'text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                  ? 'bg-[var(--ui-paper-selected)] text-[var(--ui-ink)]'
+                  : 'text-[var(--ui-ink-secondary)] hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]'
               )}
               aria-current={active ? 'page' : undefined}
             >
-              <Icon className="size-4 shrink-0 opacity-80" aria-hidden />
+              <Icon className="size-3.5 shrink-0 opacity-80" aria-hidden />
               {item.label}
             </Link>
           )
@@ -114,12 +112,12 @@ function SidebarBody({
       </nav>
 
       <div className="mt-4 flex min-h-0 flex-1 flex-col">
-        <p className="px-2.5 pb-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+        <p className="px-2.5 pb-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ui-ink-muted)]">
           Recents
         </p>
         <ul className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
           {recents.length === 0 ? (
-            <li className="px-2.5 py-1.5 text-xs text-muted-foreground/80">
+            <li className="px-2.5 py-1.5 text-xs text-[var(--ui-ink-muted)]">
               Scanned sites show up here
             </li>
           ) : (
@@ -128,7 +126,7 @@ function SidebarBody({
                 <Link
                   href={`/site/${item.domain}` as `/site/${string}`}
                   onClick={onNavigate}
-                  className="block truncate rounded-lg px-2.5 py-1.5 font-mono text-xs text-muted-foreground transition hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                  className="block h-7 truncate rounded-[7px] px-2.5 font-mono text-[12px] leading-7 text-[var(--ui-ink-secondary)] transition hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]"
                 >
                   {item.domain}
                 </Link>
@@ -138,8 +136,11 @@ function SidebarBody({
         </ul>
       </div>
 
-      <nav className="mt-2 flex flex-col gap-0.5 border-t border-sidebar-border pt-2" aria-label="More">
-        <p className="px-2.5 pb-1 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+      <nav
+        className="mt-2 flex flex-col gap-0.5 border-t border-[var(--ui-border-soft)] pt-2"
+        aria-label="More"
+      >
+        <p className="px-2.5 pb-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ui-ink-muted)]">
           More
         </p>
         {MORE_NAV.map((item) => {
@@ -150,10 +151,10 @@ function SidebarBody({
               href={item.href}
               onClick={onNavigate}
               className={cn(
-                'rounded-lg px-2.5 py-1.5 text-sm transition-colors',
+                'flex h-7 items-center rounded-[7px] px-2.5 text-[13px] transition-colors',
                 active
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                  : 'text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                  ? 'bg-[var(--ui-paper-selected)] text-[var(--ui-ink)]'
+                  : 'text-[var(--ui-ink-secondary)] hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]'
               )}
               aria-current={active ? 'page' : undefined}
             >
@@ -170,8 +171,8 @@ function SidebarBody({
               className={cn(
                 'font-mono text-[10px] uppercase tracking-[0.08em] transition-colors',
                 currentPage === item.page
-                  ? 'text-sidebar-foreground'
-                  : 'text-muted-foreground/80 hover:text-sidebar-foreground'
+                  ? 'text-[var(--ui-ink)]'
+                  : 'text-[var(--ui-ink-muted)] hover:text-[var(--ui-ink)]'
               )}
             >
               {item.label}
@@ -180,8 +181,8 @@ function SidebarBody({
         </div>
       </nav>
 
-      <div className="mt-1 flex items-center justify-between border-t border-sidebar-border px-1 pt-2">
-        <span className="px-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+      <div className="mt-1 flex items-center justify-between border-t border-[var(--ui-border-soft)] px-1 pt-2">
+        <span className="px-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ui-ink-muted)]">
           App
         </span>
         <ThemeToggle />
@@ -191,8 +192,8 @@ function SidebarBody({
 }
 
 /**
- * Full-viewport product chrome: sidebar + main canvas. No marketing footer.
- * See DESIGN.md.
+ * Warm Paper Workbench shell:
+ * outer canvas → 240px sidebar → inset paper workspace (toolbar/stats + body).
  */
 export function AppShell({
   currentPage,
@@ -216,27 +217,27 @@ export function AppShell({
   return (
     <div
       className={cn(
-        'flex h-dvh max-h-dvh overflow-hidden bg-background text-foreground',
+        'flex h-dvh max-h-dvh overflow-hidden bg-[var(--ui-canvas)] text-[var(--ui-ink)]',
         className
       )}
     >
-      {/* Desktop sidebar */}
+      {/* Global sidebar on canvas */}
       <aside
         className={cn(
-          'relative z-20 hidden shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex',
+          'relative z-20 hidden shrink-0 flex-col md:flex',
           collapsed ? 'w-[52px]' : 'w-[240px]'
         )}
         aria-label="App sidebar"
       >
         {collapsed ? (
-          <div className="flex h-full flex-col items-center gap-2 px-1.5 py-3">
+          <div className="flex h-full flex-col items-center gap-1.5 px-1.5 py-3">
             <Link
               href="/"
-              className="flex size-9 items-center justify-center rounded-lg text-sm font-normal text-sidebar-foreground hover:bg-sidebar-accent"
+              className="flex size-8 items-center justify-center rounded-[7px] text-sm font-medium text-[var(--ui-ink)] hover:bg-[var(--ui-paper-hover)]"
               aria-label="Chat"
             >
               <span>
-                d<span className="text-primary">.</span>
+                d<span className="text-[var(--ui-accent)]">.</span>
               </span>
             </Link>
             {PRIMARY_NAV.map((item) => {
@@ -248,13 +249,13 @@ export function AppShell({
                   href={item.href}
                   title={item.label}
                   className={cn(
-                    'flex size-9 items-center justify-center rounded-lg transition',
+                    'flex size-8 items-center justify-center rounded-[7px] transition',
                     active
-                      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                      : 'text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                      ? 'bg-[var(--ui-paper-selected)] text-[var(--ui-ink)]'
+                      : 'text-[var(--ui-ink-secondary)] hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]'
                   )}
                 >
-                  <Icon className="size-4" />
+                  <Icon className="size-3.5" />
                 </Link>
               )
             })}
@@ -265,7 +266,7 @@ export function AppShell({
               onClick={() => setCollapsed(false)}
               aria-label="Expand sidebar"
             >
-              <PanelLeft className="size-4" />
+              <PanelLeft className="size-3.5" />
             </Button>
           </div>
         ) : (
@@ -278,7 +279,7 @@ export function AppShell({
               onClick={() => setCollapsed(true)}
               aria-label="Collapse sidebar"
             >
-              <PanelLeftClose className="size-4" />
+              <PanelLeftClose className="size-3.5" />
             </Button>
           </div>
         )}
@@ -289,11 +290,11 @@ export function AppShell({
         <div className="fixed inset-0 z-40 md:hidden">
           <button
             type="button"
-            className="absolute inset-0 bg-black/50"
+            className="absolute inset-0 bg-[rgba(43,39,35,0.35)]"
             aria-label="Close menu"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="absolute inset-y-0 left-0 flex w-[min(280px,88vw)] flex-col bg-sidebar shadow-xl">
+          <aside className="absolute inset-y-0 left-0 flex w-[min(280px,88vw)] flex-col border-r border-[var(--ui-border-edge)] bg-[var(--ui-canvas)] shadow-[var(--shadow-float)]">
             <SidebarBody
               currentPage={currentPage}
               recents={recents}
@@ -303,28 +304,37 @@ export function AppShell({
         </div>
       ) : null}
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-3 md:hidden">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Open menu"
+      {/* Inset paper workspace */}
+      <div className="flex min-w-0 flex-1 flex-col p-0 md:p-2 md:pl-0">
+        <div className="paper paper--shell flex min-h-0 flex-1 flex-col rounded-none border-0 shadow-none md:rounded-[var(--radius-shell)] md:border md:shadow-[var(--shadow-paper)]">
+          {/* Mobile location bar */}
+          <header className="paper__toolbar flex h-11 shrink-0 items-center gap-2 border-b border-[var(--ui-border-soft)] px-2 md:hidden">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open menu"
+            >
+              {mobileOpen ? <X className="size-3.5" /> : <Menu className="size-3.5" />}
+            </Button>
+            <Link href="/" className="flex items-baseline gap-0.5">
+              <span className="text-[15px] font-medium tracking-tight">designcontracts</span>
+              <span className="font-mono text-[10px] text-[var(--ui-accent)]">.sh</span>
+            </Link>
+          </header>
+
+          {/* Utility strip — live Redis stats */}
+          <div className="paper__toolbar !min-h-9 !px-0 !py-0">
+            <AppStatsHeader className="w-full border-0 bg-transparent" />
+          </div>
+
+          <main
+            className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--ui-paper)]"
+            id="main-content"
           >
-            {mobileOpen ? <X className="size-4" /> : <Menu className="size-4" />}
-          </Button>
-          <Link href="/" className="flex items-baseline gap-0.5">
-            <span className="text-base font-normal tracking-tight">designcontracts</span>
-            <span className="font-mono text-[10px] text-primary">.sh</span>
-          </Link>
-        </header>
-
-        {/* Desktop + mobile: Redis-backed live platform stats */}
-        <AppStatsHeader />
-
-        <main className="flex min-h-0 flex-1 flex-col overflow-hidden" id="main-content">
-          {children}
-        </main>
+            {children}
+          </main>
+        </div>
       </div>
     </div>
   )

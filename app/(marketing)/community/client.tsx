@@ -123,187 +123,186 @@ export default function CommunityClient() {
 
   return (
     <AppShell currentPage="library">
-      <div className="min-h-0 flex-1 overflow-y-auto" role="region" aria-label="Design Contracts library">
-          <section className="border-b border-[color:var(--soft-border)] px-4 pb-6 pt-8 sm:px-6">
-            <div className="mx-auto max-w-3xl">
-              <h1 className="font-normal tracking-tight text-3xl tracking-tight text-foreground">Library</h1>
-              <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-                Design Contracts from public sites. Open one, or ask Chat to gather a new system.
-              </p>
+      <div
+        className="flex min-h-0 flex-1 flex-col overflow-hidden"
+        role="region"
+        aria-label="Design Contracts library"
+      >
+        {/* Location bar */}
+        <div className="paper__toolbar !min-h-11 shrink-0 justify-between !px-3 sm:!px-4">
+          <div className="min-w-0">
+            <h1 className="text-[15px] font-semibold tracking-tight text-[var(--ui-ink)]">
+              Library
+            </h1>
+            <p className="truncate text-[12px] text-[var(--ui-ink-muted)]">
+              Design Contracts from public sites
+            </p>
+          </div>
+          <Button asChild size="sm">
+            <Link href="/">New scan</Link>
+          </Button>
+        </div>
 
-              <div className="relative mt-6 max-w-xl">
-                <Search
-                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                  aria-hidden
-                />
-                <Input
-                  id="community-search"
-                  type="search"
-                  placeholder="Search domains…"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-11 rounded-xl border-[color:var(--soft-border)] bg-card/60 pl-10"
-                  aria-label="Search scanned sites"
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className="sticky top-0 z-20 border-b border-[color:var(--soft-border)] bg-background/90 backdrop-blur-xl">
-            <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-              <p className="font-mono text-[11px] text-muted-foreground">
-                {filteredSites.length} {filteredSites.length === 1 ? 'site' : 'sites'}
-              </p>
-              <div
-                className="flex gap-1 border border-[color:var(--soft-border)] p-1"
-                role="tablist"
-                aria-label="Sort options"
+        {/* View bar — search + sort */}
+        <div className="paper__toolbar !min-h-11 shrink-0 flex-wrap !gap-2 !px-3 sm:!px-4">
+          <div className="relative min-w-[200px] max-w-sm flex-1">
+            <Search
+              className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--ui-ink-muted)]"
+              aria-hidden
+            />
+            <Input
+              id="community-search"
+              type="search"
+              placeholder="Search domains…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-8 pl-8"
+              aria-label="Search scanned sites"
+            />
+          </div>
+          <p className="font-mono text-[11px] tabular-nums text-[var(--ui-ink-muted)]">
+            {filteredSites.length} {filteredSites.length === 1 ? 'site' : 'sites'}
+          </p>
+          <div
+            className="ml-auto flex rounded-[7px] bg-[var(--ui-paper)] p-0.5 shadow-[var(--shadow-control)]"
+            role="tablist"
+            aria-label="Sort options"
+          >
+            {(
+              [
+                ['votes', 'Popular'],
+                ['recent', 'Recent'],
+                ['tokens', 'Tokens'],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                aria-selected={sortBy === value}
+                onClick={() => setSortBy(value)}
+                className={cn(
+                  'h-7 rounded-[6px] px-2.5 text-[12px] transition-colors',
+                  sortBy === value
+                    ? 'bg-[var(--ui-paper-selected)] font-medium text-[var(--ui-ink)]'
+                    : 'text-[var(--ui-ink-secondary)] hover:text-[var(--ui-ink)]'
+                )}
               >
-                {(
-                  [
-                    ['votes', 'Popular'],
-                    ['recent', 'Recent'],
-                    ['tokens', 'Tokens'],
-                  ] as const
-                ).map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    role="tab"
-                    aria-selected={sortBy === value}
-                    onClick={() => setSortBy(value)}
-                    className={cn(
-                      'px-3 py-1.5 text-xs transition-colors sm:text-sm',
-                      sortBy === value
-                        ? 'bg-secondary text-foreground'
-                        : 'text-muted-foreground hover:text-foreground'
-                    )}
-                  >
-                    {label}
-                  </button>
-                ))}
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Operational list */}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {loading ? (
+            <div className="flex flex-col" role="status" aria-label="Loading sites">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-11 animate-pulse border-b border-[var(--ui-border-soft)] bg-[var(--ui-paper-subtle)]/60"
+                />
+              ))}
+            </div>
+          ) : filteredSites.length === 0 ? (
+            <div className="mx-auto max-w-[712px] px-4 py-16 text-center">
+              <h2 className="text-lg font-semibold text-[var(--ui-ink)]">No sites yet</h2>
+              <p className="mx-auto mt-2 max-w-md text-[13px] text-[var(--ui-ink-secondary)]">
+                {searchQuery
+                  ? 'Nothing matched that search.'
+                  : 'Scan a public site and it will show up here.'}
+              </p>
+              <div className="mt-5 flex justify-center gap-2">
+                {searchQuery ? (
+                  <Button variant="outline" size="sm" onClick={() => setSearchQuery('')}>
+                    Clear search
+                  </Button>
+                ) : null}
+                <Button asChild size="sm">
+                  <Link href="/">Open chat</Link>
+                </Button>
               </div>
             </div>
-          </section>
-
-          <section className="px-4 py-6 sm:px-6 sm:py-8">
-            <div className="mx-auto max-w-3xl">
-              {loading ? (
-                <div className="flex flex-col gap-2" role="status" aria-label="Loading sites">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-16 animate-pulse rounded-2xl border border-[color:var(--soft-border)] bg-muted/20"
+          ) : (
+            <ul className="flex flex-col">
+              {filteredSites.map((site) => (
+                <li
+                  key={site.id}
+                  className="group flex min-h-11 items-center gap-3 border-b border-[var(--ui-border-soft)] px-3 transition-colors hover:bg-[var(--ui-paper-hover)] sm:px-4"
+                >
+                  {site.favicon ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={site.favicon}
+                      alt=""
+                      className="size-6 shrink-0 rounded-[4px] border border-[var(--ui-border-soft)] bg-[var(--ui-paper)] object-cover"
                     />
-                  ))}
-                </div>
-              ) : filteredSites.length === 0 ? (
-                <div className="rounded-2xl border border-[color:var(--soft-border)] bg-card/40 px-6 py-16 text-center">
-                  <h2 className="font-normal tracking-tight text-2xl text-foreground">No sites yet</h2>
-                  <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                    {searchQuery
-                      ? 'Nothing matched that search.'
-                      : 'Scan a public site and it will show up here.'}
-                  </p>
-                  <div className="mt-6 flex justify-center gap-2">
-                    {searchQuery ? (
-                      <Button variant="outline" onClick={() => setSearchQuery('')}>
-                        Clear search
-                      </Button>
-                    ) : null}
-                    <Button asChild>
-                      <Link href="/">Open chat</Link>
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <ul className="flex flex-col gap-2">
-                  {filteredSites.map((site) => (
-                    <li
-                      key={site.id}
-                      className="group flex flex-col gap-4 rounded-2xl border border-[color:var(--soft-border)] bg-card/40 px-4 py-4 transition-colors hover:bg-card/70 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+                  ) : (
+                    <div
+                      className="flex size-6 shrink-0 items-center justify-center rounded-[4px] border border-[var(--ui-border-soft)] bg-[var(--ui-paper-subtle)] font-mono text-[9px] text-[var(--ui-ink-muted)]"
+                      aria-hidden
                     >
-                      <div className="flex min-w-0 items-start gap-3 sm:items-center">
-                        {site.favicon ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={site.favicon}
-                            alt=""
-                            className="mt-0.5 h-8 w-8 shrink-0 border border-[color:var(--soft-border)] bg-background object-cover sm:mt-0"
-                          />
-                        ) : (
-                          <div
-                            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center border border-[color:var(--soft-border)] bg-muted/40 font-mono text-[10px] text-muted-foreground sm:mt-0"
-                            aria-hidden
-                          >
-                            {site.domain.slice(0, 2).toUpperCase()}
-                          </div>
-                        )}
-                        <div className="min-w-0">
-                          <Link
-                            href={`/site/${site.domain}`}
-                            className="font-normal tracking-tight text-xl tracking-tight text-foreground transition-colors hover:text-[oklch(0.78_0.08_185)]"
-                          >
-                            {site.title || site.domain}
-                          </Link>
-                          <p className="truncate font-mono text-[11px] text-muted-foreground">
-                            {site.domain}
-                          </p>
-                          {site.description ? (
-                            <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
-                              {site.description}
-                            </p>
-                          ) : null}
-                          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] text-muted-foreground">
-                            <span className="inline-flex items-center gap-1">
-                              <Sparkles className="h-3 w-3" aria-hidden />
-                              {site.tokensCount} tokens
-                            </span>
-                            <span className="inline-flex items-center gap-1">
-                              <Clock className="h-3 w-3" aria-hidden />
-                              {formatTimeAgo(site.lastScanned)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                      {site.domain.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
 
-                      <div className="flex shrink-0 items-center gap-2 self-end sm:self-center">
-                        <button
-                          type="button"
-                          onClick={() => void handleVote(site.id)}
-                          disabled={site.hasVoted || votingId === site.id}
-                          className={cn(
-                            'inline-flex h-9 items-center gap-1.5 border px-2.5 font-mono text-xs transition-colors',
-                            site.hasVoted
-                              ? 'border-[oklch(0.78_0.08_185_/0.45)] bg-[oklch(0.78_0.08_185_/0.08)] text-[oklch(0.78_0.08_185)]'
-                              : 'border-[color:var(--soft-border)] text-muted-foreground hover:border-foreground/30 hover:text-foreground'
-                          )}
-                          aria-label={`Vote for ${site.domain}`}
-                          aria-pressed={site.hasVoted}
-                        >
-                          <ArrowUp className={cn('h-3.5 w-3.5', site.hasVoted && 'fill-current')} />
-                          {site.votes}
-                        </button>
-                        <Button asChild size="sm" variant="outline" className="h-9 rounded-md">
-                          <Link href={`/site/${site.domain}`}>View</Link>
-                        </Button>
-                        <Button asChild size="sm" variant="ghost" className="h-9 w-9 rounded-md px-0">
-                          <a
-                            href={`https://${site.domain}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`Visit ${site.domain}`}
-                          >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </a>
-                        </Button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </section>
+                  <div className="flex min-w-0 flex-1 items-baseline gap-2">
+                    <Link
+                      href={`/site/${site.domain}`}
+                      className="truncate text-[13px] font-medium text-[var(--ui-ink)] hover:text-[var(--ui-accent)]"
+                    >
+                      {site.title || site.domain}
+                    </Link>
+                    <span className="hidden shrink-0 font-mono text-[11px] text-[var(--ui-ink-muted)] sm:inline">
+                      {site.domain}
+                    </span>
+                  </div>
+
+                  <span className="hidden items-center gap-1 font-mono text-[11px] tabular-nums text-[var(--ui-ink-muted)] md:inline-flex">
+                    <Sparkles className="size-3" aria-hidden />
+                    {site.tokensCount}
+                  </span>
+                  <span className="hidden items-center gap-1 font-mono text-[11px] text-[var(--ui-ink-muted)] lg:inline-flex">
+                    <Clock className="size-3" aria-hidden />
+                    {formatTimeAgo(site.lastScanned)}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => void handleVote(site.id)}
+                    disabled={site.hasVoted || votingId === site.id}
+                    className={cn(
+                      'inline-flex h-7 items-center gap-1 rounded-[7px] px-2 font-mono text-[11px] tabular-nums shadow-[var(--shadow-control)] transition',
+                      site.hasVoted
+                        ? 'bg-[var(--ui-accent-soft)] text-[var(--ui-accent)]'
+                        : 'bg-[var(--ui-paper)] text-[var(--ui-ink-secondary)] hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]'
+                    )}
+                    aria-label={`Vote for ${site.domain}`}
+                    aria-pressed={site.hasVoted}
+                  >
+                    <ArrowUp className={cn('size-3', site.hasVoted && 'fill-current')} />
+                    {site.votes}
+                  </button>
+
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/site/${site.domain}`}>Open</Link>
+                  </Button>
+                  <Button asChild size="icon-sm" variant="ghost">
+                    <a
+                      href={`https://${site.domain}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Visit ${site.domain}`}
+                    >
+                      <ExternalLink className="size-3.5" />
+                    </a>
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </AppShell>
   )

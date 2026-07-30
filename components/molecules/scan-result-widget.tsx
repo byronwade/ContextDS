@@ -72,12 +72,12 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
     return (
       <div
         className={cn(
-          'flex items-center gap-2.5 rounded-xl border border-[color:var(--soft-border)] bg-secondary/30 px-3.5 py-3',
+          'flex items-center gap-2.5 rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper)] px-3 py-2.5 shadow-[var(--shadow-paper)]',
           className
         )}
       >
-        <Loader2 className="size-3.5 shrink-0 animate-spin text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">
+        <Loader2 className="size-3.5 shrink-0 animate-spin text-[var(--ui-ink-muted)]" />
+        <p className="text-[13px] text-[var(--ui-ink-secondary)]">
           Scanning{data.domain ? ` ${data.domain}` : ''}…
         </p>
       </div>
@@ -88,12 +88,12 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
     return (
       <div
         className={cn(
-          'rounded-xl border border-[color:var(--soft-border)] bg-secondary/30 px-3.5 py-3 text-sm text-muted-foreground',
+          'rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] px-3 py-2.5 text-[13px] text-[var(--ui-ink-secondary)]',
           className
         )}
       >
-        No cached contract for <span className="text-foreground">{data.domain}</span>. Scanning
-        next…
+        No cached contract for <span className="text-[var(--ui-ink)]">{data.domain}</span>.
+        Scanning next…
       </div>
     )
   }
@@ -113,13 +113,13 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-xl border border-[color:var(--soft-border)] bg-secondary/25',
+        'paper overflow-hidden !rounded-[10px]',
         className
       )}
     >
       <div className="flex items-stretch gap-0">
         {data.screenshots?.[0]?.url ? (
-          <div className="relative hidden w-28 shrink-0 overflow-hidden border-r border-[color:var(--soft-border)] sm:block">
+          <div className="relative hidden w-28 shrink-0 overflow-hidden border-r border-[var(--ui-border-soft)] sm:block">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={data.screenshots[0].url}
@@ -129,10 +129,10 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
           </div>
         ) : null}
 
-        <div className="flex min-w-0 flex-1 flex-col gap-2.5 px-3.5 py-3">
+        <div className="flex min-w-0 flex-1 flex-col gap-2 px-3 py-2.5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ui-ink-muted)]">
                 Contract
                 {typeof confidence === 'number' ? ` · ${Math.round(confidence)}%` : ''}
                 {data.mode ? ` · ${data.mode}` : ''}
@@ -142,14 +142,14 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
                     ? ` · ${data.browserEngine}`
                     : ''}
               </p>
-              <p className="mt-0.5 truncate font-medium tracking-tight text-foreground">
+              <p className="mt-0.5 truncate text-[14px] font-medium tracking-tight text-[var(--ui-ink)]">
                 {domain}
               </p>
             </div>
             <Link
               href={`/site/${domain}` as `/site/${string}`}
               onClick={() => stashSiteHandoff(domain, data)}
-              className="inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+              className="inline-flex h-7 shrink-0 items-center gap-1 rounded-[7px] bg-[var(--ui-paper)] px-2 text-[12px] text-[var(--ui-ink-secondary)] shadow-[var(--shadow-control)] transition hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]"
             >
               Open
               <ArrowUpRight className="size-3.5" />
@@ -162,18 +162,18 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
                 <span
                   key={value}
                   title={value}
-                  className="size-4 rounded-sm border border-white/10"
+                  className="size-3.5 rounded-[3px] border border-[var(--ui-border-soft)]"
                   style={{ backgroundColor: value }}
                 />
               ))}
-              <span className="ml-2 truncate font-mono text-[11px] text-muted-foreground">
+              <span className="ml-2 truncate font-mono text-[11px] text-[var(--ui-ink-muted)]">
                 {[tokenCount ? `${tokenCount} tokens` : null, font].filter(Boolean).join(' · ')}
               </span>
             </div>
           ) : null}
 
           {install ? (
-            <code className="block truncate font-mono text-[11px] text-muted-foreground">
+            <code className="block truncate font-mono text-[11px] text-[var(--ui-ink-muted)]">
               {install}
             </code>
           ) : null}

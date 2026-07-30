@@ -178,145 +178,300 @@
 }
 
 /*
- * Cursor-inspired cream editorial system for Design Contracts.
- * Canvas #f7f7f4 · ink #26251e · Contract Orange #f54e00 · hairline-only depth.
+ * Warm Paper Workbench — Design Contracts
+ * Cream canvas · warm-white paper · terracotta accent · Shopify-style bevels.
  * See DESIGN.md.
  */
 :root {
-  --radius: 0.5rem; /* 8px CTA / input dialect */
+  --radius: 0.5rem;
 
-  /* Cream default (light-first) */
-  --background: #f7f7f4;
-  --foreground: #26251e;
-  --card: #ffffff;
-  --card-foreground: #26251e;
-  --popover: #ffffff;
-  --popover-foreground: #26251e;
-  --primary: #f54e00;
-  --primary-foreground: #ffffff;
-  --secondary: #efeee8;
-  --secondary-foreground: #26251e;
-  --muted: #efeee8;
-  --muted-foreground: #5a5852;
-  --accent: #e6e5e0;
-  --accent-foreground: #26251e;
-  --destructive: #cf2d56;
-  --destructive-foreground: #ffffff;
-  --warning: #c08532;
-  --warning-foreground: #26251e;
-  --success: #1f8a65;
-  --success-foreground: #ffffff;
-  --border: #e6e5e0;
-  --input: #e6e5e0;
-  --ring: #f54e00;
-  --chart-1: #f54e00;
+  /* Warm paper primitives */
+  --ui-canvas: #f3eee5;
+  --ui-paper: #fffdf8;
+  --ui-paper-subtle: #faf5ec;
+  --ui-paper-hover: #f5eee3;
+  --ui-paper-selected: #ede3d5;
+  --ui-ink: #2b2723;
+  --ui-ink-secondary: #675f57;
+  --ui-ink-muted: #766e65;
+  --ui-border-soft: rgba(67, 52, 38, 0.1);
+  --ui-border: rgba(67, 52, 38, 0.15);
+  --ui-border-edge: rgba(67, 52, 38, 0.22);
+  --ui-accent: #9b4f32;
+  --ui-accent-hover: #7a3f2a;
+  --ui-accent-soft: #f4e5db;
+  --ui-focus: #7d4936;
+  --ui-success: #356548;
+  --ui-success-soft: #e8f2e7;
+  --ui-warning: #7a5417;
+  --ui-warning-soft: #fff1d6;
+  --ui-danger: #9c3c32;
+  --ui-danger-soft: #f9e4e0;
+  --ui-info: #3e6670;
+  --ui-info-soft: #e5f0f1;
+  --font-ui: var(--font-inter), Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-paper: 10px;
+  --radius-shell: 12px;
+  --radius-full: 9999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --shadow-control:
+    inset 0 -1px 0 rgba(72, 56, 40, 0.28),
+    inset 0 0 0 1px rgba(72, 56, 40, 0.1),
+    inset 0 0.5px 0 1.5px rgba(255, 255, 255, 0.78),
+    0 1px 1px rgba(72, 56, 40, 0.05);
+  --shadow-control-hover:
+    inset 0 -1px 0 rgba(72, 56, 40, 0.34),
+    inset 0 0 0 1px rgba(72, 56, 40, 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    0 1px 2px rgba(72, 56, 40, 0.07);
+  --shadow-control-primary:
+    inset 0 -1px 0 1px rgba(65, 31, 21, 0.62),
+    inset 0 0 0 1px rgba(105, 49, 31, 0.92),
+    inset 0 0.5px 0 1.5px rgba(255, 255, 255, 0.26),
+    0 1px 2px rgba(72, 35, 24, 0.16);
+  --shadow-paper:
+    0 1px 0 rgba(67, 52, 38, 0.07),
+    0 3px 8px -5px rgba(67, 52, 38, 0.22),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.72);
+  --shadow-paper-hover:
+    0 1px 0 rgba(67, 52, 38, 0.08),
+    0 6px 14px -8px rgba(67, 52, 38, 0.28),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.78);
+  --shadow-float:
+    0 16px 40px -12px rgba(52, 40, 29, 0.28),
+    0 4px 12px -4px rgba(52, 40, 29, 0.18),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.75);
+
+  /* shadcn semantic map → warm paper */
+  --background: var(--ui-canvas);
+  --foreground: var(--ui-ink);
+  --card: var(--ui-paper);
+  --card-foreground: var(--ui-ink);
+  --popover: var(--ui-paper);
+  --popover-foreground: var(--ui-ink);
+  --primary: var(--ui-accent);
+  --primary-foreground: var(--ui-paper);
+  --secondary: var(--ui-paper-subtle);
+  --secondary-foreground: var(--ui-ink);
+  --muted: var(--ui-paper-subtle);
+  --muted-foreground: var(--ui-ink-secondary);
+  --accent: var(--ui-accent-soft);
+  --accent-foreground: var(--ui-ink);
+  --destructive: var(--ui-danger);
+  --destructive-foreground: var(--ui-paper);
+  --warning: var(--ui-warning);
+  --warning-foreground: var(--ui-ink);
+  --success: var(--ui-success);
+  --success-foreground: var(--ui-paper);
+  --border: var(--ui-border);
+  --input: var(--ui-border);
+  --ring: var(--ui-focus);
+  --chart-1: var(--ui-accent);
   --chart-2: #9fc9a2;
   --chart-3: #9fbbe0;
   --chart-4: #c0a8dd;
-  --chart-5: #c08532;
-  --sidebar: #fafaf7;
-  --sidebar-foreground: #26251e;
-  --sidebar-primary: #f54e00;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e6e5e0;
-  --sidebar-accent-foreground: #26251e;
-  --sidebar-border: #e6e5e0;
-  --sidebar-ring: #f54e00;
-  --soft-shadow: none;
-  --soft-border: #e6e5e0;
+  --chart-5: var(--ui-warning);
+  --sidebar: transparent;
+  --sidebar-foreground: var(--ui-ink);
+  --sidebar-primary: var(--ui-accent);
+  --sidebar-primary-foreground: var(--ui-paper);
+  --sidebar-accent: var(--ui-paper-selected);
+  --sidebar-accent-foreground: var(--ui-ink);
+  --sidebar-border: var(--ui-border-soft);
+  --sidebar-ring: var(--ui-focus);
+  --soft-shadow: var(--shadow-paper);
+  --soft-border: var(--ui-border-soft);
 
-  /* Timeline pastels — scan/agent stages only */
   --timeline-thinking: #dfa88f;
   --timeline-grep: #9fc9a2;
   --timeline-read: #9fbbe0;
   --timeline-edit: #c0a8dd;
   --timeline-done: #c08532;
-  --canvas-soft: #fafaf7;
-  --primary-active: #d04200;
-  --ink-muted: #807d72;
+  --canvas-soft: var(--ui-paper-subtle);
+  --primary-active: var(--ui-accent-hover);
+  --ink-muted: var(--ui-ink-muted);
 }
 
 .light {
-  --background: #f7f7f4;
-  --foreground: #26251e;
-  --card: #ffffff;
-  --card-foreground: #26251e;
-  --popover: #ffffff;
-  --popover-foreground: #26251e;
-  --primary: #f54e00;
-  --primary-foreground: #ffffff;
-  --secondary: #efeee8;
-  --secondary-foreground: #26251e;
-  --muted: #efeee8;
-  --muted-foreground: #5a5852;
-  --accent: #e6e5e0;
-  --accent-foreground: #26251e;
-  --destructive: #cf2d56;
-  --destructive-foreground: #ffffff;
-  --warning: #c08532;
-  --warning-foreground: #26251e;
-  --success: #1f8a65;
-  --success-foreground: #ffffff;
-  --border: #e6e5e0;
-  --input: #e6e5e0;
-  --ring: #f54e00;
-  --chart-1: #f54e00;
-  --chart-2: #9fc9a2;
-  --chart-3: #9fbbe0;
-  --chart-4: #c0a8dd;
-  --chart-5: #c08532;
-  --sidebar: #fafaf7;
-  --sidebar-foreground: #26251e;
-  --sidebar-primary: #f54e00;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e6e5e0;
-  --sidebar-accent-foreground: #26251e;
-  --sidebar-border: #e6e5e0;
-  --sidebar-ring: #f54e00;
-  --soft-shadow: none;
-  --soft-border: #e6e5e0;
+  /* inherits :root warm paper */
 }
 
 .dark {
-  /* Optional quiet dark — not the brand default */
-  --background: #1a1916;
-  --foreground: #f7f7f4;
-  --card: #24231f;
-  --card-foreground: #f7f7f4;
-  --popover: #24231f;
-  --popover-foreground: #f7f7f4;
-  --primary: #f54e00;
-  --primary-foreground: #ffffff;
-  --secondary: #2e2c27;
-  --secondary-foreground: #f7f7f4;
-  --muted: #2e2c27;
-  --muted-foreground: #a09c92;
-  --accent: #2e2c27;
-  --accent-foreground: #f7f7f4;
-  --destructive: #cf2d56;
-  --destructive-foreground: #ffffff;
-  --warning: #c08532;
-  --warning-foreground: #1a1916;
-  --success: #1f8a65;
-  --success-foreground: #ffffff;
-  --border: #3a3832;
-  --input: #3a3832;
-  --ring: #f54e00;
-  --chart-1: #f54e00;
+  --ui-canvas: #1c1916;
+  --ui-paper: #26221d;
+  --ui-paper-subtle: #221e19;
+  --ui-paper-hover: #2e2923;
+  --ui-paper-selected: #3a332b;
+  --ui-ink: #f3eee5;
+  --ui-ink-secondary: #b4aaa0;
+  --ui-ink-muted: #8f857a;
+  --ui-border-soft: rgba(243, 238, 229, 0.08);
+  --ui-border: rgba(243, 238, 229, 0.14);
+  --ui-border-edge: rgba(243, 238, 229, 0.22);
+  --ui-accent: #c47a5a;
+  --ui-accent-hover: #d48b6c;
+  --ui-accent-soft: rgba(196, 122, 90, 0.18);
+  --ui-focus: #d4a08a;
+  --ui-success: #6fad88;
+  --ui-success-soft: rgba(111, 173, 136, 0.16);
+  --ui-warning: #d4a45a;
+  --ui-warning-soft: rgba(212, 164, 90, 0.16);
+  --ui-danger: #d4786e;
+  --ui-danger-soft: rgba(212, 120, 110, 0.16);
+  --ui-info: #7a9aa3;
+  --ui-info-soft: rgba(122, 154, 163, 0.16);
+
+  --shadow-control:
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(243, 238, 229, 0.08),
+    inset 0 0.5px 0 1.5px rgba(255, 255, 255, 0.04),
+    0 1px 1px rgba(0, 0, 0, 0.2);
+  --shadow-control-hover:
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(243, 238, 229, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-control-primary:
+    inset 0 -1px 0 1px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(196, 122, 90, 0.9),
+    inset 0 0.5px 0 1.5px rgba(255, 255, 255, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-paper:
+    0 1px 0 rgba(0, 0, 0, 0.2),
+    0 3px 8px -5px rgba(0, 0, 0, 0.4),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.04);
+  --shadow-paper-hover:
+    0 1px 0 rgba(0, 0, 0, 0.22),
+    0 6px 14px -8px rgba(0, 0, 0, 0.45),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.05);
+  --shadow-float:
+    0 16px 40px -12px rgba(0, 0, 0, 0.5),
+    0 4px 12px -4px rgba(0, 0, 0, 0.35),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.05);
+
+  --background: var(--ui-canvas);
+  --foreground: var(--ui-ink);
+  --card: var(--ui-paper);
+  --card-foreground: var(--ui-ink);
+  --popover: var(--ui-paper);
+  --popover-foreground: var(--ui-ink);
+  --primary: var(--ui-accent);
+  --primary-foreground: #1c1916;
+  --secondary: var(--ui-paper-subtle);
+  --secondary-foreground: var(--ui-ink);
+  --muted: var(--ui-paper-subtle);
+  --muted-foreground: var(--ui-ink-secondary);
+  --accent: var(--ui-accent-soft);
+  --accent-foreground: var(--ui-ink);
+  --destructive: var(--ui-danger);
+  --destructive-foreground: #1c1916;
+  --warning: var(--ui-warning);
+  --warning-foreground: #1c1916;
+  --success: var(--ui-success);
+  --success-foreground: #1c1916;
+  --border: var(--ui-border);
+  --input: var(--ui-border);
+  --ring: var(--ui-focus);
+  --chart-1: var(--ui-accent);
   --chart-2: #9fc9a2;
   --chart-3: #9fbbe0;
   --chart-4: #c0a8dd;
-  --chart-5: #c08532;
-  --sidebar: #1f1e1a;
-  --sidebar-foreground: #f7f7f4;
-  --sidebar-primary: #f54e00;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #2e2c27;
-  --sidebar-accent-foreground: #f7f7f4;
-  --sidebar-border: #3a3832;
-  --sidebar-ring: #f54e00;
-  --soft-shadow: none;
-  --soft-border: #3a3832;
+  --chart-5: var(--ui-warning);
+  --sidebar: transparent;
+  --sidebar-foreground: var(--ui-ink);
+  --sidebar-primary: var(--ui-accent);
+  --sidebar-primary-foreground: #1c1916;
+  --sidebar-accent: var(--ui-paper-selected);
+  --sidebar-accent-foreground: var(--ui-ink);
+  --sidebar-border: var(--ui-border-soft);
+  --sidebar-ring: var(--ui-focus);
+  --soft-shadow: var(--shadow-paper);
+  --soft-border: var(--ui-border-soft);
+  --canvas-soft: var(--ui-paper-subtle);
+  --primary-active: var(--ui-accent-hover);
+  --ink-muted: var(--ui-ink-muted);
+}
+
+/* Integrated paper containers + workbench helpers */
+.paper {
+  overflow: clip;
+  background: var(--ui-paper);
+  color: var(--ui-ink);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-paper);
+  box-shadow: var(--shadow-paper);
+}
+
+.paper--shell {
+  border-radius: var(--radius-shell);
+  border-color: var(--ui-border-edge);
+}
+
+.paper__toolbar,
+.paper__footer {
+  min-height: 36px;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: color-mix(in srgb, var(--ui-paper) 76%, var(--ui-paper-subtle));
+}
+
+.paper__toolbar {
+  border-bottom: 1px solid var(--ui-border-soft);
+}
+
+.paper__body {
+  min-width: 0;
+  padding: 16px;
+}
+
+.paper__footer {
+  border-top: 1px solid var(--ui-border-soft);
+}
+
+.ui-control {
+  box-shadow: var(--shadow-control);
+  background: var(--ui-paper);
+  border-radius: 7px;
+  transition: background-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+}
+
+.ui-control:hover {
+  background: var(--ui-paper-hover);
+  box-shadow: var(--shadow-control-hover);
+}
+
+.ui-control:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 2px 2px rgba(72, 56, 40, 0.16),
+    inset 0 0 0 1px rgba(72, 56, 40, 0.14);
+}
+
+.ui-control-primary {
+  box-shadow: var(--shadow-control-primary);
+  background: var(--ui-accent);
+  color: var(--ui-paper);
+}
+
+.ui-control-primary:hover {
+  background: var(--ui-accent-hover);
+}
+
+.font-tabular {
+  font-variant-numeric: tabular-nums;
 }
 
 @layer base {
@@ -326,6 +481,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: var(--font-ui);
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     font-optical-sizing: auto;
   }

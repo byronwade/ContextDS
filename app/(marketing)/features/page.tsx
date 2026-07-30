@@ -43,38 +43,40 @@ const features = [
 export default function FeaturesPage() {
   return (
     <AppShell currentPage="features">
-      <PageCanvas>
-        <h1 className="font-normal tracking-tight text-3xl tracking-tight text-foreground sm:text-4xl">
+      <PageCanvas variant="document">
+        <h1 className="text-[22px] font-semibold tracking-tight text-[var(--ui-ink)] sm:text-[26px]">
           Features
         </h1>
-        <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
+        <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-[var(--ui-ink-secondary)]">
           Turn a live site into AI-readable design context — without dashboard clutter.
         </p>
 
-        <div className="mt-12 space-y-10">
+        <div className="mt-10 space-y-8">
           {features.map((feature) => (
             <section
               key={feature.title}
-              className="border-t border-[color:var(--soft-border)] pt-8 first:border-t-0 first:pt-0"
+              className="border-t border-[var(--ui-border-soft)] pt-6 first:border-t-0 first:pt-0"
             >
-              <h2 className="text-[15px] font-medium tracking-tight text-foreground">
+              <h2 className="text-[14px] font-semibold tracking-tight text-[var(--ui-ink)]">
                 {feature.title}
               </h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{feature.body}</p>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--ui-ink-secondary)]">
+                {feature.body}
+              </p>
             </section>
           ))}
         </div>
 
-        <div className="mt-14 flex flex-wrap gap-3">
+        <div className="mt-12 flex flex-wrap gap-2">
           <Link
             href="/"
-            className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+            className="inline-flex h-8 items-center rounded-[7px] bg-[var(--ui-accent)] px-2.5 text-[13px] font-medium text-[var(--ui-paper)] shadow-[var(--shadow-control-primary)] transition hover:bg-[var(--ui-accent-hover)]"
           >
             Open Chat
           </Link>
           <Link
             href="/docs"
-            className="inline-flex h-10 items-center rounded-xl border border-[color:var(--soft-border)] px-4 text-sm font-medium text-foreground transition hover:bg-muted/40"
+            className="inline-flex h-8 items-center rounded-[7px] bg-[var(--ui-paper)] px-2.5 text-[13px] font-medium text-[var(--ui-ink)] shadow-[var(--shadow-control)] transition hover:bg-[var(--ui-paper-hover)]"
           >
             Read the docs
           </Link>

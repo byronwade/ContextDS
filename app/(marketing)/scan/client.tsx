@@ -111,15 +111,20 @@ function EmptyState({
   disabled?: boolean
 }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-4 pb-8 pt-16 animate-fade-in">
-      <h1 className="text-[clamp(2.5rem,7vw,3.75rem)] font-normal leading-[1.1] tracking-[-0.03em] text-foreground">
+    <div className="mx-auto flex w-full max-w-[712px] flex-1 flex-col items-center justify-center px-4 pb-10 pt-14 animate-fade-in">
+      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--ui-ink-muted)]">
+        Design Contract workbench
+      </p>
+      <h1 className="mt-3 text-[clamp(1.75rem,4vw,2.25rem)] font-semibold leading-tight tracking-[-0.02em] text-[var(--ui-ink)]">
         designcontracts
-        <span className="font-mono text-[0.45em] tracking-normal text-primary">.sh</span>
+        <span className="font-mono text-[0.5em] font-medium tracking-normal text-[var(--ui-accent)]">
+          .sh
+        </span>
       </h1>
-      <p className="mt-4 max-w-md text-center text-base font-normal leading-relaxed text-muted-foreground">
+      <p className="mt-3 max-w-md text-center text-[15px] leading-relaxed text-[var(--ui-ink-secondary)]">
         Paste a URL. Get an installable Design Contract.
       </p>
-      <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+      <div className="mt-7 flex flex-wrap items-center justify-center gap-1.5">
         {EXAMPLES.map((example, index) => (
           <button
             key={example.label}
@@ -127,8 +132,8 @@ function EmptyState({
             disabled={disabled}
             onClick={() => onPick(example.prompt)}
             className={cn(
-              'rounded-full border border-border bg-card px-3.5 py-1.5 font-mono text-xs text-muted-foreground transition',
-              'hover:border-[var(--hairline-strong,#cfcdc4)] hover:text-foreground disabled:opacity-50',
+              'h-7 rounded-[7px] bg-[var(--ui-paper)] px-2.5 font-mono text-[12px] text-[var(--ui-ink-secondary)] shadow-[var(--shadow-control)] transition',
+              'hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)] hover:shadow-[var(--shadow-control-hover)] disabled:opacity-50',
               'animate-slide-in'
             )}
             style={{ animationDelay: `${index * 40}ms` }}
@@ -185,22 +190,12 @@ export function ScanChat() {
   }
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
-      {/* Soft cream atmosphere — hairline-only product, no glow */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(720px 320px at 50% 0%, color-mix(in srgb, var(--primary) 6%, transparent), transparent 65%)',
-        }}
-      />
-
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--ui-paper)]">
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <Conversation className="min-h-0 flex-1">
           <ConversationContent
             className={cn(
-              'mx-auto w-full max-w-2xl gap-5 px-4 py-6 sm:px-6',
+              'mx-auto w-full max-w-[712px] gap-4 px-4 py-5 sm:px-6',
               !hasMessages && 'flex min-h-full flex-col'
             )}
           >
@@ -223,9 +218,9 @@ export function ScanChat() {
                 <MessageContent
                   className={cn(
                     message.role === 'user' &&
-                      'rounded-2xl bg-secondary/80 px-4 py-2.5 text-[15px] leading-relaxed',
+                      'rounded-[10px] bg-[var(--ui-paper-subtle)] px-3.5 py-2 text-[14px] leading-relaxed text-[var(--ui-ink)] shadow-[var(--shadow-control)]',
                     message.role === 'assistant' &&
-                      'w-full max-w-none gap-3 text-[15px] leading-relaxed'
+                      'w-full max-w-none gap-3 text-[14px] leading-relaxed text-[var(--ui-ink)]'
                   )}
                 >
                   {message.parts.map((part, index) => {
@@ -257,15 +252,15 @@ export function ScanChat() {
             ))}
 
             {busy && messages.at(-1)?.role === 'user' ? (
-              <div className="flex items-center gap-2 px-1 text-sm text-muted-foreground animate-fade-in">
+              <div className="flex items-center gap-2 px-1 text-[13px] text-[var(--ui-ink-secondary)] animate-fade-in">
                 <span className="inline-flex gap-1">
-                  <span className="size-1.5 animate-pulse rounded-full bg-[oklch(0.78_0.08_185)]" />
+                  <span className="size-1.5 animate-pulse rounded-full bg-[var(--ui-accent)]" />
                   <span
-                    className="size-1.5 animate-pulse rounded-full bg-[oklch(0.78_0.08_185)]"
+                    className="size-1.5 animate-pulse rounded-full bg-[var(--ui-accent)]"
                     style={{ animationDelay: '120ms' }}
                   />
                   <span
-                    className="size-1.5 animate-pulse rounded-full bg-[oklch(0.78_0.08_185)]"
+                    className="size-1.5 animate-pulse rounded-full bg-[var(--ui-accent)]"
                     style={{ animationDelay: '240ms' }}
                   />
                 </span>
@@ -274,7 +269,7 @@ export function ScanChat() {
             ) : null}
 
             {error ? (
-              <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              <div className="rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-danger-soft)] px-3.5 py-2.5 text-[13px] text-[var(--ui-danger)]">
                 {error.message || 'Something went wrong. Try again.'}
               </div>
             ) : null}
@@ -282,16 +277,12 @@ export function ScanChat() {
           <ConversationScrollButton />
         </Conversation>
 
-        {/* Composer dock */}
-        <div className="relative shrink-0">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 -top-10 h-10 bg-gradient-to-t from-background to-transparent"
-          />
-          <div className="mx-auto w-full max-w-2xl px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-1 sm:px-6">
+        {/* Composer — integrated paper footer feel */}
+        <div className="relative shrink-0 border-t border-[var(--ui-border-soft)] bg-[color-mix(in_srgb,var(--ui-paper)_76%,var(--ui-paper-subtle))]">
+          <div className="mx-auto w-full max-w-[712px] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 sm:px-6">
             <PromptInput
               onSubmit={onSubmit}
-              className="rounded-xl border border-border bg-card"
+              className="overflow-hidden rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper)] shadow-[var(--shadow-control)]"
             >
               <PromptInputBody>
                 <PromptInputTextarea
@@ -299,12 +290,12 @@ export function ScanChat() {
                   onChange={(event) => setText(event.target.value)}
                   placeholder="Ask about a site — stripe.com, linear.app…"
                   disabled={busy && status === 'submitted'}
-                  className="min-h-[52px] text-[15px] leading-relaxed placeholder:text-muted-foreground/70"
+                  className="min-h-[48px] text-[14px] leading-relaxed placeholder:text-[var(--ui-ink-muted)]"
                   aria-label="Message"
                 />
               </PromptInputBody>
-              <PromptInputFooter className="px-1">
-                <span className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground/80">
+              <PromptInputFooter className="px-1.5">
+                <span className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ui-ink-muted)]">
                   Design Contract
                 </span>
                 <PromptInputSubmit
