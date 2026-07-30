@@ -32,7 +32,7 @@ export async function generateDesignSystemSummary(
       model: openai('gpt-4o-mini'),
       prompt,
       temperature: 0.4,
-      maxTokens: 500,
+      maxOutputTokens: 500,
     })
 
     return parseSummaryResponse(text)

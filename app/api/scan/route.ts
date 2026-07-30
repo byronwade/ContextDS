@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { promises as dns } from 'dns'
-import { runScanJob } from '@/lib/workers/scan-orchestrator'
+import { runSimpleScan } from '@/lib/workers/simple-scan'
 import { scanRatelimit } from '@/lib/ratelimit'
+
+export const maxDuration = 60
+export const runtime = 'nodejs'
 
 const scanRequestSchema = z.object({
   url: z.string().url(),
@@ -10,7 +13,9 @@ const scanRequestSchema = z.object({
   prettify: z.boolean().default(false),
   quality: z.enum(['basic', 'standard', 'premium']).default('standard'),
   budget: z.number().min(0.01).max(1.0).default(0.15),
-  mode: z.enum(['fast', 'accurate']).default('accurate')  // fast = static only, accurate = full scan
+  // Default fast (static CSS) — accurate needs Playwright and is optional on Hobby
+  mode: z.enum(['fast', 'accurate']).default('fast'),
+  force: z.boolean().default(false),
 })
 
 /**
@@ -202,19 +207,20 @@ export async function POST(request: NextRequest) {
     }
     console.log('✅ SSRF validation passed')
 
-    // Fast mode skips browser automation (computed CSS + coverage API)
-    // Saves ~1,200ms but reduces accuracy from 95% to 90%
-    const includeComputed = params.mode === 'fast'
-      ? false  // Skip browser automation in fast mode
-      : process.env.DISABLE_COMPUTED_CSS === '1' ? false : true
+    // Lean serverless scanner: Blob + Redis (no Postgres).
+    // fast = static CSS only; accurate = optional computed CSS.
+    const normalizedUrl = params.url.startsWith('http')
+      ? params.url
+      : `https://${params.url}`
 
-    const normalizedUrl = params.url.startsWith('http') ? params.url : `https://${params.url}`
+    const allowComputed =
+      params.mode === 'accurate' && process.env.DISABLE_COMPUTED_CSS !== '1'
 
-    const result = await runScanJob({
+    const result = await runSimpleScan({
       url: normalizedUrl,
       prettify: params.prettify,
-      includeComputed,
-      mode: params.mode  // Pass mode to orchestrator
+      mode: allowComputed ? 'accurate' : 'fast',
+      force: params.force,
     })
 
     return NextResponse.json(result)

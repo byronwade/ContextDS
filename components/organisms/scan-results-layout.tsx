@@ -1,937 +1,659 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  ChevronDown,
   Copy,
   Download,
   Share2,
-  History,
-  TrendingUp,
-  Target,
-  Zap,
-  Shield,
-  Lightbulb,
-  AlertCircle,
-  Sparkles
+  CheckCircle2,
+  Clock,
+  FileText,
+  Sparkles,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ResultsTabs, type TabId } from "./results-tabs"
-import { MetricCard } from "@/components/molecules/metric-card"
 import { TokenGrid } from "@/components/molecules/token-grid"
-import { InsightCard } from "@/components/molecules/insight-card"
-import { ComponentShowcase } from "@/components/molecules/component-showcase"
-import { ScreenshotGallery } from "@/components/molecules/screenshot-gallery"
 import { FontPreviewCard } from "@/components/molecules/font-preview"
 
-type ScanResult = any
+type ScanResult = {
+  status?: string
+  domain?: string
+  summary?: {
+    tokensExtracted?: number
+    curatedCount?: Record<string, number>
+    confidence?: number
+    completeness?: number
+    reliability?: number
+    processingTime?: number
+  }
+  curatedTokens?: {
+    colors?: Array<{ name?: string; value: string; usage?: number; confidence?: number }>
+    typography?: {
+      families?: Array<{ name?: string; value: string; usage?: number }>
+      sizes?: Array<{ name?: string; value: string }>
+      weights?: Array<{ name?: string; value: string }>
+    }
+    spacing?: Array<{ name?: string; value: string; usage?: number }>
+    radius?: Array<{ name?: string; value: string }>
+    shadows?: Array<{ name?: string; value: string }>
+    motion?: Array<{ name?: string; value: string }>
+  }
+  brandAnalysis?: {
+    primaryColors?: string[]
+    personality?: string
+    primaryFont?: string | null
+  }
+  layoutDNA?: Record<string, unknown>
+  designMd?: {
+    markdown: string
+    fileName: string
+    summary?: {
+      colorCount: number
+      typographyCount: number
+      spacingCount: number
+      hasComponents: boolean
+    }
+  }
+  designSkill?: {
+    markdown: string
+    fileName: string
+    skillName: string
+    description: string
+  }
+  designContract?: {
+    slug: string
+    title: string
+    profile: string
+    installCommand: string
+    summary?: {
+      colorCount: number
+      typographyCount: number
+      spacingCount: number
+      fileCount: number
+    }
+  }
+  semanticGraph?: {
+    schemaVersion: number
+    summary: {
+      nodeCount: number
+      edgeCount: number
+      tokenCount: number
+      roleCount: number
+      componentCount: number
+      layoutCount: number
+      patternCount: number
+    }
+    nodes?: unknown[]
+    edges?: unknown[]
+  }
+  cacheHit?: boolean
+  metadata?: {
+    cssSources?: number
+    mode?: string
+    engine?: string
+  }
+}
 
 interface ScanProgress {
   step: number
   totalSteps: number
   phase: string
   message: string
-  details?: string[]
   timestamp: number
 }
 
+interface ScanMetrics {
+  cssRules: number
+  variables: number
+  colors: number
+  tokens: number
+  qualityScore: number
+}
+
 interface ScanResultsLayoutProps {
-  result: ScanResult
+  result: ScanResult | null
   isLoading: boolean
   scanId?: string | null
   progress?: ScanProgress | null
-  metrics?: any | null
+  metrics?: ScanMetrics | null
   error?: string | null
   onCopy: (value: string) => void
   onExport: (format: string) => void
   onShare: () => void
-  showDiff?: boolean
-  onToggleDiff?: () => void
   onNewScan?: () => void
-  onScanHistory?: () => void
 }
 
 export function ScanResultsLayout({
   result,
   isLoading,
-  scanId,
   progress,
   metrics,
   error,
   onCopy,
   onExport,
   onShare,
-  showDiff,
-  onToggleDiff,
   onNewScan,
-  onScanHistory
 }: ScanResultsLayoutProps) {
   const [activeTab, setActiveTab] = useState<TabId>("overview")
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
-  // Calculate tab counts
-  const tabCounts = useMemo(() => ({
-    tokens: result?.curatedTokens ? (
-      (result.curatedTokens.colors?.length || 0) +
-      (result.curatedTokens.typography?.families?.length || 0) +
-      (result.curatedTokens.spacing?.length || 0) +
-      (result.curatedTokens.radius?.length || 0) +
-      (result.curatedTokens.shadows?.length || 0)
-    ) : 0,
-    components: result?.componentLibrary?.summary?.totalComponents || 0,
-    insights: result?.comprehensiveAnalysis ? (
-      (result.comprehensiveAnalysis.recommendations?.quick_wins?.length || 0) +
-      (result.comprehensiveAnalysis.recommendations?.critical?.length || 0)
-    ) : 0,
-    screenshots: scanId ? "•" : 0 // Show indicator if scanId exists
-  }), [result, scanId])
-
-  // Show error state if there's an error
-  if (error && !isLoading) {
+  const tokenCount = useMemo(() => {
+    const curated = result?.curatedTokens
+    if (!curated) return 0
     return (
-      <div className="flex h-full w-full items-center justify-center p-8">
-        <div className="text-center max-w-md">
-          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-foreground mb-2">Scan Failed</h3>
-          <p className="text-sm text-muted-foreground mb-6">{error}</p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button onClick={onNewScan} variant="default">
-              <Target className="h-4 w-4 mr-2" />
-              Try Again
-            </Button>
-            <Button onClick={() => window.location.href = '/'} variant="outline">
-              Back to Home
-            </Button>
-          </div>
-        </div>
+      (curated.colors?.length || 0) +
+      (curated.typography?.families?.length || 0) +
+      (curated.spacing?.length || 0) +
+      (curated.radius?.length || 0) +
+      (curated.shadows?.length || 0)
+    )
+  }, [result?.curatedTokens])
+
+  const copyText = async (key: string, value: string) => {
+    onCopy(value)
+    try {
+      await navigator.clipboard.writeText(value)
+    } catch {
+      /* parent may already handle */
+    }
+    setCopiedKey(key)
+    window.setTimeout(() => setCopiedKey(null), 1600)
+  }
+
+  const downloadText = (fileName: string, content: string) => {
+    const blob = new Blob([content], { type: "text/markdown;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = fileName
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto flex max-w-3xl flex-col items-start gap-4 px-6 py-16">
+        <p className="text-sm uppercase tracking-[0.2em] text-destructive/80">Scan failed</p>
+        <h2 className="font-serif text-3xl text-foreground">{error}</h2>
+        <Button onClick={onNewScan}>Try another URL</Button>
       </div>
     )
   }
 
-  return (
-    <div className="flex h-full w-full flex-col overflow-hidden">
-      {/* Loading progress bar */}
-      {isLoading && progress && (
-        <div className="absolute top-0 left-0 right-0 z-50 h-0.5 bg-grep-2">
+  if (isLoading || !result) {
+    return (
+      <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-16">
+        <div className="flex items-center gap-3 text-teal-800">
+          <Clock className="h-5 w-5 animate-spin" />
+          <p className="text-sm font-medium tracking-wide">
+            {progress?.message || "Scanning public CSS…"}
+          </p>
+        </div>
+        <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
           <div
-            className="h-full bg-blue-500 transition-all duration-300"
-            style={{ width: `${(progress.step / progress.totalSteps) * 100}%` }}
+            className="h-full origin-left rounded-full bg-teal-700 transition-all duration-700"
+            style={{
+              width: `${Math.min(
+                95,
+                ((progress?.step || 1) / (progress?.totalSteps || 5)) * 100
+              )}%`,
+            }}
           />
         </div>
-      )}
+        <p className="text-sm text-muted-foreground">
+          Extracting tokens, layout DNA, DESIGN.md, and an agent skill — usually a few seconds.
+        </p>
+      </div>
+    )
+  }
 
-      {/* Header */}
-      <div className="shrink-0 border-b border-grep-2 bg-background px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={cn(
-              "w-2 h-2 rounded-full",
-              isLoading ? "bg-blue-500 animate-pulse" : "bg-green-500"
-            )} />
-            {result?.favicon && (
-              <img
-                src={result.favicon}
-                alt={`${result.domain} logo`}
-                className="w-8 h-8 rounded object-contain"
-                onError={(e) => {
-                  // Hide image if it fails to load
-                  e.currentTarget.style.display = 'none'
-                }}
-              />
+  const colors = result.curatedTokens?.colors || []
+  const families = result.curatedTokens?.typography?.families || []
+
+  return (
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+      <header className="mb-8 flex flex-col gap-6 border-b border-border/60 pb-8 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="secondary" className="rounded-md">
+              {result.domain}
+            </Badge>
+            {result.cacheHit && (
+              <Badge variant="outline" className="rounded-md">
+                cached
+              </Badge>
             )}
-            <div>
-              <h1 className="text-xl font-semibold text-foreground">
-                {result?.domain || "Analyzing..."}
-              </h1>
-              <div className="flex items-center gap-2 mt-0.5">
-                {result?.versionInfo && (
-                  <Badge variant="secondary" className="h-5 font-mono text-[10px]">
-                    v{result.versionInfo.versionNumber}
-                  </Badge>
-                )}
-                {isLoading && progress && (
-                  <span className="text-xs text-grep-7 font-mono">
-                    {progress.phase} ({progress.step}/{progress.totalSteps})
-                  </span>
-                )}
-              </div>
-            </div>
+            <Badge variant="outline" className="rounded-md">
+              {result.metadata?.engine || "w3c+design-md"}
+            </Badge>
           </div>
+          <h2 className="font-serif text-3xl tracking-tight text-foreground sm:text-4xl">
+            Design Contract ready
+          </h2>
+          <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
+            {result.summary?.tokensExtracted || tokenCount} tokens ·{" "}
+            {Math.round(result.summary?.confidence || 0)}% confidence ·{" "}
+            {Math.round((result.summary?.processingTime || 0) / 100) / 10}s
+            {result.designContract
+              ? ` · ${result.designContract.summary?.fileCount ?? 0} pack files`
+              : ""}
+            {result.semanticGraph
+              ? ` · ${result.semanticGraph.summary.nodeCount} graph nodes / ${result.semanticGraph.summary.edgeCount} edges`
+              : ""}
+            {result.brandAnalysis?.personality
+              ? ` · ${result.brandAnalysis.personality}`
+              : ""}
+          </p>
+        </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2">
-            {result?.versionInfo?.diff && onToggleDiff && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onToggleDiff}
-                className="h-8 text-xs"
-              >
-                <History className="h-3.5 w-3.5 mr-1.5" />
-                Changes
-              </Button>
-            )}
+        <div className="flex flex-wrap gap-2">
+          {result.domain && (
+            <Button
+              variant="default"
+              size="sm"
+              className="gap-2 bg-teal-800 hover:bg-teal-900"
+              onClick={() => {
+                window.location.href = `/api/contracts/download?domain=${encodeURIComponent(result.domain!)}`
+              }}
+            >
+              <Download className="h-4 w-4" />
+              Download Design Contract
+            </Button>
+          )}
+          {result.designMd && (
             <Button
               variant="outline"
               size="sm"
-              onClick={onShare}
-              className="h-8 text-xs"
+              className="gap-2"
+              onClick={() =>
+                downloadText(result.designMd!.fileName, result.designMd!.markdown)
+              }
             >
-              <Share2 className="h-3.5 w-3.5 mr-1.5" />
-              Share
+              <FileText className="h-4 w-4" />
+              DESIGN.md only
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 text-xs">
-                  <Download className="h-3.5 w-3.5 mr-1.5" />
-                  Export
-                  <ChevronDown className="h-3 w-3 ml-1.5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Standards & Specs</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => onExport('w3c-json')}>
-                  W3C Design Tokens (JSON)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onExport('style-dictionary')}>
-                  Style Dictionary
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel>Design Tools</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => onExport('figma')}>
-                  Figma Tokens Plugin
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onExport('figma-variables')}>
-                  Figma Variables API
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel>Web Frameworks</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => onExport('tailwind')}>
-                  Tailwind CSS v4
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onExport('css')}>
-                  CSS Custom Properties
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onExport('scss')}>
-                  SCSS Variables
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onExport('sass')}>
-                  Sass (Indented)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onExport('less')}>
-                  Less Variables
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onExport('stylus')}>
-                  Stylus
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel>JavaScript/TypeScript</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => onExport('ts')}>
-                  TypeScript (Typed)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onExport('js')}>
-                  JavaScript (ES6)
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel>Mobile Platforms</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => onExport('swift')}>
-                  iOS Swift
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onExport('kotlin')}>
-                  Android Kotlin
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onExport('xml')}>
-                  Android XML
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onExport('dart')}>
-                  Flutter Dart
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel>Other Formats</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => onExport('json')}>
-                  Raw JSON
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onExport('yaml')}>
-                  YAML
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          )}
+          {result.designSkill && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() =>
+                downloadText("SKILL.md", result.designSkill!.markdown)
+              }
+            >
+              <Sparkles className="h-4 w-4" />
+              Skill
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" className="gap-2" onClick={() => onExport("json")}>
+            Tokens JSON
+          </Button>
+          <Button variant="ghost" size="sm" className="gap-2" onClick={onShare}>
+            <Share2 className="h-4 w-4" />
+            Share
+          </Button>
         </div>
-      </div>
+      </header>
 
-      {/* Tabs */}
       <ResultsTabs
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        counts={tabCounts}
+        counts={{ tokens: tokenCount }}
       />
 
-      {/* Tab content */}
-      <div className="flex-1 overflow-y-auto bg-background">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          {activeTab === "overview" && (
-            <OverviewTab
-              result={result}
-              isLoading={isLoading}
-              progress={progress}
-              metrics={metrics}
-              onCopy={onCopy}
-            />
-          )}
-
-          {activeTab === "tokens" && (
-            <TokensTab
-              result={result}
-              isLoading={isLoading}
-              onCopy={onCopy}
-            />
-          )}
-
-          {activeTab === "components" && (
-            <ComponentsTab
-              result={result}
-              isLoading={isLoading}
-              onCopy={onCopy}
-            />
-          )}
-
-          {activeTab === "analysis" && (
-            <AnalysisTab
-              result={result}
-              isLoading={isLoading}
-            />
-          )}
-
-          {activeTab === "layout" && (
-            <LayoutTab
-              result={result}
-              isLoading={isLoading}
-            />
-          )}
-
-          {activeTab === "recommendations" && (
-            <RecommendationsTab
-              result={result}
-              isLoading={isLoading}
-            />
-          )}
-
-          {activeTab === "screenshots" && (
-            <ScreenshotsTab scanId={scanId} isLoading={isLoading} />
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Overview Tab
-function OverviewTab({ result, isLoading, progress, metrics, onCopy }: any) {
-  const summary = result?.summary || {}
-  const comprehensiveAnalysis = result?.comprehensiveAnalysis
-
-  return (
-    <div className="space-y-8">
-      {/* Key Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard
-          label="Design Tokens"
-          value={summary.tokensExtracted || 0}
-          icon={TrendingUp}
-          status={summary.tokensExtracted > 20 ? "success" : "warning"}
-          subtitle={summary.curatedCount ? `${summary.curatedCount.colors}c · ${summary.curatedCount.fonts}f · ${summary.curatedCount.spacing}s` : undefined}
-          isLoading={isLoading && !summary.tokensExtracted}
-        />
-
-        <MetricCard
-          label="Confidence"
-          value={`${summary.confidence || 0}%`}
-          icon={Shield}
-          status={summary.confidence >= 80 ? "success" : summary.confidence >= 60 ? "info" : "warning"}
-          progress={summary.confidence}
-          isLoading={isLoading && !summary.confidence}
-        />
-
-        <MetricCard
-          label="Components"
-          value={result?.componentLibrary?.summary?.totalComponents || 0}
-          icon={Target}
-          status="info"
-          subtitle={result?.componentLibrary?.summary?.detectionAccuracy}
-          isLoading={isLoading && !result?.componentLibrary}
-        />
-
-        <MetricCard
-          label="System Maturity"
-          value={comprehensiveAnalysis?.designSystemScore?.maturity || "N/A"}
-          icon={Zap}
-          status={comprehensiveAnalysis?.designSystemScore?.overall >= 70 ? "success" : "info"}
-          subtitle={comprehensiveAnalysis?.designSystemScore?.overall ? `${comprehensiveAnalysis.designSystemScore.overall}% score` : undefined}
-          isLoading={isLoading && !comprehensiveAnalysis}
-        />
-      </div>
-
-      {/* Top Insights */}
-      {comprehensiveAnalysis && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Key Findings</h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* Brand Identity */}
-            {comprehensiveAnalysis.brandIdentity && (
-              <InsightCard
-                title="Brand Identity"
-                description={`${comprehensiveAnalysis.brandIdentity.colorPersonality}. Typography: ${comprehensiveAnalysis.brandIdentity.typographicVoice}.`}
-                icon={Sparkles}
-                severity="info"
-                metrics={[
-                  { label: "Primary Colors", value: comprehensiveAnalysis.brandIdentity.primaryColors?.length || 0 },
-                  { label: "Industry", value: comprehensiveAnalysis.brandIdentity.industryAlignment || "N/A" }
-                ]}
-              />
+      <div className="mt-8">
+        {activeTab === "overview" && (
+          <div className="space-y-10 animate-fade-in">
+            {result.semanticGraph && (
+              <section className="rounded-2xl border border-[color:var(--soft-border)] bg-card/70 p-5 shadow-[var(--soft-shadow)]">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-teal-800/80 dark:text-teal-300/80">
+                      Semantic design graph
+                    </p>
+                    <h3 className="mt-1 font-serif text-2xl tracking-tight">
+                      How the system links together
+                    </h3>
+                    <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                      Tokens fill roles, components use those roles, and layout nodes place them —
+                      so agents can generate a contract that matches how the UI actually works.
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-xl"
+                    onClick={() =>
+                      downloadText(
+                        `${result.domain || "design"}-graph.json`,
+                        JSON.stringify(result.semanticGraph, null, 2)
+                      )
+                    }
+                  >
+                    graph.json
+                  </Button>
+                </div>
+                <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {[
+                    ["Tokens", result.semanticGraph.summary.tokenCount],
+                    ["Roles", result.semanticGraph.summary.roleCount],
+                    ["Components", result.semanticGraph.summary.componentCount],
+                    ["Patterns", result.semanticGraph.summary.patternCount],
+                  ].map(([label, value]) => (
+                    <div
+                      key={String(label)}
+                      className="rounded-xl border border-[color:var(--soft-border)] bg-background/50 px-3 py-3"
+                    >
+                      <div className="text-xs text-muted-foreground">{label}</div>
+                      <div className="mt-1 font-mono text-xl text-foreground">{value}</div>
+                    </div>
+                  ))}
+                </div>
+              </section>
             )}
 
-            {/* Accessibility */}
-            {comprehensiveAnalysis.accessibility && (
-              <InsightCard
-                title="Accessibility"
-                description={`WCAG ${comprehensiveAnalysis.accessibility.wcagLevel} compliance with ${comprehensiveAnalysis.accessibility.contrastIssues?.length || 0} contrast issues.`}
-                icon={Shield}
-                severity={comprehensiveAnalysis.accessibility.wcagLevel === "AAA" ? "info" : "warning"}
-                metrics={[
-                  { label: "Score", value: `${comprehensiveAnalysis.accessibility.overallScore}%` },
-                  { label: "Focus Indicators", value: comprehensiveAnalysis.accessibility.focusIndicators?.quality || "N/A" }
-                ]}
-              />
+            <section className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+              <div>
+                <p className="mb-3 text-xs uppercase tracking-[0.22em] text-muted-foreground">
+                  Palette
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {(result.brandAnalysis?.primaryColors?.length
+                    ? result.brandAnalysis.primaryColors
+                    : colors.slice(0, 8).map((c) => c.value)
+                  ).map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      title={color}
+                      onClick={() => void copyText(color, color)}
+                      className="group relative h-16 w-16 overflow-hidden rounded-md border border-black/10 transition-transform hover:-translate-y-0.5"
+                      style={{ background: color }}
+                    >
+                      <span className="absolute inset-x-0 bottom-0 bg-black/50 px-1 py-0.5 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
+                        {copiedKey === color ? "copied" : color}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-4">
+                <StatRow label="CSS sources" value={String(result.metadata?.cssSources ?? "—")} />
+                <StatRow
+                  label="Confidence"
+                  value={`${Math.round(result.summary?.confidence || 0)}%`}
+                />
+                <StatRow
+                  label="Completeness"
+                  value={`${Math.round(result.summary?.completeness || 0)}%`}
+                />
+                <StatRow
+                  label="Live metrics"
+                  value={
+                    metrics
+                      ? `${metrics.colors} colors · ${metrics.tokens} tokens`
+                      : `${colors.length} colors`
+                  }
+                />
+              </div>
+            </section>
+
+            {families.length > 0 && (
+              <section>
+                <p className="mb-3 text-xs uppercase tracking-[0.22em] text-muted-foreground">
+                  Typography
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {families.slice(0, 4).map((font, index) => (
+                    <FontPreviewCard
+                      key={`${font.value}-${index}`}
+                      fontFamily={String(font.value)}
+                      usage={font.usage}
+                      onCopy={() => onCopy(String(font.value))}
+                    />
+                  ))}
+                </div>
+              </section>
             )}
 
-            {/* Critical Issues */}
-            {comprehensiveAnalysis.recommendations?.critical && comprehensiveAnalysis.recommendations.critical.length > 0 && (
-              <InsightCard
-                title="Critical Issues"
-                description={comprehensiveAnalysis.recommendations.critical[0].issue}
-                icon={AlertCircle}
-                severity="critical"
-                recommendation={comprehensiveAnalysis.recommendations.critical[0].solution}
+            <section className="grid gap-4 md:grid-cols-2">
+              <ArtifactCard
+                title="Design Contract pack"
+                subtitle={
+                  result.designContract?.installCommand ||
+                  "ZIP with DESIGN.md, AGENTS.md, skills, references, config"
+                }
+                ready={Boolean(result.designContract || result.designMd)}
+                onCopy={() =>
+                  result.designContract?.installCommand &&
+                  void copyText("install", result.designContract.installCommand)
+                }
+                onOpen={() => {
+                  if (result.domain) {
+                    window.location.href = `/api/contracts/download?domain=${encodeURIComponent(result.domain)}`
+                  }
+                }}
+                copied={copiedKey === "install"}
+                openLabel="Download ZIP"
+                copyLabel="Copy install cmd"
               />
-            )}
+              <ArtifactCard
+                title="DESIGN.md grammar"
+                subtitle="Product grammar + Google token front matter for agents"
+                ready={Boolean(result.designMd)}
+                onCopy={() =>
+                  result.designMd &&
+                  void copyText("design-md", result.designMd.markdown)
+                }
+                onOpen={() => setActiveTab("design-md")}
+                copied={copiedKey === "design-md"}
+              />
+            </section>
+          </div>
+        )}
 
-            {/* Quick Win */}
-            {comprehensiveAnalysis.recommendations?.quick_wins && comprehensiveAnalysis.recommendations.quick_wins[0] && (
-              <InsightCard
-                title={comprehensiveAnalysis.recommendations.quick_wins[0].title}
-                description={comprehensiveAnalysis.recommendations.quick_wins[0].description}
-                icon={Lightbulb}
-                severity="info"
-                impact={comprehensiveAnalysis.recommendations.quick_wins[0].impact}
-                effort={comprehensiveAnalysis.recommendations.quick_wins[0].effort}
-              />
+        {activeTab === "tokens" && (
+          <div className="space-y-10 animate-fade-in">
+            {colors.length > 0 && (
+              <section className="space-y-3">
+                <h3 className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Colors</h3>
+                <TokenGrid
+                  tokens={colors.map((token) => ({
+                    name: token.name || token.value,
+                    value: token.value,
+                    usage: token.usage,
+                    confidence: token.confidence,
+                  }))}
+                  type="color"
+                  onCopy={onCopy}
+                />
+              </section>
+            )}
+            {(result.curatedTokens?.spacing?.length || 0) > 0 && (
+              <section className="space-y-3">
+                <h3 className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Spacing</h3>
+                <TokenGrid
+                  tokens={(result.curatedTokens?.spacing || []).map((token) => ({
+                    name: token.name || String(token.value),
+                    value: String(token.value),
+                    usage: token.usage,
+                  }))}
+                  type="spacing"
+                  columns={4}
+                  onCopy={onCopy}
+                />
+              </section>
+            )}
+            {(result.curatedTokens?.radius?.length || 0) > 0 && (
+              <section className="space-y-3">
+                <h3 className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Radius</h3>
+                <TokenGrid
+                  tokens={(result.curatedTokens?.radius || []).map((token) => ({
+                    name: token.name || String(token.value),
+                    value: String(token.value),
+                  }))}
+                  type="radius"
+                  columns={4}
+                  onCopy={onCopy}
+                />
+              </section>
+            )}
+            {(result.curatedTokens?.shadows?.length || 0) > 0 && (
+              <section className="space-y-3">
+                <h3 className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Shadows</h3>
+                <TokenGrid
+                  tokens={(result.curatedTokens?.shadows || []).map((token) => ({
+                    name: token.name || "shadow",
+                    value: String(token.value),
+                  }))}
+                  type="shadow"
+                  columns={3}
+                  onCopy={onCopy}
+                />
+              </section>
             )}
           </div>
-        </div>
-      )}
+        )}
+
+        {activeTab === "design-md" && result.designMd && (
+          <MarkdownPanel
+            title="DESIGN.md"
+            subtitle="Drop at project root. Point Cursor/Claude rules at this file before generating UI."
+            markdown={result.designMd.markdown}
+            onCopy={() => void copyText("design-md", result.designMd!.markdown)}
+            onDownload={() =>
+              downloadText(result.designMd!.fileName, result.designMd!.markdown)
+            }
+            copied={copiedKey === "design-md"}
+          />
+        )}
+
+        {activeTab === "skill" && result.designSkill && (
+          <MarkdownPanel
+            title={result.designSkill.skillName}
+            subtitle={result.designSkill.description}
+            markdown={result.designSkill.markdown}
+            onCopy={() => void copyText("skill", result.designSkill!.markdown)}
+            onDownload={() =>
+              downloadText("SKILL.md", result.designSkill!.markdown)
+            }
+            copied={copiedKey === "skill"}
+          />
+        )}
+
+        {activeTab === "layout" && (
+          <div className="animate-fade-in space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Layout DNA inferred from collected CSS (containers, breakpoints, grid/flex mix, archetypes).
+            </p>
+            <pre className="overflow-auto rounded-md border border-border/70 bg-slate-950 p-4 text-xs leading-relaxed text-slate-100">
+              {JSON.stringify(result.layoutDNA ?? {}, null, 2)}
+            </pre>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
 
-// Tokens Tab
-function TokensTab({ result, isLoading, onCopy }: any) {
-  const tokens = result?.curatedTokens || {}
-
+function StatRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="space-y-8">
-      {/* Colors Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Colors</h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onCopy(JSON.stringify(tokens.colors || [], null, 2))}
-            disabled={!tokens.colors || tokens.colors.length === 0}
-          >
-            <Copy className="h-3.5 w-3.5 mr-1.5" />
-            Copy All
+    <div className="flex items-baseline justify-between gap-4 border-b border-border/50 py-2">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="font-mono text-sm text-foreground">{value}</span>
+    </div>
+  )
+}
+
+function ArtifactCard({
+  title,
+  subtitle,
+  ready,
+  onCopy,
+  onOpen,
+  copied,
+  openLabel = "View",
+  copyLabel = "Copy",
+}: {
+  title: string
+  subtitle: string
+  ready: boolean
+  onCopy: () => void
+  onOpen: () => void
+  copied: boolean
+  openLabel?: string
+  copyLabel?: string
+}) {
+  return (
+    <div className="border-t border-border/70 pt-4">
+      <div className="mb-2 flex items-center gap-2">
+        {ready ? (
+          <CheckCircle2 className="h-4 w-4 text-teal-700" />
+        ) : (
+          <Clock className="h-4 w-4 text-muted-foreground" />
+        )}
+        <h3 className="font-medium text-foreground">{title}</h3>
+      </div>
+      <p className="mb-4 text-sm text-muted-foreground">{subtitle}</p>
+      <div className="flex gap-2">
+        <Button size="sm" variant="outline" onClick={onOpen} disabled={!ready}>
+          {openLabel}
+        </Button>
+        <Button size="sm" variant="ghost" className="gap-1" onClick={onCopy} disabled={!ready}>
+          <Copy className="h-3.5 w-3.5" />
+          {copied ? "Copied" : copyLabel}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function MarkdownPanel({
+  title,
+  subtitle,
+  markdown,
+  onCopy,
+  onDownload,
+  copied,
+}: {
+  title: string
+  subtitle: string
+  markdown: string
+  onCopy: () => void
+  onDownload: () => void
+  copied: boolean
+}) {
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h3 className="font-serif text-2xl text-foreground">{title}</h3>
+          <p className="text-sm text-muted-foreground">{subtitle}</p>
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" className="gap-1" onClick={onCopy}>
+            <Copy className="h-3.5 w-3.5" />
+            {copied ? "Copied" : "Copy"}
+          </Button>
+          <Button size="sm" className="gap-1 bg-teal-800 hover:bg-teal-900" onClick={onDownload}>
+            <Download className="h-3.5 w-3.5" />
+            Download
           </Button>
         </div>
-        {isLoading && (!tokens.colors || tokens.colors.length === 0) ? (
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="aspect-square bg-grep-2 rounded-lg animate-pulse" />
-            ))}
-          </div>
-        ) : tokens.colors && tokens.colors.length > 0 ? (
-          <TokenGrid tokens={tokens.colors} type="color" columns={6} onCopy={onCopy} />
-        ) : (
-          <div className="text-center py-8 text-grep-7">
-            <div className="w-12 h-12 rounded-full bg-grep-2 mx-auto mb-2" />
-            <p className="text-sm">No colors detected yet</p>
-          </div>
+      </div>
+      <pre
+        className={cn(
+          "max-h-[70vh] overflow-auto rounded-md border border-border/70",
+          "bg-[#0B1220] p-5 text-[12px] leading-relaxed text-slate-100"
         )}
-      </div>
-
-      {/* Typography Section */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">Typography</h2>
-        {isLoading && (!tokens.typography?.families || tokens.typography.families.length === 0) ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            {[...Array(2)].map((_, i) => (
-              <div key={i} className="h-24 bg-grep-2 rounded-lg animate-pulse" />
-            ))}
-          </div>
-        ) : tokens.typography?.families && tokens.typography.families.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            {tokens.typography.families.map((font: any, i: number) => (
-              <FontPreviewCard
-                key={i}
-                fontFamily={font.value}
-                percentage={font.percentage}
-                onCopy={() => onCopy(font.value)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-grep-7">
-            <div className="w-12 h-12 rounded bg-grep-2 mx-auto mb-2" />
-            <p className="text-sm">No fonts detected yet</p>
-          </div>
-        )}
-      </div>
-
-      {/* Spacing Section */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">Spacing</h2>
-        {isLoading && (!tokens.spacing || tokens.spacing.length === 0) ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-16 bg-grep-2 rounded-lg animate-pulse" />
-            ))}
-          </div>
-        ) : tokens.spacing && tokens.spacing.length > 0 ? (
-          <TokenGrid tokens={tokens.spacing} type="spacing" columns={4} onCopy={onCopy} />
-        ) : (
-          <div className="text-center py-8 text-grep-7">
-            <div className="w-12 h-4 bg-grep-2 mx-auto mb-2" />
-            <p className="text-sm">No spacing detected yet</p>
-          </div>
-        )}
-      </div>
-
-      {/* Border Radius Section */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">Border Radius</h2>
-        {isLoading && (!tokens.radius || tokens.radius.length === 0) ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-16 bg-grep-2 rounded-lg animate-pulse" />
-            ))}
-          </div>
-        ) : tokens.radius && tokens.radius.length > 0 ? (
-          <TokenGrid tokens={tokens.radius} type="radius" columns={4} onCopy={onCopy} />
-        ) : (
-          <div className="text-center py-8 text-grep-7">
-            <div className="w-12 h-12 rounded-full bg-grep-2 mx-auto mb-2" />
-            <p className="text-sm">No border radius detected yet</p>
-          </div>
-        )}
-      </div>
-
-      {/* Shadows Section */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">Shadows</h2>
-        {isLoading && (!tokens.shadows || tokens.shadows.length === 0) ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-20 bg-grep-2 rounded-lg animate-pulse" />
-            ))}
-          </div>
-        ) : tokens.shadows && tokens.shadows.length > 0 ? (
-          <TokenGrid tokens={tokens.shadows} type="shadow" columns={3} onCopy={onCopy} />
-        ) : (
-          <div className="text-center py-8 text-grep-7">
-            <div className="w-12 h-12 bg-grep-2 mx-auto mb-2 shadow-lg" />
-            <p className="text-sm">No shadows detected yet</p>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// Components Tab
-function ComponentsTab({ result, isLoading, onCopy }: any) {
-  const componentLibrary = result?.componentLibrary
-  const { components = [], summary = {} } = componentLibrary || {}
-
-  return (
-    <div className="space-y-6">
-      {/* Summary */}
-      <div className="rounded-lg border border-grep-2 bg-grep-0 p-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-          <div>
-            {isLoading && !summary.totalComponents ? (
-              <div className="text-2xl font-bold bg-grep-2 h-8 w-12 mx-auto rounded animate-pulse mb-1" />
-            ) : (
-              <div className="text-2xl font-bold text-foreground">{summary.totalComponents || 0}</div>
-            )}
-            <div className="text-xs text-grep-7 uppercase tracking-wide">Total Components</div>
-          </div>
-          <div>
-            {isLoading && !summary.averageConfidence ? (
-              <div className="text-2xl font-bold bg-grep-2 h-8 w-12 mx-auto rounded animate-pulse mb-1" />
-            ) : (
-              <div className="text-2xl font-bold text-foreground">{summary.averageConfidence || 0}%</div>
-            )}
-            <div className="text-xs text-grep-7 uppercase tracking-wide">Avg Confidence</div>
-          </div>
-          <div>
-            {isLoading && !summary.detectionAccuracy ? (
-              <div className="text-2xl font-bold bg-grep-2 h-8 w-16 mx-auto rounded animate-pulse mb-1" />
-            ) : (
-              <div className="text-2xl font-bold text-foreground capitalize">{summary.detectionAccuracy || "N/A"}</div>
-            )}
-            <div className="text-xs text-grep-7 uppercase tracking-wide">Detection Quality</div>
-          </div>
-          <div>
-            {isLoading && !summary.byType ? (
-              <div className="text-2xl font-bold bg-grep-2 h-8 w-8 mx-auto rounded animate-pulse mb-1" />
-            ) : (
-              <div className="text-2xl font-bold text-foreground">{summary.byType ? Object.keys(summary.byType).length : 0}</div>
-            )}
-            <div className="text-xs text-grep-7 uppercase tracking-wide">Component Types</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Component List */}
-      <div className="space-y-3">
-        {isLoading && components.length === 0 ? (
-          // Loading skeleton
-          [...Array(3)].map((_, i) => (
-            <div key={i} className="h-24 bg-grep-2 rounded-lg animate-pulse" />
-          ))
-        ) : components.length > 0 ? (
-          components.map((component: any, index: number) => (
-            <ComponentShowcase
-              key={index}
-              type={component.type}
-              variant={component.variant}
-              confidence={Math.min(100, Math.round(component.confidence))}
-              usage={component.usage}
-              tokens={component.tokens}
-              examples={component.examples}
-              onCopy={onCopy}
-            />
-          ))
-        ) : (
-          <div className="text-center py-8 text-grep-7">
-            <div className="w-12 h-12 rounded bg-grep-2 mx-auto mb-2" />
-            <p className="text-sm">No components detected yet</p>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// Analysis Tab
-function AnalysisTab({ result, isLoading }: any) {
-  const analysis = result?.comprehensiveAnalysis
-
-  return (
-    <div className="space-y-8">
-      {/* Design System Score */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">Design System Maturity</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <MetricCard
-            label="Overall"
-            value={`${analysis?.designSystemScore?.overall || 0}%`}
-            status={analysis?.designSystemScore?.overall >= 70 ? "success" : "info"}
-            progress={analysis?.designSystemScore?.overall}
-            isLoading={isLoading && !analysis?.designSystemScore}
-          />
-          <MetricCard
-            label="Completeness"
-            value={`${analysis?.designSystemScore?.completeness || 0}%`}
-            status={analysis?.designSystemScore?.completeness >= 70 ? "success" : "info"}
-            progress={analysis?.designSystemScore?.completeness}
-            isLoading={isLoading && !analysis?.designSystemScore}
-          />
-          <MetricCard
-            label="Consistency"
-            value={`${analysis?.designSystemScore?.consistency || 0}%`}
-            status={analysis?.designSystemScore?.consistency >= 70 ? "success" : "info"}
-            progress={analysis?.designSystemScore?.consistency}
-            isLoading={isLoading && !analysis?.designSystemScore}
-          />
-          <MetricCard
-            label="Scalability"
-            value={`${analysis?.designSystemScore?.scalability || 0}%`}
-            status={analysis?.designSystemScore?.scalability >= 70 ? "success" : "info"}
-            progress={analysis?.designSystemScore?.scalability}
-            isLoading={isLoading && !analysis?.designSystemScore}
-          />
-        </div>
-      </div>
-
-      {/* Component Architecture */}
-      {analysis?.componentArchitecture && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Component Architecture</h2>
-          <InsightCard
-            title="Detected Patterns"
-            description={`${analysis.componentArchitecture?.detectedPatterns?.length || 0} patterns found with ${analysis.componentArchitecture?.reusability || 0}% reusability score.`}
-            icon={Target}
-            severity="info"
-            metrics={[
-              { label: "Complexity", value: analysis.componentArchitecture?.complexity || "Unknown" },
-              { label: "Button Variants", value: analysis.componentArchitecture?.buttonVariants?.length || 0 }
-            ]}
-          />
-        </div>
-      )}
-
-      {/* Accessibility */}
-      {analysis?.accessibility && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Accessibility Audit</h2>
-          <div className="grid gap-4">
-            <InsightCard
-              title={`WCAG ${analysis.accessibility?.wcagLevel || "Unknown"} Compliance`}
-              description={`Overall accessibility score: ${analysis.accessibility?.overallScore || 0}%. ${analysis.accessibility?.contrastIssues?.length || 0} contrast issues detected.`}
-              icon={Shield}
-              severity={analysis.accessibility?.wcagLevel === "AAA" ? "info" : analysis.accessibility?.wcagLevel === "AA" ? "medium" : "high"}
-              metrics={[
-                { label: "Contrast Issues", value: analysis.accessibility?.contrastIssues?.length || 0 },
-                { label: "Focus Quality", value: analysis.accessibility?.focusIndicators?.quality || "Unknown" }
-              ]}
-            />
-
-            {analysis.accessibility?.contrastIssues?.slice(0, 3).map((issue: any, i: number) => (
-              <InsightCard
-                key={i}
-                title="Contrast Issue"
-                description={`${issue.foreground} on ${issue.background} has ratio ${issue.ratio.toFixed(1)}`}
-                severity="warning"
-                recommendation={issue.recommendation}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Brand Identity */}
-      {analysis?.brandIdentity && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Brand Analysis</h2>
-          <InsightCard
-            title="Brand Personality"
-            description={`${analysis.brandIdentity?.colorPersonality || "Unknown"} with ${analysis.brandIdentity?.typographicVoice?.toLowerCase() || "unknown"} typography.`}
-            icon={Sparkles}
-            severity="info"
-            metrics={[
-              { label: "Visual Style", value: analysis.brandIdentity?.visualStyle?.join(", ") || "Unknown" },
-              { label: "Industry", value: analysis.brandIdentity?.industryAlignment || "Unknown" }
-            ]}
-          />
-        </div>
-      )}
-
-      {/* Design Patterns */}
-      {analysis?.designPatterns && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Design Patterns</h2>
-          <div className="grid gap-3">
-            {analysis.designPatterns?.identified?.map((pattern: any, i: number) => (
-              <InsightCard
-                key={i}
-                title={pattern.pattern}
-                description={`Confidence: ${pattern.confidence}%. Examples: ${pattern.examples.slice(0, 3).join(", ")}`}
-                severity="info"
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Anti-patterns */}
-      {analysis?.designPatterns?.antiPatterns && analysis?.designPatterns?.antiPatterns?.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Anti-Patterns Detected</h2>
-          <div className="grid gap-3">
-            {analysis.designPatterns?.antiPatterns?.map((antiPattern: any, i: number) => (
-              <InsightCard
-                key={i}
-                title={antiPattern.issue}
-                description=""
-                severity={antiPattern.severity}
-                recommendation={antiPattern.recommendation}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// Layout Tab
-function LayoutTab({ result, isLoading }: any) {
-  return (
-    <div className="space-y-6">
-      <h2 className="text-lg font-semibold text-foreground">Layout DNA Analysis</h2>
-      <div className="rounded-lg border border-grep-2 bg-grep-0 p-6">
-        {isLoading && !result?.layoutDNA ? (
-          <div className="space-y-3">
-            <div className="h-4 bg-grep-2 rounded animate-pulse w-3/4" />
-            <div className="h-4 bg-grep-2 rounded animate-pulse w-1/2" />
-            <div className="h-4 bg-grep-2 rounded animate-pulse w-2/3" />
-            <div className="h-4 bg-grep-2 rounded animate-pulse w-1/3" />
-          </div>
-        ) : result?.layoutDNA ? (
-          <pre className="text-xs font-mono text-grep-9 overflow-auto">
-            {JSON.stringify(result.layoutDNA, null, 2)}
-          </pre>
-        ) : (
-          <div className="text-center py-8 text-grep-7">
-            <div className="w-12 h-12 bg-grep-2 mx-auto mb-2 rounded" />
-            <p className="text-sm">Layout analysis pending...</p>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// Recommendations Tab
-function RecommendationsTab({ result, isLoading }: any) {
-  const recommendations = result?.comprehensiveAnalysis?.recommendations
-
-  return (
-    <div className="space-y-8">
-      {/* Critical Issues */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-          <AlertCircle className="h-5 w-5 text-red-600" />
-          Critical Issues
-        </h2>
-        <div className="grid gap-3">
-          {isLoading && (!recommendations?.critical || recommendations.critical.length === 0) ? (
-            [...Array(2)].map((_, i) => (
-              <div key={i} className="h-20 bg-grep-2 rounded-lg animate-pulse" />
-            ))
-          ) : recommendations?.critical && recommendations.critical.length > 0 ? (
-            recommendations.critical.map((issue: any, i: number) => (
-              <InsightCard
-                key={i}
-                title={issue.issue}
-                description=""
-                severity="critical"
-                recommendation={issue.solution}
-              />
-            ))
-          ) : (
-            <div className="text-center py-8 text-grep-7">
-              <div className="w-12 h-12 bg-green-100 rounded-full mx-auto mb-2 flex items-center justify-center">
-                <Shield className="w-6 h-6 text-green-600" />
-              </div>
-              <p className="text-sm">No critical issues detected</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Quick Wins */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-          <Lightbulb className="h-5 w-5 text-yellow-600" />
-          Quick Wins
-        </h2>
-        <div className="grid gap-3">
-          {isLoading && (!recommendations?.quick_wins || recommendations.quick_wins.length === 0) ? (
-            [...Array(3)].map((_, i) => (
-              <div key={i} className="h-16 bg-grep-2 rounded-lg animate-pulse" />
-            ))
-          ) : recommendations?.quick_wins && recommendations.quick_wins.length > 0 ? (
-            recommendations.quick_wins.map((win: any, i: number) => (
-              <InsightCard
-                key={i}
-                title={win.title}
-                description={win.description}
-                severity="info"
-                impact={win.impact}
-                effort={win.effort}
-              />
-            ))
-          ) : (
-            <div className="text-center py-8 text-grep-7">
-              <div className="w-12 h-12 bg-yellow-100 rounded-full mx-auto mb-2 flex items-center justify-center">
-                <Lightbulb className="w-6 h-6 text-yellow-600" />
-              </div>
-              <p className="text-sm">Analyzing opportunities...</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Long-term Improvements */}
-      {recommendations.long_term && recommendations.long_term.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-            <Target className="h-5 w-5 text-blue-600" />
-            Long-term Improvements
-          </h2>
-          <div className="grid gap-3">
-            {recommendations.long_term.map((improvement: any, i: number) => (
-              <InsightCard
-                key={i}
-                title={improvement.title}
-                description={improvement.description}
-                severity="info"
-                impact={improvement.impact}
-                effort={improvement.effort}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// Screenshots Tab
-function ScreenshotsTab({ scanId, isLoading }: { scanId: string | null; isLoading: boolean }) {
-  return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-foreground">Multi-Viewport Screenshots</h2>
-      {!scanId && isLoading ? (
-        <div className="text-center py-8 text-grep-7">
-          <div className="w-12 h-12 bg-grep-2 mx-auto mb-2 rounded animate-pulse" />
-          <p className="text-sm">Initializing scan...</p>
-        </div>
-      ) : scanId ? (
-        <ScreenshotGallery scanId={scanId} />
-      ) : (
-        <div className="text-center py-8 text-grep-7">
-          <div className="w-12 h-12 bg-grep-2 mx-auto mb-2 rounded" />
-          <p className="text-sm">No scan ID available for screenshots</p>
-        </div>
-      )}
+      >
+        {markdown}
+      </pre>
     </div>
   )
 }

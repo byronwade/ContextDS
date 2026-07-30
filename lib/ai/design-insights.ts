@@ -62,7 +62,7 @@ export async function generateDesignInsights(
       model: gateway('openai/gpt-4o-mini'), // Fast, cost-effective model via AI Gateway
       prompt,
       temperature: 0.3, // Lower temperature for consistent analysis
-      maxTokens: 1000
+      maxOutputTokens: 1000
     })
 
     // Parse AI response into structured insights

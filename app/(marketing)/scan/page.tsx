@@ -1,18 +1,28 @@
+import { Suspense } from "react"
 import { Metadata } from "next"
 import ScanClient from "./client"
 
 export const metadata: Metadata = {
-  title: "Scan Website - ContextDS Design Token Scanner",
-  description: "Extract design tokens from any website. Scan for colors, typography, spacing, shadows, and more with AI-powered analysis.",
+  title: "Scan → Design Contract | Design Contracts",
+  description:
+    "Turn any public site into an installable Design Contract — DESIGN.md grammar, agent skills, references, and check/verify workflow.",
   openGraph: {
-    title: "Scan Website - ContextDS Design Token Scanner",
-    description: "Extract design tokens from any website with AI-powered analysis",
+    title: "Scan → Design Contract | Design Contracts",
+    description:
+      "Scan a site, download a Design Contract pack, and keep every new component on-brand.",
   },
 }
 
-// Force dynamic rendering for scan page (uses searchParams)
-export const dynamic = 'force-dynamic'
-
 export default function ScanPage() {
-  return <ScanClient />
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground">
+          Loading scanner…
+        </div>
+      }
+    >
+      <ScanClient />
+    </Suspense>
+  )
 }

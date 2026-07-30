@@ -14,7 +14,7 @@ import { useStatsStore } from "@/stores/stats-store"
 import { cn } from "@/lib/utils"
 
 interface MarketingHeaderProps {
-  currentPage?: "home" | "features" | "pricing" | "docs" | "about" | "community" | "metrics" | "scan" | "site" | "contact"
+  currentPage?: "home" | "features" | "pricing" | "docs" | "about" | "community" | "metrics" | "scan" | "site" | "contact" | "privacy" | "terms"
   showSearch?: boolean
 }
 
@@ -77,7 +77,7 @@ export function MarketingHeader({ currentPage = "home", showSearch = false }: Ma
           <div className="flex items-center gap-2 pr-2 sm:pr-3">
             <Link className="outline-offset-4 flex items-center gap-1.5 sm:gap-2" href="/">
               <Palette className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 dark:text-blue-400" />
-              <span className="text-base sm:text-lg font-semibold text-black dark:text-white">ContextDS</span>
+              <span className="text-base sm:text-lg font-semibold text-black dark:text-white">Design Contracts</span>
               <span className="hidden xs:inline text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900">Beta</span>
             </Link>
           </div>

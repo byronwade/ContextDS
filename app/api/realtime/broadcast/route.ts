@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { broadcast, getConnectionCount } from '@/lib/realtime/connections'
 
-export const runtime = 'edge'
 
 // POST endpoint for broadcasting updates
 export async function POST(request: NextRequest) {

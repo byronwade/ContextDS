@@ -1,5 +1,5 @@
 /**
- * SEO Structured Data Generation for ContextDS
+ * SEO Structured Data Generation for designcontracts.sh
  * Generates JSON-LD structured data markup for enhanced search engine visibility
  */
 
@@ -145,23 +145,23 @@ export function generateOrganizationSchema(): OrganizationSchema {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "ContextDS",
+    name: "designcontracts.sh",
     description: "AI-powered design token extraction and analysis platform. Extract design tokens from any website and analyze layout DNA for design systems.",
-    url: "https://contextds.com",
-    logo: "https://contextds.com/logo.png",
+    url: "https://designcontracts.sh",
+    logo: "https://designcontracts.sh/logo.png",
     sameAs: [
-      "https://github.com/contextds",
+      "https://github.com/byronwade/ContextDS",
       "https://twitter.com/contextds"
     ],
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "Customer Service",
-      email: "hello@contextds.com"
+      email: "hello@designcontracts.com"
     },
     foundingDate: "2024",
     founder: {
       "@type": "Person",
-      name: "ContextDS Team"
+      name: "designcontracts.sh Team"
     },
     keywords: [
       "design tokens",
@@ -179,20 +179,20 @@ export function generateWebsiteSchema(): WebsiteSchema {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "ContextDS - Design Tokens Made Fast",
+    name: "designcontracts.sh - Design Tokens Made Fast",
     description: "Extract design tokens from any website. AI-powered CSS analysis and layout DNA profiling for design systems.",
-    url: "https://contextds.com",
+    url: "https://designcontracts.sh",
     potentialAction: {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: "https://contextds.com/scan?url={search_term_string}"
+        urlTemplate: "https://designcontracts.sh/scan?url={search_term_string}"
       },
       "query-input": "required name=search_term_string"
     },
     mainEntity: {
       "@type": "Organization",
-      name: "ContextDS"
+      name: "designcontracts.sh"
     }
   }
 }
@@ -201,9 +201,9 @@ export function generateSoftwareApplicationSchema(): SoftwareApplicationSchema {
   return {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "ContextDS",
+    name: "designcontracts.sh",
     description: "AI-powered design token extraction platform. Scan websites to extract colors, typography, spacing, and layout patterns automatically.",
-    url: "https://contextds.com",
+    url: "https://designcontracts.sh",
     applicationCategory: "DesignApplication",
     operatingSystem: ["Web Browser", "Any"],
     offers: {
@@ -223,8 +223,8 @@ export function generateSoftwareApplicationSchema(): SoftwareApplicationSchema {
       "Design System Maturity Scoring"
     ],
     screenshot: [
-      "https://contextds.com/screenshots/token-extraction.png",
-      "https://contextds.com/screenshots/layout-analysis.png"
+      "https://designcontracts.sh/screenshots/token-extraction.png",
+      "https://designcontracts.sh/screenshots/layout-analysis.png"
     ]
   }
 }
@@ -248,8 +248,8 @@ export function generateWebPageSchema(page: {
     url: page.url,
     isPartOf: {
       "@type": "WebSite",
-      name: "ContextDS",
-      url: "https://contextds.com"
+      name: "designcontracts.sh",
+      url: "https://designcontracts.sh"
     }
   }
 
@@ -295,8 +295,8 @@ export function generateDatasetSchema(dataset: {
     keywords: dataset.keywords,
     creator: {
       "@type": "Organization",
-      name: "ContextDS",
-      url: "https://contextds.com"
+      name: "designcontracts.sh",
+      url: "https://designcontracts.sh"
     },
     license: dataset.license || "https://creativecommons.org/licenses/by/4.0/",
     distribution: {
@@ -327,8 +327,8 @@ export function generateDesignTokenSchema(tokens: {
     url: tokens.url,
     creator: {
       "@type": "Organization",
-      name: "ContextDS",
-      url: "https://contextds.com"
+      name: "designcontracts.sh",
+      url: "https://designcontracts.sh"
     },
     about: {
       "@type": "Thing",
@@ -396,7 +396,7 @@ export function generatePageSchemas(page: {
     breadcrumbs: page.breadcrumbs,
     mainEntity: page.type === 'scan' ? {
       type: "SoftwareApplication",
-      name: "ContextDS Token Scanner",
+      name: "designcontracts.sh Token Scanner",
       description: "Extract design tokens from any website URL"
     } : undefined
   }))

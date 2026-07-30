@@ -1,3 +1,9 @@
+/**
+ * @deprecated Postgres/Drizzle is optional legacy support.
+ * Default scan + directory storage uses `lib/storage/serverless-store.ts`
+ * (Vercel Blob + Upstash Redis). Only set DATABASE_URL if you intentionally
+ * keep the old Neon path for experimental routes.
+ */
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { sql } from 'drizzle-orm'
 import postgres from 'postgres'
@@ -7,7 +13,7 @@ import * as schema from './schema'
 let client: postgres.Sql<{}> | null = null
 
 if (process.env.DATABASE_URL) {
-  console.log('🔗 Connecting to Neon PostgreSQL with ultrathink optimization...')
+  console.log('🔗 Connecting to legacy Postgres (optional — not used by default scan path)...')
 
   // Ultrathink optimized connection to Neon database
   client = postgres(process.env.DATABASE_URL, {

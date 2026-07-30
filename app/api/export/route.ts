@@ -74,13 +74,13 @@ export async function POST(request: NextRequest) {
     } else if (params.domain) {
       // Find most recent token set for domain
       const siteQuery = await db.query.sites.findFirst({
-        where: (sites: typeof import('@/lib/db/schema').sites.$inferSelect, { eq }: { eq: typeof import('drizzle-orm').eq }) => eq(sites.domain, params.domain),
+        where: (sitesTable, { eq: equals }) => equals(sitesTable.domain, params.domain!),
         with: {
           tokenSets: {
-            orderBy: (tokenSets: typeof import('@/lib/db/schema').tokenSets.$inferSelect, { desc }: { desc: typeof import('drizzle-orm').desc }) => [desc(tokenSets.versionNumber)],
-            limit: 1
-          }
-        }
+            orderBy: (sets, { desc: descending }) => [descending(sets.versionNumber)],
+            limit: 1,
+          },
+        },
       })
 
       tokenSet = siteQuery?.tokenSets[0]

@@ -6,7 +6,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ultraCache } from '@/lib/cache/ultra-cache'
 
-export const runtime = 'nodejs'
 export const maxDuration = 30
 
 // Popular sites to warm cache with

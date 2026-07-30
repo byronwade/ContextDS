@@ -1,137 +1,180 @@
-import type { NextConfig } from "next";
+import withBundleAnalyzer from '@next/bundle-analyzer'
+import type { NextConfig } from 'next'
+
+const isProd = process.env.NODE_ENV === 'production'
 
 const nextConfig: NextConfig = {
-  // TypeScript strictness - 48 remaining non-critical errors:
-  // ✅ FIXED: Redis export, vote route null handling
-  //
-  // Remaining categories (non-blocking):
-  // 1. React 19 / Radix UI type incompatibilities (popover:"hint" vs "auto" - 8 errors)
-  // 2. web-vitals v5 API changes (navigationType expanded enum - 6 errors)
-  // 3. AI orchestrator type mismatches (layout property, pipelineId - 5 errors)
-  // 4. comprehensive-analyzer: maxTokens deprecated, string|object unions (7 errors)
-  // 5. cost-optimizer: missing properties and types (10 errors)
-  // 6. Store type mismatches in components (loading, scanResult props - 4 errors)
-  // 7. Database query type issues (export/search routes - 3 errors)
-  // 8. Marketing page void return (1 error)
-  // 9. Implicit any in stats-section map (2 errors)
-  //
-  // These are library/framework version mismatches that don't affect runtime.
-  // Build bypasses remain until upstream types are updated.
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // React Compiler — automatic memoization (stable in Next 16)
+  reactCompiler: true,
+
+  // Typed routes for compile-time href safety
+  typedRoutes: true,
+
+  // Pre-existing type debt across AI/analyzer modules; keep green builds while tightening tests.
   typescript: {
     ignoreBuildErrors: true,
   },
+
+  // Cache Components (PPR successor) stays off until API routes migrate to connection()/use cache.
+  // Enable later with: cacheComponents: true
+
+  // Keep heavy browser / native deps out of the server bundle graph.
+  // Note: packages listed in optimizePackageImports cannot also be externalized.
+  serverExternalPackages: [
+    'playwright',
+    'playwright-core',
+    'puppeteer-core',
+    '@sparticuz/chromium',
+    'extract-css-core',
+    'style-dictionary',
+    'ws',
+    'tar-fs',
+  ],
+
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "stripe.com", pathname: "/**" },
-      { protocol: "https", hostname: "github.com", pathname: "/**" },
-      { protocol: "https", hostname: "figma.com", pathname: "/**" },
-      { protocol: "https", hostname: "vercel.com", pathname: "/**" },
-      { protocol: "https", hostname: "*.public.blob.vercel-storage.com", pathname: "/**" },
-      { protocol: "https", hostname: "contextds.com", pathname: "/**" },
-      { protocol: "https", hostname: "cdn.contextds.com", pathname: "/**" }
+      { protocol: 'https', hostname: 'stripe.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'github.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'figma.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'vercel.com', pathname: '/**' },
+      { protocol: 'https', hostname: '*.public.blob.vercel-storage.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'designcontracts.sh', pathname: '/**' },
+      { protocol: 'https', hostname: 'contextds.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'cdn.contextds.com', pathname: '/**' },
     ],
-    domains: ["stripe.com", "github.com", "figma.com", "vercel.com", "contextds.com"],
     formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 31536000, // NEXTFASTER: 1 year cache for maximum performance
+    minimumCacheTTL: 31536000,
     dangerouslyAllowSVG: false,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    unoptimized: process.env.NODE_ENV === 'development' ? true : false
+    // Always optimize in production — never ship unoptimized images to users
+    unoptimized: !isProd,
   },
-  // NEXTFASTER: React 19 compiler for automatic optimization (moved to top-level)
-  reactCompiler: true,
 
-  // Performance optimizations - no caching, pure architectural wins
   experimental: {
-    // NEXTFASTER: Partial Prerendering - fastest way to ship (Next.js 15 canary)
-    ppr: true,
-
-    // NEXTFASTER: Inline CSS for critical styles (eliminates render-blocking CSS)
+    // Inline critical CSS (removes render-blocking stylesheets)
     inlineCss: true,
 
-    // PERFORMANCE: Optimize package imports to reduce bundle size by ~40KB
+    // Turbopack filesystem cache — faster cold starts / rebuilds (canary-grade)
+    turbopackFileSystemCacheForDev: true,
+
+    // Client router cache: keep soft navigations snappy
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
+
+    // Tree-shake heavy barrels — only ship what is imported
     optimizePackageImports: [
-      // UI Libraries (saves ~30KB)
       'lucide-react',
-      '@radix-ui/react-icons',
-      '@radix-ui/react-dropdown-menu',
-      '@radix-ui/react-dialog',
-      '@radix-ui/react-popover',
-      '@radix-ui/react-tooltip',
       '@radix-ui/react-accordion',
-      '@radix-ui/react-tabs',
+      '@radix-ui/react-alert-dialog',
+      '@radix-ui/react-avatar',
+      '@radix-ui/react-checkbox',
+      '@radix-ui/react-collapsible',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-hover-card',
+      '@radix-ui/react-label',
+      '@radix-ui/react-menubar',
+      '@radix-ui/react-navigation-menu',
+      '@radix-ui/react-popover',
+      '@radix-ui/react-progress',
+      '@radix-ui/react-radio-group',
       '@radix-ui/react-scroll-area',
       '@radix-ui/react-select',
-      // Charts (saves ~15KB)
+      '@radix-ui/react-separator',
+      '@radix-ui/react-slider',
+      '@radix-ui/react-slot',
+      '@radix-ui/react-switch',
+      '@radix-ui/react-tabs',
+      '@radix-ui/react-toggle',
+      '@radix-ui/react-toggle-group',
+      '@radix-ui/react-tooltip',
       'recharts',
-      // Date utilities (saves ~8KB)
       'date-fns',
-      // CSS analysis (saves ~12KB)
-      '@projectwallace/css-analyzer',
-      // AI/OpenAI (saves ~20KB)
-      '@ai-sdk/openai',
-      'openai',
-      // Form libraries (saves ~10KB)
       'react-hook-form',
       '@hookform/resolvers',
+      'zustand',
+      'sonner',
+      'cmdk',
+      'vaul',
+      'class-variance-authority',
     ],
+  },
 
-    // Use optimized CSS loading
-    optimizeCss: true,
+  // Turbopack (stable default in Next 16) — keep resolve extensions explicit
+  turbopack: {
+    resolveExtensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'],
   },
-  // Compiler optimizations
+
   compiler: {
-    // Remove console logs in production
-    removeConsole: process.env.NODE_ENV === 'production' ? {
-      exclude: ['error', 'warn']
-    } : false,
+    removeConsole: isProd
+      ? {
+          exclude: ['error', 'warn'],
+        }
+      : false,
   },
-  // SEO and Production optimizations
+
+  logging: {
+    fetches: {
+      fullUrl: !isProd,
+    },
+  },
+
   poweredByHeader: false,
   compress: true,
   reactStrictMode: true,
 
-  // Generate sitemap automatically during build
+  // Stable build IDs for CDN cache reuse (Date.now() busts every deploy unnecessarily)
   generateBuildId: async () => {
-    return `build-${Date.now()}`
+    return (
+      process.env.VERCEL_GIT_COMMIT_SHA ||
+      process.env.GITHUB_SHA ||
+      process.env.SOURCE_VERSION ||
+      'designcontracts-local'
+    )
   },
 
-  // Headers for SEO and security
   async headers() {
     return [
       {
         source: '/(.*)',
         headers: [
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
-          }
+          },
         ],
       },
       {
-        source: '/api/(.*)',
+        // Scan is dynamic — do not blanket-cache API mutations
+        source: '/api/scan',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, s-maxage=1, stale-while-revalidate=59',
+            value: 'no-store',
+          },
+        ],
+      },
+      {
+        source: '/api/stats',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=30, stale-while-revalidate=300',
+          },
+        ],
+      },
+      {
+        source: '/api/community/sites',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=60, stale-while-revalidate=600',
           },
         ],
       },
@@ -152,39 +195,24 @@ const nextConfig: NextConfig = {
             value: 'public, max-age=86400, stale-while-revalidate=604800',
           },
         ],
-      }
+      },
     ]
   },
 
-  // Redirects for SEO
   async redirects() {
     return [
-      {
-        source: '/home',
-        destination: '/',
-        permanent: true,
-      },
-      {
-        source: '/documentation',
-        destination: '/docs',
-        permanent: true,
-      },
-      {
-        source: '/api-docs',
-        destination: '/api',
-        permanent: true,
-      }
+      { source: '/home', destination: '/', permanent: true },
+      { source: '/documentation', destination: '/docs', permanent: true },
+      { source: '/api-docs', destination: '/docs', permanent: true },
     ]
   },
 
-  // Rewrites for clean URLs and performance monitoring
   async rewrites() {
     return [
       {
         source: '/sitemap.xml',
         destination: '/api/sitemap.xml',
       },
-      // NEXTFASTER: Optimize Vercel Analytics loading
       {
         source: '/insights/vitals.js',
         destination: 'https://cdn.vercel-insights.com/v1/speed-insights/script.js',
@@ -200,9 +228,11 @@ const nextConfig: NextConfig = {
       {
         source: '/hfi/vitals',
         destination: 'https://vitals.vercel-insights.com/v2/vitals',
-      }
+      },
     ]
-  }
-};
+  },
+}
 
-export default nextConfig;
+export default withBundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+})(nextConfig)

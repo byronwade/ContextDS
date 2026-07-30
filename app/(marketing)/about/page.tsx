@@ -265,7 +265,7 @@ export default function AboutPage() {
                   <Rocket className="h-8 w-8 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
                   <h3 className="font-semibold mb-2">Modern Infrastructure</h3>
                   <p className="text-muted-foreground text-sm">
-                    Built on Next.js 15, Supabase, and optimized for performance and scalability.
+                    Built on Next.js 16, Supabase, and optimized for performance and scalability.
                   </p>
                 </CardContent>
               </Card>

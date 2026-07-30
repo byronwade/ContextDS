@@ -243,7 +243,7 @@ export class SchemaValidator {
       {
         name: 'format-correction',
         description: 'Fix format errors (URLs, dates, regexes)',
-        applicableErrors: ['format', 'invalid_string'],
+        applicableErrors: ['format', 'invalid_format', 'invalid_string'],
         execute: this.repairFormatErrors.bind(this),
         confidence: 0.85
       },
@@ -264,7 +264,7 @@ export class SchemaValidator {
       {
         name: 'enum-correction',
         description: 'Map invalid enum values to valid options',
-        applicableErrors: ['invalid_enum_value'],
+        applicableErrors: ['invalid_enum_value', 'invalid_value'],
         execute: this.repairEnumErrors.bind(this),
         confidence: 0.90
       },
@@ -364,29 +364,31 @@ export class SchemaValidator {
     }
   }
 
-  // Parse Zod errors into structured format
+  // Parse Zod errors into structured format (Zod v4 uses `.issues`)
   private parseZodErrors(zodError: z.ZodError): ValidationError[] {
-    return zodError.errors.map(error => ({
+    return zodError.issues.map((error) => ({
       path: error.path.join('.'),
       message: error.message,
       severity: this.classifyErrorSeverity(error),
       code: error.code,
       suggestion: this.generateErrorSuggestion(error),
-      autoFixable: this.isAutoFixable(error)
+      autoFixable: this.isAutoFixable(error),
     }))
   }
 
   private classifyErrorSeverity(error: z.ZodIssue): 'low' | 'medium' | 'high' | 'critical' {
     switch (error.code) {
       case 'invalid_type':
-        return error.path.length === 0 ? 'critical' : 'high' // Root type errors are critical
+        return error.path.length === 0 ? 'critical' : 'high'
       case 'too_small':
       case 'too_big':
         return 'medium'
+      case 'invalid_format':
       case 'invalid_string':
         return error.path.includes('url') ? 'high' : 'medium'
-      case 'required':
-        return error.path.includes('metadata') ? 'high' : 'medium'
+      case 'invalid_value':
+      case 'invalid_enum_value':
+        return 'medium'
       default:
         return 'medium'
     }
@@ -395,23 +397,38 @@ export class SchemaValidator {
   private generateErrorSuggestion(error: z.ZodIssue): string {
     switch (error.code) {
       case 'invalid_type':
-        return `Expected ${error.expected}, got ${error.received}. Convert value to correct type.`
+        return 'Expected a different type. Convert value to the correct type.'
       case 'too_small':
-        return `Value too small. Minimum: ${error.minimum}`
+        return 'Value too small for the configured minimum.'
       case 'too_big':
-        return `Value too large. Maximum: ${error.maximum}`
+        return 'Value too large for the configured maximum.'
+      case 'invalid_format':
       case 'invalid_string':
-        return `String format invalid. Expected pattern: ${error.validation}`
-      case 'required':
-        return `Field is required. Add this field with appropriate value.`
+        return 'String format invalid. Check the expected pattern or format.'
+      case 'invalid_value':
+      case 'invalid_enum_value':
+        return 'Value is not one of the allowed options. Map to a valid enum value.'
       default:
         return 'Fix this validation error to continue.'
     }
   }
 
   private isAutoFixable(error: z.ZodIssue): boolean {
-    const autoFixableCodes = ['too_small', 'too_big', 'invalid_enum_value', 'required']
-    return autoFixableCodes.includes(error.code) || this.guardrails.autoFixTypes.includes(error.expected?.toString() || '')
+    const autoFixableCodes = [
+      'too_small',
+      'too_big',
+      'invalid_enum_value',
+      'invalid_value',
+      'invalid_type',
+    ]
+    const expected =
+      'expected' in error && error.expected != null
+        ? String(error.expected)
+        : ''
+    return (
+      autoFixableCodes.includes(error.code) ||
+      this.guardrails.autoFixTypes.includes(expected)
+    )
   }
 
   // Auto-repair implementation

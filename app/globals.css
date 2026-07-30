@@ -102,6 +102,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-instrument-serif), "Iowan Old Style", "Palatino Linotype", Georgia, serif;
 
   /* Enhanced semantic colors */
   --color-destructive: var(--destructive);
@@ -165,104 +166,102 @@
 }
 
 :root {
-  --radius: 0.625rem;
+  /* Soft modern radius — clean cards, not pills */
+  --radius: 0.9rem;
 
-  /* Enhanced brand colors inspired by design tokens */
-  --background: oklch(0.99 0.002 240);
-  --foreground: oklch(0.15 0.01 240);
+  /* Soft mist canvas — calm, eye-easy, not cream/terracotta */
+  --background: oklch(0.985 0.004 210);
+  --foreground: oklch(0.22 0.02 230);
 
-  /* Card system with subtle depth */
-  --card: oklch(0.995 0.002 240);
-  --card-foreground: oklch(0.15 0.01 240);
-  --popover: oklch(0.995 0.002 240);
-  --popover-foreground: oklch(0.15 0.01 240);
+  /* Soft elevated surfaces */
+  --card: oklch(0.995 0.002 210);
+  --card-foreground: oklch(0.22 0.02 230);
+  --popover: oklch(0.995 0.002 210);
+  --popover-foreground: oklch(0.22 0.02 230);
 
-  /* Primary brand - vibrant blue representing digital design */
-  --primary: oklch(0.55 0.18 255);
-  --primary-foreground: oklch(0.98 0.005 240);
+  /* Soft ink primary — confident, quiet */
+  --primary: oklch(0.28 0.03 230);
+  --primary-foreground: oklch(0.99 0.002 210);
 
-  /* Secondary - complementary purple for design systems */
-  --secondary: oklch(0.95 0.01 280);
-  --secondary-foreground: oklch(0.45 0.15 280);
+  /* Soft secondary wash */
+  --secondary: oklch(0.96 0.008 200);
+  --secondary-foreground: oklch(0.32 0.03 220);
 
-  /* Muted backgrounds with subtle color temperature */
-  --muted: oklch(0.94 0.008 240);
-  --muted-foreground: oklch(0.5 0.02 240);
+  /* Muted stone */
+  --muted: oklch(0.955 0.006 210);
+  --muted-foreground: oklch(0.5 0.02 220);
 
-  /* Accent - energetic cyan for highlighting tokens */
-  --accent: oklch(0.92 0.02 200);
-  --accent-foreground: oklch(0.25 0.08 200);
+  /* Soft teal accent — scanning emphasis without purple glow */
+  --accent: oklch(0.94 0.02 190);
+  --accent-foreground: oklch(0.32 0.05 190);
 
-  /* Enhanced semantic colors */
-  --destructive: oklch(0.65 0.25 15);
-  --destructive-foreground: oklch(0.98 0.01 15);
-  --warning: oklch(0.75 0.15 70);
-  --warning-foreground: oklch(0.2 0.05 70);
-  --success: oklch(0.6 0.18 140);
-  --success-foreground: oklch(0.98 0.01 140);
+  /* Semantic */
+  --destructive: oklch(0.62 0.18 20);
+  --destructive-foreground: oklch(0.99 0.005 20);
+  --warning: oklch(0.78 0.12 80);
+  --warning-foreground: oklch(0.28 0.04 80);
+  --success: oklch(0.62 0.12 165);
+  --success-foreground: oklch(0.99 0.005 165);
 
-  /* Border and input improvements */
-  --border: oklch(0.9 0.005 240);
-  --input: oklch(0.92 0.008 240);
-  --ring: oklch(0.55 0.18 255);
+  /* Soft borders */
+  --border: oklch(0.91 0.008 210);
+  --input: oklch(0.94 0.006 210);
+  --ring: oklch(0.55 0.06 190);
 
-  /* Enhanced chart colors for token visualization */
-  --chart-1: oklch(0.65 0.22 15);   /* Red for errors/critical */
-  --chart-2: oklch(0.7 0.15 200);   /* Cyan for tokens */
-  --chart-3: oklch(0.6 0.18 140);   /* Green for success */
-  --chart-4: oklch(0.75 0.15 70);   /* Yellow for warnings */
-  --chart-5: oklch(0.58 0.16 280);  /* Purple for design systems */
+  --chart-1: oklch(0.62 0.12 20);
+  --chart-2: oklch(0.62 0.1 190);
+  --chart-3: oklch(0.62 0.12 165);
+  --chart-4: oklch(0.75 0.1 80);
+  --chart-5: oklch(0.45 0.04 230);
 
-  /* Sidebar refinements */
-  --sidebar: oklch(0.97 0.005 240);
-  --sidebar-foreground: oklch(0.2 0.01 240);
-  --sidebar-primary: oklch(0.55 0.18 255);
-  --sidebar-primary-foreground: oklch(0.98 0.005 240);
-  --sidebar-accent: oklch(0.92 0.02 200);
-  --sidebar-accent-foreground: oklch(0.25 0.08 200);
-  --sidebar-border: oklch(0.9 0.005 240);
-  --sidebar-ring: oklch(0.55 0.18 255);
+  --sidebar: oklch(0.975 0.005 210);
+  --sidebar-foreground: oklch(0.25 0.02 230);
+  --sidebar-primary: oklch(0.28 0.03 230);
+  --sidebar-primary-foreground: oklch(0.99 0.002 210);
+  --sidebar-accent: oklch(0.94 0.02 190);
+  --sidebar-accent-foreground: oklch(0.32 0.05 190);
+  --sidebar-border: oklch(0.91 0.008 210);
+  --sidebar-ring: oklch(0.55 0.06 190);
+
+  /* Soft UI helpers */
+  --soft-shadow: 0 1px 2px oklch(0.3 0.02 230 / 0.04), 0 12px 40px oklch(0.3 0.02 230 / 0.06);
+  --soft-border: oklch(0.88 0.01 210 / 0.7);
 }
 
 .dark {
-  /* Enhanced dark mode with subtle color temperature */
-  --background: oklch(0.12 0.005 240);
-  --foreground: oklch(0.95 0.008 240);
+  --background: oklch(0.16 0.01 230);
+  --foreground: oklch(0.95 0.008 210);
 
-  /* Card system with enhanced depth */
-  --card: oklch(0.16 0.008 240);
-  --card-foreground: oklch(0.95 0.008 240);
-  --popover: oklch(0.16 0.008 240);
-  --popover-foreground: oklch(0.95 0.008 240);
+  --card: oklch(0.2 0.012 230);
+  --card-foreground: oklch(0.95 0.008 210);
+  --popover: oklch(0.2 0.012 230);
+  --popover-foreground: oklch(0.95 0.008 210);
 
-  /* Primary brand - brighter blue for dark mode */
-  --primary: oklch(0.7 0.2 255);
-  --primary-foreground: oklch(0.1 0.005 240);
+  --primary: oklch(0.92 0.01 210);
+  --primary-foreground: oklch(0.18 0.02 230);
 
-  /* Secondary - enhanced purple */
-  --secondary: oklch(0.22 0.02 280);
-  --secondary-foreground: oklch(0.8 0.1 280);
+  --secondary: oklch(0.24 0.015 220);
+  --secondary-foreground: oklch(0.9 0.01 210);
 
-  /* Muted with subtle warmth */
-  --muted: oklch(0.2 0.01 240);
-  --muted-foreground: oklch(0.65 0.015 240);
+  --muted: oklch(0.22 0.012 230);
+  --muted-foreground: oklch(0.7 0.015 210);
 
-  /* Accent - vivid cyan for tokens */
-  --accent: oklch(0.25 0.05 200);
-  --accent-foreground: oklch(0.85 0.08 200);
+  --accent: oklch(0.28 0.04 190);
+  --accent-foreground: oklch(0.9 0.03 190);
 
-  /* Enhanced semantic colors for dark mode */
-  --destructive: oklch(0.7 0.22 15);
-  --destructive-foreground: oklch(0.95 0.01 15);
-  --warning: oklch(0.8 0.18 70);
-  --warning-foreground: oklch(0.15 0.02 70);
-  --success: oklch(0.7 0.2 140);
-  --success-foreground: oklch(0.95 0.01 140);
+  --destructive: oklch(0.68 0.16 20);
+  --destructive-foreground: oklch(0.98 0.01 20);
+  --warning: oklch(0.78 0.12 80);
+  --warning-foreground: oklch(0.18 0.03 80);
+  --success: oklch(0.68 0.1 165);
+  --success-foreground: oklch(0.98 0.01 165);
 
-  /* Enhanced borders and inputs */
-  --border: oklch(0.25 0.01 240);
-  --input: oklch(0.18 0.008 240);
-  --ring: oklch(0.7 0.2 255);
+  --border: oklch(0.3 0.015 230);
+  --input: oklch(0.22 0.012 230);
+  --ring: oklch(0.65 0.06 190);
+
+  --soft-shadow: 0 1px 2px oklch(0 0 0 / 0.2), 0 16px 48px oklch(0 0 0 / 0.28);
+  --soft-border: oklch(0.4 0.02 230 / 0.45);
 
   /* Chart colors optimized for dark mode */
   --chart-1: oklch(0.7 0.22 15);    /* Bright red */

@@ -6,7 +6,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { runScanJob } from '@/lib/workers/scan-orchestrator'
 
-export const runtime = 'nodejs'
 export const maxDuration = 30
 
 const PERF_TEST_SITES = [

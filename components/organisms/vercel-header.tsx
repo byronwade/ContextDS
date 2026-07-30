@@ -3,16 +3,26 @@
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Palette, Menu, X } from "lucide-react"
+import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/atoms/theme-toggle"
-import { AnimatedCounter } from "@/components/atoms/animated-counter"
-import { useRealtimeStore } from "@/stores/realtime-store"
 import { useStatsStore } from "@/stores/stats-store"
 import { cn } from "@/lib/utils"
 
 interface VercelHeaderProps {
-  currentPage?: "home" | "features" | "pricing" | "docs" | "about" | "community" | "metrics" | "scan" | "site" | "contact"
+  currentPage?:
+    | "home"
+    | "features"
+    | "pricing"
+    | "docs"
+    | "about"
+    | "community"
+    | "metrics"
+    | "scan"
+    | "site"
+    | "contact"
+    | "privacy"
+    | "terms"
   showSearch?: boolean
   searchValue?: string
   onSearchChange?: (value: string) => void
@@ -26,6 +36,13 @@ interface VercelHeaderProps {
   }>
 }
 
+const NAV = [
+  { href: "/scan", label: "Scan" },
+  { href: "/docs", label: "Docs" },
+  { href: "/community", label: "Library" },
+  { href: "/about", label: "About" },
+]
+
 export function VercelHeader({
   currentPage = "home",
   showSearch = false,
@@ -34,275 +51,152 @@ export function VercelHeader({
   onScan,
   isScanning = false,
   className,
-  recentSites = []
 }: VercelHeaderProps) {
   const router = useRouter()
-  const { metrics, isConnected } = useRealtimeStore()
   const { stats, loadStats } = useStatsStore()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-
-  // Load stats on mount if not already loaded
-  useEffect(() => {
-    if (!stats) {
-      loadStats()
-    }
-  }, [stats, loadStats])
-
-  const formatCompact = (num: number) => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
-    return num.toString()
-  }
-
-  const handleScan = (url: string) => {
-    // Clean the URL to get just the domain
-    let domain = url.trim()
-    // Remove protocol if present
-    domain = domain.replace(/^https?:\/\//, '')
-    // Remove www. if present
-    domain = domain.replace(/^www\./, '')
-    // Remove trailing slash and path
-    domain = domain.split('/')[0]
-
-    // Navigate to site/[domain] route
-    router.push(`/site/${encodeURIComponent(domain)}`)
-    setMobileMenuOpen(false)
-  }
-
   const [localSearchValue, setLocalSearchValue] = useState(searchValue)
 
-  // Update local value when prop changes
+  useEffect(() => {
+    if (!stats) loadStats()
+  }, [stats, loadStats])
+
   useEffect(() => {
     setLocalSearchValue(searchValue)
   }, [searchValue])
 
-  const handleSearchChange = (value: string) => {
-    setLocalSearchValue(value)
-    if (onSearchChange) {
-      onSearchChange(value)
-    }
+  const goScan = (url: string) => {
+    const domain = url
+      .trim()
+      .replace(/^https?:\/\//, "")
+      .replace(/^www\./, "")
+      .split("/")[0]
+    if (!domain) return
+    if (onScan) onScan(domain)
+    else router.push(`/scan?url=${encodeURIComponent(domain)}`)
+    setMobileMenuOpen(false)
   }
 
   return (
-    <header className={cn(
-      "sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80",
-      className
-    )} role="banner" aria-label="Site header">
-      <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between w-full">
+    <header
+      className={cn(
+        "sticky top-0 z-50 w-full border-b border-[color:var(--soft-border)] bg-background/70 backdrop-blur-xl",
+        className
+      )}
+      role="banner"
+      aria-label="Site header"
+    >
+      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
+        <Link
+          href="/"
+          className="group flex items-baseline gap-1.5 outline-offset-4 transition-opacity hover:opacity-80"
+        >
+          <span className="font-serif text-xl tracking-tight text-foreground sm:text-2xl">
+            designcontracts
+          </span>
+          <span className="font-mono text-xs text-teal-700/80 dark:text-teal-300/80">
+            .sh
+          </span>
+        </Link>
 
-          {/* Left: Brand + Live Stats */}
-          <div className="flex items-center gap-6">
-            <Link
-              href="/"
-              className="flex items-center gap-2 outline-offset-4 transition-opacity hover:opacity-80"
-            >
-              <Palette className="h-5 w-5 text-primary" />
-              <span className="text-lg font-semibold text-foreground">ContextDS</span>
-              <span className="hidden xs:inline text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-                Beta
-              </span>
-            </Link>
-
-            {/* Live Stats - Desktop Only */}
-            <div className="hidden lg:flex items-center space-x-6 text-sm text-muted-foreground font-mono border-l border-border pl-6">
-              <div className="flex items-center space-x-1">
-                <AnimatedCounter
-                  value={(metrics?.totalTokens && metrics.totalTokens > 0) ? metrics.totalTokens : (stats?.tokens || 0)}
-                  formatCompact={true}
-                  className="text-foreground font-medium"
-                />
-                <span>tokens</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <AnimatedCounter
-                  value={(metrics?.totalSites && metrics.totalSites > 0) ? metrics.totalSites : (stats?.sites || 0)}
-                  formatCompact={true}
-                  className="text-foreground font-medium"
-                />
-                <span>sites</span>
-              </div>
-              {isConnected && (
-                <div className="flex items-center space-x-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-emerald-500">Live</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Center: Search Input (Desktop) - Centered, not full width */}
-          {showSearch && (
-            <div className="hidden md:flex absolute left-1/2 transform -translate-x-1/2">
-              <div className="relative w-80">
-                <label htmlFor="header-search" className="sr-only">
-                  Search for website to scan for design tokens
-                </label>
-                <input
-                  id="header-search"
-                  type="search"
-                  placeholder="Scan any website for design tokens..."
-                  value={localSearchValue}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && localSearchValue.trim()) {
-                      handleScan(localSearchValue.trim())
-                    }
-                  }}
-                  className="w-full h-9 px-3 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-                  aria-label="Enter website URL to scan for design tokens"
-                  role="searchbox"
-                />
-                {isScanning && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2" aria-hidden="true">
-                    <div className="w-4 h-4 border-2 border-border border-t-primary rounded-full animate-spin" />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Right: Navigation */}
-          <div className="flex items-center gap-3">
-
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="md:hidden"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle mobile menu"
-            >
-              {mobileMenuOpen ? (
-                <X className="h-4 w-4" />
-              ) : (
-                <Menu className="h-4 w-4" />
-              )}
-            </Button>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation" role="navigation">
-              <Link href="/features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Features
-              </Link>
-              <Link href="/community" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Community
-              </Link>
-              <Link href="/docs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Docs
-              </Link>
-              <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Pricing
-              </Link>
-              <Link href="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                About
-              </Link>
-            </nav>
-
-            <div className="w-px h-4 bg-border" />
-            <ThemeToggle />
-          </div>
-        </div>
-
-        {/* Mobile Search */}
         {showSearch && (
-          <div className="md:hidden border-t border-border px-4 py-3">
-            <div className="relative w-full">
-              <label htmlFor="mobile-search" className="sr-only">
-                Search for website to scan for design tokens
-              </label>
-              <input
-                id="mobile-search"
-                type="search"
-                placeholder="Scan any website..."
-                value={localSearchValue}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && localSearchValue.trim()) {
-                    handleScan(localSearchValue.trim())
-                  }
-                }}
-                className="w-full h-9 px-3 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-                aria-label="Enter website URL to scan for design tokens"
-                role="searchbox"
-              />
-              {isScanning && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2" aria-hidden="true">
-                  <div className="w-4 h-4 border-2 border-border border-t-primary rounded-full animate-spin" />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-background/95 backdrop-blur-md">
-            <nav className="flex flex-col p-4 space-y-2" aria-label="Mobile navigation menu" role="navigation">
-
-              {/* Mobile Stats */}
-              <div className="flex items-center justify-between text-sm text-muted-foreground font-mono pb-4 border-b border-border">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-1">
-                    <span className="text-foreground font-medium">{formatCompact((metrics?.totalTokens && metrics.totalTokens > 0) ? metrics.totalTokens : (stats?.tokens || 0))}</span>
-                    <span>tokens</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <span className="text-foreground font-medium">{formatCompact((metrics?.totalSites && metrics.totalSites > 0) ? metrics.totalSites : (stats?.sites || 0))}</span>
-                    <span>sites</span>
-                  </div>
-                </div>
-                {isConnected && (
-                  <div className="flex items-center space-x-1">
-                    <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-emerald-500 text-xs">Live</span>
-                  </div>
-                )}
+          <div className="absolute left-1/2 hidden w-full max-w-sm -translate-x-1/2 md:block">
+            <label htmlFor="header-search" className="sr-only">
+              Website URL to scan
+            </label>
+            <input
+              id="header-search"
+              type="search"
+              placeholder="Scan a site…"
+              value={localSearchValue}
+              onChange={(e) => {
+                setLocalSearchValue(e.target.value)
+                onSearchChange?.(e.target.value)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && localSearchValue.trim()) {
+                  goScan(localSearchValue.trim())
+                }
+              }}
+              className="h-10 w-full rounded-2xl border border-[color:var(--soft-border)] bg-card/80 px-4 text-sm shadow-[var(--soft-shadow)] outline-none transition focus:border-teal-700/30 focus:ring-2 focus:ring-teal-700/15"
+              aria-label="Enter website URL to scan"
+            />
+            {isScanning && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2" aria-hidden>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-teal-700" />
               </div>
-
-              <Link
-                href="/features"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-              >
-                Features
-              </Link>
-
-              <Link
-                href="/community"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-              >
-                Community
-              </Link>
-
-              <Link
-                href="/docs"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-              >
-                Documentation
-              </Link>
-
-              <Link
-                href="/pricing"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-              >
-                Pricing
-              </Link>
-
-              <Link
-                href="/about"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-              >
-                About
-              </Link>
-            </nav>
+            )}
           </div>
         )}
+
+        <div className="flex items-center gap-2">
+          <nav className="hidden items-center gap-1 md:flex" aria-label="Main navigation">
+            {NAV.map((item) => {
+              const active =
+                currentPage === item.label.toLowerCase() ||
+                (item.href === "/scan" && currentPage === "scan") ||
+                (item.href === "/community" && currentPage === "community")
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "rounded-xl px-3 py-2 text-sm transition-colors",
+                    active
+                      ? "bg-secondary text-foreground"
+                      : "text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              )
+            })}
+          </nav>
+
+          <Link
+            href="/scan"
+            className="hidden rounded-2xl bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground shadow-[var(--soft-shadow)] transition hover:opacity-90 sm:inline-flex"
+          >
+            Start scan
+          </Link>
+
+          <ThemeToggle />
+
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="md:hidden"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          </Button>
+        </div>
       </div>
+
+      {mobileMenuOpen && (
+        <div className="border-t border-[color:var(--soft-border)] bg-background/95 backdrop-blur-xl md:hidden">
+          <nav className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-4" aria-label="Mobile navigation">
+            {NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className="rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+              >
+                {item.label}
+              </Link>
+            ))}
+            <Link
+              href="/scan"
+              onClick={() => setMobileMenuOpen(false)}
+              className="mt-2 rounded-2xl bg-primary px-3 py-2.5 text-center text-sm font-medium text-primary-foreground"
+            >
+              Start scan
+            </Link>
+          </nav>
+        </div>
+      )}
     </header>
   )
 }

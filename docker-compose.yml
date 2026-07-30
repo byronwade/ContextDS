@@ -1,0 +1,23 @@
+# Local / self-hosted accurate scanner for designcontracts.sh
+#
+#   docker compose up --build scanner
+#   SCANNER_SERVICE_URL=http://localhost:4040 bun dev
+#
+# On Vercel: deploy `scanner/` to Fly/Railway/ECS and set SCANNER_SERVICE_URL
+# to that public HTTPS URL. Fast static scans still run in the Next.js function.
+
+services:
+  scanner:
+    build:
+      context: ./scanner
+    ports:
+      - "4040:4040"
+    environment:
+      PORT: 4040
+      NODE_ENV: production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4040/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5

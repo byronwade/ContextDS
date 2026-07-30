@@ -55,8 +55,55 @@ export interface ScanResult {
   layoutDNA?: any
   metadata?: any
   database?: any
+  storage?: any
   designSystemSpec?: any
   componentLibrary?: any
+  designMd?: {
+    markdown: string
+    fileName: string
+    summary?: {
+      colorCount: number
+      typographyCount: number
+      spacingCount: number
+      hasComponents: boolean
+    }
+  }
+  designSkill?: {
+    markdown: string
+    fileName: string
+    skillName: string
+    description: string
+  }
+  designContract?: {
+    slug: string
+    title: string
+    profile: string
+    installCommand: string
+    summary?: {
+      colorCount: number
+      typographyCount: number
+      spacingCount: number
+      fileCount: number
+    }
+    files?: Array<{ path: string; content: string }>
+  }
+  /** Linked token↔role↔component↔layout model */
+  semanticGraph?: {
+    schemaVersion: number
+    summary: {
+      nodeCount: number
+      edgeCount: number
+      tokenCount: number
+      roleCount: number
+      componentCount: number
+      layoutCount: number
+      patternCount: number
+    }
+    nodes: unknown[]
+    edges: unknown[]
+    index?: unknown
+  }
+  cacheHit?: boolean
 }
 
 interface ScanState {
@@ -73,7 +120,7 @@ interface ScanState {
   eventSource: EventSource | null
 
   // Actions
-  startScan: (domain: string) => Promise<void>
+  startScan: (domain: string, mode?: 'fast' | 'accurate') => Promise<void>
   updateProgress: (progress: ScanProgress) => void
   updateMetrics: (metrics: ScanMetrics) => void
   setResult: (result: ScanResult) => void
@@ -94,7 +141,7 @@ export const useScanStore = create<ScanState>()(
       error: null,
       eventSource: null,
 
-      startScan: async (domain: string) => {
+      startScan: async (domain: string, mode: 'fast' | 'accurate' = 'fast') => {
         const state = get()
 
         // Cancel any existing scan
@@ -114,86 +161,64 @@ export const useScanStore = create<ScanState>()(
         })
 
         try {
-          // Start the scan API call (returns immediately with scanId)
-          const response = await fetch('/api/scan', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              url: domain.startsWith('http') ? domain : `https://${domain}`,
-              depth: '1',
-              prettify: false,
-              quality: 'standard',
-              budget: 0.15,
-              mode: 'accurate'
-            }),
-          })
-
-          if (!response.ok) {
-            throw new Error(`Scan failed with status ${response.status}`)
+          // Client-side phase feedback while the serverless scan runs
+          const phases = [
+            {
+              step: 1,
+              phase: 'collect',
+              message:
+                mode === 'accurate'
+                  ? 'Browser capture + public CSS'
+                  : 'Collecting public CSS',
+            },
+            { step: 2, phase: 'tokenize', message: 'W3C tokens + Project Wallace' },
+            { step: 3, phase: 'layout', message: 'Profiling layout DNA' },
+            { step: 4, phase: 'graph', message: 'Building semantic design graph' },
+            { step: 5, phase: 'design-md', message: 'Composing Design Contract pack' },
+            { step: 6, phase: 'persist', message: 'Saving scan results' },
+          ]
+          let phaseIndex = 0
+          const tick = () => {
+            const phase = phases[Math.min(phaseIndex, phases.length - 1)]
+            get().updateProgress({
+              step: phase.step,
+              totalSteps: phases.length,
+              phase: phase.phase,
+              message: phase.message,
+              timestamp: Date.now(),
+            })
+            phaseIndex += 1
           }
+          tick()
+          const progressTimer = setInterval(tick, 900)
 
-          const apiResponse = await response.json()
+          try {
+            const response = await fetch('/api/scan', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                url: domain.startsWith('http') ? domain : `https://${domain}`,
+                depth: '1',
+                prettify: false,
+                quality: 'standard',
+                budget: 0.15,
+                mode,
+              }),
+            })
 
-          if (apiResponse.status === 'failed') {
-            throw new Error(apiResponse.error || 'Scan failed')
-          }
-
-          // Check if this is a direct result (no SSE) or an SSE-based scan
-          if (apiResponse.scanId) {
-            // SSE-based scan - connect to progress stream
-            const scanId = apiResponse.scanId
-            set({ scanId })
-
-            // Connect to SSE
-            const eventSource = new EventSource(`/api/scan/progress?scanId=${scanId}`)
-
-            eventSource.onmessage = (event) => {
-              try {
-                const data = JSON.parse(event.data)
-
-                if (data.type === 'connected') {
-                  console.log('Connected to scan progress stream')
-                } else if (data.type === 'progress') {
-                  get().updateProgress({
-                    step: data.step || 0,
-                    totalSteps: data.totalSteps || 16,
-                    phase: data.phase || '',
-                    message: data.message || '',
-                    time: data.time,
-                    details: data.details,
-                    logs: data.logs,
-                    timestamp: data.timestamp
-                  })
-                } else if (data.type === 'metrics') {
-                  get().updateMetrics(data.metrics)
-                } else if (data.type === 'complete') {
-                  // Scan complete - result data included in complete event
-                  eventSource.close()
-                  if (data.data) {
-                    get().setResult(data.data)
-                  } else {
-                    set({ error: 'No scan result data received', isScanning: false })
-                  }
-                } else if (data.type === 'error') {
-                  eventSource.close()
-                  set({ error: data.message || 'Scan failed', isScanning: false })
-                }
-              } catch (error) {
-                console.error('Error parsing SSE message:', error)
-              }
+            if (!response.ok) {
+              throw new Error(`Scan failed with status ${response.status}`)
             }
 
-            eventSource.onerror = (error) => {
-              console.error('SSE error:', error)
-              eventSource.close()
-              set({ error: 'Connection lost to scan progress', isScanning: false })
+            const apiResponse = await response.json()
+
+            if (apiResponse.status === 'failed') {
+              throw new Error(apiResponse.error || 'Scan failed')
             }
 
-            set({ eventSource })
-          } else {
-            // Direct result - no SSE
-            console.log('📦 Direct scan result received (no SSE)')
             get().setResult(apiResponse)
+          } finally {
+            clearInterval(progressTimer)
           }
 
         } catch (error) {

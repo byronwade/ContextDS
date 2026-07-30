@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import { SkipLinks } from "@/components/atoms/skip-links";
 import { ErrorBoundary } from "@/components/atoms/error-boundary";
 import { WebVitalsReporter } from "@/components/atoms/web-vitals-reporter";
 import { ComprehensiveSEOTracking } from "@/components/atoms/seo-analytics";
+import { AnalyticsProvider } from "@/components/providers/analytics-provider";
 import { generateHomepageMetadata } from "@/lib/seo/meta-tags";
 import { generateOrganizationSchema, generateWebsiteSchema, generateSoftwareApplicationSchema } from "@/lib/seo/structured-data";
 import { RESOURCE_HINTS } from "@/lib/seo/performance";
@@ -25,7 +26,20 @@ const geistMono = Geist_Mono({
   fallback: ['ui-monospace', 'Menlo', 'Monaco', 'Consolas', 'monospace']
 });
 
-export const metadata: Metadata = generateHomepageMetadata();
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument-serif",
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+  preload: false,
+});
+
+export const metadata: Metadata = {
+  ...generateHomepageMetadata(),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "https://designcontracts.sh"
+  ),
+};
 
 export default function RootLayout({
   children,
@@ -45,7 +59,7 @@ export default function RootLayout({
         <meta name="googlebot" content="index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1" />
 
         {/* Canonical URL */}
-        <link rel="canonical" href="https://contextds.com" />
+        <link rel="canonical" href="https://designcontracts.sh" />
 
         {/* Resource hints for performance */}
         {RESOURCE_HINTS.dnsPrefetch.map((href) => (
@@ -71,18 +85,15 @@ export default function RootLayout({
           <link key={href} rel="prefetch" href={href} />
         ))}
 
-        {/* Database connection preconnect */}
-        <link rel="preconnect" href="https://ep-delicate-breeze-adofco8i-pooler.c-2.us-east-1.aws.neon.tech" crossOrigin="anonymous" />
-
         {/* Favicon and app icons */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
 
-        {/* Theme color for mobile browsers */}
-        <meta name="theme-color" content="#3b82f6" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#1e40af" media="(prefers-color-scheme: dark)" />
+        {/* Soft brand theme colors */}
+        <meta name="theme-color" content="#F4F8F9" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#1A2228" media="(prefers-color-scheme: dark)" />
 
         {/* Structured Data - JSON-LD */}
         <script
@@ -163,15 +174,17 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} antialiased`}
         suppressHydrationWarning
       >
         <SkipLinks />
         <WebVitalsReporter />
         <ComprehensiveSEOTracking />
-        <ErrorBoundary>
-          {children}
-        </ErrorBoundary>
+        <AnalyticsProvider>
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
+        </AnalyticsProvider>
       </body>
     </html>
   );
