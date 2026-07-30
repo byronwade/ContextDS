@@ -4,7 +4,6 @@
     "app/**/{page,layout,loading,error,not-found,route,default,template}.{ts,tsx}",
     "app/**/sitemap.{ts,tsx}",
     "app/**/robots.{ts,tsx}",
-    "proxy.ts",
     "scripts/**/*.{ts,js,mjs}",
     "scanner/server.mjs"
   ],
