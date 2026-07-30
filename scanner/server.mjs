@@ -270,8 +270,8 @@ const server = http.createServer(async (req, res) => {
   }
 })
 
-server.listen(PORT, () => {
-  console.log(`[designcontracts-scanner] listening on :${PORT}`)
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`[designcontracts-scanner] listening on 0.0.0.0:${PORT}`)
   // Warm the browser so the first scan is faster
   getBrowser().catch((error) => {
     console.warn('[scanner] browser warm-up failed:', error)
