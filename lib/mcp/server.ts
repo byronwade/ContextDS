@@ -72,6 +72,8 @@ export class MCPServer {
         site: { domain },
         token_set: result.tokens,
         curated_tokens: result.curatedTokens,
+        design_md: result.designMd,
+        design_skill: result.designSkill,
         pack: result.promptPack,
         layout_dna: result.layoutDNA,
         brand_analysis: result.brandAnalysis,
@@ -105,6 +107,8 @@ export class MCPServer {
       return {
         token_set: scan.tokens,
         curated_tokens: scan.curatedTokens,
+        design_md: scan.designMd,
+        design_skill: scan.designSkill,
         pack: scan.promptPack,
         layout_dna: scan.layoutDNA,
         consensus: scan.summary.confidence,

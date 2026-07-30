@@ -4,6 +4,9 @@ import { promises as dns } from 'dns'
 import { runSimpleScan } from '@/lib/workers/simple-scan'
 import { scanRatelimit } from '@/lib/ratelimit'
 
+export const maxDuration = 60
+export const runtime = 'nodejs'
+
 const scanRequestSchema = z.object({
   url: z.string().url(),
   depth: z.enum(['1', '2', '3']).default('1'),

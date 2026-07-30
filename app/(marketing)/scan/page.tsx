@@ -3,12 +3,13 @@ import { Metadata } from "next"
 import ScanClient from "./client"
 
 export const metadata: Metadata = {
-  title: "Scan Website - ContextDS Design Token Scanner",
+  title: "Scan → DESIGN.md | ContextDS",
   description:
-    "Extract design tokens from any website. Scan for colors, typography, spacing, shadows, and more with AI-powered analysis.",
+    "Turn any public site into W3C design tokens, a Google-compatible DESIGN.md, and a Cursor/Claude agent skill.",
   openGraph: {
-    title: "Scan Website - ContextDS Design Token Scanner",
-    description: "Extract design tokens from any website with AI-powered analysis",
+    title: "Scan → DESIGN.md | ContextDS",
+    description:
+      "Extract tokens and generate agent-readable DESIGN.md + skills from any public website.",
   },
 }
 

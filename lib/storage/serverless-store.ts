@@ -33,6 +33,14 @@ export interface StoredScanResult {
   status: 'completed' | 'failed'
   summary: {
     tokensExtracted: number
+    curatedCount?: {
+      colors: number
+      fonts: number
+      sizes: number
+      spacing: number
+      radius: number
+      shadows: number
+    }
     confidence: number
     completeness: number
     reliability: number
@@ -43,6 +51,22 @@ export interface StoredScanResult {
   layoutDNA?: unknown
   promptPack?: unknown
   brandAnalysis?: unknown
+  designMd?: {
+    markdown: string
+    fileName: string
+    summary: {
+      colorCount: number
+      typographyCount: number
+      spacingCount: number
+      hasComponents: boolean
+    }
+  }
+  designSkill?: {
+    markdown: string
+    fileName: string
+    skillName: string
+    description: string
+  }
   metadata: {
     cssSources: number
     staticCssSources: number
@@ -50,6 +74,7 @@ export interface StoredScanResult {
     scanId: string
     tokenSetId: string
     mode: 'fast' | 'accurate'
+    engine?: string
   }
   error?: string
 }

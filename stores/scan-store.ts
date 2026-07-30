@@ -55,8 +55,26 @@ export interface ScanResult {
   layoutDNA?: any
   metadata?: any
   database?: any
+  storage?: any
   designSystemSpec?: any
   componentLibrary?: any
+  designMd?: {
+    markdown: string
+    fileName: string
+    summary?: {
+      colorCount: number
+      typographyCount: number
+      spacingCount: number
+      hasComponents: boolean
+    }
+  }
+  designSkill?: {
+    markdown: string
+    fileName: string
+    skillName: string
+    description: string
+  }
+  cacheHit?: boolean
 }
 
 interface ScanState {
@@ -115,85 +133,57 @@ export const useScanStore = create<ScanState>()(
 
         try {
           // Start the scan API call (returns immediately with scanId)
-          const response = await fetch('/api/scan', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              url: domain.startsWith('http') ? domain : `https://${domain}`,
-              depth: '1',
-              prettify: false,
-              quality: 'standard',
-              budget: 0.15,
-              mode: 'accurate'
-            }),
-          })
-
-          if (!response.ok) {
-            throw new Error(`Scan failed with status ${response.status}`)
+          // Client-side phase feedback while the serverless scan runs
+          const phases = [
+            { step: 1, phase: 'collect', message: 'Collecting public CSS' },
+            { step: 2, phase: 'tokenize', message: 'Extracting W3C design tokens' },
+            { step: 3, phase: 'layout', message: 'Profiling layout DNA' },
+            { step: 4, phase: 'design-md', message: 'Composing DESIGN.md + agent skill' },
+            { step: 5, phase: 'persist', message: 'Saving to serverless storage' },
+          ]
+          let phaseIndex = 0
+          const tick = () => {
+            const phase = phases[Math.min(phaseIndex, phases.length - 1)]
+            get().updateProgress({
+              step: phase.step,
+              totalSteps: phases.length,
+              phase: phase.phase,
+              message: phase.message,
+              timestamp: Date.now(),
+            })
+            phaseIndex += 1
           }
+          tick()
+          const progressTimer = setInterval(tick, 900)
 
-          const apiResponse = await response.json()
+          try {
+            const response = await fetch('/api/scan', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                url: domain.startsWith('http') ? domain : `https://${domain}`,
+                depth: '1',
+                prettify: false,
+                quality: 'standard',
+                budget: 0.15,
+                // Fast path: static CSS — accurate needs Playwright and is slower
+                mode: 'fast',
+              }),
+            })
 
-          if (apiResponse.status === 'failed') {
-            throw new Error(apiResponse.error || 'Scan failed')
-          }
-
-          // Check if this is a direct result (no SSE) or an SSE-based scan
-          if (apiResponse.scanId) {
-            // SSE-based scan - connect to progress stream
-            const scanId = apiResponse.scanId
-            set({ scanId })
-
-            // Connect to SSE
-            const eventSource = new EventSource(`/api/scan/progress?scanId=${scanId}`)
-
-            eventSource.onmessage = (event) => {
-              try {
-                const data = JSON.parse(event.data)
-
-                if (data.type === 'connected') {
-                  console.log('Connected to scan progress stream')
-                } else if (data.type === 'progress') {
-                  get().updateProgress({
-                    step: data.step || 0,
-                    totalSteps: data.totalSteps || 16,
-                    phase: data.phase || '',
-                    message: data.message || '',
-                    time: data.time,
-                    details: data.details,
-                    logs: data.logs,
-                    timestamp: data.timestamp
-                  })
-                } else if (data.type === 'metrics') {
-                  get().updateMetrics(data.metrics)
-                } else if (data.type === 'complete') {
-                  // Scan complete - result data included in complete event
-                  eventSource.close()
-                  if (data.data) {
-                    get().setResult(data.data)
-                  } else {
-                    set({ error: 'No scan result data received', isScanning: false })
-                  }
-                } else if (data.type === 'error') {
-                  eventSource.close()
-                  set({ error: data.message || 'Scan failed', isScanning: false })
-                }
-              } catch (error) {
-                console.error('Error parsing SSE message:', error)
-              }
+            if (!response.ok) {
+              throw new Error(`Scan failed with status ${response.status}`)
             }
 
-            eventSource.onerror = (error) => {
-              console.error('SSE error:', error)
-              eventSource.close()
-              set({ error: 'Connection lost to scan progress', isScanning: false })
+            const apiResponse = await response.json()
+
+            if (apiResponse.status === 'failed') {
+              throw new Error(apiResponse.error || 'Scan failed')
             }
 
-            set({ eventSource })
-          } else {
-            // Direct result - no SSE
-            console.log('📦 Direct scan result received (no SSE)')
             get().setResult(apiResponse)
+          } finally {
+            clearInterval(progressTimer)
           }
 
         } catch (error) {

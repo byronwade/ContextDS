@@ -1,0 +1,332 @@
+/**
+ * Generate a Google Stitch–compatible DESIGN.md from extracted tokens.
+ * Spec: https://github.com/google-labs-code/design.md
+ *
+ * YAML front matter = machine-readable tokens
+ * Markdown body = agent rationale (Overview → Colors → … → Do's and Don'ts)
+ */
+
+export type DesignMdInput = {
+  domain: string
+  url: string
+  curatedTokens: {
+    colors?: Array<{ name?: string; value: string; usage?: number; semantic?: string }>
+    typography?: {
+      families?: Array<{ name?: string; value: string; usage?: number }>
+      sizes?: Array<{ name?: string; value: string; usage?: number }>
+      weights?: Array<{ name?: string; value: string; usage?: number }>
+    }
+    spacing?: Array<{ name?: string; value: string; usage?: number }>
+    radius?: Array<{ name?: string; value: string; usage?: number }>
+    shadows?: Array<{ name?: string; value: string; usage?: number }>
+    motion?: Array<{ name?: string; value: string; usage?: number }>
+  }
+  layoutDNA?: {
+    containers?: {
+      maxWidth?: string | null
+      maxWidths?: string[]
+      strategy?: string
+      commonPadding?: string[]
+    }
+    breakpoints?: Array<number | string>
+    gridSystem?: string
+    spacingBase?: number | null
+    archetypes?: Array<string | { type: string; confidence?: number }>
+  } | null
+  brandAnalysis?: {
+    primaryColors?: string[]
+    personality?: string
+  } | null
+  confidence?: number
+}
+
+export type DesignMdArtifact = {
+  markdown: string
+  fileName: string
+  summary: {
+    colorCount: number
+    typographyCount: number
+    spacingCount: number
+    hasComponents: boolean
+  }
+}
+
+function yamlEscape(value: string): string {
+  if (/[:#{}[\],&*?|>!%@`]/.test(value) || value.includes('\n') || value.includes('"')) {
+    return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+  }
+  return value
+}
+
+function slugToken(name: string, fallback: string): string {
+  const cleaned = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+  return cleaned || fallback
+}
+
+function pickColors(input: DesignMdInput) {
+  const colors = [...(input.curatedTokens.colors ?? [])]
+  colors.sort((a, b) => (b.usage ?? 0) - (a.usage ?? 0))
+
+  const brand = input.brandAnalysis?.primaryColors ?? []
+  const map: Record<string, string> = {}
+
+  if (brand[0]) map.primary = brand[0]
+  if (brand[1]) map.secondary = brand[1]
+  if (brand[2]) map.tertiary = brand[2]
+
+  let i = 0
+  for (const color of colors.slice(0, 12)) {
+    const key =
+      color.semantic?.replace(/\s+/g, '-').toLowerCase() ||
+      slugToken(color.name || '', `color-${++i}`)
+    if (!map[key]) map[key] = String(color.value)
+    if (!map.primary) map.primary = String(color.value)
+    else if (!map.secondary && String(color.value) !== map.primary) map.secondary = String(color.value)
+    else if (
+      !map.tertiary &&
+      String(color.value) !== map.primary &&
+      String(color.value) !== map.secondary
+    ) {
+      map.tertiary = String(color.value)
+    }
+  }
+
+  if (!map.neutral) map.neutral = '#F8FAFC'
+  if (!map.primary) map.primary = '#0F172A'
+
+  return map
+}
+
+function pickTypography(input: DesignMdInput) {
+  const families = input.curatedTokens.typography?.families ?? []
+  const sizes = [...(input.curatedTokens.typography?.sizes ?? [])].sort((a, b) => {
+    return parseFloat(String(b.value)) - parseFloat(String(a.value))
+  })
+  const weights = input.curatedTokens.typography?.weights ?? []
+
+  const primaryFamily = String(families[0]?.value || 'system-ui, sans-serif')
+  const secondaryFamily = String(families[1]?.value || primaryFamily)
+
+  const typography: Record<string, Record<string, string | number>> = {
+    h1: {
+      fontFamily: primaryFamily,
+      fontSize: String(sizes[0]?.value || '2.25rem'),
+      fontWeight: Number.parseInt(String(weights[0]?.value || '700'), 10) || 700,
+    },
+    h2: {
+      fontFamily: primaryFamily,
+      fontSize: String(sizes[1]?.value || sizes[0]?.value || '1.5rem'),
+      fontWeight: Number.parseInt(String(weights[0]?.value || '600'), 10) || 600,
+    },
+    'body-md': {
+      fontFamily: secondaryFamily,
+      fontSize: String(sizes[Math.min(2, sizes.length - 1)]?.value || '1rem'),
+      fontWeight: Number.parseInt(String(weights[weights.length - 1]?.value || '400'), 10) || 400,
+    },
+    label: {
+      fontFamily: secondaryFamily,
+      fontSize: String(sizes[sizes.length - 1]?.value || '0.875rem'),
+      fontWeight: 500,
+    },
+  }
+
+  return typography
+}
+
+function pickScale(
+  items: Array<{ name?: string; value: string }> | undefined,
+  keys: string[]
+): Record<string, string> {
+  const values = [...(items ?? [])].map((item) => String(item.value))
+  const unique = Array.from(new Set(values)).slice(0, keys.length)
+  const scale: Record<string, string> = {}
+  keys.forEach((key, index) => {
+    scale[key] = unique[index] || unique[unique.length - 1] || (key === 'sm' ? '4px' : '8px')
+  })
+  return scale
+}
+
+export function generateDesignMd(input: DesignMdInput): DesignMdArtifact {
+  const colors = pickColors(input)
+  const typography = pickTypography(input)
+  const rounded = pickScale(input.curatedTokens.radius, ['sm', 'md', 'lg', 'full'])
+  const spacing = pickScale(input.curatedTokens.spacing, ['xs', 'sm', 'md', 'lg', 'xl'])
+  const shadow = input.curatedTokens.shadows?.[0]?.value
+  const firstArchetype = input.layoutDNA?.archetypes?.[0]
+  const archetype =
+    typeof firstArchetype === 'string'
+      ? firstArchetype
+      : firstArchetype?.type || input.layoutDNA?.gridSystem || 'marketing site'
+  const spacingBase = input.layoutDNA?.spacingBase || 8
+  const breakpointLabels = (input.layoutDNA?.breakpoints ?? [])
+    .slice(0, 6)
+    .map((value) => (typeof value === 'number' ? `${value}px` : String(value)))
+  const containerWidths =
+    input.layoutDNA?.containers?.maxWidths ??
+    (input.layoutDNA?.containers?.maxWidth
+      ? [input.layoutDNA.containers.maxWidth]
+      : [])
+  const personality = input.brandAnalysis?.personality || 'extracted from live CSS'
+
+  const frontMatterLines: string[] = [
+    '---',
+    'version: alpha',
+    `name: ${yamlEscape(input.domain)}`,
+    `description: ${yamlEscape(`Design system extracted from ${input.url} by ContextDS`)}`,
+    'colors:',
+  ]
+
+  for (const [key, value] of Object.entries(colors)) {
+    frontMatterLines.push(`  ${key}: ${yamlEscape(value)}`)
+  }
+
+  frontMatterLines.push('typography:')
+  for (const [key, style] of Object.entries(typography)) {
+    frontMatterLines.push(`  ${key}:`)
+    for (const [prop, val] of Object.entries(style)) {
+      frontMatterLines.push(`    ${prop}: ${typeof val === 'number' ? val : yamlEscape(String(val))}`)
+    }
+  }
+
+  frontMatterLines.push('rounded:')
+  for (const [key, value] of Object.entries(rounded)) {
+    frontMatterLines.push(`  ${key}: ${yamlEscape(value)}`)
+  }
+
+  frontMatterLines.push('spacing:')
+  for (const [key, value] of Object.entries(spacing)) {
+    frontMatterLines.push(`  ${key}: ${yamlEscape(value)}`)
+  }
+
+  frontMatterLines.push('components:')
+  frontMatterLines.push('  button-primary:')
+  frontMatterLines.push('    backgroundColor: "{colors.primary}"')
+  frontMatterLines.push('    textColor: "{colors.neutral}"')
+  frontMatterLines.push('    rounded: "{rounded.md}"')
+  frontMatterLines.push(`    padding: ${yamlEscape(spacing.sm)}`)
+  frontMatterLines.push('  button-secondary:')
+  frontMatterLines.push('    backgroundColor: "{colors.secondary}"')
+  frontMatterLines.push('    textColor: "{colors.neutral}"')
+  frontMatterLines.push('    rounded: "{rounded.md}"')
+  frontMatterLines.push(`    padding: ${yamlEscape(spacing.sm)}`)
+  frontMatterLines.push('  surface-card:')
+  frontMatterLines.push('    backgroundColor: "{colors.neutral}"')
+  frontMatterLines.push('    textColor: "{colors.primary}"')
+  frontMatterLines.push('    rounded: "{rounded.lg}"')
+  frontMatterLines.push(`    padding: ${yamlEscape(spacing.md)}`)
+  frontMatterLines.push('---')
+
+  const colorBullets = Object.entries(colors)
+    .slice(0, 8)
+    .map(([key, value]) => `- **${key} (${value}):** Use for ${describeColorRole(key)}.`)
+    .join('\n')
+
+  const dos = [
+    `- Use only colors defined in the YAML front matter — never invent new brand hues.`,
+    `- Keep the spacing rhythm near a ${spacingBase}px base (extracted spacing scale).`,
+    `- Prefer \`${typography.h1.fontFamily}\` for headlines and \`${typography['body-md'].fontFamily}\` for body.`,
+    `- Map primary CTAs to \`button-primary\` (background \`{colors.primary}\`).`,
+  ]
+
+  const donts = [
+    `- Do not introduce Inter/Roboto/Arial if a site font family is defined above.`,
+    `- Do not mix more than ${Math.min(Object.keys(colors).length, 6)} brand colors on one screen.`,
+    `- Do not invent border-radius values outside the rounded scale.`,
+    `- Do not place large surfaces in accent/tertiary colors reserved for interaction.`,
+  ]
+
+  const body = [
+    '',
+    '## Overview',
+    '',
+    `Visual identity reconstructed from **${input.domain}** (${archetype}).`,
+    `Personality signal: ${personality}. Confidence ${Math.round(input.confidence ?? 0)}%.`,
+    'Agents should treat YAML tokens as normative and this prose as application guidance.',
+    '',
+    '## Colors',
+    '',
+    'Palette ranked by observed CSS usage frequency and brand heuristics.',
+    '',
+    colorBullets,
+    '',
+    '## Typography',
+    '',
+    `- **Headlines:** ${typography.h1.fontFamily} at ${typography.h1.fontSize} / weight ${typography.h1.fontWeight}`,
+    `- **Body:** ${typography['body-md'].fontFamily} at ${typography['body-md'].fontSize}`,
+    `- **Labels:** ${typography.label.fontFamily} at ${typography.label.fontSize}`,
+    '',
+    '## Layout',
+    '',
+    `- Spacing scale: ${Object.entries(spacing)
+      .map(([k, v]) => `${k}=${v}`)
+      .join(', ')}`,
+    `- Inferred spacing base: ${spacingBase}px`,
+    breakpointLabels.length
+      ? `- Observed breakpoints: ${breakpointLabels.join(', ')}`
+      : '- Breakpoints: follow a mobile-first 640 / 768 / 1024 / 1280 scale unless product rules say otherwise',
+    containerWidths.length
+      ? `- Container max widths seen: ${containerWidths.slice(0, 4).join(', ')}`
+      : '- Containers: keep content measure readable; avoid full-bleed text columns',
+    '',
+    '## Elevation & Depth',
+    '',
+    shadow
+      ? `Primary elevation token observed: \`${shadow}\`. Use sparingly for floating surfaces.`
+      : 'No strong shadow system detected — prefer borders and tonal surfaces over heavy drop shadows.',
+    '',
+    '## Shapes',
+    '',
+    `Corner scale: ${Object.entries(rounded)
+      .map(([k, v]) => `${k}=${v}`)
+      .join(', ')}.`,
+    'Keep interactive controls on `rounded.md` unless the control is a pill/chip intentionally using `rounded.full`.',
+    '',
+    '## Components',
+    '',
+    '- `button-primary` — primary actions and CTAs',
+    '- `button-secondary` — secondary/supporting actions',
+    '- `surface-card` — content grouping only when interaction needs a container; prefer open layouts otherwise',
+    '',
+    "## Do's and Don'ts",
+    '',
+    "### Do",
+    ...dos,
+    '',
+    "### Don't",
+    ...donts,
+    '',
+    '---',
+    '',
+    `_Generated by ContextDS from ${input.url}. Drop this file at the project root and point your agent rules at it before generating UI._`,
+    '',
+  ].join('\n')
+
+  return {
+    markdown: `${frontMatterLines.join('\n')}${body}`,
+    fileName: 'DESIGN.md',
+    summary: {
+      colorCount: Object.keys(colors).length,
+      typographyCount: Object.keys(typography).length,
+      spacingCount: Object.keys(spacing).length,
+      hasComponents: true,
+    },
+  }
+}
+
+function describeColorRole(key: string): string {
+  switch (key) {
+    case 'primary':
+      return 'headlines, primary CTAs, and core brand marks'
+    case 'secondary':
+      return 'supporting text, borders, and secondary actions'
+    case 'tertiary':
+      return 'accent interaction accents and highlights'
+    case 'neutral':
+      return 'page backgrounds and quiet surfaces'
+    default:
+      return 'supporting UI accents matching observed usage'
+  }
+}

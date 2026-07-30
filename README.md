@@ -40,7 +40,7 @@ ContextDS turns **any public website** into an **AI-readable design system**. We
 4) **Organize** it all into a strict **AI Prompt Pack** so agents (Claude Code, etc.) can _obey_ the system instead of guessing,  
 5) **Publish** a browsable **Directory** and expose everything via **MCP tools** and **HTTP API**.
 
-Think **Project Wallace** design-tokens analyzer—but simplified for serverless: scan → tokenize → persist as JSON on **Vercel Blob**, with an **Upstash Redis** index for recent/popular sites.
+Think **Project Wallace** design-tokens analyzer—plus the new agent layer: every scan also emits a Google Stitch–compatible **DESIGN.md** and a Cursor/Claude **design skill** (`SKILL.md`) so coding agents can rebuild UI that matches the site. Persist as JSON on **Vercel Blob**, with an **Upstash Redis** index for recent/popular sites.
 
 ---
 

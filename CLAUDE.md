@@ -7,11 +7,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **ContextDS** is a design token extraction and analysis platform that automatically scans websites to generate AI-readable design tokens and layout DNA profiles. Built with Next.js 16, App Router, React 19, TypeScript, and Tailwind CSS, this project aims to be the fastest, most accurate way to turn any public site into actionable design tokens for AI agents.
 
 ### Core Vision
-- **Dashboard + Marketing Website**: Comprehensive platform with public directory and premium tools
+- **Scan → agent-ready design system**: Public URL → W3C tokens → Google-compatible `DESIGN.md` + Cursor/Claude design skill
 - **Design Token Extraction**: CSS analysis and W3C token generation (parity with Project Wallace)
-- **Layout DNA Profiling**: Multi-page layout analysis across breakpoints
+- **Layout DNA Profiling**: Layout analysis from collected CSS (containers, breakpoints, archetypes)
 - **AI Integration**: MCP server tools for Claude Code and other AI agents
-- **Community Features**: Voting, remixing, and collaborative token refinement
+- **Serverless storage**: Vercel Blob + Upstash Redis (no paid Postgres on the default path)
 
 ## Development Commands
 
