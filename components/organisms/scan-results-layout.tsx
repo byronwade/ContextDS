@@ -241,6 +241,9 @@ export function ScanResultsLayout({
             {result.designContract
               ? ` · ${result.designContract.summary?.fileCount ?? 0} pack files`
               : ""}
+            {result.semanticGraph
+              ? ` · ${result.semanticGraph.summary.nodeCount} graph nodes / ${result.semanticGraph.summary.edgeCount} edges`
+              : ""}
             {result.brandAnalysis?.personality
               ? ` · ${result.brandAnalysis.personality}`
               : ""}
@@ -306,6 +309,54 @@ export function ScanResultsLayout({
       <div className="mt-8">
         {activeTab === "overview" && (
           <div className="space-y-10 animate-fade-in">
+            {result.semanticGraph && (
+              <section className="rounded-2xl border border-[color:var(--soft-border)] bg-card/70 p-5 shadow-[var(--soft-shadow)]">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-teal-800/80 dark:text-teal-300/80">
+                      Semantic design graph
+                    </p>
+                    <h3 className="mt-1 font-serif text-2xl tracking-tight">
+                      How the system links together
+                    </h3>
+                    <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                      Tokens fill roles, components use those roles, and layout nodes place them —
+                      so agents can generate a contract that matches how the UI actually works.
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-xl"
+                    onClick={() =>
+                      downloadText(
+                        `${result.domain || "design"}-graph.json`,
+                        JSON.stringify(result.semanticGraph, null, 2)
+                      )
+                    }
+                  >
+                    graph.json
+                  </Button>
+                </div>
+                <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {[
+                    ["Tokens", result.semanticGraph.summary.tokenCount],
+                    ["Roles", result.semanticGraph.summary.roleCount],
+                    ["Components", result.semanticGraph.summary.componentCount],
+                    ["Patterns", result.semanticGraph.summary.patternCount],
+                  ].map(([label, value]) => (
+                    <div
+                      key={String(label)}
+                      className="rounded-xl border border-[color:var(--soft-border)] bg-background/50 px-3 py-3"
+                    >
+                      <div className="text-xs text-muted-foreground">{label}</div>
+                      <div className="mt-1 font-mono text-xl text-foreground">{value}</div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
             <section className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
               <div>
                 <p className="mb-3 text-xs uppercase tracking-[0.22em] text-muted-foreground">
