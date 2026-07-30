@@ -11,7 +11,7 @@ export type CssSource = {
 }
 
 const USER_AGENT =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 ContextDS/1.0 (+https://contextds.com/bot)'
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 DesignContracts/1.0 (+https://designcontracts.sh/bot)'
 
 // BULLETPROOF LIMITS: Prevent system overload from large sites
 const fetchLimit = pLimit(6)  // Max 6 concurrent requests

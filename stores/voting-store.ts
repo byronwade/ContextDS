@@ -13,7 +13,7 @@ interface VotingState {
   loadVotes: () => void
 }
 
-const STORAGE_KEY = "contextds_voted_sites"
+const STORAGE_KEY = "designcontracts_voted_sites"
 
 export const useVotingStore = create<VotingState>((set, get) => ({
   votedSites: [],

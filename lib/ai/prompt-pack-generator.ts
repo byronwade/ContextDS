@@ -295,7 +295,7 @@ ${hasTypography ? 'Typography tokens have been extracted from the design system.
         },
         tools: {
           extractor: 'remix-generator',
-          analyzer: 'contextds-merger',
+          analyzer: 'designcontracts-merger',
           generator: 'ai-reconciliation',
         },
       },

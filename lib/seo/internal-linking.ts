@@ -1,5 +1,5 @@
 /**
- * Internal Linking Strategy for ContextDS
+ * Internal Linking Strategy for Design Contracts
  * Comprehensive internal linking system for improved SEO and user experience
  */
 
@@ -29,8 +29,8 @@ export interface LinkingContext {
 export const CORE_NAVIGATION_LINKS: InternalLink[] = [
   {
     href: '/',
-    text: 'ContextDS Home',
-    title: 'Extract design tokens from any website - ContextDS',
+    text: 'Design Contracts Home',
+    title: 'Extract design tokens from any website - Design Contracts',
     priority: 'high',
     category: 'product'
   },
@@ -51,7 +51,7 @@ export const CORE_NAVIGATION_LINKS: InternalLink[] = [
   {
     href: '/docs',
     text: 'Documentation',
-    title: 'Complete guide to ContextDS design token extraction',
+    title: 'Complete guide to Design Contracts design token extraction',
     priority: 'high',
     category: 'resource'
   },
@@ -98,7 +98,7 @@ export const FEATURE_LINKS: InternalLink[] = [
     title: 'Model Context Protocol server for AI agents',
     priority: 'medium',
     category: 'feature',
-    context: 'Integrate ContextDS with Claude and other AI agents'
+    context: 'Integrate Design Contracts with Claude and other AI agents'
   }
 ]
 
@@ -116,7 +116,7 @@ export const RESOURCE_LINKS: InternalLink[] = [
   {
     href: '/docs/api/authentication',
     text: 'API Authentication',
-    title: 'How to authenticate with the ContextDS API',
+    title: 'How to authenticate with the Design Contracts API',
     priority: 'low',
     category: 'help'
   },
@@ -266,7 +266,7 @@ export function generateContextualLinks(context: LinkingContext): InternalLink[]
         links.push({
           href: '/docs/api',
           text: 'API Integration Guide',
-          title: 'Integrate ContextDS into your development workflow',
+          title: 'Integrate Design Contracts into your development workflow',
           priority: 'high',
           category: 'resource'
         })

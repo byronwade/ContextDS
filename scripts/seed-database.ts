@@ -6,7 +6,7 @@ import * as dotenv from 'dotenv'
 // Load environment variables
 dotenv.config({ path: '.env.local' })
 
-console.log('🌱 Seeding ContextDS database with sample design token data...')
+console.log('🌱 Seeding Design Contracts database with sample design token data...')
 
 const sampleSites = [
   {
@@ -238,9 +238,9 @@ const generateTokenSet = (domain: string, siteProfile: any) => {
         extractedAt: new Date().toISOString()
       },
       tools: {
-        extractor: 'contextds-advanced-extractor',
-        analyzer: 'contextds-ai-analyzer',
-        generator: 'contextds-w3c-generator'
+        extractor: 'designcontracts-advanced-extractor',
+        analyzer: 'designcontracts-ai-analyzer',
+        generator: 'designcontracts-w3c-generator'
       }
     },
     ...profiles[domain] || profiles['stripe.com'] // Default to stripe profile

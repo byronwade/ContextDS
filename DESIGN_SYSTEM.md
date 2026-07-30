@@ -1,10 +1,10 @@
-# ContextDS Design System
+# Design Contracts — Design System
 
-A comprehensive design system for the ContextDS design token extraction platform, built with modern principles and accessibility in mind.
+A comprehensive design system for the Design Contracts design token extraction platform, built with modern principles and accessibility in mind.
 
 ## Overview
 
-The ContextDS design system is built around the concept of design tokens themselves, creating a meta-design that reflects our core product offering. The system emphasizes clarity, precision, and professional polish while maintaining approachability for developers and designers.
+The Design Contracts design system is built around the concept of design tokens themselves, creating a meta-design that reflects our core product offering. The system emphasizes clarity, precision, and professional polish while maintaining approachability for developers and designers.
 
 ## Design Principles
 
@@ -302,4 +302,4 @@ Brand-appropriate shadows with OKLCH color integration:
 - TypeScript-first with proper prop interfaces
 - RSC compatibility for Next.js integration
 
-This design system creates a cohesive, professional, and accessible experience that reflects ContextDS's mission of precise design token extraction while providing an excellent user experience for both designers and developers.
+This design system creates a cohesive, professional, and accessible experience that reflects Design Contracts' mission of precise design token extraction while providing an excellent user experience for both designers and developers.

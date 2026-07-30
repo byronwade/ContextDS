@@ -39,7 +39,7 @@ export interface W3CDesignToken {
     'contextds.confidence': number
     'contextds.sources': string[]
     'contextds.selectors'?: string[]
-    'contextds.components'?: string[]
+    'designcontracts.shponents'?: string[]
     'contextds.original'?: string
   }
 }
@@ -190,7 +190,7 @@ export function extractW3CTokens(
         }))
       },
       tools: {
-        extractor: 'contextds-w3c-tokenizer',
+        extractor: 'designcontracts-w3c-tokenizer',
         version: '2.0.0'
       }
     }

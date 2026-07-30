@@ -147,7 +147,7 @@ export const useSearchStore = create<SearchState>()(
         },
       }),
       {
-        name: 'contextds-search-preferences',
+        name: 'designcontracts-search-preferences',
         partialize: (state) => ({ preferences: state.preferences }),
       }
     ),

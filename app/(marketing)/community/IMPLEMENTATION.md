@@ -87,7 +87,7 @@ Located in: `/app/sitemap.ts`
 - Change frequency hints
 - Priority weighting
 
-**Access**: `https://contextds.com/sitemap.xml`
+**Access**: `https://designcontracts.sh/sitemap.xml`
 
 **Caching**: Revalidates every hour
 
@@ -103,7 +103,7 @@ Located in: `/app/robots.ts`
 - Special rules for AI crawlers
 - Sitemap reference
 
-**Access**: `https://contextds.com/robots.txt`
+**Access**: `https://designcontracts.sh/robots.txt`
 
 ### 6. Web Vitals Monitoring
 Located in: `/hooks/use-web-vitals.ts`
@@ -142,23 +142,23 @@ useWebVitals({
 # Check <head> section for meta tags
 
 # Validate Open Graph
-curl -I https://contextds.com/community
+curl -I https://designcontracts.sh/community
 # Or use: https://www.opengraph.xyz/
 ```
 
 ### 2. Structured Data Testing
 ```bash
 # Google Rich Results Test
-https://search.google.com/test/rich-results?url=https://contextds.com/community
+https://search.google.com/test/rich-results?url=https://designcontracts.sh/community
 
 # Schema.org Validator
-https://validator.schema.org/#url=https://contextds.com/community
+https://validator.schema.org/#url=https://designcontracts.sh/community
 ```
 
 ### 3. Sitemap Validation
 ```bash
 # Check sitemap loads
-curl https://contextds.com/sitemap.xml
+curl https://designcontracts.sh/sitemap.xml
 
 # Validate XML
 https://www.xml-sitemaps.com/validate-xml-sitemap.html
@@ -167,7 +167,7 @@ https://www.xml-sitemaps.com/validate-xml-sitemap.html
 ### 4. Robots.txt Testing
 ```bash
 # View robots.txt
-curl https://contextds.com/robots.txt
+curl https://designcontracts.sh/robots.txt
 
 # Test with Google
 https://www.google.com/webmasters/tools/robots-testing-tool
@@ -176,7 +176,7 @@ https://www.google.com/webmasters/tools/robots-testing-tool
 ### 5. Performance Testing
 ```bash
 # Lighthouse CLI
-npx lighthouse https://contextds.com/community --view
+npx lighthouse https://designcontracts.sh/community --view
 
 # Or use Chrome DevTools > Lighthouse tab
 ```
@@ -187,10 +187,10 @@ npx lighthouse https://contextds.com/community --view
 1. **Create OG Image**
    - Size: 1200x630px
    - Location: `/public/og-community.png`
-   - Include: ContextDS branding, "Design Token Community" text, visual tokens
+   - Include: Design Contracts branding, "Design Token Community" text, visual tokens
 
 2. **Update Domain**
-   - Replace `https://contextds.com` with your actual domain
+   - Replace `https://designcontracts.sh` with your actual domain
    - Files to update:
      - `/app/(marketing)/community/metadata.ts` (line 39)
      - `/app/sitemap.ts` (line 4)
@@ -283,7 +283,7 @@ npx lighthouse https://contextds.com/community --view
 **Solution**:
 ```bash
 # Test API endpoint
-curl https://contextds.com/api/community/sites?sort=votes&limit=10
+curl https://designcontracts.sh/api/community/sites?sort=votes&limit=10
 
 # Check Next.js build
 bun build

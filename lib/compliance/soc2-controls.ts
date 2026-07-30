@@ -53,7 +53,7 @@ class SOC2ComplianceFramework {
   }
 
   /**
-   * Initialize SOC 2 controls for ContextDS
+   * Initialize SOC 2 controls for Design Contracts
    */
   private initializeControls(): void {
     // Security Controls (CC6.0 - CC8.0)

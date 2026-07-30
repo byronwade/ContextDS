@@ -320,7 +320,7 @@ export class UltraFetch {
       try {
         const response = await fetch(url, {
           headers: {
-            'User-Agent': 'ContextDS/1.0 (https://contextds.com)',
+            'User-Agent': 'DesignContracts/1.0 (https://designcontracts.sh)',
           },
           signal: AbortSignal.timeout(10000) // 10s timeout
         })

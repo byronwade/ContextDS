@@ -14,7 +14,7 @@ if (!DATABASE_URL) {
   process.exit(1)
 }
 
-console.log('🚀 Starting ContextDS database optimization...')
+console.log('🚀 Starting Design Contracts database optimization...')
 
 async function main() {
   const client = postgres(DATABASE_URL!, {
@@ -164,7 +164,7 @@ async function main() {
       console.warn('  ⚠️  Performance could be improved')
     }
 
-    console.log('\n🎉 ContextDS database optimization completed successfully!')
+    console.log('\n🎉 Design Contracts database optimization completed successfully!')
     console.log('🔍 Your token search queries should now be significantly faster')
     console.log('📈 Database is optimized for millions of design tokens')
 

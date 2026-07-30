@@ -1,5 +1,5 @@
 /**
- * Core Web Vitals and Performance Optimization for ContextDS
+ * Core Web Vitals and Performance Optimization for Design Contracts
  * Tools for monitoring and optimizing LCP, FID, CLS, and other performance metrics
  */
 

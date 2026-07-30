@@ -51,7 +51,7 @@ export default function FeaturesPage() {
         </h1>
         <p className="mt-4 text-lg text-muted-foreground">
           Everything needed to turn a live site into AI-readable design context — without the old
-          ContextDS dashboard clutter.
+          Design Contracts dashboard clutter.
         </p>
 
         <div className="mt-14 space-y-10">

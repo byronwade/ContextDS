@@ -1,8 +1,8 @@
-# ContextDS Model Context Protocol (MCP) Server Setup
+# Design Contracts Model Context Protocol (MCP) Server Setup
 
 ## Overview
 
-ContextDS provides a **Model Context Protocol (MCP) server** that allows AI agents like Claude Code to extract and analyze design tokens from any website. This enables AI-powered design system analysis, token extraction, and automated component generation.
+Design Contracts provides a **Model Context Protocol (MCP) server** that allows AI agents like Claude Code to extract and analyze design tokens from any website. This enables AI-powered design system analysis, token extraction, and automated component generation.
 
 ---
 
@@ -74,14 +74,14 @@ Add the MCP server to your Claude Desktop configuration:
 ```json
 {
   "mcpServers": {
-    "contextds": {
+    "designcontracts": {
       "command": "node",
       "args": [
         "/path/to/designer/mcp-server-wrapper.js"
       ],
       "env": {
-        "CONTEXTDS_API_KEY": "your-api-key-here",
-        "CONTEXTDS_API_URL": "https://contextds.com/api/mcp"
+        "DESIGNCONTRACTS_API_KEY": "your-api-key-here",
+        "DESIGNCONTRACTS_API_URL": "https://designcontracts.sh/api/mcp"
       }
     }
   }
@@ -92,14 +92,14 @@ Add the MCP server to your Claude Desktop configuration:
 ```json
 {
   "mcpServers": {
-    "contextds-local": {
+    "designcontracts-local": {
       "command": "node",
       "args": [
         "/Users/byronwade/designer/mcp-server-wrapper.js"
       ],
       "env": {
-        "CONTEXTDS_API_KEY": "dev-key-for-testing",
-        "CONTEXTDS_API_URL": "http://localhost:3000/api/mcp"
+        "DESIGNCONTRACTS_API_KEY": "dev-key-for-testing",
+        "DESIGNCONTRACTS_API_URL": "http://localhost:3000/api/mcp"
       }
     }
   }
@@ -265,8 +265,8 @@ const { stdin, stdout } = require('process');
 const https = require('https');
 const http = require('http');
 
-const API_KEY = process.env.CONTEXTDS_API_KEY;
-const API_URL = process.env.CONTEXTDS_API_URL || 'https://contextds.com/api/mcp';
+const API_KEY = process.env.DESIGNCONTRACTS_API_KEY;
+const API_URL = process.env.DESIGNCONTRACTS_API_URL || 'https://designcontracts.sh/api/mcp';
 
 let buffer = '';
 
@@ -445,7 +445,7 @@ curl -X POST http://localhost:3000/api/mcp/layout-profile \
 Once configured, use in Claude Code:
 
 ```
-@contextds scan https://tailwindcss.com and generate a component using their design tokens
+@designcontracts scan https://tailwindcss.com and generate a component using their design tokens
 ```
 
 ---
@@ -474,10 +474,10 @@ Required for production:
 
 ```bash
 # .env.local
-CONTEXTDS_API_KEY=your-64-char-hex-key
+DESIGNCONTRACTS_API_KEY=your-64-char-hex-key
 REDIS_URL=https://your-upstash-redis-url
 REDIS_TOKEN=your-redis-token
-DATABASE_URL=postgresql://user:pass@host:5432/contextds
+DATABASE_URL=postgresql://user:pass@host:5432/designcontracts
 ```
 
 ---
@@ -499,7 +499,7 @@ All MCP operations are logged with:
 
 Access usage metrics at:
 - **Local:** http://localhost:3000/dashboard/api-usage
-- **Production:** https://contextds.com/dashboard/api-usage
+- **Production:** https://designcontracts.sh/dashboard/api-usage
 
 Tracks:
 - Requests per day/week/month
@@ -516,8 +516,8 @@ Tracks:
 
 **Issue 1: "Invalid or missing API key"**
 ```
-Solution: Verify CONTEXTDS_API_KEY is set in environment variables
-Check: echo $CONTEXTDS_API_KEY
+Solution: Verify DESIGNCONTRACTS_API_KEY is set in environment variables
+Check: echo $DESIGNCONTRACTS_API_KEY
 ```
 
 **Issue 2: "Rate limit exceeded"**
@@ -543,7 +543,7 @@ Solution:
 
 **Issue 5: Connection refused to localhost:3000**
 ```
-Solution: Ensure ContextDS is running locally
+Solution: Ensure Design Contracts is running locally
 Run: bun run dev
 Check: curl http://localhost:3000/api/health
 ```
@@ -555,12 +555,12 @@ Enable verbose logging:
 ```json
 {
   "mcpServers": {
-    "contextds": {
+    "designcontracts": {
       "command": "node",
       "args": ["/path/to/mcp-server-wrapper.js"],
       "env": {
-        "CONTEXTDS_API_KEY": "your-key",
-        "CONTEXTDS_DEBUG": "true",
+        "DESIGNCONTRACTS_API_KEY": "your-key",
+        "DESIGNCONTRACTS_DEBUG": "true",
         "LOG_LEVEL": "debug"
       }
     }
@@ -573,7 +573,7 @@ Check logs:
 # Claude Desktop logs
 tail -f ~/Library/Logs/Claude/mcp*.log
 
-# ContextDS server logs
+# Design Contracts server logs
 bun run dev
 ```
 
@@ -594,7 +594,7 @@ vercel env add DATABASE_URL
 
 # 3. Update MCP config to use production URL
 # In claude_desktop_config.json:
-"CONTEXTDS_API_URL": "https://contextds.com/api/mcp"
+"DESIGNCONTRACTS_API_URL": "https://designcontracts.sh/api/mcp"
 ```
 
 ### Self-Hosted Deployment
@@ -604,7 +604,7 @@ vercel env add DATABASE_URL
 bun run build
 
 # 2. Set production environment variables
-export CONTEXTDS_API_KEY=production-key
+export DESIGNCONTRACTS_API_KEY=production-key
 export REDIS_URL=redis://...
 export DATABASE_URL=postgresql://...
 
@@ -633,8 +633,8 @@ const transport = new StdioClientTransport({
   command: 'node',
   args: ['/path/to/mcp-server-wrapper.js'],
   env: {
-    CONTEXTDS_API_KEY: process.env.CONTEXTDS_API_KEY,
-    CONTEXTDS_API_URL: 'https://contextds.com/api/mcp'
+    DESIGNCONTRACTS_API_KEY: process.env.DESIGNCONTRACTS_API_KEY,
+    DESIGNCONTRACTS_API_URL: 'https://designcontracts.sh/api/mcp'
   }
 });
 
@@ -809,13 +809,13 @@ const analysis = await Promise.all(
 
 ```bash
 # Install MCP client SDK
-npm install @contextds/mcp-client
+npm install @designcontracts/mcp-client
 
 # Usage:
-import { ContextDSMCP } from '@contextds/mcp-client';
+import { DesignContractsMCP } from '@designcontracts/mcp-client';
 
-const client = new ContextDSMCP({
-  apiKey: process.env.CONTEXTDS_API_KEY
+const client = new DesignContractsMCP({
+  apiKey: process.env.DESIGNCONTRACTS_API_KEY
 });
 
 const tokens = await client.scanTokens('https://example.com');
@@ -828,7 +828,7 @@ const tokens = await client.scanTokens('https://example.com');
 # Add to .claude/config.json:
 {
   "mcp": {
-    "servers": ["@contextds/mcp-server"]
+    "servers": ["@designcontracts/mcp-server"]
   }
 }
 ```
@@ -838,20 +838,20 @@ const tokens = await client.scanTokens('https://example.com');
 ## 🤝 Support
 
 ### Documentation
-- **API Docs:** https://contextds.com/docs/api
-- **MCP Guide:** https://contextds.com/docs/mcp
-- **Examples:** https://contextds.com/examples
+- **API Docs:** https://designcontracts.sh/docs/api
+- **MCP Guide:** https://designcontracts.sh/docs/mcp
+- **Examples:** https://designcontracts.sh/examples
 
 ### Community
-- **GitHub Issues:** https://github.com/contextds/contextds/issues
-- **Discord:** https://discord.gg/contextds
-- **Email:** support@contextds.com
+- **GitHub Issues:** https://github.com/byronwade/designcontracts.sh/issues
+- **Discord:** https://designcontracts.sh
+- **Email:** support@designcontracts.sh
 
 ### Enterprise Support
 - **SLA:** 99.9% uptime
 - **Priority Support:** 24/7 availability
 - **Custom Integrations:** Available
-- **Contact:** enterprise@contextds.com
+- **Contact:** enterprise@designcontracts.sh
 
 ---
 
@@ -860,7 +860,7 @@ const tokens = await client.scanTokens('https://example.com');
 - [ ] **Dashboard API Key Management** (Sprint 1)
 - [ ] **Usage Analytics Dashboard** (Sprint 1)
 - [ ] **WebSocket Support** for real-time scanning (Sprint 2)
-- [ ] **npm Package** `@contextds/mcp-client` (Sprint 2)
+- [ ] **npm Package** `@designcontracts/mcp-client` (Sprint 2)
 - [ ] **Figma Plugin Integration** (Sprint 3)
 - [ ] **GitHub Action** for CI/CD token validation (Sprint 3)
 - [ ] **VSCode Extension** with MCP integration (Sprint 4)

@@ -1,13 +1,13 @@
 # Community Page SEO Optimization Guide
 
 ## Overview
-This document outlines the comprehensive SEO optimizations implemented for the ContextDS Community page at `/community`.
+This document outlines the comprehensive SEO optimizations implemented for the Design Contracts Community page at `/community`.
 
 ## Implemented Optimizations
 
 ### 1. Metadata Configuration (`metadata.ts`)
 - **Title Tag**: Optimized with primary keywords and brand name
-  - Format: "Design Token Community | Browse 1000+ Design Systems | ContextDS"
+  - Format: "Design Token Community | Browse 1000+ Design Systems | Design Contracts"
   - Length: Under 60 characters for optimal display
 
 - **Meta Description**: Compelling description with key features
@@ -179,7 +179,7 @@ Target: < 0.1
 ### Canonical URLs
 ```typescript
 alternates: {
-  canonical: 'https://contextds.com/community',
+  canonical: 'https://designcontracts.sh/community',
 }
 ```
 

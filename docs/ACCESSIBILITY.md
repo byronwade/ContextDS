@@ -1,10 +1,10 @@
-# Accessibility Guidelines for ContextDS
+# Accessibility Guidelines for Design Contracts
 
-This document outlines the accessibility standards, testing procedures, and implementation guidelines for the ContextDS design token platform.
+This document outlines the accessibility standards, testing procedures, and implementation guidelines for the Design Contracts design token platform.
 
 ## Overview
 
-ContextDS is committed to WCAG 2.1 Level AA compliance to ensure our platform is accessible to all users, including those using assistive technologies.
+Design Contracts is committed to WCAG 2.1 Level AA compliance to ensure our platform is accessible to all users, including those using assistive technologies.
 
 ## Current Accessibility Status
 

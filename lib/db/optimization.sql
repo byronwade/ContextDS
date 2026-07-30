@@ -1,4 +1,4 @@
--- ContextDS Database Optimization Script
+-- Design Contracts Database Optimization Script
 -- Ultrathink performance optimization for Neon PostgreSQL
 
 -- ============================================================================
@@ -257,7 +257,7 @@ ALTER TABLE mcp_usage SET (
 -- default_statistics_target = 100
 
 -- ============================================================================
--- UTILITY FUNCTIONS FOR CONTEXTDS
+-- UTILITY FUNCTIONS FOR designcontracts
 -- ============================================================================
 
 -- Fast token count function
@@ -385,5 +385,5 @@ COMMENT ON INDEX idx_token_sets_site_public IS 'Composite index for public token
 SELECT update_contextds_stats();
 
 -- Show optimization results
-SELECT 'ContextDS database optimization completed!' as status;
+SELECT 'Design Contracts database optimization completed!' as status;
 SELECT * FROM get_contextds_performance_stats();

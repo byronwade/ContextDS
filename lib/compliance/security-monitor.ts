@@ -300,7 +300,7 @@ class SecurityMonitor {
       severity,
       message,
       metadata,
-      source: 'ContextDS_Security_Monitor'
+      source: 'DesignContracts_Security_Monitor'
     }
 
     // Log the alert
@@ -345,7 +345,7 @@ class SecurityMonitor {
         },
         body: JSON.stringify({
           timestamp: new Date().toISOString(),
-          source: 'ContextDS',
+          source: 'Design Contracts',
           ...event
         })
       })

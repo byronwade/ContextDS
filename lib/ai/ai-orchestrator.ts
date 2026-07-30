@@ -9,11 +9,11 @@ import { gatewayCache } from './gateway-cache'
 import { aiObservability, recordAIOperation } from './observability'
 import type { W3CTokenSet } from '../analyzers/token-generator'
 
-export interface ContextDSPipeline {
+export interface DesignContractsPipeline {
   url: string
   options: PipelineOptions
   progress: PipelineProgress
-  result?: ContextDSResult
+  result?: DesignContractsResult
   error?: string
 }
 
@@ -61,7 +61,7 @@ export interface PipelineProgress {
   }
 }
 
-export interface ContextDSResult {
+export interface DesignContractsResult {
   // Core results
   tokenSet: W3CTokenSet
   layoutDNA: any
@@ -98,19 +98,19 @@ export interface ContextDSResult {
 export class AIOrchestrator {
   private extractor = new AdvancedExtractor()
   private fallbackOrchestrator = new FallbackOrchestrator()
-  private activePipelines = new Map<string, ContextDSPipeline>()
+  private activePipelines = new Map<string, DesignContractsPipeline>()
 
   // Main processing pipeline with full AI integration
   async processWebsite(
     url: string,
     options: Partial<PipelineOptions> = {},
     progressCallback?: (progress: PipelineProgress) => void
-  ): Promise<ContextDSResult> {
+  ): Promise<DesignContractsResult> {
     const pipelineId = `pipeline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     const startTime = Date.now()
 
     // Initialize pipeline
-    const pipeline: ContextDSPipeline = {
+    const pipeline: DesignContractsPipeline = {
       url,
       options: this.mergeDefaultOptions(options),
       progress: {
@@ -162,7 +162,7 @@ export class AIOrchestrator {
 
   // Phase 1: Advanced Extraction with Fallbacks
   private async executeExtractionPhase(
-    pipeline: ContextDSPipeline,
+    pipeline: DesignContractsPipeline,
     progressCallback?: (progress: PipelineProgress) => void
   ): Promise<ComprehensiveScanResult> {
     pipeline.progress.phase = 'extraction'
@@ -206,7 +206,7 @@ export class AIOrchestrator {
             {
               url: pipeline.url,
               domain: new URL(pipeline.url).hostname,
-              userAgent: 'ContextDS/1.0',
+              userAgent: 'DesignContracts/1.0',
               viewports: [{ width: 1280, height: 720, name: 'desktop' }],
               options: { includeComputed: true, timeout: 30000, retryAttempts: 2 },
               cache: new Map(),
@@ -237,7 +237,7 @@ export class AIOrchestrator {
 
   // Phase 2: AI Processing with Cost Optimization
   private async executeAIProcessingPhase(
-    pipeline: ContextDSPipeline,
+    pipeline: DesignContractsPipeline,
     extractionResult: ComprehensiveScanResult,
     progressCallback?: (progress: PipelineProgress) => void
   ): Promise<TwoPhaseResult<any>> {
@@ -323,11 +323,11 @@ export class AIOrchestrator {
 
   // Phase 3: Validation and Final Optimization
   private async executeValidationPhase(
-    pipeline: ContextDSPipeline,
+    pipeline: DesignContractsPipeline,
     extractionResult: ComprehensiveScanResult,
     aiResult: TwoPhaseResult<any> | null,
     progressCallback?: (progress: PipelineProgress) => void
-  ): Promise<ContextDSResult> {
+  ): Promise<DesignContractsResult> {
     pipeline.progress.phase = 'validation'
     pipeline.progress.currentStep = 'Validating results...'
     pipeline.progress.overallProgress = 90
@@ -366,7 +366,7 @@ export class AIOrchestrator {
       }
 
       // Create comprehensive result
-      const result: ContextDSResult = {
+      const result: DesignContractsResult = {
         tokenSet: finalTokenSet,
         layoutDNA: extractionResult.aggregatedData.layout || {},
         brandAnalysis: extractionResult.aggregatedData.brand || {},
@@ -545,7 +545,7 @@ export class AIOrchestrator {
           extractedAt: extraction.metadata.finishedAt
         },
         tools: {
-          extractor: 'contextds-advanced-extractor',
+          extractor: 'designcontracts-advanced-extractor',
           analyzer: 'deterministic-analysis',
           generator: 'basic-token-generator'
         }
@@ -683,7 +683,7 @@ export class AIOrchestrator {
   }
 
   // Monitoring and analytics
-  async getActivePipelines(): Promise<Map<string, ContextDSPipeline>> {
+  async getActivePipelines(): Promise<Map<string, DesignContractsPipeline>> {
     return new Map(this.activePipelines)
   }
 
@@ -773,7 +773,7 @@ export async function scanAndAnalyze(
     priority?: 'low' | 'normal' | 'high' | 'critical'
   } = {},
   progressCallback?: (progress: PipelineProgress) => void
-): Promise<ContextDSResult> {
+): Promise<DesignContractsResult> {
   const pipelineOptions: Partial<PipelineOptions> = {
     maxBudget: options.budget || 0.15,
     priority: options.priority || 'normal',
@@ -787,7 +787,7 @@ export async function scanAndAnalyze(
 export async function quickScan(
   url: string,
   progressCallback?: (progress: PipelineProgress) => void
-): Promise<ContextDSResult> {
+): Promise<DesignContractsResult> {
   return aiOrchestrator.processWebsite(url, {
     maxBudget: 0.05, // Low budget for quick scans
     priority: 'low',
@@ -800,7 +800,7 @@ export async function quickScan(
 export async function premiumScan(
   url: string,
   progressCallback?: (progress: PipelineProgress) => void
-): Promise<ContextDSResult> {
+): Promise<DesignContractsResult> {
   return aiOrchestrator.processWebsite(url, {
     maxBudget: 0.50, // Higher budget for premium analysis
     priority: 'critical',
@@ -817,7 +817,7 @@ export async function budgetAwareScan(
   monthlyBudget: number,
   currentSpend: number,
   progressCallback?: (progress: PipelineProgress) => void
-): Promise<ContextDSResult> {
+): Promise<DesignContractsResult> {
   const remainingBudget = monthlyBudget - currentSpend
   const daysLeft = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() - new Date().getDate()
   const dailyBudget = remainingBudget / Math.max(1, daysLeft)
@@ -845,10 +845,10 @@ export async function batchScan(
     totalBudget?: number
     priority?: 'low' | 'normal' | 'high'
   } = {}
-): Promise<Array<{ url: string; result?: ContextDSResult; error?: string; cost: number }>> {
+): Promise<Array<{ url: string; result?: DesignContractsResult; error?: string; cost: number }>> {
   const maxConcurrency = options.maxConcurrency || 3
   const budgetPerScan = (options.totalBudget || 1.0) / urls.length
-  const results: Array<{ url: string; result?: ContextDSResult; error?: string; cost: number }> = []
+  const results: Array<{ url: string; result?: DesignContractsResult; error?: string; cost: number }> = []
 
   // Process URLs in batches
   for (let i = 0; i < urls.length; i += maxConcurrency) {
@@ -893,7 +893,7 @@ export async function batchScan(
 }
 
 // Emergency scanning with minimal AI usage
-export async function emergencyScan(url: string): Promise<ContextDSResult> {
+export async function emergencyScan(url: string): Promise<DesignContractsResult> {
   return aiOrchestrator.processWebsite(url, {
     maxBudget: 0.01, // Minimal budget
     priority: 'low',

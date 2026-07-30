@@ -4,7 +4,7 @@ Guidance for agents working in this repository.
 
 ## Product
 
-**Design Contracts** (rebrand of ContextDS) scans public websites and produces **installable Design Contract packs** compatible with [`byronwade/Design`](https://github.com/byronwade/Design).
+**Design Contracts** (`designcontracts.sh`) scans public websites and produces **installable Design Contract packs** compatible with [`byronwade/Design`](https://github.com/byronwade/Design).
 
 Mental model:
 

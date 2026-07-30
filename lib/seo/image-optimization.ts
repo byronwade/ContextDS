@@ -1,5 +1,5 @@
 /**
- * Image Optimization and SEO for ContextDS
+ * Image Optimization and SEO for Design Contracts
  * Utilities for optimizing images, generating alt text, and improving LCP
  */
 
@@ -302,7 +302,7 @@ export function generateImageSchema(params: {
     license: license || 'https://creativecommons.org/licenses/by/4.0/',
     author: {
       '@type': 'Organization',
-      name: 'ContextDS'
+      name: 'Design Contracts'
     }
   }
 }

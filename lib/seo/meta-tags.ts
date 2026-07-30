@@ -32,7 +32,7 @@ export interface SiteMetadata {
 }
 
 const DEFAULT_CONFIG = {
-  siteName: "designcontracts.sh",
+  siteName: "Design Contracts",
   defaultImage: "/images/og-default.png",
   twitterHandle: "@designcontracts",
   locale: "en_US",
@@ -46,7 +46,7 @@ export function generateSEOMetadata(config: SEOConfig): Metadata {
     keywords = [],
     canonical,
     robots = "index, follow",
-    author = "designcontracts.sh",
+    author = "Design Contracts",
     image = DEFAULT_CONFIG.defaultImage,
     type = DEFAULT_CONFIG.type,
     locale = DEFAULT_CONFIG.locale,
@@ -149,7 +149,7 @@ export function generateSEOMetadata(config: SEOConfig): Metadata {
 
 export function generateHomepageMetadata(): Metadata {
   return generateSEOMetadata({
-    title: "designcontracts.sh — Scan sites into Design Contracts",
+    title: "Design Contracts — Scan sites into installable contracts",
     description: "Scan any public website into an installable Design Contract. W3C tokens, Project Wallace, layout DNA, DESIGN.md, and agent resolve → check → verify.",
     keywords: [
       "design contracts",

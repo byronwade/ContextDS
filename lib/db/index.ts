@@ -33,7 +33,7 @@ if (process.env.DATABASE_URL) {
 
     // Connection metadata
     connection: {
-      application_name: 'contextds-production',
+      application_name: 'designcontracts-production',
       statement_timeout: '30s',                    // Prevent hanging queries
       idle_in_transaction_session_timeout: '10s', // Prevent idle transactions
       tcp_keepalives_idle: '60',                   // TCP keepalive for stable connections
@@ -158,7 +158,7 @@ async function initializeOptimization() {
       return
     }
 
-    console.log('🚀 Initializing ContextDS database optimization...')
+    console.log('🚀 Initializing Design Contracts database optimization...')
 
     // Check if optimization tables exist
     const hasOptimization = await db.execute(sql`

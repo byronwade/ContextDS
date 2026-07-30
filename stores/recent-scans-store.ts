@@ -66,7 +66,7 @@ export const useRecentScans = create<RecentScansState>()(
       }
     }),
     {
-      name: 'contextds-recent-scans', // localStorage key
+      name: 'designcontracts-recent-scans', // localStorage key
       version: 1,
     }
   )

@@ -57,7 +57,7 @@ export class W3CTokenGenerator {
         tools: {
           extractor: '@projectwallace/extract-css-core',
           analyzer: '@projectwallace/css-analyzer',
-          generator: 'contextds-token-generator'
+          generator: 'designcontracts-token-generator'
         }
       }
     }
