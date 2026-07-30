@@ -88,6 +88,11 @@ function assertPublicUrl(rawUrl) {
 }
 
 async function getBrowser() {
+  // On Vercel, Chromium cannot be reused across frozen isolates — launch per request.
+  if (ON_VERCEL) {
+    return launchBrowser()
+  }
+
   if (!browserPromise) {
     browserPromise = launchBrowser().catch((error) => {
       browserPromise = null
@@ -232,6 +237,9 @@ async function collectPage(url, { screenshot = true } = {}) {
     }
   } finally {
     await context.close().catch(() => {})
+    if (ON_VERCEL) {
+      await browser.close().catch(() => {})
+    }
   }
 }
 
@@ -297,10 +305,12 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`[designcontracts-scanner] listening on 0.0.0.0:${PORT}`)
-  // Warm the browser so the first scan is faster
-  getBrowser().catch((error) => {
-    console.warn('[scanner] browser warm-up failed:', error)
-  })
+  // Warm browser only for long-lived Docker/local processes
+  if (!ON_VERCEL) {
+    getBrowser().catch((error) => {
+      console.warn('[scanner] browser warm-up failed:', error)
+    })
+  }
 })
 
 async function shutdown() {
