@@ -1,22 +1,34 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 import { promises as dns } from 'dns'
-import { runSimpleScan } from '@/lib/workers/simple-scan'
+import { type NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { scanRatelimit } from '@/lib/ratelimit'
+import { runSimpleScan } from '@/lib/workers/simple-scan'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
 
 const scanRequestSchema = z.object({
-  url: z.string().url(),
-  depth: z.enum(['1', '2', '3']).default('1'),
+  url: z.string().min(1),
   prettify: z.boolean().default(false),
-  quality: z.enum(['basic', 'standard', 'premium']).default('standard'),
-  budget: z.number().min(0.01).max(1.0).default(0.15),
-  // Default fast (static CSS) — accurate needs Playwright and is optional on Hobby
+  // Default fast (static CSS) — accurate needs Docker/Playwright scanner service
   mode: z.enum(['fast', 'accurate']).default('fast'),
   force: z.boolean().default(false),
+  /** @deprecated mapped to mode when present */
+  quality: z.enum(['basic', 'standard', 'premium', 'thorough']).optional(),
+  /** @deprecated ignored */
+  depth: z.enum(['1', '2', '3']).optional(),
+  /** @deprecated ignored */
+  budget: z.number().min(0.01).max(1.0).optional(),
 })
+
+function resolveMode(
+  mode: 'fast' | 'accurate',
+  quality?: 'basic' | 'standard' | 'premium' | 'thorough'
+): 'fast' | 'accurate' {
+  if (mode === 'accurate') return 'accurate'
+  if (quality === 'premium' || quality === 'thorough') return 'accurate'
+  return 'fast'
+}
 
 /**
  * Check if an IP address is in a private range
@@ -173,9 +185,7 @@ export async function POST(request: NextRequest) {
     }
 
     const payload = await request.json()
-    console.log('📥 Scan request payload:', JSON.stringify(payload, null, 2))
     const params = scanRequestSchema.parse(payload)
-    console.log('✅ Validated params:', JSON.stringify(params, null, 2))
 
     // 4. URL length validation
     if (params.url.length > 2048) {
@@ -185,8 +195,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const normalizedUrl = params.url.startsWith('http')
+      ? params.url
+      : `https://${params.url}`
+
     // URL validation to prevent SSRF
-    const url = new URL(params.url)
+    const url = new URL(normalizedUrl)
     const allowedProtocols = ['http:', 'https:']
     if (!allowedProtocols.includes(url.protocol)) {
       return NextResponse.json(
@@ -195,31 +209,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Comprehensive SSRF protection with DNS resolution
-    console.log('🔍 Validating SSRF for URL:', url.href)
     const ssrfError = await validateSSRF(url)
     if (ssrfError) {
-      console.error('❌ SSRF validation failed:', ssrfError)
       return NextResponse.json(
         { status: 'failed', error: ssrfError },
         { status: 400 }
       )
     }
-    console.log('✅ SSRF validation passed')
 
-    // Lean serverless scanner: Blob + Redis (no Postgres).
-    // fast = static CSS only; accurate = optional computed CSS.
-    const normalizedUrl = params.url.startsWith('http')
-      ? params.url
-      : `https://${params.url}`
-
-    const allowComputed =
-      params.mode === 'accurate' && process.env.DISABLE_COMPUTED_CSS !== '1'
+    const requestedMode = resolveMode(params.mode, params.quality)
+    const mode =
+      requestedMode === 'accurate' && process.env.DISABLE_COMPUTED_CSS !== '1'
+        ? 'accurate'
+        : 'fast'
 
     const result = await runSimpleScan({
       url: normalizedUrl,
       prettify: params.prettify,
-      mode: allowComputed ? 'accurate' : 'fast',
+      mode,
       force: params.force,
     })
 

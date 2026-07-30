@@ -33,39 +33,6 @@ export async function POST(request: NextRequest) {
     const mcpServer = new MCPServer()
     const result = await mcpServer.scanTokens(params, userId)
 
-    // Record AI operation for observability
-    if (result.ai_metadata) {
-      await import('@/lib/ai/observability').then(({ recordAIOperation }) => {
-        recordAIOperation(
-          'mcp-scan-tokens',
-          result.ai_metadata.models_used?.[0] || 'unknown',
-          {
-            inputTokens: 0, // Would calculate from request
-            outputTokens: 0, // Would calculate from response
-            cost: result.ai_metadata.total_cost || 0
-          },
-          {
-            latency: result.ai_metadata.processing_time || 0,
-            cacheHit: result.status === 'cached'
-          },
-          {
-            score: result.ai_metadata.quality_score || 80,
-            confidence: result.ai_metadata.confidence || 80,
-            validationPassed: true
-          },
-          {
-            url: params.url,
-            userId,
-            requestId: `mcp-${Date.now()}`
-          },
-          {
-            success: result.status !== 'failed',
-            error: result.error
-          }
-        )
-      }).catch(console.warn)
-    }
-
     return NextResponse.json(result)
 
   } catch (error) {

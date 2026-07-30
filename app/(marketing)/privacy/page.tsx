@@ -3,10 +3,10 @@ import { MarketingHeader } from "@/components/organisms/marketing-header"
 import { MarketingFooter } from "@/components/organisms/marketing-footer"
 
 export const metadata: Metadata = {
-  title: "Privacy Policy - ContextDS",
-  description: "Privacy Policy for ContextDS design token extraction platform. Learn how we handle and protect your data.",
+  title: "Privacy Policy - designcontracts.sh",
+  description: "Privacy Policy for designcontracts.sh design token extraction platform. Learn how we handle and protect your data.",
   openGraph: {
-    title: "Privacy Policy - ContextDS",
+    title: "Privacy Policy - designcontracts.sh",
     description: "How we handle and protect your data",
   },
 }
@@ -27,7 +27,7 @@ export default function PrivacyPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
               <p className="mb-4">
-                ContextDS ("we," "our," or "us") is committed to protecting your privacy. This Privacy
+                designcontracts.sh ("we," "our," or "us") is committed to protecting your privacy. This Privacy
                 Policy explains how we collect, use, disclose, and safeguard your information when you
                 use our design token extraction service.
               </p>
@@ -250,9 +250,9 @@ export default function PrivacyPage() {
                 If you have questions about this Privacy Policy or our data practices, please contact us:
               </p>
               <ul className="list-disc pl-6 mb-4 space-y-2">
-                <li>Email: privacy@contextds.com</li>
+                <li>Email: privacy@designcontracts.sh</li>
                 <li>Contact form: /contact</li>
-                <li>Data Protection Officer: dpo@contextds.com</li>
+                <li>Data Protection Officer: dpo@designcontracts.sh</li>
               </ul>
             </section>
 

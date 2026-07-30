@@ -137,17 +137,12 @@ export default function SitePage() {
         onCopy={handleCopyToken}
         onExport={handleExport}
         onShare={handleShareUrl}
-        showDiff={false}
-        onToggleDiff={() => {}}
         onNewScan={() => {
           resetScan()
           // Restart scan for current domain
           if (domain) {
             checkExistingData(domain)
           }
-        }}
-        onScanHistory={() => {
-          console.log('Show scan history')
         }}
       />
     </div>

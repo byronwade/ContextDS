@@ -50,8 +50,7 @@ export function MarketingHeader({ currentPage = "home", showSearch = false }: Ma
 
     setScanLoading(true)
     try {
-      // Navigate to home with scan parameters
-      router.push(`/?scan=${encodeURIComponent(target)}`)
+      router.push(`/scan?url=${encodeURIComponent(target)}`)
     } catch (error) {
       console.error('Scan error:', error)
     } finally {
@@ -61,7 +60,7 @@ export function MarketingHeader({ currentPage = "home", showSearch = false }: Ma
 
   const handleSearch = () => {
     if (!query.trim()) return
-    router.push(`/?q=${encodeURIComponent(query)}`)
+    router.push(`/community?q=${encodeURIComponent(query.trim())}`)
   }
 
   const onClearResults = () => {

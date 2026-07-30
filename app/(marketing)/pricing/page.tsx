@@ -7,10 +7,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
 export const metadata: Metadata = {
-  title: "Pricing - ContextDS",
+  title: "Pricing - designcontracts.sh",
   description: "Simple, transparent pricing for design token extraction. Start free, upgrade as you grow.",
   openGraph: {
-    title: "Pricing - ContextDS",
+    title: "Pricing - designcontracts.sh",
     description: "Simple pricing for AI-powered design token extraction",
   },
 }

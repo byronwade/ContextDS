@@ -252,13 +252,12 @@ export const RESOURCE_HINTS = {
   dnsPrefetch: [
     'https://fonts.googleapis.com',
     'https://fonts.gstatic.com',
-    'https://api.contextds.com'
+    'https://designcontracts.sh'
   ],
 
   // Preconnect for critical third-party resources
   preconnect: [
     { href: 'https://fonts.googleapis.com', crossOrigin: true },
-    { href: 'https://api.contextds.com', crossOrigin: true }
   ],
 
   // Preload critical assets (fonts handled automatically by Next.js)

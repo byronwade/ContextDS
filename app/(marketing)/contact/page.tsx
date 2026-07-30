@@ -19,10 +19,10 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export const metadata: Metadata = {
-  title: "Contact - ContextDS",
-  description: "Get in touch with the ContextDS team. Support, sales, partnerships, and general inquiries welcome.",
+  title: "Contact - designcontracts.sh",
+  description: "Get in touch with the designcontracts.sh team. Support, sales, partnerships, and general inquiries welcome.",
   openGraph: {
-    title: "Contact - ContextDS",
+    title: "Contact - designcontracts.sh",
     description: "Get in touch with our team",
   },
 }
@@ -32,42 +32,42 @@ const contactTypes = [
     icon: HelpCircle,
     title: "General Support",
     description: "Questions about features, usage, or getting started",
-    email: "support@contextds.com",
+    email: "support@designcontracts.sh",
     response: "Usually within 24 hours"
   },
   {
     icon: Building2,
     title: "Sales & Enterprise",
     description: "Enterprise plans, custom integrations, and partnerships",
-    email: "sales@contextds.com",
+    email: "sales@designcontracts.sh",
     response: "Usually within 4 hours"
   },
   {
     icon: Bug,
     title: "Bug Reports",
     description: "Found a bug or technical issue? Let us know",
-    email: "bugs@contextds.com",
+    email: "bugs@designcontracts.sh",
     response: "Usually within 12 hours"
   },
   {
     icon: Shield,
     title: "Privacy & Legal",
     description: "GDPR requests, website removal, legal questions",
-    email: "legal@contextds.com",
+    email: "legal@designcontracts.sh",
     response: "Usually within 48 hours"
   },
   {
     icon: Lightbulb,
     title: "Feature Requests",
     description: "Ideas for new features or improvements",
-    email: "features@contextds.com",
+    email: "features@designcontracts.sh",
     response: "Usually within 1 week"
   },
   {
     icon: Users,
     title: "Community",
     description: "Join our community discussions and get help from other users",
-    email: "community@contextds.com",
+    email: "community@designcontracts.sh",
     response: "Join our Discord server"
   }
 ]
@@ -75,7 +75,7 @@ const contactTypes = [
 const faqs = [
   {
     question: "How do I remove my website from your directory?",
-    answer: "You can request removal by emailing legal@contextds.com or by adding 'ContextDS' to your robots.txt disallow list. We'll process removal requests within 48 hours."
+    answer: "You can request removal by emailing legal@designcontracts.sh or by adding 'designcontracts.sh' to your robots.txt disallow list. We'll process removal requests within 48 hours."
   },
   {
     question: "Can I get enterprise pricing?",
@@ -86,7 +86,7 @@ const faqs = [
     answer: "We offer a 14-day money-back guarantee for all paid plans. Contact support if you're not satisfied with our service."
   },
   {
-    question: "How can I contribute to ContextDS?",
+    question: "How can I contribute to designcontracts.sh?",
     answer: "We welcome contributions! You can report bugs, suggest features, contribute to our open-source components, or join our community discussions."
   }
 ]
@@ -279,10 +279,10 @@ export default function ContactPage() {
                   a critical issue, please contact us directly:
                 </p>
                 <a
-                  href="mailto:security@contextds.com"
+                  href="mailto:security@designcontracts.sh"
                   className="text-red-600 dark:text-red-400 hover:underline font-medium"
                 >
-                  security@contextds.com
+                  security@designcontracts.sh
                 </a>
               </CardContent>
             </Card>
