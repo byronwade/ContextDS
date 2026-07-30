@@ -17,7 +17,18 @@ import { Button } from '@/components/ui/button'
 import { pushRecent, readRecents, type RecentDomain } from '@/lib/recents'
 import { cn } from '@/lib/utils'
 
-export type AppShellPage = 'chat' | 'library' | 'docs' | 'site'
+export type AppShellPage =
+  | 'chat'
+  | 'library'
+  | 'docs'
+  | 'site'
+  | 'features'
+  | 'pricing'
+  | 'about'
+  | 'contact'
+  | 'privacy'
+  | 'terms'
+  | 'metrics'
 
 type AppShellProps = {
   currentPage: AppShellPage
@@ -31,6 +42,18 @@ const PRIMARY_NAV = [
   { href: '/', label: 'Chat', page: 'chat' as const, icon: MessageSquare },
   { href: '/community', label: 'Library', page: 'library' as const, icon: Library },
   { href: '/docs', label: 'Docs', page: 'docs' as const, icon: BookOpen },
+] as const
+
+const MORE_NAV = [
+  { href: '/features', label: 'Features', page: 'features' as const },
+  { href: '/pricing', label: 'Pricing', page: 'pricing' as const },
+  { href: '/about', label: 'About', page: 'about' as const },
+] as const
+
+const LEGAL_LINKS = [
+  { href: '/contact', label: 'Contact', page: 'contact' as const },
+  { href: '/privacy', label: 'Privacy', page: 'privacy' as const },
+  { href: '/terms', label: 'Terms', page: 'terms' as const },
 ] as const
 
 function SidebarBody({
@@ -114,7 +137,49 @@ function SidebarBody({
         </ul>
       </div>
 
-      <div className="mt-auto flex items-center justify-between border-t border-sidebar-border px-1 pt-2">
+      <nav className="mt-2 flex flex-col gap-0.5 border-t border-sidebar-border pt-2" aria-label="More">
+        <p className="px-2.5 pb-1 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+          More
+        </p>
+        {MORE_NAV.map((item) => {
+          const active = currentPage === item.page
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onNavigate}
+              className={cn(
+                'rounded-lg px-2.5 py-1.5 text-sm transition-colors',
+                active
+                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                  : 'text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+              )}
+              aria-current={active ? 'page' : undefined}
+            >
+              {item.label}
+            </Link>
+          )
+        })}
+        <div className="mt-1 flex flex-wrap gap-x-2.5 gap-y-1 px-2.5 pb-1">
+          {LEGAL_LINKS.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onNavigate}
+              className={cn(
+                'font-mono text-[10px] uppercase tracking-[0.08em] transition-colors',
+                currentPage === item.page
+                  ? 'text-sidebar-foreground'
+                  : 'text-muted-foreground/80 hover:text-sidebar-foreground'
+              )}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      </nav>
+
+      <div className="mt-1 flex items-center justify-between border-t border-sidebar-border px-1 pt-2">
         <span className="px-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
           App
         </span>

@@ -17,18 +17,22 @@
 | `/community` | Library | Directory of scanned contracts |
 | `/docs` | Docs | Install + API |
 | `/site/[domain]` | — | Detail view; **hydrate cache, don’t auto-rescan** |
+| `/features`, `/pricing`, `/about` | More | Same `AppShell`; quiet content via `PageCanvas` |
+| `/contact`, `/privacy`, `/terms` | Legal links | Same shell; no separate marketing chrome |
+| `/metrics` | — | Live metrics; still use `AppShell` |
 | `/scan`, `/agent` | → `/` | Redirects (keep `?url=`) |
 
 When adding pages:
-1. Decide if it’s a **product** route → wrap with `AppShell` + `currentPage`.
-2. Add a sidebar item in `AppShell` if users need persistent access.
+1. Wrap with `AppShell` + `currentPage` (and `PageCanvas` if scrollable).
+2. Add a sidebar item under Primary or More if users need persistent access.
 3. Update `DESIGN.md` route table and this file.
-4. Never introduce a second competing nav system on product routes.
+4. Never introduce a second competing nav (`MarketingHeader` / `MarketingFooter` / `VercelHeader`) on public routes.
 
 ## Design & UI rules (summary)
-- App-like: sidebar + canvas, **no marketing footer** on Chat / Library / Docs / Site.
+- App-like: sidebar + canvas, **no marketing footer** on any AppShell route.
 - Dark-first; mint accent (hue ~185); Geist + Instrument Serif; no purple-glow themes.
 - Chat empty state = brand + one line + chips + composer. No hero cards/stats.
+- Secondary pages: one title, one supporting line, list/sections — not card grids or blue gradient heroes.
 - Inline scan widgets stay compact; Open uses cached scan.
 - Details: [`DESIGN.md`](./DESIGN.md).
 

@@ -10,8 +10,8 @@ import { LiveActivityFeed } from "@/components/molecules/live-activity-feed"
 import { LiveMetricsDashboard } from "@/components/molecules/live-metrics-dashboard"
 import { LiveScanQueue } from "@/components/molecules/live-scan-queue"
 import { LiveUserPresence } from "@/components/molecules/live-user-presence"
-import { MarketingHeader } from "@/components/organisms/marketing-header"
-import { MarketingFooter } from "@/components/organisms/marketing-footer"
+import { AppShell } from "@/components/organisms/app-shell"
+import { PageCanvas } from "@/components/molecules/page-canvas"
 
 interface RealtimeStats {
   page_views: number
@@ -178,15 +178,13 @@ export default function MetricsPage() {
   const maxValue = Math.max(...timeSeriesData.map(d => d.value), 1)
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <MarketingHeader currentPage="metrics" showSearch={true} />
-
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <AppShell currentPage="metrics">
+      <PageCanvas innerClassName="max-w-6xl px-4 py-8 sm:px-6">
         {/* Page Header with Live Status */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Real-Time Metrics</h1>
-            <p className="text-sm text-grep-9 mt-1">Live platform performance and usage analytics</p>
+            <h1 className="font-serif text-3xl tracking-tight text-foreground">Metrics</h1>
+            <p className="text-sm text-muted-foreground mt-1">Live platform performance and usage analytics</p>
           </div>
 
           {/* Connection Status */}
@@ -520,10 +518,8 @@ export default function MetricsPage() {
             </div>
           </div>
         </div>
-      </div>
-
-      <MarketingFooter />
-    </div>
+      </PageCanvas>
+    </AppShell>
   )
 }
 

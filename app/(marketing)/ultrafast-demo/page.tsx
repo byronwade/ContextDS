@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { AppShell } from "@/components/organisms/app-shell"
+import { PageCanvas } from "@/components/molecules/page-canvas"
 import {
   Zap,
   Target,
@@ -166,18 +168,12 @@ export default function UltraFastDemoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <div className="border-b border-neutral-200 dark:border-neutral-700">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <Zap className="h-8 w-8 text-blue-500" />
-              <h1 className="text-4xl font-bold">Ultra-Fast Scanning Demo</h1>
-            </div>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Experience scanning speeds under 200ms with our ultra-parallel system,
-              progressive loading skeletons, and optimized database operations.
+    <AppShell currentPage="metrics">
+      <PageCanvas innerClassName="max-w-6xl px-4 py-8 sm:px-6">
+          <div className="mb-8">
+            <h1 className="font-serif text-3xl tracking-tight text-foreground">Scan demo</h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              Progressive scan timing demo — same app shell as the rest of the product.
             </p>
           </div>
 
@@ -270,14 +266,10 @@ export default function UltraFastDemoPage() {
               )}
             </CardContent>
           </Card>
-        </div>
-      </div>
 
       {/* Performance Metrics */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-          <Activity className="h-6 w-6 text-green-500" />
-          Ultra-Performance Metrics
+        <h2 className="mb-6 mt-10 font-serif text-2xl tracking-tight text-foreground">
+          Performance metrics
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -368,13 +360,12 @@ export default function UltraFastDemoPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
 
       {/* Progressive Scan Results */}
       {(isScanning || scanResults) && (
-        <div className="border-t border-neutral-200 dark:border-neutral-700">
+        <div className="mt-8 border-t border-[color:var(--soft-border)] pt-6">
           <ProgressiveScanResults
-            scanId={currentScanId}
+            scanId={currentScanId ?? undefined}
             domain={demoUrl.replace(/^https?:\/\//, '').replace(/\/.*$/, '')}
             url={demoUrl}
             onScanComplete={handleScanComplete}
@@ -383,6 +374,7 @@ export default function UltraFastDemoPage() {
           />
         </div>
       )}
-    </div>
+      </PageCanvas>
+    </AppShell>
   )
 }

@@ -1,6 +1,6 @@
 import { Metadata } from "next"
-import { MarketingHeader } from "@/components/organisms/marketing-header"
-import { MarketingFooter } from "@/components/organisms/marketing-footer"
+import { AppShell } from "@/components/organisms/app-shell"
+import { PageCanvas } from "@/components/molecules/page-canvas"
 
 export const metadata: Metadata = {
   title: "Terms of Service - designcontracts.sh",
@@ -13,13 +13,10 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <>
-      <MarketingHeader currentPage="terms" showSearch={true} />
-
-      <main className="min-h-screen bg-background">
-        <div className="max-w-4xl mx-auto px-4 py-20">
+    <AppShell currentPage="terms">
+      <PageCanvas innerClassName="max-w-3xl">
           <div className="prose prose-gray dark:prose-invert max-w-none">
-            <h1 className="text-4xl font-bold tracking-tight mb-8">Terms of Service</h1>
+            <h1 className="font-serif text-3xl tracking-tight mb-8 sm:text-4xl">Terms of Service</h1>
             <p className="text-muted-foreground mb-8">
               Last updated: December 2024
             </p>
@@ -219,10 +216,7 @@ export default function TermsPage() {
               </p>
             </section>
           </div>
-        </div>
-      </main>
-
-      <MarketingFooter />
-    </>
+      </PageCanvas>
+    </AppShell>
   )
 }

@@ -24,6 +24,14 @@ Design Contracts is an **app**, not a marketing site.
 | `/community` | Library | Scanned Design Contracts directory |
 | `/docs` | Docs | API + install guidance |
 | `/site/[domain]` | *(detail)* | Full contract for one domain — **hydrate from cache, never auto-rescan** |
+| `/features` | Features (More) | Product capabilities |
+| `/pricing` | Pricing (More) | Plans |
+| `/about` | About (More) | Mission / principles |
+| `/contact` | Contact | Support channels |
+| `/privacy`, `/terms` | Legal | Policies |
+| `/metrics` | — | Internal live metrics (same shell) |
+
+Scrollable pages use `PageCanvas` inside `AppShell`. **No `MarketingHeader` / `MarketingFooter` on these routes.**
 
 ### Legacy redirects
 
@@ -31,8 +39,6 @@ Design Contracts is an **app**, not a marketing site.
 |------|----|
 | `/scan`, `/agent` | `/` (preserve `?url=`) |
 | `/community/[domain]` | `/site/[domain]` |
-
-Secondary pages (`/about`, `/pricing`, `/features`, legal) may use lighter chrome but should share tokens, type, and link back into the app shell (`/` / Library / Docs).
 
 ---
 
@@ -110,6 +116,11 @@ Lucide outline icons, 16–18px, consistent stroke. No emoji in chrome.
 │   stripe.com    │
 │   linear.app    │
 │                 │
+│ More            │
+│   Features      │
+│   Pricing       │
+│   About         │
+│   Contact · Privacy · Terms │
 │ [theme]         │
 └─────────────────┘
 ```
@@ -117,6 +128,7 @@ Lucide outline icons, 16–18px, consistent stroke. No emoji in chrome.
 - Width ~240px desktop; sheet/drawer on mobile
 - Recents from local history of opened/scanned domains → `/site/[domain]` or `/?url=`
 - Brand links to `/`
+- Secondary/legal pages stay in the same shell so nav never forks
 
 ### Main canvas
 
@@ -142,7 +154,7 @@ Not a full marketing card. Open → `/site/[domain]` **without rescanning**.
 
 | Do | Don’t |
 |----|-------|
-| Use `AppShell` on product routes | Add `MarketingFooter` on Chat/Library/Docs/Site |
+| Use `AppShell` + `PageCanvas` on all public app routes | Add `MarketingHeader` / `MarketingFooter` (legacy only) |
 | Use semantic tokens (`bg-background`, `text-muted-foreground`) | Hard-code purple/indigo gradients |
 | Prefer list rows / strips for results | Nest cards inside cards |
 | One primary CTA per section | Pill clusters / stat strips in first viewport |

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { MarketingFooter } from '@/components/organisms/marketing-footer'
-import { VercelHeader } from '@/components/organisms/vercel-header'
+import { AppShell } from '@/components/organisms/app-shell'
+import { PageCanvas } from '@/components/molecules/page-canvas'
 
 export const metadata: Metadata = {
   title: 'Features — designcontracts.sh',
@@ -20,7 +20,7 @@ const features = [
   },
   {
     title: 'Fast + accurate modes',
-    body: 'Fast uses static CSS for Hobby-friendly latency. Accurate adds Docker Playwright capture when SCANNER_SERVICE_URL is set.',
+    body: 'Fast uses static CSS for Hobby-friendly latency. Accurate adds the Vercel Chromium scanner when SCANNER_SERVICE_URL is set.',
   },
   {
     title: 'Wallace-aware tokenization',
@@ -42,46 +42,44 @@ const features = [
 
 export default function FeaturesPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <VercelHeader currentPage="features" />
-      <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-        <p className="text-sm text-muted-foreground">Features</p>
-        <h1 className="mt-2 font-serif text-4xl tracking-tight text-foreground sm:text-5xl">
-          designcontracts.sh
+    <AppShell currentPage="features">
+      <PageCanvas>
+        <h1 className="font-serif text-3xl tracking-tight text-foreground sm:text-4xl">
+          Features
         </h1>
-        <p className="mt-4 text-lg text-muted-foreground">
-          Everything needed to turn a live site into AI-readable design context — without the old
-          Design Contracts dashboard clutter.
+        <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
+          Turn a live site into AI-readable design context — without dashboard clutter.
         </p>
 
-        <div className="mt-14 space-y-10">
+        <div className="mt-12 space-y-10">
           {features.map((feature) => (
             <section
               key={feature.title}
-              className="border-t border-border/60 pt-8 first:border-t-0 first:pt-0"
+              className="border-t border-[color:var(--soft-border)] pt-8 first:border-t-0 first:pt-0"
             >
-              <h2 className="text-xl font-semibold text-foreground">{feature.title}</h2>
-              <p className="mt-2 text-muted-foreground">{feature.body}</p>
+              <h2 className="text-[15px] font-medium tracking-tight text-foreground">
+                {feature.title}
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{feature.body}</p>
             </section>
           ))}
         </div>
 
-        <div className="mt-16 flex flex-wrap gap-3">
+        <div className="mt-14 flex flex-wrap gap-3">
           <Link
             href="/"
-            className="inline-flex h-11 items-center rounded-md bg-foreground px-5 text-sm font-medium text-background"
+            className="inline-flex h-10 items-center rounded-xl bg-foreground px-4 text-sm font-medium text-background transition hover:opacity-90"
           >
-            Open Scan
+            Open Chat
           </Link>
           <Link
             href="/docs"
-            className="inline-flex h-11 items-center rounded-md border border-border px-5 text-sm font-medium text-foreground"
+            className="inline-flex h-10 items-center rounded-xl border border-[color:var(--soft-border)] px-4 text-sm font-medium text-foreground transition hover:bg-muted/40"
           >
             Read the docs
           </Link>
         </div>
-      </main>
-      <MarketingFooter />
-    </div>
+      </PageCanvas>
+    </AppShell>
   )
 }
