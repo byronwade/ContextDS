@@ -21,6 +21,17 @@ export interface SiteIndexEntry {
   popularity: number
   scanCount: number
   tokenCount: number
+  /** Last scan confidence (0–100), when known */
+  confidence?: number
+  /** Category counts from the last curated scan, when known */
+  curatedCount?: {
+    colors: number
+    fonts: number
+    sizes: number
+    spacing: number
+    radius: number
+    shadows: number
+  }
   lastScanned: string | null
   status: 'completed' | 'failed' | 'scanning'
 }
@@ -79,6 +90,8 @@ export interface StoredScanResult {
       fileCount: number
     }
     files: Array<{ path: string; content: string }>
+    /** Present on API responses so clients can download the full pack */
+    download?: string
   }
   /** Linked token↔role↔component↔layout model for agents */
   semanticGraph?: unknown
@@ -257,6 +270,8 @@ export async function saveScan(result: StoredScanResult): Promise<SiteIndexEntry
     popularity: (existing?.popularity ?? 0) + 1,
     scanCount: (existing?.scanCount ?? 0) + 1,
     tokenCount,
+    confidence: result.summary.confidence,
+    curatedCount: result.summary.curatedCount,
     lastScanned: result.scannedAt,
     status: result.status === 'completed' ? 'completed' : 'failed',
   }
@@ -367,21 +382,35 @@ export async function getDirectoryStats(): Promise<{
 
   const tokens = all.reduce((sum, site) => sum + site.tokenCount, 0)
   const scans = all.reduce((sum, site) => sum + site.scanCount, 0)
+  const withConfidence = all.filter((site) => typeof site.confidence === 'number')
+  const averageConfidence = withConfidence.length
+    ? Math.round(
+        withConfidence.reduce((sum, site) => sum + (site.confidence ?? 0), 0) /
+          withConfidence.length
+      )
+    : 0
+
+  const categories = all.reduce(
+    (acc, site) => {
+      const c = site.curatedCount
+      if (!c) return acc
+      acc.colors += c.colors
+      acc.typography += c.fonts + c.sizes
+      acc.spacing += c.spacing
+      acc.shadows += c.shadows
+      acc.radius += c.radius
+      return acc
+    },
+    { colors: 0, typography: 0, spacing: 0, shadows: 0, radius: 0, motion: 0 }
+  )
 
   return {
     sites: all.length,
     tokens,
     scans,
     tokenSets: all.length,
-    averageConfidence: all.length ? 78 : 0,
-    categories: {
-      colors: Math.round(tokens * 0.35),
-      typography: Math.round(tokens * 0.2),
-      spacing: Math.round(tokens * 0.2),
-      shadows: Math.round(tokens * 0.1),
-      radius: Math.round(tokens * 0.1),
-      motion: Math.round(tokens * 0.05),
-    },
+    averageConfidence,
+    categories,
     recentActivity: recent.map((site) => ({
       domain: site.domain,
       scannedAt: site.lastScanned,

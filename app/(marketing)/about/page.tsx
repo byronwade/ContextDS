@@ -17,10 +17,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
 export const metadata: Metadata = {
-  title: "About - ContextDS",
+  title: "About - designcontracts.sh",
   description: "Learn about our mission to make design tokens accessible to everyone through AI-powered extraction and analysis.",
   openGraph: {
-    title: "About - ContextDS",
+    title: "About - designcontracts.sh",
     description: "Making design tokens accessible through AI",
   },
 }

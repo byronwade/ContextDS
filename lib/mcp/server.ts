@@ -11,6 +11,7 @@ import {
 } from '../db'
 import { eq, desc, and, or, sql } from 'drizzle-orm'
 import { intelligentCache } from '../cache/intelligent-cache'
+import { contractDownloadPath, normalizeDomain } from '../domain'
 import { getScan, getSite } from '../storage/serverless-store'
 import { runSimpleScan } from '../workers/simple-scan'
 
@@ -19,10 +20,13 @@ import { runSimpleScan } from '../workers/simple-scan'
 // MCP Tool Schemas
 export const scanTokensSchema = z.object({
   url: z.string().url(),
-  depth: z.enum(['1', '2', '3']).optional().default('1'),
+  mode: z.enum(['fast', 'accurate']).optional().default('fast'),
+  force: z.boolean().optional().default(false),
+  prettify: z.boolean().optional().default(false),
+  /** @deprecated ignored — kept for older agents */
+  depth: z.enum(['1', '2', '3']).optional(),
   pages: z.array(z.string()).optional(),
   viewports: z.array(z.number()).optional(),
-  prettify: z.boolean().optional().default(false)
 })
 
 export const getTokensSchema = z.object({
@@ -59,17 +63,24 @@ export const voteTokenSchema = z.object({
 export class MCPServer {
   async scanTokens(params: z.infer<typeof scanTokensSchema>, _userId?: string) {
     try {
-      const domain = new URL(params.url).hostname
+      const domain = normalizeDomain(params.url)
+      const requestedMode = params.mode ?? 'fast'
+      const mode =
+        requestedMode === 'accurate' && process.env.DISABLE_COMPUTED_CSS === '1'
+          ? 'fast'
+          : requestedMode
+
       const result = await runSimpleScan({
         url: params.url,
         prettify: params.prettify,
-        mode: process.env.DISABLE_COMPUTED_CSS === '1' ? 'fast' : 'fast',
-        force: false,
+        mode,
+        force: params.force ?? false,
       })
 
       return {
         status: result.cacheHit ? 'cached' : 'fresh',
         site: { domain },
+        mode: result.metadata.mode,
         token_set: result.tokens,
         curated_tokens: result.curatedTokens,
         design_md: result.designMd,
@@ -81,7 +92,7 @@ export class MCPServer {
               profile: result.designContract.profile,
               installCommand: result.designContract.installCommand,
               summary: result.designContract.summary,
-              download: `/api/contracts/download?domain=${encodeURIComponent(domain)}`,
+              download: result.designContract.download || contractDownloadPath(domain),
             }
           : undefined,
         pack: result.promptPack,
@@ -101,7 +112,7 @@ export class MCPServer {
   }
 
   async getTokens(params: z.infer<typeof getTokensSchema>) {
-    const domain = new URL(params.url).hostname
+    const domain = normalizeDomain(params.url)
     try {
       const [site, scan] = await Promise.all([getSite(domain), getScan(domain)])
 

@@ -3,11 +3,11 @@ import { MarketingHeader } from "@/components/organisms/marketing-header"
 import { MarketingFooter } from "@/components/organisms/marketing-footer"
 
 export const metadata: Metadata = {
-  title: "Terms of Service - ContextDS",
-  description: "Terms of Service for ContextDS design token extraction platform.",
+  title: "Terms of Service - designcontracts.sh",
+  description: "Terms of Service for designcontracts.sh design token extraction platform.",
   openGraph: {
-    title: "Terms of Service - ContextDS",
-    description: "Legal terms and conditions for using ContextDS",
+    title: "Terms of Service - designcontracts.sh",
+    description: "Legal terms and conditions for using designcontracts.sh",
   },
 }
 
@@ -27,7 +27,7 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">1. Acceptance of Terms</h2>
               <p className="mb-4">
-                By accessing and using ContextDS ("Service"), you accept and agree to be bound by the
+                By accessing and using designcontracts.sh ("Service"), you accept and agree to be bound by the
                 terms and provision of this agreement. If you do not agree to abide by the above,
                 please do not use this service.
               </p>
@@ -36,7 +36,7 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">2. Description of Service</h2>
               <p className="mb-4">
-                ContextDS provides automated design token extraction and analysis services for public
+                designcontracts.sh provides automated design token extraction and analysis services for public
                 websites. Our service:
               </p>
               <ul className="list-disc pl-6 mb-4 space-y-2">
@@ -51,12 +51,12 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">3. Robots.txt Compliance</h2>
               <p className="mb-4">
-                ContextDS respects the robots.txt standard and web crawling best practices:
+                designcontracts.sh respects the robots.txt standard and web crawling best practices:
               </p>
               <ul className="list-disc pl-6 mb-4 space-y-2">
                 <li>We check and honor robots.txt files before analyzing any website</li>
                 <li>We respect crawl delays and user-agent restrictions</li>
-                <li>Website owners can opt-out by adding "ContextDS" to their robots.txt disallow list</li>
+                <li>Website owners can opt-out by adding "designcontracts.sh" to their robots.txt disallow list</li>
                 <li>We provide a clear opt-out mechanism for website owners who prefer not to be analyzed</li>
               </ul>
             </section>
@@ -95,7 +95,7 @@ export default function TermsPage() {
               <h2 className="text-2xl font-semibold mb-4">6. Intellectual Property</h2>
               <p className="mb-4">
                 The service and its original content, features, and functionality are and will remain
-                the exclusive property of ContextDS and its licensors. The service is protected by
+                the exclusive property of designcontracts.sh and its licensors. The service is protected by
                 copyright, trademark, and other laws.
               </p>
               <p className="mb-4">
@@ -156,7 +156,7 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">11. Limitation of Liability</h2>
               <p className="mb-4">
-                In no event shall ContextDS, nor its directors, employees, partners, agents,
+                In no event shall designcontracts.sh, nor its directors, employees, partners, agents,
                 suppliers, or affiliates, be liable for any indirect, incidental, special,
                 consequential, or punitive damages, including without limitation, loss of profits,
                 data, use, goodwill, or other intangible losses, resulting from your use of the service.
@@ -187,7 +187,7 @@ export default function TermsPage() {
               <h2 className="text-2xl font-semibold mb-4">14. Governing Law</h2>
               <p className="mb-4">
                 These Terms shall be interpreted and governed by the laws of the jurisdiction
-                in which ContextDS operates, without regard to conflict of law provisions.
+                in which designcontracts.sh operates, without regard to conflict of law provisions.
               </p>
             </section>
 
@@ -197,7 +197,7 @@ export default function TermsPage() {
                 If you have any questions about these Terms of Service, please contact us at:
               </p>
               <ul className="list-disc pl-6 mb-4 space-y-2">
-                <li>Email: legal@contextds.com</li>
+                <li>Email: legal@designcontracts.sh</li>
                 <li>Contact form: /contact</li>
               </ul>
             </section>
@@ -205,7 +205,7 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">16. Website Owner Rights</h2>
               <p className="mb-4">
-                If you own a website that has been analyzed by ContextDS and would like to:
+                If you own a website that has been analyzed by designcontracts.sh and would like to:
               </p>
               <ul className="list-disc pl-6 mb-4 space-y-2">
                 <li>Remove your site from our directory</li>

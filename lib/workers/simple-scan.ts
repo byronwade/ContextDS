@@ -19,6 +19,7 @@ import {
 import { type CuratedTokenSet, curateTokens } from '@/lib/analyzers/token-curator'
 import { extractW3CTokens } from '@/lib/analyzers/w3c-tokenizer'
 import { buildDesignContractPackage } from '@/lib/contracts/design-contract-package'
+import { contractDownloadPath, normalizeDomain } from '@/lib/domain'
 import { collectComputedCss } from '@/lib/extractors/computed-css'
 import { type CssSource, collectStaticCss } from '@/lib/extractors/static-css'
 import { isBrowserServiceConfigured, scanWithBrowserService } from '@/lib/scanner/browser-service'
@@ -180,16 +181,26 @@ function slimCuratedForClient(curated: CuratedTokenSet): CuratedTokenSet {
 }
 
 function slimContract(
-  contract: StoredScanResult['designContract']
+  contract: StoredScanResult['designContract'],
+  domain: string
 ): StoredScanResult['designContract'] {
   if (!contract) return undefined
   return {
     ...contract,
+    download: contract.download || contractDownloadPath(domain),
     files: (contract.files || []).map((file) => ({
       path: file.path,
       content: '',
     })),
   }
+}
+
+function clientTokens(cached: StoredScanResult): CuratedTokenSet | StoredScanResult['tokens'] {
+  // Prefer curated shape so cache hits match fresh responses.
+  if (cached.curatedTokens && typeof cached.curatedTokens === 'object') {
+    return cached.curatedTokens as CuratedTokenSet
+  }
+  return cached.tokens
 }
 
 function fromCache(cached: StoredScanResult): SimpleScanResult {
@@ -198,19 +209,20 @@ function fromCache(cached: StoredScanResult): SimpleScanResult {
     cached.metadata.scanId,
     cached.metadata.tokenSetId
   )
+  const tokens = clientTokens(cached)
   return {
     status: 'completed',
     domain: cached.domain,
     url: cached.url,
     summary: cached.summary,
-    tokens: cached.tokens,
-    curatedTokens: cached.curatedTokens,
+    tokens,
+    curatedTokens: (cached.curatedTokens as CuratedTokenSet | undefined) ?? undefined,
     layoutDNA: cached.layoutDNA,
     promptPack: cached.promptPack,
     brandAnalysis: cached.brandAnalysis,
     designMd: cached.designMd,
     designSkill: cached.designSkill,
-    designContract: slimContract(cached.designContract),
+    designContract: slimContract(cached.designContract, cached.domain),
     semanticGraph: cached.semanticGraph
       ? slimSemanticGraph(cached.semanticGraph as SemanticGraph)
       : undefined,
@@ -228,7 +240,7 @@ export async function runSimpleScan({
   force = false,
 }: SimpleScanInput): Promise<SimpleScanResult> {
   const target = normalizeUrl(url)
-  const domain = target.hostname.replace(/^www\./, '')
+  const domain = normalizeDomain(target.hostname)
   const startedAt = Date.now()
   void prettify
 
@@ -513,16 +525,6 @@ export async function runSimpleScan({
   const site = await saveScan(stored)
   const storage = storageMeta(site.id, scanId, tokenSetId)
 
-  const designContractSummary = stored.designContract
-    ? {
-        ...stored.designContract,
-        files: stored.designContract.files.map((file) => ({
-          path: file.path,
-          content: '',
-        })),
-      }
-    : undefined
-
   return {
     status: 'completed',
     domain,
@@ -535,7 +537,7 @@ export async function runSimpleScan({
     brandAnalysis: stored.brandAnalysis,
     designMd: stored.designMd,
     designSkill: stored.designSkill,
-    designContract: designContractSummary,
+    designContract: slimContract(stored.designContract, domain),
     semanticGraph: clientGraph,
     metadata: stored.metadata,
     database: storage,

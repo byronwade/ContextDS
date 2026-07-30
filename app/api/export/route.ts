@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
         name: params.domain || 'design-tokens',
         version: String(tokenSet.versionNumber || 1),
         description: `Design tokens for ${params.domain}`,
-        homepage: `https://contextds.com/site/${params.domain}`
+        homepage: `https://designcontracts.sh/site/${params.domain}`
       },
       options: params.options
     })

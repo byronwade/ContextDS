@@ -48,9 +48,17 @@ export async function scanWithBrowserService(
   const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? 55000)
 
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+    const secret = process.env.SCANNER_SERVICE_SECRET?.trim()
+    if (secret) {
+      headers['x-scanner-secret'] = secret
+    }
+
     const response = await fetch(`${base}/scan`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ url: targetUrl, screenshot: true }),
       signal: controller.signal,
     })

@@ -19,10 +19,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
 export const metadata: Metadata = {
-  title: "Documentation - ContextDS",
-  description: "Complete API documentation and guides for integrating ContextDS with your workflow. MCP tools, REST API, and more.",
+  title: "Documentation - designcontracts.sh",
+  description: "Complete API documentation and guides for integrating designcontracts.sh with your workflow. MCP tools, REST API, and more.",
   openGraph: {
-    title: "Documentation - ContextDS",
+    title: "Documentation - designcontracts.sh",
     description: "API docs and integration guides for design token extraction",
   },
 }
@@ -32,7 +32,7 @@ const quickStart = [
     step: 1,
     title: "Get your API key",
     description: "Sign up for a free account and generate your API key",
-    code: "curl -H 'Authorization: Bearer YOUR_API_KEY' \\n  https://api.contextds.com/v1/scan"
+    code: "curl -H 'Authorization: Bearer YOUR_API_KEY' \\n  https://designcontracts.sh/api/v1/scan"
   },
   {
     step: 2,
@@ -118,11 +118,11 @@ const mcpTools = [
 const sdks = [
   {
     language: "JavaScript",
-    package: "@contextds/sdk",
-    install: "npm install @contextds/sdk",
-    example: `import { ContextDS } from '@contextds/sdk';
+    package: "@designcontracts/sdk",
+    install: "npm install @designcontracts/sdk",
+    example: `import { designcontracts.sh } from '@designcontracts/sdk';
 
-const client = new ContextDS('your-api-key');
+const client = new designcontracts.sh('your-api-key');
 const tokens = await client.scan('https://example.com');`
   },
   {
@@ -138,7 +138,7 @@ tokens = client.scan('https://example.com')`
     language: "cURL",
     package: "curl",
     install: "Built-in on most systems",
-    example: `curl -X POST https://api.contextds.com/v1/scan \\
+    example: `curl -X POST https://designcontracts.sh/api/v1/scan \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"url": "https://example.com"}'`
@@ -159,7 +159,7 @@ export default function DocsPage() {
             </Badge>
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
               Build with{" "}
-              <span className="text-blue-600 dark:text-blue-400">ContextDS</span>
+              <span className="text-blue-600 dark:text-blue-400">designcontracts.sh</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
               Complete API documentation, MCP tools for Claude Code, and SDKs to integrate
@@ -231,7 +231,7 @@ export default function DocsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="bg-muted rounded-lg p-4 font-mono text-sm">
-                    https://api.contextds.com/v1
+                    https://designcontracts.sh/api/v1
                   </div>
                 </CardContent>
               </Card>
@@ -318,7 +318,7 @@ export default function DocsPage() {
                   <Zap className="h-8 w-8 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
                   <h3 className="font-semibold mb-2">Getting Started with Claude Code</h3>
                   <p className="text-muted-foreground mb-4">
-                    Install our MCP server to use ContextDS tools directly in Claude Code
+                    Install our MCP server to use designcontracts.sh tools directly in Claude Code
                   </p>
                   <div className="bg-muted rounded-lg p-4 font-mono text-sm mb-4">
                     npx @contextds/mcp-server install
@@ -1444,7 +1444,7 @@ class TokenMapper {
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold mb-4">Real-World Implementation Examples</h2>
               <p className="text-muted-foreground">
-                Practical examples of AI agents using ContextDS to solve design challenges
+                Practical examples of AI agents using designcontracts.sh to solve design challenges
               </p>
             </div>
 
@@ -1692,7 +1692,7 @@ const corrections = await mcp.generate_brand_corrections({
           <div className="max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold mb-4">Need help?</h2>
             <p className="text-muted-foreground mb-8">
-              Our team is here to help you get the most out of ContextDS.
+              Our team is here to help you get the most out of designcontracts.sh.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button className="px-6 py-3 bg-blue-600 hover:bg-blue-700">

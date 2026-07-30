@@ -151,12 +151,12 @@ export function generateOrganizationSchema(): OrganizationSchema {
     logo: "https://designcontracts.sh/logo.png",
     sameAs: [
       "https://github.com/byronwade/ContextDS",
-      "https://twitter.com/contextds"
+      "https://twitter.com/designcontracts"
     ],
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "Customer Service",
-      email: "hello@designcontracts.com"
+      email: "hello@designcontracts.sh"
     },
     foundingDate: "2024",
     founder: {

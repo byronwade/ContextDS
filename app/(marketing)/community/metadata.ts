@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Design Token Community | Browse 1000+ Design Systems | ContextDS',
+  title: 'Design Token Community | Browse 1000+ Design Systems | designcontracts.sh',
   description: 'Explore design tokens from top brands like Stripe, GitHub, and Linear. Browse 17,000+ curated design tokens including colors, typography, spacing, and shadows. Vote for the best extractions and discover design system patterns.',
 
   keywords: [
@@ -22,17 +22,17 @@ export const metadata: Metadata = {
     'design token patterns',
   ],
 
-  authors: [{ name: 'ContextDS Team' }],
+  authors: [{ name: 'designcontracts.sh Team' }],
 
-  creator: 'ContextDS',
-  publisher: 'ContextDS',
+  creator: 'designcontracts.sh',
+  publisher: 'designcontracts.sh',
 
   // Open Graph
   openGraph: {
     title: 'Design Token Community - Browse 1000+ Design Systems',
     description: 'Explore and vote on design token extractions from top websites. Search 17,000+ tokens including colors, typography, spacing, and shadows.',
-    url: 'https://contextds.com/community',
-    siteName: 'ContextDS',
+    url: 'https://designcontracts.sh/community',
+    siteName: 'designcontracts.sh',
     locale: 'en_US',
     type: 'website',
     images: [
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
         url: '/og-community.png', // You'll need to create this
         width: 1200,
         height: 630,
-        alt: 'ContextDS Design Token Community - Browse Design Systems',
+        alt: 'designcontracts.sh Design Token Community - Browse Design Systems',
       },
     ],
   },
@@ -48,10 +48,10 @@ export const metadata: Metadata = {
   // Twitter Card
   twitter: {
     card: 'summary_large_image',
-    title: 'Design Token Community | ContextDS',
+    title: 'Design Token Community | designcontracts.sh',
     description: 'Browse 1000+ design systems and 17,000+ design tokens. Vote on the best extractions from Stripe, GitHub, Linear, and more.',
     images: ['/og-community.png'],
-    creator: '@contextds', // Update with your actual Twitter handle
+    creator: '@designcontracts', // Update with your actual Twitter handle
   },
 
   // Robots
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
 
   // Canonical URL
   alternates: {
-    canonical: 'https://contextds.com/community',
+    canonical: 'https://designcontracts.sh/community',
   },
 
   // Additional metadata

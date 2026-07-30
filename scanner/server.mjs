@@ -12,8 +12,49 @@ import { chromium } from 'playwright'
 
 const PORT = Number(process.env.PORT || 4040)
 const MAX_CSS_BYTES = 8 * 1024 * 1024
+const SCANNER_SECRET = process.env.SCANNER_SERVICE_SECRET?.trim() || ''
 
-async function collectPage(url) {
+function isPrivateIPv4(ip) {
+  const parts = ip.split('.').map(Number)
+  if (parts.length !== 4 || parts.some((p) => Number.isNaN(p) || p < 0 || p > 255)) return true
+  return (
+    parts[0] === 10 ||
+    parts[0] === 127 ||
+    (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) ||
+    (parts[0] === 192 && parts[1] === 168) ||
+    parts[0] === 0 ||
+    (parts[0] === 169 && parts[1] === 254) ||
+    parts[0] === 255
+  )
+}
+
+function assertPublicUrl(rawUrl) {
+  const url = new URL(rawUrl)
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error('Only http(s) URLs are allowed')
+  }
+  const hostname = url.hostname.toLowerCase()
+  const port = url.port || (url.protocol === 'https:' ? '443' : '80')
+  if (!['80', '443', '8080'].includes(port)) {
+    throw new Error('Only ports 80, 443, and 8080 are allowed')
+  }
+  if (
+    hostname === 'localhost' ||
+    hostname.endsWith('.localhost') ||
+    hostname.endsWith('.local') ||
+    hostname.endsWith('.internal') ||
+    hostname === '169.254.169.254' ||
+    hostname === 'metadata.google.internal'
+  ) {
+    throw new Error('Cannot scan local or metadata hosts')
+  }
+  if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname) && isPrivateIPv4(hostname)) {
+    throw new Error('Cannot scan private IP addresses')
+  }
+  return url
+}
+
+async function collectPage(url, { screenshot = true } = {}) {
   const browser = await chromium.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
@@ -106,11 +147,13 @@ async function collectPage(url) {
     })
 
     let screenshotBase64 = null
-    try {
-      const buffer = await page.screenshot({ type: 'jpeg', quality: 72, fullPage: false })
-      screenshotBase64 = buffer.toString('base64')
-    } catch {
-      screenshotBase64 = null
+    if (screenshot) {
+      try {
+        const buffer = await page.screenshot({ type: 'jpeg', quality: 72, fullPage: false })
+        screenshotBase64 = buffer.toString('base64')
+      } catch {
+        screenshotBase64 = null
+      }
     }
 
     let total = 0
@@ -152,6 +195,13 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && req.url === '/scan') {
+      if (SCANNER_SECRET) {
+        const provided = req.headers['x-scanner-secret']
+        if (provided !== SCANNER_SECRET) {
+          return sendJson(res, 401, { error: 'Unauthorized' })
+        }
+      }
+
       const chunks = []
       for await (const chunk of req) chunks.push(chunk)
       const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')
@@ -159,7 +209,8 @@ const server = http.createServer(async (req, res) => {
       if (!url.startsWith('http')) {
         return sendJson(res, 400, { error: 'url must be an absolute http(s) URL' })
       }
-      const result = await collectPage(url)
+      assertPublicUrl(url)
+      const result = await collectPage(url, { screenshot: body.screenshot !== false })
       return sendJson(res, 200, { status: 'completed', ...result })
     }
 
