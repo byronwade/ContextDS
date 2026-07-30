@@ -19,6 +19,9 @@ test.describe('Scanner Basic Functionality', () => {
 		await expect(composer).toBeVisible();
 		await expect(page.getByRole('heading', { name: /designcontracts/i })).toBeVisible();
 		await expect(page.getByRole('button', { name: 'stripe.com' })).toBeVisible();
+		await expect(page.getByRole('navigation', { name: /primary/i })).toBeVisible();
+		await expect(page.getByRole('link', { name: 'Chat' }).first()).toBeVisible();
+		await expect(page.getByRole('link', { name: 'Library' }).first()).toBeVisible();
 	});
 
 	test('should show error for invalid URL', async ({ page }) => {

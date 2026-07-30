@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
-import { AppChrome } from '@/components/organisms/app-chrome'
+import { AppShell } from '@/components/organisms/app-shell'
 import { ScanChat } from './scan/client'
 
 export const metadata: Metadata = {
@@ -19,18 +19,10 @@ function ChatFallback() {
 
 export default function HomePage() {
   return (
-    <div className="flex h-dvh max-h-dvh flex-col overflow-hidden bg-background text-foreground">
-      <AppChrome currentPage="home" />
-      <main
-        id="main-content"
-        className="flex min-h-0 flex-1 flex-col"
-        role="main"
-        aria-label="Design Contracts chat"
-      >
-        <Suspense fallback={<ChatFallback />}>
-          <ScanChat />
-        </Suspense>
-      </main>
-    </div>
+    <AppShell currentPage="chat">
+      <Suspense fallback={<ChatFallback />}>
+        <ScanChat />
+      </Suspense>
+    </AppShell>
   )
 }

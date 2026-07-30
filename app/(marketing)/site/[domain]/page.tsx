@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation'
 import { useEffect, useRef } from 'react'
-import { AppChrome } from '@/components/organisms/app-chrome'
+import { AppShell } from '@/components/organisms/app-shell'
 import { ScanResultsLayout } from '@/components/organisms/scan-results-layout'
 import { storedScanToClientResult } from '@/lib/scanner/scan-client-result'
 import { useScanStore } from '@/stores/scan-store'
@@ -114,9 +114,7 @@ export default function SitePage() {
   }
 
   return (
-    <div className="flex h-dvh w-full flex-col overflow-hidden bg-background antialiased">
-      <AppChrome currentPage="site" />
-
+    <AppShell currentPage="site" recentDomain={domain}>
       <ScanResultsLayout
         result={scanResult}
         isLoading={scanLoading}
@@ -133,6 +131,6 @@ export default function SitePage() {
           }
         }}
       />
-    </div>
+    </AppShell>
   )
 }

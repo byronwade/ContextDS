@@ -1,4 +1,7 @@
-# Design Contracts — Design System
+# Design Contracts — Design System (legacy)
+
+> **Superseded by [`DESIGN.md`](./DESIGN.md).**  
+> Use `DESIGN.md` for product UI, app shell, routing, and tokens. This file is kept only for historical reference.
 
 A comprehensive design system for the Design Contracts design token extraction platform, built with modern principles and accessibility in mind.
 

@@ -39,6 +39,7 @@ import {
   isScanResultToolName,
 } from '@/components/molecules/scan-result-widget'
 import type { DesignContractAgentUIMessage } from '@/lib/agent/design-contract-agent'
+import { pushRecent } from '@/lib/recents'
 import { cn } from '@/lib/utils'
 
 const EXAMPLES = [
@@ -127,8 +128,8 @@ function EmptyState({
             disabled={disabled}
             onClick={() => onPick(example.prompt)}
             className={cn(
-              'rounded-md border border-[color:var(--soft-border)] bg-transparent px-3 py-1.5 font-mono text-xs text-muted-foreground transition',
-              'hover:border-foreground/25 hover:text-foreground disabled:opacity-50',
+              'rounded-full border border-[color:var(--soft-border)] bg-card/50 px-3.5 py-1.5 font-mono text-xs text-muted-foreground transition',
+              'hover:border-foreground/20 hover:bg-card hover:text-foreground disabled:opacity-50',
               'animate-slide-in'
             )}
             style={{ animationDelay: `${index * 40}ms` }}
@@ -162,6 +163,7 @@ export function ScanChat() {
       .replace(/^www\./, '')
       .split('/')[0]
     if (!domain) return
+    pushRecent(domain)
     void sendMessage({
       text: `Scan ${domain} and show me the Design Contract — summarize the system and how to install it.`,
     })
@@ -171,6 +173,14 @@ export function ScanChat() {
     const next = message.text?.trim()
     if (!next || busy) return
     setText('')
+    // Best-effort: if the message looks like a bare domain, stash it in Recents.
+    const maybeDomain = next
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .split(/[\s/?#]/)[0]
+    if (maybeDomain && /\./.test(maybeDomain) && !maybeDomain.includes(' ')) {
+      pushRecent(maybeDomain)
+    }
     void sendMessage({ text: next })
   }
 
@@ -281,7 +291,7 @@ export function ScanChat() {
           <div className="mx-auto w-full max-w-2xl px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-1 sm:px-6">
             <PromptInput
               onSubmit={onSubmit}
-              className="border-[color:var(--soft-border)] bg-card/60 shadow-[0_-1px_0_0_oklch(1_0_0_/_0.03)] backdrop-blur-md"
+              className="rounded-2xl border-[color:var(--soft-border)] bg-card/80 shadow-[0_0_0_1px_oklch(1_0_0_/_0.03)] backdrop-blur-md"
             >
               <PromptInputBody>
                 <PromptInputTextarea

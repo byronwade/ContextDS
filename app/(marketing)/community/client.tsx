@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { ArrowUp, Clock, ExternalLink, Search, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { AppChrome } from '@/components/organisms/app-chrome'
+import { AppShell } from '@/components/organisms/app-shell'
 import { useVotingStore } from '@/stores/voting-store'
 import { cn } from '@/lib/utils'
 
@@ -117,30 +117,16 @@ export default function CommunityClient() {
   const loading = !loaded || isPending
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-background text-foreground">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(900px 420px at 15% -10%, oklch(0.45 0.04 185 / 0.14), transparent 55%), radial-gradient(700px 400px at 100% 0%, oklch(1 0 0 / 0.03), transparent 45%)',
-        }}
-      />
-
-      <div className="relative z-10 flex min-h-screen flex-col">
-        <AppChrome currentPage="community" />
-
-        <main id="main-content" className="flex-1" role="main" aria-label="Design Contracts library">
-          <section className="border-b border-[color:var(--soft-border)] px-4 pb-8 pt-8 sm:px-6 sm:pb-10 sm:pt-10">
-            <div className="mx-auto max-w-5xl">
-              <h1 className="font-serif text-3xl tracking-tight text-foreground sm:text-4xl">
-                Library
-              </h1>
+    <AppShell currentPage="library">
+      <div className="min-h-0 flex-1 overflow-y-auto" role="region" aria-label="Design Contracts library">
+          <section className="border-b border-[color:var(--soft-border)] px-4 pb-6 pt-8 sm:px-6">
+            <div className="mx-auto max-w-3xl">
+              <h1 className="font-serif text-3xl tracking-tight text-foreground">Library</h1>
               <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-                Design Contracts from public sites. Open one, or ask chat to gather a new system.
+                Design Contracts from public sites. Open one, or ask Chat to gather a new system.
               </p>
 
-              <div className="relative mt-8 max-w-xl">
+              <div className="relative mt-6 max-w-xl">
                 <Search
                   className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                   aria-hidden
@@ -151,15 +137,15 @@ export default function CommunityClient() {
                   placeholder="Search domains…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-11 border-[color:var(--soft-border)] bg-background/70 pl-10"
+                  className="h-11 rounded-xl border-[color:var(--soft-border)] bg-card/60 pl-10"
                   aria-label="Search scanned sites"
                 />
               </div>
             </div>
           </section>
 
-          <section className="sticky top-14 z-20 border-b border-[color:var(--soft-border)] bg-background/85 backdrop-blur-xl">
-            <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+          <section className="sticky top-0 z-20 border-b border-[color:var(--soft-border)] bg-background/90 backdrop-blur-xl">
+            <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
               <p className="font-mono text-[11px] text-muted-foreground">
                 {filteredSites.length} {filteredSites.length === 1 ? 'site' : 'sites'}
               </p>
@@ -195,19 +181,19 @@ export default function CommunityClient() {
             </div>
           </section>
 
-          <section className="px-4 py-8 sm:px-6 sm:py-10">
-            <div className="mx-auto max-w-5xl">
+          <section className="px-4 py-6 sm:px-6 sm:py-8">
+            <div className="mx-auto max-w-3xl">
               {loading ? (
-                <div className="space-y-3" role="status" aria-label="Loading sites">
+                <div className="flex flex-col gap-2" role="status" aria-label="Loading sites">
                   {Array.from({ length: 6 }).map((_, i) => (
                     <div
                       key={i}
-                      className="h-20 animate-pulse border border-[color:var(--soft-border)] bg-muted/20"
+                      className="h-16 animate-pulse rounded-2xl border border-[color:var(--soft-border)] bg-muted/20"
                     />
                   ))}
                 </div>
               ) : filteredSites.length === 0 ? (
-                <div className="border border-[color:var(--soft-border)] px-6 py-16 text-center">
+                <div className="rounded-2xl border border-[color:var(--soft-border)] bg-card/40 px-6 py-16 text-center">
                   <h2 className="font-serif text-2xl text-foreground">No sites yet</h2>
                   <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
                     {searchQuery
@@ -226,11 +212,11 @@ export default function CommunityClient() {
                   </div>
                 </div>
               ) : (
-                <ul className="divide-y divide-[color:var(--soft-border)] border border-[color:var(--soft-border)]">
+                <ul className="flex flex-col gap-2">
                   {filteredSites.map((site) => (
                     <li
                       key={site.id}
-                      className="group flex flex-col gap-4 px-4 py-5 transition-colors hover:bg-secondary/40 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+                      className="group flex flex-col gap-4 rounded-2xl border border-[color:var(--soft-border)] bg-card/40 px-4 py-4 transition-colors hover:bg-card/70 sm:flex-row sm:items-center sm:justify-between sm:px-5"
                     >
                       <div className="flex min-w-0 items-start gap-3 sm:items-center">
                         {site.favicon ? (
@@ -313,9 +299,7 @@ export default function CommunityClient() {
               )}
             </div>
           </section>
-        </main>
-
       </div>
-    </div>
+    </AppShell>
   )
 }
