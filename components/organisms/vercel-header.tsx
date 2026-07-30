@@ -38,7 +38,7 @@ interface VercelHeaderProps {
 }
 
 const NAV = [
-  { href: "/scan", label: "Scan" },
+  { href: "/", label: "Chat" },
   { href: "/community", label: "Library" },
   { href: "/docs", label: "Docs" },
   { href: "/about", label: "About" },
@@ -76,7 +76,7 @@ export function VercelHeader({
       .split("/")[0]
     if (!domain) return
     if (onScan) onScan(domain)
-    else router.push(`/scan?url=${encodeURIComponent(domain)}`)
+    else router.push(`/?url=${encodeURIComponent(domain)}`)
     setMobileMenuOpen(false)
   }
 
@@ -133,9 +133,13 @@ export function VercelHeader({
           <nav className="hidden items-center gap-0.5 md:flex" aria-label="Main navigation">
             {NAV.map((item) => {
               const active =
-                currentPage === item.label.toLowerCase() ||
-                (item.href === "/scan" && (currentPage === "scan" || currentPage === "agent")) ||
-                (item.href === "/community" && currentPage === "community")
+                (item.href === "/" &&
+                  (currentPage === "home" ||
+                    currentPage === "scan" ||
+                    currentPage === "agent")) ||
+                (item.href === "/community" && currentPage === "community") ||
+                (item.href === "/docs" && currentPage === "docs") ||
+                (item.href === "/about" && currentPage === "about")
               return (
                 <Link
                   key={item.href}
@@ -152,13 +156,6 @@ export function VercelHeader({
               )
             })}
           </nav>
-
-          <Link
-            href="/scan"
-            className="hidden rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition hover:opacity-90 sm:inline-flex"
-          >
-            Start scan
-          </Link>
 
           <ThemeToggle />
 
@@ -190,13 +187,6 @@ export function VercelHeader({
                 {item.label}
               </Link>
             ))}
-            <Link
-              href="/scan"
-              onClick={() => setMobileMenuOpen(false)}
-              className="mt-2 rounded-md bg-primary px-3 py-2.5 text-center text-sm font-medium text-primary-foreground"
-            >
-              Start scan
-            </Link>
           </nav>
         </div>
       )}

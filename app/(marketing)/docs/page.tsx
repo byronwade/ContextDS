@@ -49,8 +49,8 @@ export default function DocsPage() {
           <ol className="list-decimal space-y-3 pl-5 text-muted-foreground">
             <li>
               Open{' '}
-              <Link href="/scan" className="text-foreground underline-offset-4 hover:underline">
-                /scan
+              <Link href="/" className="text-foreground underline-offset-4 hover:underline">
+                chat
               </Link>{' '}
               and paste a public URL (or use the home search).
             </li>
@@ -90,8 +90,8 @@ npx --yes github:byronwade/Design resolve --request "rebuild the hero"`}
           <h2 className="text-xl font-semibold text-foreground">Scan</h2>
           <p className="text-muted-foreground">
             Open{' '}
-            <Link href="/scan" className="text-foreground underline-offset-4 hover:underline">
-              /scan
+            <Link href="/" className="text-foreground underline-offset-4 hover:underline">
+              chat
             </Link>
             . It uses the Vercel AI SDK + AI Gateway (ToolLoopAgent) and tools that call this same
             pipeline (

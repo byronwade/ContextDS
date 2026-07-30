@@ -1,15 +1,18 @@
 import { redirect } from 'next/navigation'
 
-type AgentPageProps = {
-  searchParams?: Promise<{ url?: string }> | { url?: string }
-}
+type SearchParams = Promise<{ url?: string | string[] }>
 
-/** Legacy /agent route — Scan is the product name. */
-export default async function AgentPage({ searchParams }: AgentPageProps) {
-  const params = searchParams instanceof Promise ? await searchParams : searchParams
-  const url = params?.url?.trim()
+/** Legacy /agent → home chat */
+export default async function AgentPage({
+  searchParams,
+}: {
+  searchParams: SearchParams
+}) {
+  const params = await searchParams
+  const raw = Array.isArray(params.url) ? params.url[0] : params.url
+  const url = raw?.trim()
   if (url) {
-    redirect(`/scan?url=${encodeURIComponent(url)}`)
+    redirect(`/?url=${encodeURIComponent(url)}`)
   }
-  redirect('/scan')
+  redirect('/')
 }

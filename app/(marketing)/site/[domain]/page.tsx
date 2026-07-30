@@ -1,21 +1,19 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { useEffect, useState } from "react"
-import { VercelHeader } from "@/components/organisms/vercel-header"
+import { useEffect } from "react"
+import { AppChrome } from "@/components/organisms/app-chrome"
 import { ScanResultsLayout } from "@/components/organisms/scan-results-layout"
 import { useScanStore } from "@/stores/scan-store"
 
 export default function SitePage() {
   const params = useParams()
   const domain = params.domain as string
-  const [searchQuery, setSearchQuery] = useState(domain || "")
 
   const {
     isScanning: scanLoading,
     result: scanResult,
     error: scanError,
-    metrics: scanMetrics,
     progress: scanProgress,
     scanId,
     startScan,
@@ -23,13 +21,9 @@ export default function SitePage() {
   } = useScanStore()
 
   useEffect(() => {
-    setSearchQuery(domain || "")
-  }, [domain])
-
-  useEffect(() => {
     if (domain) {
       // Check if domain exists in database first, then scan if needed
-      checkExistingData(domain)
+      void checkExistingData(domain)
     }
   }, [domain])
 
@@ -113,21 +107,9 @@ export default function SitePage() {
   }
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-between overflow-hidden antialiased">
-      {/* Header */}
-      <VercelHeader
-        currentPage="site"
-        showSearch={true}
-        searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
-        onScan={(newDomain) => {
-          // Allow scanning different domains from the site page
-          window.location.href = `/site/${encodeURIComponent(newDomain)}`
-        }}
-        isScanning={scanLoading}
-      />
+    <div className="flex h-dvh w-full flex-col overflow-hidden bg-background antialiased">
+      <AppChrome currentPage="site" />
 
-      {/* Scan Results */}
       <ScanResultsLayout
         result={scanResult}
         isLoading={scanLoading}

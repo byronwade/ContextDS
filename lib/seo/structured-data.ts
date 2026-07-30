@@ -186,7 +186,7 @@ export function generateWebsiteSchema(): WebsiteSchema {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: "https://designcontracts.sh/scan?url={search_term_string}"
+        urlTemplate: "https://designcontracts.sh/?url={search_term_string}"
       },
       "query-input": "required name=search_term_string"
     },

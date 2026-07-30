@@ -204,6 +204,9 @@ const nextConfig: NextConfig = {
       { source: '/home', destination: '/', permanent: true },
       { source: '/documentation', destination: '/docs', permanent: true },
       { source: '/api-docs', destination: '/docs', permanent: true },
+      // Chat is the product surface at /
+      { source: '/scan', destination: '/', permanent: false },
+      { source: '/agent', destination: '/', permanent: false },
     ]
   },
 

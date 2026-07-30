@@ -12,16 +12,13 @@ test.describe('Scanner Basic Functionality', () => {
 		await expect(page).toHaveTitle(/Design Contracts/i);
 	});
 
-	test('should route homepage URL into scan', async ({ page }) => {
+	test('should show chat composer on homepage', async ({ page }) => {
 		await page.goto('/');
 
-		const urlInput = page.getByPlaceholder('stripe.com');
-		await expect(urlInput).toBeVisible();
-		await urlInput.fill('example.com');
-
-		await page.getByRole('button', { name: /scan site/i }).click();
-		await expect(page).toHaveURL(/\/scan\?url=example\.com/);
-		await expect(page.getByText(/Scan · Design Contracts/i)).toBeVisible();
+		const composer = page.getByLabel('Message');
+		await expect(composer).toBeVisible();
+		await expect(page.getByRole('heading', { name: /designcontracts/i })).toBeVisible();
+		await expect(page.getByRole('button', { name: 'stripe.com' })).toBeVisible();
 	});
 
 	test('should show error for invalid URL', async ({ page }) => {

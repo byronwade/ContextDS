@@ -50,7 +50,7 @@ export function MarketingHeader({ currentPage = "home", showSearch = false }: Ma
 
     setScanLoading(true)
     try {
-      router.push(`/scan?url=${encodeURIComponent(target)}`)
+      router.push(`/?url=${encodeURIComponent(target)}`)
     } catch (error) {
       console.error('Scan error:', error)
     } finally {

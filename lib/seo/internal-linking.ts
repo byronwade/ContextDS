@@ -35,7 +35,7 @@ export const CORE_NAVIGATION_LINKS: InternalLink[] = [
     category: 'product'
   },
   {
-    href: '/scan',
+    href: '/',
     text: 'Scan Website',
     title: 'Extract design tokens from any website URL',
     priority: 'high',
@@ -195,7 +195,7 @@ export function generateContextualLinks(context: LinkingContext): InternalLink[]
           category: 'feature'
         },
         {
-          href: '/scan',
+          href: '/',
           text: 'Extract Your Own Tokens',
           title: 'Scan any website to extract design tokens',
           priority: 'high',
@@ -220,7 +220,7 @@ export function generateContextualLinks(context: LinkingContext): InternalLink[]
 
         // Link to scan functionality
         links.push({
-          href: `/scan?url=${siteData.domain}`,
+          href: `/?url=${siteData.domain}`,
           text: `Re-scan ${siteData.domain}`,
           title: `Extract latest design tokens from ${siteData.domain}`,
           priority: 'high',

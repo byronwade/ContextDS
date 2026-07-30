@@ -5,8 +5,7 @@ import Link from 'next/link'
 import { ArrowUp, Clock, ExternalLink, Search, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { MarketingFooter } from '@/components/organisms/marketing-footer'
-import { VercelHeader } from '@/components/organisms/vercel-header'
+import { AppChrome } from '@/components/organisms/app-chrome'
 import { useVotingStore } from '@/stores/voting-store'
 import { cn } from '@/lib/utils'
 
@@ -129,20 +128,16 @@ export default function CommunityClient() {
       />
 
       <div className="relative z-10 flex min-h-screen flex-col">
-        <VercelHeader currentPage="community" showSearch />
+        <AppChrome currentPage="community" />
 
         <main id="main-content" className="flex-1" role="main" aria-label="Design Contracts library">
-          <section className="border-b border-[color:var(--soft-border)] px-4 pb-10 pt-12 sm:px-6 sm:pb-14 sm:pt-16">
+          <section className="border-b border-[color:var(--soft-border)] px-4 pb-8 pt-8 sm:px-6 sm:pb-10 sm:pt-10">
             <div className="mx-auto max-w-5xl">
-              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+              <h1 className="font-serif text-3xl tracking-tight text-foreground sm:text-4xl">
                 Library
-              </p>
-              <h1 className="mt-3 font-serif text-4xl tracking-tight text-foreground sm:text-5xl">
-                Scanned systems
               </h1>
-              <p className="mt-3 max-w-xl text-muted-foreground">
-                Browse Design Contracts pulled from public sites. Open one, or ask Scan to gather a
-                new system.
+              <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+                Design Contracts from public sites. Open one, or ask chat to gather a new system.
               </p>
 
               <div className="relative mt-8 max-w-xl">
@@ -226,7 +221,7 @@ export default function CommunityClient() {
                       </Button>
                     ) : null}
                     <Button asChild>
-                      <Link href="/scan">Open Scan</Link>
+                      <Link href="/">Open chat</Link>
                     </Button>
                   </div>
                 </div>
@@ -320,7 +315,6 @@ export default function CommunityClient() {
           </section>
         </main>
 
-        <MarketingFooter />
       </div>
     </div>
   )

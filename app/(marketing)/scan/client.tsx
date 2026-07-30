@@ -12,7 +12,6 @@ import { useSearchParams } from 'next/navigation'
 import {
   Conversation,
   ConversationContent,
-  ConversationEmptyState,
   ConversationScrollButton,
 } from '@/components/ai-elements/conversation'
 import {
@@ -28,7 +27,6 @@ import {
   PromptInputTextarea,
   type PromptInputMessage,
 } from '@/components/ai-elements/prompt-input'
-import { Suggestion, Suggestions } from '@/components/ai-elements/suggestion'
 import {
   Tool,
   ToolContent,
@@ -41,11 +39,13 @@ import {
   isScanResultToolName,
 } from '@/components/molecules/scan-result-widget'
 import type { DesignContractAgentUIMessage } from '@/lib/agent/design-contract-agent'
+import { cn } from '@/lib/utils'
 
-const SUGGESTIONS = [
-  'Scan stripe.com and install the Design Contract',
-  'Pull the design system from linear.app',
-  'Compare type + color on vercel.com',
+const EXAMPLES = [
+  { label: 'stripe.com', prompt: 'Scan stripe.com and install the Design Contract' },
+  { label: 'linear.app', prompt: 'Pull the design system from linear.app' },
+  { label: 'vercel.com', prompt: 'Compare type + color on vercel.com' },
+  { label: 'cursor.com', prompt: 'Scan cursor.com and summarize the Design Contract' },
 ] as const
 
 function partText(part: UIMessage['parts'][number]): string {
@@ -77,11 +77,11 @@ function ToolPart({ part }: { part: UIMessage['parts'][number] }) {
       ({
         domain: inputDomain.replace(/^https?:\/\//, '').split('/')[0] || undefined,
       } as const)
-    return <ScanResultWidget data={payload} state={state} className="mb-2" />
+    return <ScanResultWidget data={payload} state={state} className="mt-1" />
   }
 
   return (
-    <Tool defaultOpen={state === 'output-error'}>
+    <Tool defaultOpen={state === 'output-error'} className="mt-1">
       <ToolHeader
         title={name}
         type={part.type as `tool-${string}`}
@@ -101,6 +101,46 @@ function ToolPart({ part }: { part: UIMessage['parts'][number] }) {
   )
 }
 
+function EmptyState({
+  onPick,
+  disabled,
+}: {
+  onPick: (prompt: string) => void
+  disabled?: boolean
+}) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center px-4 pb-8 pt-16 animate-fade-in">
+      <h1 className="font-serif text-[clamp(2.5rem,7vw,3.75rem)] leading-[0.95] tracking-[-0.03em] text-foreground">
+        designcontracts
+        <span className="font-mono text-[0.5em] tracking-normal text-[oklch(0.78_0.08_185)]">
+          .sh
+        </span>
+      </h1>
+      <p className="mt-4 max-w-md text-center text-[15px] leading-relaxed text-muted-foreground">
+        Paste a URL. Get an installable Design Contract.
+      </p>
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+        {EXAMPLES.map((example, index) => (
+          <button
+            key={example.label}
+            type="button"
+            disabled={disabled}
+            onClick={() => onPick(example.prompt)}
+            className={cn(
+              'rounded-md border border-[color:var(--soft-border)] bg-transparent px-3 py-1.5 font-mono text-xs text-muted-foreground transition',
+              'hover:border-foreground/25 hover:text-foreground disabled:opacity-50',
+              'animate-slide-in'
+            )}
+            style={{ animationDelay: `${index * 40}ms` }}
+          >
+            {example.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function ScanChat() {
   const searchParams = useSearchParams()
   const startedUrl = useRef<string | null>(null)
@@ -111,6 +151,7 @@ export function ScanChat() {
   })
 
   const busy = status === 'submitted' || status === 'streaming'
+  const hasMessages = messages.length > 0 || Boolean(searchParams.get('url'))
 
   useEffect(() => {
     const raw = searchParams.get('url')?.trim()
@@ -134,102 +175,137 @@ export function ScanChat() {
   }
 
   return (
-    <div className="relative flex min-h-[65vh] flex-1 flex-col overflow-hidden border border-[color:var(--soft-border)] bg-background/40">
-      <Conversation className="min-h-0 flex-1">
-        <ConversationContent className="gap-6 px-4 py-5 sm:px-5">
-          {messages.length === 0 && !searchParams.get('url') ? (
-            <div className="flex min-h-[40vh] flex-col items-center justify-center gap-5 px-2 text-center">
-              <ConversationEmptyState
-                title="Scan a public site"
-                description="Paste a URL or pick a suggestion. Scan gathers tokens and drops an installable Design Contract inline."
-                className="min-h-0 p-0"
-              />
-              <Suggestions className="w-full max-w-lg justify-center px-1">
-                {SUGGESTIONS.map((suggestion) => (
-                  <Suggestion
-                    key={suggestion}
-                    suggestion={suggestion}
-                    onClick={(value) => void sendMessage({ text: value })}
-                    className="rounded-md"
-                    variant="outline"
-                  />
-                ))}
-              </Suggestions>
-            </div>
-          ) : null}
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
+      {/* Soft atmosphere — not a marketing hero */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(720px 360px at 50% 0%, oklch(0.42 0.035 185 / 0.10), transparent 60%)',
+        }}
+      />
 
-          {messages.map((message) => (
-            <Message from={message.role} key={message.id}>
-              <MessageContent>
-                {message.parts.map((part, index) => {
-                  if (part.type === 'text') {
-                    const content = partText(part)
-                    if (!content) return null
-                    return message.role === 'assistant' ? (
-                      <MessageResponse key={`${message.id}-t-${index}`}>
-                        {content}
-                      </MessageResponse>
-                    ) : (
-                      <p key={`${message.id}-t-${index}`} className="whitespace-pre-wrap">
-                        {content}
-                      </p>
-                    )
-                  }
-                  if (isToolUIPart(part)) {
-                    return <ToolPart key={`${message.id}-tool-${index}`} part={part} />
-                  }
-                  return null
-                })}
-              </MessageContent>
-            </Message>
-          ))}
-
-          {error ? (
-            <div className="border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              {error.message || 'Something went wrong during scan.'}
-            </div>
-          ) : null}
-        </ConversationContent>
-        <ConversationScrollButton />
-      </Conversation>
-
-      <div className="shrink-0 border-t border-[color:var(--soft-border)] bg-background/90 p-3 backdrop-blur sm:p-4">
-        {messages.length > 0 ? (
-          <Suggestions className="mb-3 px-0.5">
-            {SUGGESTIONS.map((suggestion) => (
-              <Suggestion
-                key={suggestion}
-                suggestion={suggestion}
-                onClick={(value) => void sendMessage({ text: value })}
-                className="rounded-md"
-                variant="outline"
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col">
+        <Conversation className="min-h-0 flex-1">
+          <ConversationContent
+            className={cn(
+              'mx-auto w-full max-w-2xl gap-5 px-4 py-6 sm:px-6',
+              !hasMessages && 'flex min-h-full flex-col'
+            )}
+          >
+            {!hasMessages ? (
+              <EmptyState
                 disabled={busy}
+                onPick={(prompt) => void sendMessage({ text: prompt })}
               />
-            ))}
-          </Suggestions>
-        ) : null}
+            ) : null}
 
-        <PromptInput onSubmit={onSubmit} className="border-[color:var(--soft-border)]">
-          <PromptInputBody>
-            <PromptInputTextarea
-              value={text}
-              onChange={(event) => setText(event.target.value)}
-              placeholder="stripe.com — or ask how to rebuild a screen from the contract…"
-              disabled={busy}
-              className="min-h-12"
-            />
-          </PromptInputBody>
-          <PromptInputFooter>
-            <span className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-              Design Contracts · Scan
-            </span>
-            <PromptInputSubmit
-              status={status}
-              disabled={!busy && !text.trim()}
-              onStop={() => stop()}
-            />
-          </PromptInputFooter>
-        </PromptInput>
+            {messages.map((message) => (
+              <Message
+                from={message.role}
+                key={message.id}
+                className={cn(
+                  'max-w-full animate-slide-in',
+                  message.role === 'user' ? 'max-w-[85%]' : 'max-w-full'
+                )}
+              >
+                <MessageContent
+                  className={cn(
+                    message.role === 'user' &&
+                      'rounded-2xl bg-secondary/80 px-4 py-2.5 text-[15px] leading-relaxed',
+                    message.role === 'assistant' &&
+                      'w-full max-w-none gap-3 text-[15px] leading-relaxed'
+                  )}
+                >
+                  {message.parts.map((part, index) => {
+                    if (part.type === 'text') {
+                      const content = partText(part)
+                      if (!content) return null
+                      return message.role === 'assistant' ? (
+                        <MessageResponse key={`${message.id}-t-${index}`}>
+                          {content}
+                        </MessageResponse>
+                      ) : (
+                        <p
+                          key={`${message.id}-t-${index}`}
+                          className="whitespace-pre-wrap"
+                        >
+                          {content}
+                        </p>
+                      )
+                    }
+                    if (isToolUIPart(part)) {
+                      return (
+                        <ToolPart key={`${message.id}-tool-${index}`} part={part} />
+                      )
+                    }
+                    return null
+                  })}
+                </MessageContent>
+              </Message>
+            ))}
+
+            {busy && messages.at(-1)?.role === 'user' ? (
+              <div className="flex items-center gap-2 px-1 text-sm text-muted-foreground animate-fade-in">
+                <span className="inline-flex gap-1">
+                  <span className="size-1.5 animate-pulse rounded-full bg-[oklch(0.78_0.08_185)]" />
+                  <span
+                    className="size-1.5 animate-pulse rounded-full bg-[oklch(0.78_0.08_185)]"
+                    style={{ animationDelay: '120ms' }}
+                  />
+                  <span
+                    className="size-1.5 animate-pulse rounded-full bg-[oklch(0.78_0.08_185)]"
+                    style={{ animationDelay: '240ms' }}
+                  />
+                </span>
+                Working…
+              </div>
+            ) : null}
+
+            {error ? (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                {error.message || 'Something went wrong. Try again.'}
+              </div>
+            ) : null}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
+
+        {/* Composer dock */}
+        <div className="relative shrink-0">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 -top-10 h-10 bg-gradient-to-t from-background to-transparent"
+          />
+          <div className="mx-auto w-full max-w-2xl px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-1 sm:px-6">
+            <PromptInput
+              onSubmit={onSubmit}
+              className="border-[color:var(--soft-border)] bg-card/60 shadow-[0_-1px_0_0_oklch(1_0_0_/_0.03)] backdrop-blur-md"
+            >
+              <PromptInputBody>
+                <PromptInputTextarea
+                  value={text}
+                  onChange={(event) => setText(event.target.value)}
+                  placeholder="Ask about a site — stripe.com, linear.app…"
+                  disabled={busy && status === 'submitted'}
+                  className="min-h-[52px] text-[15px] leading-relaxed placeholder:text-muted-foreground/70"
+                  aria-label="Message"
+                />
+              </PromptInputBody>
+              <PromptInputFooter className="px-1">
+                <span className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground/80">
+                  Design Contract
+                </span>
+                <PromptInputSubmit
+                  status={status}
+                  disabled={!busy && !text.trim()}
+                  onStop={() => stop()}
+                />
+              </PromptInputFooter>
+            </PromptInput>
+          </div>
+        </div>
       </div>
     </div>
   )
