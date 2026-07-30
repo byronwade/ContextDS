@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { domain: string } }
+  { params }: { params: Promise<{ domain: string }> }
 ) {
+  const { domain } = await params
+
   try {
-    const domain = params.domain
 
     if (!domain) {
       return NextResponse.json({ error: 'Domain is required' }, { status: 400 })
@@ -88,7 +89,7 @@ export async function GET(
     return NextResponse.json(
       {
         hasData: false,
-        domain: params.domain,
+        domain,
         error: 'Failed to check site data',
         shouldRescan: true
       },

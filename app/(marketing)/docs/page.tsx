@@ -576,7 +576,7 @@ function extractDominantColors(imageData, numColors = 5) {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="text-sm">
-                    <strong>Next.js 15 + React 19</strong>
+                    <strong>Next.js 16 + React 19</strong>
                     <p className="text-muted-foreground">App Router with RSC architecture</p>
                   </div>
                   <div className="text-sm">

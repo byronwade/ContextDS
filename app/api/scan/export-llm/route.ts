@@ -8,8 +8,6 @@ import { db, scans, sites } from '@/lib/db'
 import { eq, desc } from 'drizzle-orm'
 import { exportForLLM } from '@/lib/exporters/llm-format'
 
-export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {

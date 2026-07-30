@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**ContextDS** is a design token extraction and analysis platform that automatically scans websites to generate AI-readable design tokens and layout DNA profiles. Built with Next.js 15, App Router, React 19, TypeScript, and Tailwind CSS, this project aims to be the fastest, most accurate way to turn any public site into actionable design tokens for AI agents.
+**ContextDS** is a design token extraction and analysis platform that automatically scans websites to generate AI-readable design tokens and layout DNA profiles. Built with Next.js 16, App Router, React 19, TypeScript, and Tailwind CSS, this project aims to be the fastest, most accurate way to turn any public site into actionable design tokens for AI agents.
 
 ### Core Vision
 - **Dashboard + Marketing Website**: Comprehensive platform with public directory and premium tools
@@ -64,7 +64,7 @@ public/               # Static assets
 ### Technology Stack
 
 **Frontend**
-- **Framework**: Next.js 15 with App Router and React 19
+- **Framework**: Next.js 16 with App Router and React 19
 - **Styling**: Tailwind CSS v4 with CSS variables for theming
 - **UI Components**: shadcn/ui with "new-york" style variant
 - **State Management**: Zustand for client-side state

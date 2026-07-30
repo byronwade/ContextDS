@@ -3,7 +3,6 @@ import { addConnection, removeConnection, broadcast } from '@/lib/realtime/conne
 import { db, sites, tokenSets, scans } from '@/lib/db'
 import { sql, count, isNotNull } from 'drizzle-orm'
 
-export const runtime = 'nodejs'
 let currentMetrics = {
   totalScans: 0,
   totalTokens: 0,

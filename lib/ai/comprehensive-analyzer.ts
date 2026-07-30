@@ -133,7 +133,7 @@ export async function analyzeDesignSystemComprehensive(
       schema: AnalysisSchema,
       prompt,
       temperature: 0.4, // Balanced creativity and consistency
-      maxTokens: 4000
+      maxOutputTokens: 4000
     })
 
     return object

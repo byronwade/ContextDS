@@ -3,7 +3,6 @@ import { db } from "@/lib/db"
 import { sites, tokenSets, scans } from "@/lib/db/schema"
 import { desc, sql, count, eq } from "drizzle-orm"
 
-export const dynamic = "force-dynamic"
 
 export async function GET(request: NextRequest) {
   try {

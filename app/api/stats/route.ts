@@ -3,10 +3,6 @@ import { db, sites, tokenSets, scans } from '@/lib/db'
 import { sql, desc, count, isNotNull } from 'drizzle-orm'
 import { createHash } from 'crypto'
 
-// PERFORMANCE: Node.js runtime required for crypto module
-export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
-
 export async function GET(request: NextRequest) {
   try {
     // Skip during build time

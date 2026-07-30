@@ -7,21 +7,30 @@ const SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'X-XSS-Protection': '1; mode=block',
-  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"
+  'Content-Security-Policy':
+    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;",
 } as const
 
-export async function middleware(request: NextRequest) {
+function getClientIp(request: NextRequest): string {
+  return (
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    request.headers.get('x-real-ip') ||
+    '127.0.0.1'
+  )
+}
+
+export async function proxy(request: NextRequest) {
   const response = NextResponse.next()
 
   // Apply pre-computed security headers (faster than individual sets)
-  Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
     response.headers.set(key, value)
-  })
+  }
 
   // Rate limiting for API routes
   if (request.nextUrl.pathname.startsWith('/api/')) {
     try {
-      const identifier = request.ip ?? '127.0.0.1'
+      const identifier = getClientIp(request)
       const { success, limit, reset, remaining } = await ratelimit.limit(identifier)
 
       response.headers.set('X-RateLimit-Limit', limit.toString())
@@ -55,12 +64,10 @@ export async function middleware(request: NextRequest) {
 
   // Request size limits
   const contentLength = request.headers.get('content-length')
-  if (contentLength && parseInt(contentLength) > 10 * 1024 * 1024) { // 10MB limit
+  if (contentLength && parseInt(contentLength, 10) > 10 * 1024 * 1024) {
+    // 10MB limit
     return new NextResponse('Request too large', { status: 413 })
   }
-
-  // Metrics tracking moved to client-side (non-blocking)
-  // See: components/atoms/web-vitals-reporter.tsx
 
   return response
 }

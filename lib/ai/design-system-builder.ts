@@ -154,7 +154,7 @@ export async function buildDesignSystemSpec(
       schema: DesignSystemSpecSchema,
       prompt,
       temperature: 0.3,
-      maxTokens: 6000
+      maxOutputTokens: 6000
     })
 
     return object

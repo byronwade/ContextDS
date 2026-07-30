@@ -7,11 +7,11 @@
 - Update `drizzle.config.ts`, `tailwind.config.ts`, and `eslint.config.mjs` whenever dependencies or tokens change.
 
 ## Build, Test, and Development Commands
-- `pnpm install` syncs dependencies after cloning or pulling.
-- `pnpm dev` serves Turbopack at `http://localhost:3000`; `pnpm build` + `pnpm start` verify the production bundle.
-- `pnpm lint` runs the Next.js ESLint config; fix issues locally with `pnpm lint --fix`.
-- `pnpm dlx drizzle-kit generate` then `pnpm dlx drizzle-kit migrate` align Supabase with `lib/db/schema.ts`.
-- `pnpm dlx playwright test` executes end-to-end suites; scope runs with `--project` or `--grep` when iterating.
+- `bun install` syncs dependencies after cloning or pulling.
+- `bun dev` serves Turbopack at `http://localhost:3000`; `bun run build` + `bun start` verify the production bundle.
+- `bun lint` runs the Next.js ESLint config; fix issues locally with `bun lint --fix` when supported.
+- `bun run db:generate` then `bun run db:migrate` align the database with `lib/db/schema.ts`.
+- `bun run test` executes Playwright end-to-end suites; scope runs with `--project` or `--grep` when iterating.
 
 ## Coding Style & Naming Conventions
 - Keep TypeScript strict; avoid `any` and add explicit return types on shared helpers.

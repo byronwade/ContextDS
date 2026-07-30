@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db, screenshots, screenshotContent } from '@/lib/db'
 import { eq, asc } from 'drizzle-orm'
 
-export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/scans/[scanId]/screenshots

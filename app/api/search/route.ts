@@ -5,9 +5,6 @@ import { eq, and, or, like, ilike, sql, desc } from 'drizzle-orm'
 import { z } from 'zod'
 import { searchRatelimit } from '@/lib/ratelimit'
 
-// PERFORMANCE: Node.js runtime required for database access
-export const runtime = 'nodejs'
-
 const searchSchema = z.object({
   query: z.string().min(1),
   mode: z.enum(['tokens', 'sites', 'layouts', 'code']).default('tokens'),

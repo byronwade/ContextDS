@@ -5,8 +5,6 @@ import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { useScanStore, type ScanResult } from "@/stores/scan-store"
 
-// Force dynamic rendering for scan page (uses searchParams)
-export const dynamic = 'force-dynamic'
 import { useRealtimeStats } from "@/hooks/use-realtime-stats"
 import { useRealtimeStore } from "@/stores/realtime-store"
 import { LiveActivityFeed } from "@/components/molecules/live-activity-feed"

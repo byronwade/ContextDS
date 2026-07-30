@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server'
 import { metricsClient } from '@/lib/metrics/client'
 
-export const runtime = 'edge'
 
 export async function GET(request: NextRequest) {
   const encoder = new TextEncoder()
