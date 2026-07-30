@@ -1,17 +1,19 @@
-import { Metadata } from "next"
-import { Check, Star, Zap, Users, Building2 } from "lucide-react"
+import type { Metadata } from "next"
+import Link from "next/link"
+import { Check, Minus } from "lucide-react"
 import { MarketingHeader } from "@/components/organisms/marketing-header"
 import { MarketingFooter } from "@/components/organisms/marketing-footer"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
-  title: "Pricing - designcontracts.sh",
-  description: "Simple, transparent pricing for design token extraction. Start free, upgrade as you grow.",
+  title: "Pricing — designcontracts.sh",
+  description:
+    "Free scans for everyone. Pro adds the Design Contract Studio, the MCP server, private contracts and unlimited accurate scans.",
   openGraph: {
-    title: "Pricing - designcontracts.sh",
-    description: "Simple pricing for AI-powered design token extraction",
+    title: "Pricing — designcontracts.sh",
+    description:
+      "Free scans for everyone. Pro unlocks the Studio and the MCP server.",
   },
 }
 
@@ -20,119 +22,92 @@ const plans = [
     name: "Free",
     price: "$0",
     period: "forever",
-    description: "Perfect for exploring and small projects",
-    icon: Star,
+    description: "Scan public sites and read every contract in the Library.",
     features: [
-      "10 token extractions per month",
-      "Basic design token export",
-      "Community directory access",
-      "Standard CSS analysis",
-      "Public token sets only",
-      "Community support"
+      "10 scans per month",
+      "Full Design System Dossier for any scanned site",
+      "Library access with community contracts",
+      "DESIGN.md + tokens.json export",
+      "Public MCP read tools (get_tokens, layout_profile)",
     ],
-    limitations: [
-      "No layout DNA analysis",
-      "No private token sets",
-      "No API access",
-      "No priority support"
-    ],
-    cta: "Start free",
-    popular: false
+    cta: { label: "Start scanning", href: "/" },
+    highlight: false,
   },
   {
     name: "Pro",
-    price: "$9.95",
+    price: "$12",
     period: "per month",
-    description: "For designers and developers building design systems",
-    icon: Zap,
+    description: "Author your own contracts and bring them into your agent.",
     features: [
-      "Unlimited token extractions",
-      "Full layout DNA analysis",
-      "Private token sets",
-      "MCP API access",
-      "Advanced export formats",
-      "Version history & diffs",
-      "Priority email support",
-      "Custom token aliasing",
-      "Bulk operations",
-      "Webhook integrations"
+      "Everything in Free, unlimited accurate scans",
+      "Design Contract Studio — author + export your own systems",
+      "MCP server API key — scan_tokens, research_artifacts, compose_pack",
+      "Private contracts & version history",
+      "Semantic graph + full pack downloads via API",
+      "Priority support",
     ],
-    limitations: [],
-    cta: "Start Pro trial",
-    popular: true
+    cta: { label: "Upgrade to Pro", href: "/studio" },
+    highlight: true,
   },
   {
     name: "Team",
     price: "$29",
-    period: "per month",
-    description: "For teams collaborating on design systems",
-    icon: Users,
+    period: "per seat / month",
+    description: "Shared contract libraries for product teams and agencies.",
     features: [
       "Everything in Pro",
-      "Team workspaces",
-      "Collaborative features",
-      "Shared token libraries",
-      "Team analytics",
-      "Role-based permissions",
-      "SSO integration",
-      "Priority chat support",
-      "Team onboarding",
-      "Advanced security"
+      "Shared team workspace and contract library",
+      "Org-wide MCP keys with usage analytics",
+      "Role-based permissions & SSO",
+      "Onboarding + migration help",
     ],
-    limitations: [],
-    cta: "Contact sales",
-    popular: false
+    cta: { label: "Contact us", href: "/contact" },
+    highlight: false,
   },
-  {
-    name: "Enterprise",
-    price: "Custom",
-    period: "pricing",
-    description: "For large organizations with custom needs",
-    icon: Building2,
-    features: [
-      "Everything in Team",
-      "Custom integrations",
-      "On-premises deployment",
-      "SLA guarantees",
-      "Dedicated support",
-      "Custom training",
-      "Advanced analytics",
-      "Audit logging",
-      "Custom branding",
-      "Volume discounts"
-    ],
-    limitations: [],
-    cta: "Contact sales",
-    popular: false
-  }
+]
+
+const comparison: Array<{
+  feature: string
+  free: string | boolean
+  pro: string | boolean
+  team: string | boolean
+}> = [
+  { feature: "Site scans", free: "10 / month", pro: "Unlimited", team: "Unlimited" },
+  { feature: "Design System Dossier", free: true, pro: true, team: true },
+  { feature: "Design Contract Studio", free: false, pro: true, team: true },
+  { feature: "MCP server (write tools + API key)", free: false, pro: true, team: true },
+  { feature: "Private contracts", free: false, pro: true, team: true },
+  { feature: "Team workspace & SSO", free: false, pro: false, team: true },
 ]
 
 const faqs = [
   {
-    question: "What counts as a token extraction?",
-    answer: "A token extraction is analyzing one website/URL to generate design tokens. Each scan counts as one extraction, regardless of how many tokens are found."
+    question: "What exactly is a Design Contract?",
+    answer:
+      "An installable pack — DESIGN.md grammar, agent skills, references and config — that pins a site's design system so AI agents keep new UI on-system over time. Scans produce one automatically; Pro lets you author your own in the Studio.",
+  },
+  {
+    question: "What does the MCP server add?",
+    answer:
+      "It exposes designcontracts.sh as tools inside Claude, Cursor and any MCP client: fetch a site's tokens mid-build, profile its layout, trigger scans and compose packs without leaving your editor. Read tools are free; scanning, research and pack composition need a Pro key.",
+  },
+  {
+    question: "Do I need Pro to use scanned contracts?",
+    answer:
+      "No. Every public scan's dossier, DESIGN.md and pack download stay free. Pro is for creating your own contracts, private storage, and the full MCP toolset.",
   },
   {
     question: "Can I cancel anytime?",
-    answer: "Yes, you can cancel your subscription at any time. You'll continue to have access to Pro features until the end of your billing period."
+    answer:
+      "Yes — cancel whenever you like and keep Pro until the end of the billing period. Paid plans come with a 14-day money-back guarantee.",
   },
-  {
-    question: "What's included in the free plan?",
-    answer: "The free plan includes 10 monthly extractions, basic token export, and access to our community directory. Perfect for trying out the platform."
-  },
-  {
-    question: "Do you offer refunds?",
-    answer: "We offer a 14-day money-back guarantee for all paid plans. If you're not satisfied, we'll provide a full refund within the first 14 days."
-  },
-  {
-    question: "What payment methods do you accept?",
-    answer: "We accept all major credit cards (Visa, MasterCard, American Express) and PayPal. Enterprise customers can also pay by invoice."
-  },
-  {
-    question: "Is there a trial for paid plans?",
-    answer: "Yes! Pro and Team plans come with a 14-day free trial. No credit card required to start your trial."
-  }
 ]
+
+function CellValue({ value }: { value: string | boolean }) {
+  if (value === true) return <Check className="mx-auto size-4 text-[oklch(0.72_0.12_165)]" />
+  if (value === false) return <Minus className="mx-auto size-4 text-muted-foreground/40" />
+  return <span className="font-mono text-xs text-foreground">{value}</span>
+}
 
 export default function PricingPage() {
   return (
@@ -140,198 +115,136 @@ export default function PricingPage() {
       <MarketingHeader currentPage="pricing" showSearch={true} />
 
       <main className="min-h-screen bg-background">
-        {/* Hero Section */}
-        <section className="py-20 px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-              Simple, transparent{" "}
-              <span className="text-blue-600 dark:text-blue-400">pricing</span>
-            </h1>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Start free and scale as you grow. No hidden fees, no surprises.
+        <section className="px-4 pb-4 pt-20 sm:px-6">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+              Pricing
             </p>
-            <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Check className="h-4 w-4 text-green-500" />
-                14-day free trial
-              </span>
-              <span className="flex items-center gap-1">
-                <Check className="h-4 w-4 text-green-500" />
-                Cancel anytime
-              </span>
-              <span className="flex items-center gap-1">
-                <Check className="h-4 w-4 text-green-500" />
-                No setup fees
-              </span>
-            </div>
+            <h1 className="mt-3 font-serif text-5xl tracking-tight text-foreground sm:text-6xl">
+              Scan free. Create with Pro.
+            </h1>
+            <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+              Reading design systems is free forever. Pro is for making your own —
+              the Studio, the MCP server, and private contracts.
+            </p>
           </div>
         </section>
 
-        {/* Pricing Cards */}
-        <section className="py-16 px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {plans.map((plan) => (
-                <Card
-                  key={plan.name}
-                  className={`relative ${plan.popular ? 'border-blue-500 shadow-lg scale-105' : 'border-muted'}`}
-                >
-                  {plan.popular && (
-                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white">
-                      Most Popular
-                    </Badge>
+        <section className="px-4 py-12 sm:px-6">
+          <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-3">
+            {plans.map((plan) => (
+              <div
+                key={plan.name}
+                className={cn(
+                  "flex flex-col rounded-2xl border p-6",
+                  plan.highlight
+                    ? "border-[oklch(0.78_0.08_185/0.45)] bg-[oklch(0.78_0.08_185/0.05)]"
+                    : "border-[color:var(--soft-border)] bg-card/40"
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <h2 className="font-serif text-2xl tracking-tight text-foreground">
+                    {plan.name}
+                  </h2>
+                  {plan.highlight && (
+                    <span className="rounded-full border border-[oklch(0.78_0.08_185/0.45)] px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-[oklch(0.78_0.08_185)]">
+                      Recommended
+                    </span>
                   )}
-
-                  <CardHeader className="text-center pb-4">
-                    <plan.icon className="h-8 w-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
-                    <h3 className="text-lg font-semibold">{plan.name}</h3>
-                    <div className="mt-2">
-                      <span className="text-3xl font-bold">{plan.price}</span>
-                      {plan.period && (
-                        <span className="text-muted-foreground">/{plan.period}</span>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-2">{plan.description}</p>
-                  </CardHeader>
-
-                  <CardContent className="pt-0">
-                    <Button
-                      className={`w-full mb-6 ${plan.popular ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
-                      variant={plan.popular ? "default" : "outline"}
-                    >
-                      {plan.cta}
-                    </Button>
-
-                    <div className="space-y-3">
-                      {plan.features.map((feature, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                          <span className="text-sm">{feature}</span>
-                        </div>
-                      ))}
-
-                      {plan.limitations.map((limitation, index) => (
-                        <div key={index} className="flex items-start gap-2 opacity-60">
-                          <div className="h-4 w-4 mt-0.5 flex-shrink-0 flex items-center justify-center">
-                            <div className="h-0.5 w-2 bg-muted-foreground rounded" />
-                          </div>
-                          <span className="text-sm text-muted-foreground">{limitation}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                </div>
+                <p className="mt-4">
+                  <span className="font-mono text-4xl text-foreground">{plan.price}</span>
+                  <span className="ml-2 font-mono text-[11px] text-muted-foreground">
+                    {plan.period}
+                  </span>
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  {plan.description}
+                </p>
+                <ul className="mt-6 flex-1 space-y-2.5">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                      <Check className="mt-0.5 size-3.5 shrink-0 text-[oklch(0.72_0.12_165)]" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  asChild
+                  variant={plan.highlight ? "default" : "outline"}
+                  className="mt-8 w-full"
+                >
+                  <Link href={plan.cta.href}>{plan.cta.label}</Link>
+                </Button>
+              </div>
+            ))}
           </div>
         </section>
 
-        {/* Feature Comparison */}
-        <section className="py-16 px-4 bg-muted/30">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Compare plans</h2>
-              <p className="text-muted-foreground">
-                See exactly what's included in each plan
-              </p>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full">
+        <section className="px-4 py-12 sm:px-6">
+          <div className="mx-auto max-w-3xl">
+            <h2 className="text-center font-serif text-3xl tracking-tight text-foreground">
+              Compare plans
+            </h2>
+            <div className="mt-8 overflow-x-auto rounded-2xl border border-[color:var(--soft-border)]">
+              <table className="w-full min-w-[520px] text-sm">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-4 px-4 font-medium">Feature</th>
-                    <th className="text-center py-4 px-4 font-medium">Free</th>
-                    <th className="text-center py-4 px-4 font-medium text-blue-600">Pro</th>
-                    <th className="text-center py-4 px-4 font-medium">Team</th>
-                    <th className="text-center py-4 px-4 font-medium">Enterprise</th>
+                  <tr className="border-b border-border/40 text-left">
+                    <th className="px-4 py-3 font-medium text-muted-foreground">Feature</th>
+                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">Free</th>
+                    <th className="px-4 py-3 text-center font-medium text-[oklch(0.78_0.08_185)]">Pro</th>
+                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">Team</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b border-muted">
-                    <td className="py-4 px-4">Monthly extractions</td>
-                    <td className="py-4 px-4 text-center">10</td>
-                    <td className="py-4 px-4 text-center text-blue-600">Unlimited</td>
-                    <td className="py-4 px-4 text-center">Unlimited</td>
-                    <td className="py-4 px-4 text-center">Unlimited</td>
-                  </tr>
-                  <tr className="border-b border-muted">
-                    <td className="py-4 px-4">Layout DNA analysis</td>
-                    <td className="py-4 px-4 text-center">—</td>
-                    <td className="py-4 px-4 text-center text-blue-600">✓</td>
-                    <td className="py-4 px-4 text-center">✓</td>
-                    <td className="py-4 px-4 text-center">✓</td>
-                  </tr>
-                  <tr className="border-b border-muted">
-                    <td className="py-4 px-4">API access</td>
-                    <td className="py-4 px-4 text-center">—</td>
-                    <td className="py-4 px-4 text-center text-blue-600">✓</td>
-                    <td className="py-4 px-4 text-center">✓</td>
-                    <td className="py-4 px-4 text-center">✓</td>
-                  </tr>
-                  <tr className="border-b border-muted">
-                    <td className="py-4 px-4">Team collaboration</td>
-                    <td className="py-4 px-4 text-center">—</td>
-                    <td className="py-4 px-4 text-center">—</td>
-                    <td className="py-4 px-4 text-center">✓</td>
-                    <td className="py-4 px-4 text-center">✓</td>
-                  </tr>
-                  <tr className="border-b border-muted">
-                    <td className="py-4 px-4">SSO integration</td>
-                    <td className="py-4 px-4 text-center">—</td>
-                    <td className="py-4 px-4 text-center">—</td>
-                    <td className="py-4 px-4 text-center">✓</td>
-                    <td className="py-4 px-4 text-center">✓</td>
-                  </tr>
-                  <tr className="border-b border-muted">
-                    <td className="py-4 px-4">Custom deployment</td>
-                    <td className="py-4 px-4 text-center">—</td>
-                    <td className="py-4 px-4 text-center">—</td>
-                    <td className="py-4 px-4 text-center">—</td>
-                    <td className="py-4 px-4 text-center">✓</td>
-                  </tr>
+                  {comparison.map((row) => (
+                    <tr key={row.feature} className="border-b border-border/30 last:border-b-0">
+                      <td className="px-4 py-3 text-foreground">{row.feature}</td>
+                      <td className="px-4 py-3 text-center"><CellValue value={row.free} /></td>
+                      <td className="px-4 py-3 text-center"><CellValue value={row.pro} /></td>
+                      <td className="px-4 py-3 text-center"><CellValue value={row.team} /></td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
           </div>
         </section>
 
-        {/* FAQ Section */}
-        <section className="py-16 px-4">
-          <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Frequently asked questions</h2>
-              <p className="text-muted-foreground">
-                Everything you need to know about our pricing
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              {faqs.map((faq, index) => (
-                <Card key={index} className="border-muted">
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold mb-2">{faq.question}</h3>
-                    <p className="text-muted-foreground">{faq.answer}</p>
-                  </CardContent>
-                </Card>
+        <section className="px-4 py-12 sm:px-6">
+          <div className="mx-auto max-w-2xl">
+            <h2 className="text-center font-serif text-3xl tracking-tight text-foreground">
+              Questions
+            </h2>
+            <div className="mt-8 space-y-0 border-t border-border/40">
+              {faqs.map((faq) => (
+                <details key={faq.question} className="group border-b border-border/40 py-4">
+                  <summary className="cursor-pointer select-none list-none text-[15px] font-medium text-foreground transition-colors hover:text-[oklch(0.78_0.08_185)]">
+                    {faq.question}
+                  </summary>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {faq.answer}
+                  </p>
+                </details>
               ))}
             </div>
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-20 px-4 text-center">
-          <div className="max-w-2xl mx-auto">
-            <h2 className="text-3xl font-bold mb-4">Ready to get started?</h2>
-            <p className="text-muted-foreground mb-8">
-              Start with our free plan and upgrade when you need more power.
+        <section className="px-4 py-20 text-center sm:px-6">
+          <div className="mx-auto max-w-xl">
+            <h2 className="font-serif text-3xl tracking-tight text-foreground">
+              Gather your first system in seconds
+            </h2>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Paste a URL in Chat — the dossier, the pack and the philosophy are free.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="px-8 py-3 bg-blue-600 hover:bg-blue-700">
-                Start free trial
+            <div className="mt-6 flex justify-center gap-3">
+              <Button asChild>
+                <Link href="/">Open chat</Link>
               </Button>
-              <Button variant="outline" className="px-8 py-3">
-                Contact sales
+              <Button asChild variant="outline">
+                <Link href="/studio">Try the Studio</Link>
               </Button>
             </div>
           </div>

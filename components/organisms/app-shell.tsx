@@ -9,6 +9,8 @@ import {
   MessageSquare,
   PanelLeftClose,
   PanelLeft,
+  PenTool,
+  Plug,
   Plus,
   X,
 } from 'lucide-react'
@@ -17,7 +19,7 @@ import { Button } from '@/components/ui/button'
 import { pushRecent, readRecents, type RecentDomain } from '@/lib/recents'
 import { cn } from '@/lib/utils'
 
-export type AppShellPage = 'chat' | 'library' | 'docs' | 'site'
+export type AppShellPage = 'chat' | 'library' | 'studio' | 'docs' | 'mcp' | 'site'
 
 type AppShellProps = {
   currentPage: AppShellPage
@@ -28,9 +30,11 @@ type AppShellProps = {
 }
 
 const PRIMARY_NAV = [
-  { href: '/', label: 'Chat', page: 'chat' as const, icon: MessageSquare },
-  { href: '/community', label: 'Library', page: 'library' as const, icon: Library },
-  { href: '/docs', label: 'Docs', page: 'docs' as const, icon: BookOpen },
+  { href: '/', label: 'Chat', page: 'chat' as const, icon: MessageSquare, pro: false },
+  { href: '/community', label: 'Library', page: 'library' as const, icon: Library, pro: false },
+  { href: '/studio', label: 'Studio', page: 'studio' as const, icon: PenTool, pro: true },
+  { href: '/mcp', label: 'MCP', page: 'mcp' as const, icon: Plug, pro: true },
+  { href: '/docs', label: 'Docs', page: 'docs' as const, icon: BookOpen, pro: false },
 ] as const
 
 function SidebarBody({
@@ -84,6 +88,11 @@ function SidebarBody({
             >
               <Icon className="size-4 shrink-0 opacity-80" aria-hidden />
               {item.label}
+              {item.pro ? (
+                <span className="ml-auto rounded-full border border-[oklch(0.78_0.08_185/0.35)] px-1.5 py-px font-mono text-[9px] uppercase tracking-[0.08em] text-[oklch(0.78_0.08_185)]">
+                  Pro
+                </span>
+              ) : null}
             </Link>
           )
         })}

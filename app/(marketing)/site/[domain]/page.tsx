@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 import { AppShell } from '@/components/organisms/app-shell'
-import { ScanResultsLayout } from '@/components/organisms/scan-results-layout'
+import { DesignDossier } from '@/components/dossier/design-dossier'
 import { storedScanToClientResult } from '@/lib/scanner/scan-client-result'
 import { useScanStore } from '@/stores/scan-store'
 
@@ -12,6 +12,44 @@ type SiteApiResponse = {
   shouldRescan?: boolean
   domain?: string
   scan?: Parameters<typeof storedScanToClientResult>[0] | null
+}
+
+type TokenEntry = { name?: string; value: string | number }
+
+function cssVarName(prefix: string, token: TokenEntry, index: number): string {
+  const base = (token.name || `${prefix}-${index + 1}`)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+  return `--${base.startsWith(prefix) ? base : `${prefix}-${base}`}`
+}
+
+function generateCSS(tokens: {
+  colors?: TokenEntry[]
+  typography?: { families?: TokenEntry[]; sizes?: TokenEntry[]; weights?: TokenEntry[] }
+  spacing?: TokenEntry[]
+  radius?: TokenEntry[]
+  shadows?: TokenEntry[]
+  motion?: TokenEntry[]
+}): string {
+  const lines: string[] = [':root {']
+  const emit = (label: string, prefix: string, list?: TokenEntry[]) => {
+    if (!list?.length) return
+    lines.push(`  /* ${label} */`)
+    list.forEach((token, index) => {
+      lines.push(`  ${cssVarName(prefix, token, index)}: ${token.value};`)
+    })
+  }
+  emit('Colors', 'color', tokens.colors)
+  emit('Font families', 'font', tokens.typography?.families)
+  emit('Font sizes', 'text', tokens.typography?.sizes)
+  emit('Font weights', 'weight', tokens.typography?.weights)
+  emit('Spacing', 'space', tokens.spacing)
+  emit('Radius', 'radius', tokens.radius)
+  emit('Shadows', 'shadow', tokens.shadows)
+  emit('Motion', 'motion', tokens.motion)
+  lines.push('}')
+  return lines.join('\n') + '\n'
 }
 
 export default function SitePage() {
@@ -24,18 +62,10 @@ export default function SitePage() {
     result: scanResult,
     error: scanError,
     progress: scanProgress,
-    scanId,
     startScan,
     resetScan,
     setResult,
   } = useScanStore()
-
-  useEffect(() => {
-    if (!domain || loadedFor.current === domain) return
-    loadedFor.current = domain
-    void loadSite(domain)
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once per domain
-  }, [domain])
 
   const loadSite = async (target: string) => {
     resetScan()
@@ -57,55 +87,30 @@ export default function SitePage() {
     await startScan(target, 'accurate')
   }
 
-  const handleCopyToken = (value: string) => {
-    void navigator.clipboard.writeText(value)
-  }
+  useEffect(() => {
+    if (!domain || loadedFor.current === domain) return
+    loadedFor.current = domain
+    void loadSite(domain)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once per domain
+  }, [domain])
 
   const handleExport = (format: string) => {
-    if (!scanResult?.curatedTokens) return
+    const curated = scanResult?.curatedTokens
+    if (!curated) return
 
-    let content = ''
-    let mimeType = 'text/plain'
-    let extension: string = format
-
-    switch (format) {
-      case 'json':
-        content = JSON.stringify(scanResult.curatedTokens, null, 2)
-        mimeType = 'application/json'
-        break
-      case 'css':
-        content = generateCSS(scanResult.curatedTokens)
-        mimeType = 'text/css'
-        break
-      default:
-        content = JSON.stringify(scanResult.curatedTokens, null, 2)
-        mimeType = 'application/json'
-        extension = 'json'
-    }
-
-    const blob = new Blob([content], { type: mimeType })
+    const isCss = format === 'css'
+    const content = isCss ? generateCSS(curated) : JSON.stringify(curated, null, 2)
+    const blob = new Blob([content], {
+      type: isCss ? 'text/css' : 'application/json',
+    })
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement('a')
     anchor.href = url
-    anchor.download = `${domain}-tokens.${extension}`
+    anchor.download = `${domain}-tokens.${isCss ? 'css' : 'json'}`
     document.body.appendChild(anchor)
     anchor.click()
     anchor.remove()
     URL.revokeObjectURL(url)
-  }
-
-  const generateCSS = (tokens: {
-    colors?: Array<{ value: string }>
-  }) => {
-    let css = ':root {\n'
-    if (tokens.colors) {
-      css += '  /* Colors */\n'
-      tokens.colors.forEach((token, i) => {
-        css += `  --color-${i + 1}: ${token.value};\n`
-      })
-    }
-    css += '}\n'
-    return css
   }
 
   const handleShareUrl = () => {
@@ -115,16 +120,15 @@ export default function SitePage() {
 
   return (
     <AppShell currentPage="site" recentDomain={domain}>
-      <ScanResultsLayout
+      <DesignDossier
         result={scanResult}
         isLoading={scanLoading}
-        scanId={scanId}
         progress={scanProgress}
         error={scanError}
-        onCopy={handleCopyToken}
+        domain={domain}
         onExport={handleExport}
         onShare={handleShareUrl}
-        onNewScan={() => {
+        onRescan={() => {
           resetScan()
           if (domain) {
             void startScan(domain, 'accurate')

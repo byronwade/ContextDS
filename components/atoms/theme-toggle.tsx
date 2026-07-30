@@ -1,46 +1,74 @@
 "use client"
 
-import { useTheme } from "@/hooks/use-theme"
-import { Monitor, Sun, Moon } from "lucide-react"
+import { useSyncExternalStore } from "react"
+import { Monitor, Moon, Sun } from "lucide-react"
+import { useTheme, type Theme } from "@/hooks/use-theme"
+import { cn } from "@/lib/utils"
 
-export function ThemeToggle() {
+const noopSubscribe = () => () => {}
+
+const OPTIONS: Array<{ value: Theme; icon: typeof Sun; label: string }> = [
+  { value: "system", icon: Monitor, label: "System theme" },
+  { value: "light", icon: Sun, label: "Light theme" },
+  { value: "dark", icon: Moon, label: "Dark theme" },
+]
+
+/**
+ * Segmented theme control — pill track, sliding thumb, hairline ring.
+ * Geometry: 2px padding + three 28px cells, so the thumb always sits
+ * concentric with the track (no clipped corners on the last cell).
+ */
+export function ThemeToggle({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme()
-
-  const themes = [
-    { value: "dark" as const, icon: Moon, label: "Switch to dark theme" },
-    { value: "light" as const, icon: Sun, label: "Switch to light theme" },
-    { value: "system" as const, icon: Monitor, label: "Switch to system theme" },
-  ]
+  // false during SSR/hydration so the thumb only renders once theme is known
+  const mounted = useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false
+  )
 
   const activeIndex = Math.max(
     0,
-    themes.findIndex((t) => t.value === theme)
+    OPTIONS.findIndex((option) => option.value === theme)
   )
 
   return (
-    <div className="relative flex h-8 w-[96px] items-center justify-between rounded-md border border-[color:var(--soft-border)] bg-secondary/40">
-      <div
-        className="absolute h-7 w-7 rounded-sm bg-background shadow-[var(--soft-shadow)] transition-transform duration-200"
-        style={{
-          transform: `translateX(calc(${activeIndex * 32}px + 2px))`,
-        }}
+    <div
+      role="radiogroup"
+      aria-label="Color theme"
+      className={cn(
+        "relative inline-flex h-8 items-center rounded-full border border-[color:var(--soft-border)] bg-secondary/50 p-[2px]",
+        className
+      )}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          "absolute left-[2px] top-[2px] size-7 rounded-full border border-[color:var(--soft-border)] bg-background shadow-[0_1px_2px_oklch(0_0_0/0.25)] transition-transform duration-200 ease-out",
+          !mounted && "opacity-0"
+        )}
+        style={{ transform: `translateX(${activeIndex * 28}px)` }}
       />
-
-      {themes.map((themeOption) => {
-        const Icon = themeOption.icon
-        const isActive = theme === themeOption.value
-
+      {OPTIONS.map((option) => {
+        const Icon = option.icon
+        const isActive = mounted && theme === option.value
         return (
           <button
-            key={themeOption.value}
-            onClick={() => setTheme(themeOption.value)}
-            className={`relative z-10 flex h-8 w-8 items-center justify-center transition-colors duration-200 ${
-              isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
-            aria-label={themeOption.label}
-            title={themeOption.label}
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={isActive}
+            aria-label={option.label}
+            title={option.label}
+            onClick={() => setTheme(option.value)}
+            className={cn(
+              "relative z-10 flex size-7 items-center justify-center rounded-full transition-colors duration-200",
+              isActive
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
           >
-            <Icon className="h-3.5 w-3.5" />
+            <Icon className="size-3.5" strokeWidth={1.75} />
           </button>
         )
       })}

@@ -411,9 +411,9 @@
     scroll-padding-top: 2rem;
   }
 
-  /* Ultrathink: Better selection styling */
+  /* Selection uses the product mint accent */
   ::selection {
-    @apply bg-blue-500/20 text-blue-900 dark:text-blue-100;
+    background: oklch(0.72 0.08 185 / 0.25);
   }
 
   /* Ultrathink: Enhanced code rendering */
