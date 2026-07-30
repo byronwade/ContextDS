@@ -88,6 +88,12 @@ type ScanResult = {
     nodes?: unknown[]
     edges?: unknown[]
   }
+  screenshots?: Array<{
+    label: string
+    url: string
+    mime?: string
+    viewport?: string
+  }>
   cacheHit?: boolean
   metadata?: {
     cssSources?: number
@@ -309,6 +315,25 @@ export function ScanResultsLayout({
       <div className="mt-8">
         {activeTab === "overview" && (
           <div className="space-y-10 animate-fade-in">
+            {result.screenshots?.[0]?.url ? (
+              <section className="overflow-hidden rounded-2xl border border-[color:var(--soft-border)] bg-card/70 shadow-[var(--soft-shadow)]">
+                <div className="flex items-center justify-between px-5 py-3">
+                  <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
+                    Captured surface
+                  </p>
+                  <span className="text-xs text-muted-foreground">
+                    {result.screenshots[0].label || "homepage"}
+                  </span>
+                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={result.screenshots[0].url}
+                  alt={`Screenshot of ${result.domain || "scanned site"}`}
+                  className="max-h-[420px] w-full object-cover object-top"
+                />
+              </section>
+            ) : null}
+
             {result.semanticGraph && (
               <section className="rounded-2xl border border-[color:var(--soft-border)] bg-card/70 p-5 shadow-[var(--soft-shadow)]">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

@@ -32,9 +32,10 @@ export class ProgressEmitter {
   private currentStep: number = 0
   private totalSteps: number = 16
 
-  constructor(scanId: string) {
+  constructor(scanId: string, totalSteps = 16) {
     this.scanId = scanId
     this.startTime = Date.now()
+    this.totalSteps = totalSteps
   }
 
   emit(event: Omit<ProgressEvent, 'scanId' | 'timestamp'>) {

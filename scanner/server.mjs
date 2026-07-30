@@ -1,6 +1,6 @@
 /**
  * Design Contracts browser scanner microservice.
- * Runs Playwright Chromium in Docker for accurate CSS + screenshot capture.
+ * Runs Playwright Chromium with a reused browser for accurate CSS + screenshots.
  *
  * Endpoints:
  *   GET  /health
@@ -13,6 +13,10 @@ import { chromium } from 'playwright'
 const PORT = Number(process.env.PORT || 4040)
 const MAX_CSS_BYTES = 8 * 1024 * 1024
 const SCANNER_SECRET = process.env.SCANNER_SERVICE_SECRET?.trim() || ''
+const MAX_CONCURRENCY = Number(process.env.SCANNER_MAX_CONCURRENCY || 2)
+
+let browserPromise = null
+let activeScans = 0
 
 function isPrivateIPv4(ip) {
   const parts = ip.split('.').map(Number)
@@ -54,18 +58,37 @@ function assertPublicUrl(rawUrl) {
   return url
 }
 
+async function getBrowser() {
+  if (!browserPromise) {
+    browserPromise = chromium
+      .launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+      })
+      .catch((error) => {
+        browserPromise = null
+        throw error
+      })
+  }
+
+  const browser = await browserPromise
+  if (!browser.isConnected()) {
+    browserPromise = null
+    return getBrowser()
+  }
+  return browser
+}
+
 async function collectPage(url, { screenshot = true } = {}) {
-  const browser = await chromium.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+  const browser = await getBrowser()
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
+    userAgent:
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 DesignContractsBot/1.0 (+https://designcontracts.sh)',
   })
 
   try {
-    const page = await browser.newPage({
-      viewport: { width: 1440, height: 900 },
-      userAgent:
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 DesignContractsBot/1.0 (+https://designcontracts.sh)',
-    })
+    const page = await context.newPage()
 
     // Prefer domcontentloaded — networkidle hangs on modern SPAs with open sockets.
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 })
@@ -104,8 +127,19 @@ async function collectPage(url, { screenshot = true } = {}) {
         }
       }
 
-      // Sample computed styles from key elements for CSS-in-JS sites
-      const sampleSelectors = ['body', 'h1', 'h2', 'p', 'a', 'button', 'input', 'nav', 'main', 'header', 'footer']
+      const sampleSelectors = [
+        'body',
+        'h1',
+        'h2',
+        'p',
+        'a',
+        'button',
+        'input',
+        'nav',
+        'main',
+        'header',
+        'footer',
+      ]
       const computedChunks = []
       for (const selector of sampleSelectors) {
         const el = document.querySelector(selector)
@@ -168,14 +202,12 @@ async function collectPage(url, { screenshot = true } = {}) {
       url: payload.finalUrl,
       title: payload.title,
       sources,
-      screenshot: screenshotBase64
-        ? { mime: 'image/jpeg', base64: screenshotBase64 }
-        : null,
+      screenshot: screenshotBase64 ? { mime: 'image/jpeg', base64: screenshotBase64 } : null,
       bytes: total,
       sourceCount: sources.length,
     }
   } finally {
-    await browser.close()
+    await context.close().catch(() => {})
   }
 }
 
@@ -191,7 +223,12 @@ function sendJson(res, status, body) {
 const server = http.createServer(async (req, res) => {
   try {
     if (req.method === 'GET' && req.url === '/health') {
-      return sendJson(res, 200, { ok: true, service: 'designcontracts-scanner' })
+      return sendJson(res, 200, {
+        ok: true,
+        service: 'designcontracts-scanner',
+        activeScans,
+        browserReady: Boolean(browserPromise),
+      })
     }
 
     if (req.method === 'POST' && req.url === '/scan') {
@@ -202,6 +239,10 @@ const server = http.createServer(async (req, res) => {
         }
       }
 
+      if (activeScans >= MAX_CONCURRENCY) {
+        return sendJson(res, 429, { error: 'Scanner busy — retry shortly' })
+      }
+
       const chunks = []
       for await (const chunk of req) chunks.push(chunk)
       const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')
@@ -210,8 +251,14 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 400, { error: 'url must be an absolute http(s) URL' })
       }
       assertPublicUrl(url)
-      const result = await collectPage(url, { screenshot: body.screenshot !== false })
-      return sendJson(res, 200, { status: 'completed', ...result })
+
+      activeScans += 1
+      try {
+        const result = await collectPage(url, { screenshot: body.screenshot !== false })
+        return sendJson(res, 200, { status: 'completed', ...result })
+      } finally {
+        activeScans -= 1
+      }
     }
 
     sendJson(res, 404, { error: 'not found' })
@@ -225,4 +272,21 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`[designcontracts-scanner] listening on :${PORT}`)
+  // Warm the browser so the first scan is faster
+  getBrowser().catch((error) => {
+    console.warn('[scanner] browser warm-up failed:', error)
+  })
 })
+
+async function shutdown() {
+  try {
+    const browser = await browserPromise
+    if (browser) await browser.close()
+  } catch {
+    // ignore
+  }
+  process.exit(0)
+}
+
+process.on('SIGTERM', shutdown)
+process.on('SIGINT', shutdown)
