@@ -57,15 +57,17 @@ export function VercelHeader({
   const router = useRouter()
   const { stats, loadStats } = useStatsStore()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [localSearchValue, setLocalSearchValue] = useState(searchValue)
+  const [internalSearch, setInternalSearch] = useState("")
+  const localSearchValue = onSearchChange ? searchValue : internalSearch
 
   useEffect(() => {
     if (!stats) loadStats()
   }, [stats, loadStats])
 
-  useEffect(() => {
-    setLocalSearchValue(searchValue)
-  }, [searchValue])
+  const setLocalSearchValue = (value: string) => {
+    if (onSearchChange) onSearchChange(value)
+    else setInternalSearch(value)
+  }
 
   const goScan = (url: string) => {
     const domain = url
@@ -111,7 +113,6 @@ export function VercelHeader({
               value={localSearchValue}
               onChange={(e) => {
                 setLocalSearchValue(e.target.value)
-                onSearchChange?.(e.target.value)
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && localSearchValue.trim()) {
