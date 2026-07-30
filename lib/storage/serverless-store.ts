@@ -160,24 +160,66 @@ function createId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
 }
 
+type BlobAccess = 'public' | 'private'
+
+/**
+ * Cache which access mode works for this store.
+ * Private stores reject public puts; public stores reject private puts.
+ * Production Hobby blobs are often public — private-only writes silently failed
+ * and caused Open → /site to miss cache and re-scan forever.
+ */
+let resolvedBlobAccess: BlobAccess | null = null
+
+function preferredBlobAccessOrder(): BlobAccess[] {
+  const envAccess = process.env.BLOB_ACCESS
+  if (envAccess === 'public' || envAccess === 'private') {
+    return envAccess === 'public' ? ['public', 'private'] : ['private', 'public']
+  }
+  if (resolvedBlobAccess === 'public') return ['public', 'private']
+  if (resolvedBlobAccess === 'private') return ['private', 'public']
+  // Prefer private when possible; fall back for public stores.
+  return ['private', 'public']
+}
+
+function isWrongAccessError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return (
+    message.includes('public store') ||
+    message.includes('private store') ||
+    message.includes('private access') ||
+    message.includes('public access')
+  )
+}
+
 async function readBlobJson<T>(pathname: string): Promise<T | null> {
   if (!hasBlob()) return null
 
-  try {
-    // Prefer private get() — scan payloads are no longer world-readable.
-    const privateResult = await get(pathname, { access: 'private', useCache: false })
-    if (privateResult?.stream) {
-      const text = await new Response(privateResult.stream).text()
-      return JSON.parse(text) as T
+  // 1) Authenticated get (works for private stores; may 400 on public stores)
+  for (const access of preferredBlobAccessOrder()) {
+    try {
+      const result = await get(pathname, { access, useCache: false })
+      if (result?.stream) {
+        resolvedBlobAccess = access
+        const text = await new Response(result.stream).text()
+        return JSON.parse(text) as T
+      }
+    } catch (error) {
+      if (!isWrongAccessError(error)) {
+        // Continue to list/fetch fallback for missing/legacy blobs
+        break
+      }
     }
+  }
 
-    // Backward-compatible fallback for older public blobs
-    const { blobs } = await list({ prefix: pathname, limit: 1 })
+  // 2) Public URL via list (public stores + older uploads)
+  try {
+    const { blobs } = await list({ prefix: pathname, limit: 5 })
     const match = blobs.find((blob) => blob.pathname === pathname) ?? blobs[0]
     if (!match) return null
 
     const response = await fetch(match.url, { cache: 'no-store' })
     if (!response.ok) return null
+    resolvedBlobAccess = 'public'
     return (await response.json()) as T
   } catch (error) {
     console.warn('[serverless-store] blob read failed:', error)
@@ -188,18 +230,31 @@ async function readBlobJson<T>(pathname: string): Promise<T | null> {
 async function writeBlobJson(pathname: string, data: unknown): Promise<string | null> {
   if (!hasBlob()) return null
 
-  try {
-    const blob = await put(pathname, JSON.stringify(data), {
-      access: 'private',
-      contentType: 'application/json',
-      addRandomSuffix: false,
-      allowOverwrite: true,
-    })
-    return blob.url
-  } catch (error) {
-    console.warn('[serverless-store] blob write failed:', error)
-    return null
+  const body = JSON.stringify(data)
+  let lastError: unknown = null
+
+  for (const access of preferredBlobAccessOrder()) {
+    try {
+      const blob = await put(pathname, body, {
+        access,
+        contentType: 'application/json',
+        addRandomSuffix: false,
+        allowOverwrite: true,
+      })
+      resolvedBlobAccess = access
+      return blob.url
+    } catch (error) {
+      lastError = error
+      if (isWrongAccessError(error)) {
+        continue
+      }
+      console.warn('[serverless-store] blob write failed:', error)
+      return null
+    }
   }
+
+  console.warn('[serverless-store] blob write failed:', lastError)
+  return null
 }
 
 async function loadDirectoryFromBlob(): Promise<SiteIndexEntry[]> {

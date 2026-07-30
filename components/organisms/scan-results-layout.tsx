@@ -182,37 +182,47 @@ export function ScanResultsLayout({
 
   if (error) {
     return (
-      <div className="mx-auto flex max-w-3xl flex-col items-start gap-4 px-6 py-16">
-        <p className="text-sm uppercase tracking-[0.2em] text-destructive/80">Scan failed</p>
-        <h2 className="font-serif text-3xl text-foreground">{error}</h2>
-        <Button onClick={onNewScan}>Try another URL</Button>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto flex max-w-3xl flex-col items-start gap-4 px-4 py-12 sm:px-6">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-destructive">
+            Scan failed
+          </p>
+          <h2 className="font-serif text-3xl tracking-tight text-foreground">{error}</h2>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={onNewScan}>Try again</Button>
+            <Button variant="outline" onClick={() => (window.location.href = "/")}>
+              Back to Chat
+            </Button>
+          </div>
+        </div>
       </div>
     )
   }
 
   if (isLoading || !result) {
+    const pct = Math.min(
+      95,
+      ((progress?.step || 1) / (progress?.totalSteps || 5)) * 100
+    )
     return (
-      <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-16">
-        <div className="flex items-center gap-3 text-teal-800">
-          <Clock className="h-5 w-5 animate-spin" />
-          <p className="text-sm font-medium tracking-wide">
-            {progress?.message || "Scanning public CSS…"}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-12 sm:px-6">
+          <div className="flex items-center gap-3 text-foreground">
+            <Clock className="size-4 animate-spin text-muted-foreground" />
+            <p className="text-sm font-medium tracking-tight">
+              {progress?.message || "Scanning public CSS…"}
+            </p>
+          </div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full origin-left rounded-full bg-foreground transition-all duration-700"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Extracting tokens, layout DNA, and an installable Design Contract pack.
           </p>
         </div>
-        <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
-          <div
-            className="h-full origin-left rounded-full bg-teal-700 transition-all duration-700"
-            style={{
-              width: `${Math.min(
-                95,
-                ((progress?.step || 1) / (progress?.totalSteps || 5)) * 100
-              )}%`,
-            }}
-          />
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Extracting tokens, layout DNA, DESIGN.md, and an agent skill — usually a few seconds.
-        </p>
       </div>
     )
   }
@@ -221,34 +231,25 @@ export function ScanResultsLayout({
   const families = result.curatedTokens?.typography?.families || []
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-      <header className="mb-8 flex flex-col gap-6 border-b border-border/60 pb-8 lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-3">
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
+      <header className="mb-8 flex flex-col gap-6 border-b border-border pb-8 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary" className="rounded-md">
-              {result.domain}
-            </Badge>
-            {result.cacheHit && (
-              <Badge variant="outline" className="rounded-md">
-                cached
-              </Badge>
-            )}
-            <Badge variant="outline" className="rounded-md">
-              {result.metadata?.engine || "w3c+design-md"}
+            <Badge variant="secondary">{result.domain}</Badge>
+            {result.cacheHit ? <Badge variant="outline">cached</Badge> : null}
+            <Badge variant="outline">
+              {result.metadata?.mode || result.metadata?.engine || "scan"}
             </Badge>
           </div>
-          <h2 className="font-serif text-3xl tracking-tight text-foreground sm:text-4xl">
-            Design Contract ready
-          </h2>
-          <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
+          <h1 className="font-serif text-3xl tracking-tight text-foreground sm:text-4xl">
+            {result.domain}
+          </h1>
+          <p className="max-w-2xl text-sm text-muted-foreground">
             {result.summary?.tokensExtracted || tokenCount} tokens ·{" "}
-            {Math.round(result.summary?.confidence || 0)}% confidence ·{" "}
-            {Math.round((result.summary?.processingTime || 0) / 100) / 10}s
+            {Math.round(result.summary?.confidence || 0)}% confidence
             {result.designContract
               ? ` · ${result.designContract.summary?.fileCount ?? 0} pack files`
-              : ""}
-            {result.semanticGraph
-              ? ` · ${result.semanticGraph.summary.nodeCount} graph nodes / ${result.semanticGraph.summary.edgeCount} edges`
               : ""}
             {result.brandAnalysis?.personality
               ? ` · ${result.brandAnalysis.personality}`
@@ -257,52 +258,53 @@ export function ScanResultsLayout({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {result.domain && (
+          {result.domain ? (
             <Button
-              variant="default"
               size="sm"
-              className="gap-2 bg-teal-800 hover:bg-teal-900"
               onClick={() => {
                 window.location.href = `/api/contracts/download?domain=${encodeURIComponent(result.domain!)}`
               }}
             >
-              <Download className="h-4 w-4" />
-              Download Design Contract
+              <Download data-icon="inline-start" />
+              Download pack
             </Button>
-          )}
-          {result.designMd && (
+          ) : null}
+          {result.designMd ? (
             <Button
               variant="outline"
               size="sm"
-              className="gap-2"
               onClick={() =>
                 downloadText(result.designMd!.fileName, result.designMd!.markdown)
               }
             >
-              <FileText className="h-4 w-4" />
-              DESIGN.md only
+              <FileText data-icon="inline-start" />
+              DESIGN.md
             </Button>
-          )}
-          {result.designSkill && (
+          ) : null}
+          {result.designSkill ? (
             <Button
               variant="outline"
               size="sm"
-              className="gap-2"
               onClick={() =>
                 downloadText("SKILL.md", result.designSkill!.markdown)
               }
             >
-              <Sparkles className="h-4 w-4" />
+              <Sparkles data-icon="inline-start" />
               Skill
             </Button>
-          )}
-          <Button variant="ghost" size="sm" className="gap-2" onClick={() => onExport("json")}>
+          ) : null}
+          <Button variant="ghost" size="sm" onClick={() => onExport("json")}>
             Tokens JSON
           </Button>
-          <Button variant="ghost" size="sm" className="gap-2" onClick={onShare}>
-            <Share2 className="h-4 w-4" />
+          <Button variant="ghost" size="sm" onClick={onShare}>
+            <Share2 data-icon="inline-start" />
             Share
           </Button>
+          {onNewScan ? (
+            <Button variant="ghost" size="sm" onClick={onNewScan}>
+              New scan
+            </Button>
+          ) : null}
         </div>
       </header>
 
@@ -338,7 +340,7 @@ export function ScanResultsLayout({
               <section className="rounded-2xl border border-[color:var(--soft-border)] bg-card/70 p-5 shadow-[var(--soft-shadow)]">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.22em] text-teal-800/80 dark:text-teal-300/80">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                       Semantic design graph
                     </p>
                     <h3 className="mt-1 font-serif text-2xl tracking-tight">
@@ -397,7 +399,7 @@ export function ScanResultsLayout({
                       type="button"
                       title={color}
                       onClick={() => void copyText(color, color)}
-                      className="group relative h-16 w-16 overflow-hidden rounded-md border border-black/10 transition-transform hover:-translate-y-0.5"
+                      className="group relative size-14 overflow-hidden rounded-lg border border-border transition-transform hover:-translate-y-0.5"
                       style={{ background: color }}
                     >
                       <span className="absolute inset-x-0 bottom-0 bg-black/50 px-1 py-0.5 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
@@ -572,15 +574,16 @@ export function ScanResultsLayout({
         )}
 
         {activeTab === "layout" && (
-          <div className="animate-fade-in space-y-4">
+          <div className="animate-fade-in flex flex-col gap-4">
             <p className="text-sm text-muted-foreground">
               Layout DNA inferred from collected CSS (containers, breakpoints, grid/flex mix, archetypes).
             </p>
-            <pre className="overflow-auto rounded-md border border-border/70 bg-slate-950 p-4 text-xs leading-relaxed text-slate-100">
+            <pre className="overflow-auto rounded-xl border border-border bg-muted/40 p-4 font-mono text-xs leading-relaxed text-foreground">
               {JSON.stringify(result.layoutDNA ?? {}, null, 2)}
             </pre>
           </div>
         )}
+      </div>
       </div>
     </div>
   )
@@ -618,9 +621,9 @@ function ArtifactCard({
     <div className="border-t border-border/70 pt-4">
       <div className="mb-2 flex items-center gap-2">
         {ready ? (
-          <CheckCircle2 className="h-4 w-4 text-teal-700" />
+          <CheckCircle2 className="size-4 text-foreground" />
         ) : (
-          <Clock className="h-4 w-4 text-muted-foreground" />
+          <Clock className="size-4 text-muted-foreground" />
         )}
         <h3 className="font-medium text-foreground">{title}</h3>
       </div>
@@ -629,8 +632,8 @@ function ArtifactCard({
         <Button size="sm" variant="outline" onClick={onOpen} disabled={!ready}>
           {openLabel}
         </Button>
-        <Button size="sm" variant="ghost" className="gap-1" onClick={onCopy} disabled={!ready}>
-          <Copy className="h-3.5 w-3.5" />
+        <Button size="sm" variant="ghost" onClick={onCopy} disabled={!ready}>
+          <Copy data-icon="inline-start" />
           {copied ? "Copied" : copyLabel}
         </Button>
       </div>
@@ -661,22 +664,17 @@ function MarkdownPanel({
           <p className="text-sm text-muted-foreground">{subtitle}</p>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" className="gap-1" onClick={onCopy}>
-            <Copy className="h-3.5 w-3.5" />
+          <Button size="sm" variant="outline" onClick={onCopy}>
+            <Copy data-icon="inline-start" />
             {copied ? "Copied" : "Copy"}
           </Button>
-          <Button size="sm" className="gap-1 bg-teal-800 hover:bg-teal-900" onClick={onDownload}>
-            <Download className="h-3.5 w-3.5" />
+          <Button size="sm" onClick={onDownload}>
+            <Download data-icon="inline-start" />
             Download
           </Button>
         </div>
       </div>
-      <pre
-        className={cn(
-          "max-h-[70vh] overflow-auto rounded-md border border-border/70",
-          "bg-[#0B1220] p-5 text-[12px] leading-relaxed text-slate-100"
-        )}
-      >
+      <pre className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-muted/40 p-5 font-mono text-xs leading-relaxed text-foreground">
         {markdown}
       </pre>
     </div>

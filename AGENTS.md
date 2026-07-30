@@ -42,6 +42,8 @@ When adding pages:
 - `bun lint` runs the Next.js ESLint config; fix issues locally with `bun lint --fix` when supported.
 - No database migrate step for the default path — set `BLOB_READ_WRITE_TOKEN` + Upstash Redis env vars for durable storage.
 - Accurate scans need `SCANNER_SERVICE_URL` (e.g. `https://designcontracts-scanner.vercel.app`) + matching `SCANNER_SERVICE_SECRET`.
+- Blob persistence: `BLOB_READ_WRITE_TOKEN` required. Store may be public or private — `lib/storage/serverless-store.ts` tries both (override with `BLOB_ACCESS`).
+- `/site/[domain]` must hydrate from cache/handoff and **must not auto-rescan** on Open.
 - `bun run test` executes Playwright end-to-end suites; scope runs with `--project` or `--grep` when iterating.
 - `bun run test:unit` runs Vitest unit specs.
 

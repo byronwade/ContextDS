@@ -76,7 +76,7 @@ function SidebarBody({
         <span className="font-serif text-[15px] tracking-tight text-sidebar-foreground">
           designcontracts
         </span>
-        <span className="font-mono text-[10px] text-[oklch(0.78_0.08_185)]">.sh</span>
+        <span className="font-mono text-[10px] text-muted-foreground">.sh</span>
       </Link>
 
       <Link
@@ -312,7 +312,7 @@ export function AppShell({
           </Button>
           <Link href="/" className="flex items-baseline gap-0.5">
             <span className="font-serif text-base tracking-tight">designcontracts</span>
-            <span className="font-mono text-[10px] text-[oklch(0.78_0.08_185)]">.sh</span>
+            <span className="font-mono text-[10px] text-muted-foreground">.sh</span>
           </Link>
         </header>
 

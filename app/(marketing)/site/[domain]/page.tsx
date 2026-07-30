@@ -1,11 +1,20 @@
 'use client'
 
 import { useParams } from 'next/navigation'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AppShell } from '@/components/organisms/app-shell'
 import { ScanResultsLayout } from '@/components/organisms/scan-results-layout'
+import { PageCanvas } from '@/components/molecules/page-canvas'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { storedScanToClientResult } from '@/lib/scanner/scan-client-result'
+import {
+  handoffToScanResult,
+  normalizeDomain,
+  readSiteHandoff,
+} from '@/lib/site-handoff'
 import { useScanStore } from '@/stores/scan-store'
+import Link from 'next/link'
 
 type SiteApiResponse = {
   hasData?: boolean
@@ -14,10 +23,15 @@ type SiteApiResponse = {
   scan?: Parameters<typeof storedScanToClientResult>[0] | null
 }
 
+type LoadPhase = 'hydrating' | 'ready' | 'missing' | 'scanning' | 'error'
+
 export default function SitePage() {
   const params = useParams()
-  const domain = params.domain as string
+  const rawDomain = params.domain as string
+  const domain = normalizeDomain(rawDomain || '')
   const loadedFor = useRef<string | null>(null)
+  const [phase, setPhase] = useState<LoadPhase>('hydrating')
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   const {
     isScanning: scanLoading,
@@ -33,19 +47,42 @@ export default function SitePage() {
   useEffect(() => {
     if (!domain || loadedFor.current === domain) return
     loadedFor.current = domain
-    void loadSite(domain)
+    void hydrateSite(domain)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- load once per domain
   }, [domain])
 
-  const loadSite = async (target: string) => {
-    resetScan()
+  useEffect(() => {
+    if (scanLoading) {
+      setPhase('scanning')
+      return
+    }
+    if (scanResult?.domain === domain) {
+      setPhase('ready')
+    }
+  }, [scanLoading, scanResult, domain])
+
+  const hydrateSite = async (target: string) => {
+    setPhase('hydrating')
+    setLoadError(null)
+
+    // 1) Instant handoff from Chat Open (same tab) — never blocks on storage.
+    const handoff = readSiteHandoff(target)
+    if (handoff) {
+      const fromHandoff = handoffToScanResult(handoff)
+      if (fromHandoff) {
+        setResult(fromHandoff)
+        setPhase('ready')
+      }
+    }
+
+    // 2) Durable cache (Blob / Redis) — upgrade handoff with full pack when available.
     try {
       const response = await fetch(`/api/sites/${encodeURIComponent(target)}`)
       if (response.ok) {
         const existing = (await response.json()) as SiteApiResponse
         if (existing.hasData && existing.scan) {
-          // Already scanned (e.g. from chat widget) — show results, do not rescan.
           setResult(storedScanToClientResult(existing.scan))
+          setPhase('ready')
           return
         }
       }
@@ -53,8 +90,11 @@ export default function SitePage() {
       console.error('Error loading cached site data:', error)
     }
 
-    // No cached contract — run a quality scan via the browser scanner when configured.
-    await startScan(target, 'accurate')
+    // 3) No cache — show empty state. Do NOT auto-rescan (avoids infinite loading
+    // when scanner/env is misconfigured on preview deploys).
+    if (!handoff) {
+      setPhase('missing')
+    }
   }
 
   const handleCopyToken = (value: string) => {
@@ -94,9 +134,7 @@ export default function SitePage() {
     URL.revokeObjectURL(url)
   }
 
-  const generateCSS = (tokens: {
-    colors?: Array<{ value: string }>
-  }) => {
+  const generateCSS = (tokens: { colors?: Array<{ value: string }> }) => {
     let css = ':root {\n'
     if (tokens.colors) {
       css += '  /* Colors */\n'
@@ -113,24 +151,67 @@ export default function SitePage() {
     void navigator.clipboard.writeText(shareUrl)
   }
 
+  const runFreshScan = () => {
+    setLoadError(null)
+    resetScan()
+    setPhase('scanning')
+    void startScan(domain, 'accurate').catch((error: unknown) => {
+      setLoadError(error instanceof Error ? error.message : 'Scan failed')
+      setPhase('error')
+    })
+  }
+
   return (
     <AppShell currentPage="site" recentDomain={domain}>
-      <ScanResultsLayout
-        result={scanResult}
-        isLoading={scanLoading}
-        scanId={scanId}
-        progress={scanProgress}
-        error={scanError}
-        onCopy={handleCopyToken}
-        onExport={handleExport}
-        onShare={handleShareUrl}
-        onNewScan={() => {
-          resetScan()
-          if (domain) {
-            void startScan(domain, 'accurate')
-          }
-        }}
-      />
+      {phase === 'hydrating' && !scanResult ? (
+        <PageCanvas>
+          <div className="flex flex-col gap-6">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-4 w-full max-w-md" />
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <Skeleton className="h-24 rounded-xl" />
+              <Skeleton className="h-24 rounded-xl" />
+              <Skeleton className="h-24 rounded-xl" />
+            </div>
+          </div>
+        </PageCanvas>
+      ) : null}
+
+      {phase === 'missing' && !scanResult ? (
+        <PageCanvas>
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            Contract
+          </p>
+          <h1 className="mt-2 font-serif text-3xl tracking-tight text-foreground sm:text-4xl">
+            {domain}
+          </h1>
+          <p className="mt-2 max-w-lg text-[15px] text-muted-foreground">
+            No saved Design Contract for this domain yet. Scan from Chat, or run one here.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Button onClick={runFreshScan}>Scan now</Button>
+            <Button variant="outline" asChild>
+              <Link href={`/?url=${encodeURIComponent(domain)}`}>Open in Chat</Link>
+            </Button>
+          </div>
+        </PageCanvas>
+      ) : null}
+
+      {(phase === 'ready' || phase === 'scanning' || phase === 'error' || scanResult) &&
+      (scanResult || scanLoading || scanError || loadError) ? (
+        <ScanResultsLayout
+          result={scanResult}
+          isLoading={scanLoading || phase === 'scanning'}
+          scanId={scanId}
+          progress={scanProgress}
+          error={scanError || loadError}
+          onCopy={handleCopyToken}
+          onExport={handleExport}
+          onShare={handleShareUrl}
+          onNewScan={runFreshScan}
+        />
+      ) : null}
     </AppShell>
   )
 }

@@ -48,9 +48,10 @@ Inspired by modern AI workspaces (sidebar + canvas, ⌘K density, soft panels) a
 
 ### Theme
 
-- **Default:** dark-first (`:root` = dark). Light mode is supported via `.light`.
-- **Accent:** cool mint (`oklch` hue ~185) — used sparingly for `.sh`, focus rings, active pills. **No purple glow.**
-- **Surfaces:** near-black canvas → slightly lifted sidebar → card panels. Depth from tone shifts + 1px borders, not multi-layer shadows.
+- **Default:** dark-first (`html.dark`). Light mode via `.light`.
+- **Palette:** shadcn/ui **neutral** tokens from [ui.shadcn.com theming](https://ui.shadcn.com/docs/theming) — achromatic surfaces, semantic `background` / `foreground` / `muted` / `border`.
+- **Brand accent:** mint only on the `.sh` wordmark (and rare scan cues). **No purple glow, no teal button themes.**
+- **Surfaces:** near-black canvas → slightly lifted sidebar/card. Depth from tone shifts + 1px borders, not multi-layer shadows.
 
 ### Tokens (CSS)
 
@@ -166,10 +167,16 @@ Not a full marketing card. Open → `/site/[domain]` **without rescanning**.
 
 1. User chats a URL → agent `get_tokens` then `scan_site` (accurate when scanner configured)
 2. Widget appears inline with mode/engine badge when available
-3. **Open** loads saved Blob/Redis scan — no second scan
-4. Explicit “New scan” only forces a fresh accurate run
+3. **Open** stashes a client handoff + hydrates `/api/sites/[domain]` — **never auto-rescans**
+4. Cache miss shows an empty state with explicit **Scan now** / **Open in Chat**
+5. Explicit “New scan” only forces a fresh accurate run
 
-Scanner wiring (ops): `SCANNER_SERVICE_URL` + `SCANNER_SERVICE_SECRET` on the Next.js project.
+### Persistence (ops)
+
+- Scans persist via Vercel Blob (`BLOB_READ_WRITE_TOKEN`). Code auto-falls back between `private` and `public` store access (Hobby stores are often public).
+- Upstash Redis optional for directory index speed; Blob alone is enough for `/site/[domain]` hydrate.
+- Optional: `BLOB_ACCESS=public|private` to skip probing.
+- Scanner wiring: `SCANNER_SERVICE_URL` + `SCANNER_SERVICE_SECRET` on the Next.js project.
 
 ---
 

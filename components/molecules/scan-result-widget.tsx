@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { ArrowUpRight, Loader2 } from 'lucide-react'
+import { stashSiteHandoff } from '@/lib/site-handoff'
 import { cn } from '@/lib/utils'
 
 export type ScanWidgetPayload = {
@@ -147,6 +148,7 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
             </div>
             <Link
               href={`/site/${domain}` as `/site/${string}`}
+              onClick={() => stashSiteHandoff(domain, data)}
               className="inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition hover:bg-secondary hover:text-foreground"
             >
               Open
