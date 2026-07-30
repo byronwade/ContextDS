@@ -45,12 +45,20 @@ interface ScanProgress {
   timestamp: number
 }
 
+interface ScanMetrics {
+  cssRules: number
+  variables: number
+  colors: number
+  tokens: number
+  qualityScore: number
+}
+
 interface ScanResultsLayoutProps {
-  result: ScanResult
+  result: ScanResult | null
   isLoading: boolean
   scanId?: string | null
   progress?: ScanProgress | null
-  metrics?: any | null
+  metrics?: ScanMetrics | null
   error?: string | null
   onCopy: (value: string) => void
   onExport: (format: string) => void

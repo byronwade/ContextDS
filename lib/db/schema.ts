@@ -11,6 +11,7 @@ import {
   pgEnum,
   unique
 } from 'drizzle-orm/pg-core'
+import { relations } from 'drizzle-orm'
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 
 // Enums
@@ -117,10 +118,10 @@ export const screenshots = pgTable('screenshots', {
   capturedAt: timestamp('captured_at').notNull().defaultNow(),
   selector: text('selector'), // Optional: specific component selector
   label: varchar('label', { length: 100 }), // e.g., "Hero Section", "Navigation"
-}, (table) => ({
+}, (table) => [
   // Unique constraint: one screenshot per site per viewport
-  uniqueSiteViewport: unique('screenshots_site_viewport_unique').on(table.siteId, table.viewport)
-}))
+  unique('screenshots_site_viewport_unique').on(table.siteId, table.viewport),
+])
 
 // Token Sets table - W3C design tokens with metadata
 export const tokenSets = pgTable('token_sets', {
@@ -386,3 +387,74 @@ export type NewPopularSitesCache = typeof popularSitesCache.$inferInsert
 
 export type RecentActivityCache = typeof recentActivityCache.$inferSelect
 export type NewRecentActivityCache = typeof recentActivityCache.$inferInsert
+
+// Relational query API (db.query.*) — required by Drizzle for `with:` joins
+export const sitesRelations = relations(sites, ({ many }) => ({
+  scans: many(scans),
+  tokenSets: many(tokenSets),
+  layoutProfiles: many(layoutProfiles),
+  orgArtifacts: many(orgArtifacts),
+  screenshots: many(screenshots),
+}))
+
+export const scansRelations = relations(scans, ({ one, many }) => ({
+  site: one(sites, {
+    fields: [scans.siteId],
+    references: [sites.id],
+  }),
+  tokenSets: many(tokenSets),
+  layoutProfiles: many(layoutProfiles),
+  screenshots: many(screenshots),
+}))
+
+export const tokenSetsRelations = relations(tokenSets, ({ one, many }) => ({
+  site: one(sites, {
+    fields: [tokenSets.siteId],
+    references: [sites.id],
+  }),
+  scan: one(scans, {
+    fields: [tokenSets.scanId],
+    references: [scans.id],
+  }),
+  tokenVotes: many(tokenVotes),
+}))
+
+export const layoutProfilesRelations = relations(layoutProfiles, ({ one }) => ({
+  site: one(sites, {
+    fields: [layoutProfiles.siteId],
+    references: [sites.id],
+  }),
+  scan: one(scans, {
+    fields: [layoutProfiles.scanId],
+    references: [scans.id],
+  }),
+}))
+
+export const orgArtifactsRelations = relations(orgArtifacts, ({ one }) => ({
+  site: one(sites, {
+    fields: [orgArtifacts.siteId],
+    references: [sites.id],
+  }),
+}))
+
+export const tokenVotesRelations = relations(tokenVotes, ({ one }) => ({
+  tokenSet: one(tokenSets, {
+    fields: [tokenVotes.tokenSetId],
+    references: [tokenSets.id],
+  }),
+  user: one(users, {
+    fields: [tokenVotes.userId],
+    references: [users.id],
+  }),
+}))
+
+export const screenshotsRelations = relations(screenshots, ({ one }) => ({
+  site: one(sites, {
+    fields: [screenshots.siteId],
+    references: [sites.id],
+  }),
+  scan: one(scans, {
+    fields: [screenshots.scanId],
+    references: [scans.id],
+  }),
+}))

@@ -1,5 +1,14 @@
 import { z } from 'zod'
-import { db, sites, scans, tokenSets, layoutProfiles, queryWithMetrics } from '../db'
+import {
+  db,
+  sites,
+  scans,
+  tokenSets,
+  layoutProfiles,
+  orgArtifacts,
+  tokenVotes,
+  queryWithMetrics,
+} from '../db'
 import { eq, desc, and, or, sql } from 'drizzle-orm'
 import { intelligentCache } from '../cache/intelligent-cache'
 
@@ -279,7 +288,7 @@ export class MCPServer {
 
       // Store results
       if (site) {
-        await db.insert(db.orgArtifacts).values({
+        await db.insert(orgArtifacts).values({
           siteId: site.id,
           docsUrls: artifacts.docs,
           storybookUrl: artifacts.storybook,
@@ -353,12 +362,12 @@ The site uses a ${params.layout_profile?.containers?.maxWidth || 'unknown'} max-
   async voteToken(params: z.infer<typeof voteTokenSchema>, userId: string) {
     try {
       // Store vote
-      await db.insert(db.tokenVotes).values({
+      await db.insert(tokenVotes).values({
         tokenSetId: params.token_set_id,
         tokenKey: params.token_key,
         voteType: params.vote_type,
         note: params.note,
-        userId
+        userId,
       })
 
       // Calculate new confidence score (simplified)

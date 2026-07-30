@@ -330,7 +330,7 @@ function HomePageContent() {
         recentSites={popularSites.slice(0, 5).map(site => ({
           domain: site.domain || '',
           tokens: site.tokens,
-          lastScanned: site.lastScanned
+          lastScanned: site.lastScanned ?? undefined,
         }))}
       />
 

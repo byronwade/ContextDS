@@ -256,7 +256,7 @@ export class AIGatewayClient {
             content: request.prompt
           }
         ],
-        max_tokens: request.maxTokens || modelConfig.maxTokens,
+        max_completion_tokens: request.maxTokens || modelConfig.maxTokens,
         temperature: request.temperature || 0.3,
         response_format: request.schema ? { type: 'json_object' } : undefined
       })
@@ -429,7 +429,7 @@ Return only the corrected JSON, no explanation.`
           { role: 'system', content: 'You are a JSON repair specialist. Fix invalid JSON to match schemas.' },
           { role: 'user', content: repairPrompt }
         ],
-        max_tokens: 4096,
+        max_completion_tokens: 4096,
         temperature: 0.1
       })
 

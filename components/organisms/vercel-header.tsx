@@ -12,7 +12,7 @@ import { useStatsStore } from "@/stores/stats-store"
 import { cn } from "@/lib/utils"
 
 interface VercelHeaderProps {
-  currentPage?: "home" | "features" | "pricing" | "docs" | "about" | "community" | "metrics" | "scan" | "site" | "contact"
+  currentPage?: "home" | "features" | "pricing" | "docs" | "about" | "community" | "metrics" | "scan" | "site" | "contact" | "privacy" | "terms"
   showSearch?: boolean
   searchValue?: string
   onSearchChange?: (value: string) => void

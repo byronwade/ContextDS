@@ -39,8 +39,12 @@ export default function CommunityClient() {
   const [loading, setLoading] = useState(true)
   const [votingId, setVotingId] = useState<string | null>(null)
 
-  const { hasVoted, addVote } = useVotingStore()
+  const { hasVoted, addVote, loadVotes } = useVotingStore()
   const { metrics: liveMetrics, isConnected, activities, addActivity } = useRealtimeStore()
+
+  useEffect(() => {
+    loadVotes()
+  }, [loadVotes])
 
   const loadSites = useCallback(async () => {
     try {
