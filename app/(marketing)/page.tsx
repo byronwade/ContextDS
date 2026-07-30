@@ -21,7 +21,7 @@ function HomePageContent() {
       .replace(/^https?:\/\//, "")
       .replace(/^www\./, "")
       .split("/")[0]
-    router.push(`/agent?url=${encodeURIComponent(domain)}`)
+    router.push(`/scan?url=${encodeURIComponent(domain)}`)
   }
 
   return (
@@ -65,8 +65,8 @@ function HomePageContent() {
                 </span>
               </h1>
               <p className="mt-6 max-w-lg animate-fade-in text-base leading-relaxed text-muted-foreground sm:text-lg">
-                Ask the agent. It runs the scanner as a tool and hands you an installable Design
-                Contract — resolve, check, verify.
+                Scan any public site into an installable Design Contract — resolve, check, and
+                verify with the Design CLI.
               </p>
 
               <form
@@ -90,7 +90,7 @@ function HomePageContent() {
                     disabled={!url.trim()}
                     className="h-11 gap-2 rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground hover:opacity-90"
                   >
-                    Ask agent
+                    Scan site
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </div>
@@ -139,8 +139,8 @@ $ npx github:byronwade/Design install stripe-com
             <div className="mx-auto grid w-full max-w-5xl gap-12 sm:grid-cols-3 sm:gap-8">
               {[
                 {
-                  title: "Agent-first",
-                  body: "Chat is the product. The scanner is a tool the agent calls when it needs fresh data.",
+                  title: "Scan-first",
+                  body: "Chat is the surface. Under the hood, Scan calls the pipeline when it needs fresh data.",
                 },
                 {
                   title: "Inline contracts",

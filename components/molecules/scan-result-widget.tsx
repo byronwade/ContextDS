@@ -108,7 +108,6 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
     (data.tokens?.colors?.length || 0) + (data.tokens?.typography?.families?.length || 0)
   const confidence = data.summary?.confidence
   const downloadHref = data.designContract?.download || `/api/contracts/download?domain=${domain}`
-  const siteHref = `/site/${encodeURIComponent(domain)}`
 
   return (
     <div
@@ -178,7 +177,7 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
 
         <div className="flex flex-wrap gap-2 pt-1">
           <Button asChild size="sm" className="h-9 rounded-md gap-1.5">
-            <Link href={siteHref}>
+            <Link href={`/site/${domain}` as `/site/${string}`}>
               View full results
               <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>

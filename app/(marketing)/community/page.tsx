@@ -1,12 +1,13 @@
-import { Metadata } from "next"
-import CommunityClient from "./client"
+import type { Metadata } from 'next'
+import CommunityClient from './client'
 
 export const metadata: Metadata = {
-  title: "Community - ContextDS Design Token Database",
-  description: "Explore and discover design tokens from top websites. Community-driven database of design systems, colors, typography, and spacing tokens.",
+  title: 'Library — Design Contracts',
+  description:
+    'Browse scanned Design Contracts from public sites — tokens, layout DNA, and installable packs.',
   openGraph: {
-    title: "Community - ContextDS Design Token Database",
-    description: "Explore and discover design tokens from top websites",
+    title: 'Library — Design Contracts',
+    description: 'Browse scanned Design Contracts from public sites.',
   },
 }
 

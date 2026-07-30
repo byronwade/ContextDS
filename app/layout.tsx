@@ -5,6 +5,7 @@ import { ErrorBoundary } from "@/components/atoms/error-boundary";
 import { WebVitalsReporter } from "@/components/atoms/web-vitals-reporter";
 import { ComprehensiveSEOTracking } from "@/components/atoms/seo-analytics";
 import { AnalyticsProvider } from "@/components/providers/analytics-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { generateHomepageMetadata } from "@/lib/seo/meta-tags";
 import { generateOrganizationSchema, generateWebsiteSchema, generateSoftwareApplicationSchema } from "@/lib/seo/structured-data";
 import { RESOURCE_HINTS } from "@/lib/seo/performance";
@@ -182,9 +183,11 @@ export default function RootLayout({
         <WebVitalsReporter />
         <ComprehensiveSEOTracking />
         <AnalyticsProvider>
-          <ErrorBoundary>
-            {children}
-          </ErrorBoundary>
+          <TooltipProvider>
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
+          </TooltipProvider>
         </AnalyticsProvider>
       </body>
     </html>

@@ -12,16 +12,16 @@ test.describe('Scanner Basic Functionality', () => {
 		await expect(page).toHaveTitle(/Design Contracts/i);
 	});
 
-	test('should route homepage URL into the agent', async ({ page }) => {
+	test('should route homepage URL into scan', async ({ page }) => {
 		await page.goto('/');
 
 		const urlInput = page.getByPlaceholder('stripe.com');
 		await expect(urlInput).toBeVisible();
 		await urlInput.fill('example.com');
 
-		await page.getByRole('button', { name: /ask agent/i }).click();
-		await expect(page).toHaveURL(/\/agent\?url=example\.com/);
-		await expect(page.getByText(/scanner as a tool/i)).toBeVisible();
+		await page.getByRole('button', { name: /scan site/i }).click();
+		await expect(page).toHaveURL(/\/scan\?url=example\.com/);
+		await expect(page.getByText(/Scan · Design Contracts/i)).toBeVisible();
 	});
 
 	test('should show error for invalid URL', async ({ page }) => {

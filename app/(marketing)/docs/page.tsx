@@ -49,14 +49,14 @@ export default function DocsPage() {
           <ol className="list-decimal space-y-3 pl-5 text-muted-foreground">
             <li>
               Open{' '}
-              <Link href="/agent" className="text-foreground underline-offset-4 hover:underline">
-                /agent
+              <Link href="/scan" className="text-foreground underline-offset-4 hover:underline">
+                /scan
               </Link>{' '}
               and paste a public URL (or use the home search).
             </li>
             <li>
-              The agent runs the scanner as a tool and shows an inline Design Contract widget —
-              open View full results for every tab.
+              Scan gathers tokens via tools and shows an inline Design Contract widget — open View
+              full results for every tab.
             </li>
             <li>Download the pack and install it with the Design CLI.</li>
           </ol>
@@ -87,13 +87,14 @@ npx --yes github:byronwade/Design resolve --request "rebuild the hero"`}
         </section>
 
         <section className="mt-14 space-y-4">
-          <h2 className="text-xl font-semibold text-foreground">Design Contract agent</h2>
+          <h2 className="text-xl font-semibold text-foreground">Scan</h2>
           <p className="text-muted-foreground">
-            Chat with the ToolLoopAgent at{' '}
-            <Link href="/agent" className="text-foreground underline-offset-4 hover:underline">
-              /agent
+            Open{' '}
+            <Link href="/scan" className="text-foreground underline-offset-4 hover:underline">
+              /scan
             </Link>
-            . It uses the Vercel AI SDK + AI Gateway and tools that call this same scan pipeline (
+            . It uses the Vercel AI SDK + AI Gateway (ToolLoopAgent) and tools that call this same
+            pipeline (
             <code className="text-foreground">scan_site</code>,{' '}
             <code className="text-foreground">get_tokens</code>,{' '}
             <code className="text-foreground">resolve_graph</code>,{' '}

@@ -38,9 +38,9 @@ interface VercelHeaderProps {
 }
 
 const NAV = [
-  { href: "/agent", label: "Agent" },
-  { href: "/docs", label: "Docs" },
+  { href: "/scan", label: "Scan" },
   { href: "/community", label: "Library" },
+  { href: "/docs", label: "Docs" },
   { href: "/about", label: "About" },
 ]
 
@@ -76,7 +76,7 @@ export function VercelHeader({
       .split("/")[0]
     if (!domain) return
     if (onScan) onScan(domain)
-    else router.push(`/agent?url=${encodeURIComponent(domain)}`)
+    else router.push(`/scan?url=${encodeURIComponent(domain)}`)
     setMobileMenuOpen(false)
   }
 
@@ -134,8 +134,7 @@ export function VercelHeader({
             {NAV.map((item) => {
               const active =
                 currentPage === item.label.toLowerCase() ||
-                (item.href === "/scan" && currentPage === "scan") ||
-                (item.href === "/agent" && currentPage === "agent") ||
+                (item.href === "/scan" && (currentPage === "scan" || currentPage === "agent")) ||
                 (item.href === "/community" && currentPage === "community")
               return (
                 <Link

@@ -31,8 +31,8 @@ const features = [
     body: 'Vercel Blob + Upstash Redis (with memory fallback). No paid Postgres required for the scan path.',
   },
   {
-    title: 'Design Contract agent',
-    body: 'A ToolLoopAgent on Vercel AI Gateway that scans sites, reads the semantic graph, and hands you an installable contract pack via chat.',
+    title: 'Scan chat',
+    body: 'AI SDK messaging UI on Vercel AI Gateway. Scan sites, read the semantic graph, and hand you an installable contract pack inline.',
   },
   {
     title: 'MCP-ready',
@@ -68,10 +68,10 @@ export default function FeaturesPage() {
 
         <div className="mt-16 flex flex-wrap gap-3">
           <Link
-            href="/agent"
+            href="/scan"
             className="inline-flex h-11 items-center rounded-md bg-foreground px-5 text-sm font-medium text-background"
           >
-            Open the agent
+            Open Scan
           </Link>
           <Link
             href="/docs"

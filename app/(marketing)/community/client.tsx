@@ -1,19 +1,14 @@
-"use client"
+'use client'
 
-import { useState, useEffect, useCallback } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { ArrowUp, Search, TrendingUp, Clock, Sparkles, ExternalLink, Palette, Star, Globe } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { useVotingStore } from "@/stores/voting-store"
-import { useRealtimeStore } from "@/stores/realtime-store"
-import { LiveActivityFeed } from "@/components/molecules/live-activity-feed"
-import { LiveMetricsDashboard } from "@/components/molecules/live-metrics-dashboard"
-import { MarketingHeader } from "@/components/organisms/marketing-header"
-import { MarketingFooter } from "@/components/organisms/marketing-footer"
+import { useEffect, useMemo, useState, useTransition } from 'react'
+import Link from 'next/link'
+import { ArrowUp, Clock, ExternalLink, Search, Sparkles } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { MarketingFooter } from '@/components/organisms/marketing-footer'
+import { VercelHeader } from '@/components/organisms/vercel-header'
+import { useVotingStore } from '@/stores/voting-store'
+import { cn } from '@/lib/utils'
 
 type Site = {
   id: string
@@ -25,394 +20,308 @@ type Site = {
   popularity: number
   votes: number
   lastScanned: string | null
-  consensusScore: number
   hasVoted: boolean
 }
 
-type SortOption = "votes" | "recent" | "tokens"
+type SortOption = 'votes' | 'recent' | 'tokens'
+
+function formatTimeAgo(dateString: string | null): string {
+  if (!dateString) return 'Never'
+  const date = new Date(dateString)
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000)
+  if (seconds < 60) return 'Just now'
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
+  if (seconds < 2592000) return `${Math.floor(seconds / 86400)}d ago`
+  return `${Math.floor(seconds / 2592000)}mo ago`
+}
 
 export default function CommunityClient() {
   const [sites, setSites] = useState<Site[]>([])
-  const [filteredSites, setFilteredSites] = useState<Site[]>([])
-  const [searchQuery, setSearchQuery] = useState("")
-  const [sortBy, setSortBy] = useState<SortOption>("votes")
-  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState<SortOption>('votes')
   const [votingId, setVotingId] = useState<string | null>(null)
-
+  const [isPending, startTransition] = useTransition()
+  const [loaded, setLoaded] = useState(false)
   const { hasVoted, addVote, loadVotes } = useVotingStore()
-  const { metrics: liveMetrics, isConnected, activities, addActivity } = useRealtimeStore()
 
   useEffect(() => {
     loadVotes()
   }, [loadVotes])
 
-  const loadSites = useCallback(async () => {
-    try {
-      setLoading(true)
-      const response = await fetch(`/api/community/sites?sort=${sortBy}`)
-
-      if (!response.ok) {
-        throw new Error("Failed to load sites")
+  useEffect(() => {
+    let cancelled = false
+    startTransition(async () => {
+      try {
+        const response = await fetch(`/api/community/sites?sort=${sortBy}`)
+        if (!response.ok) throw new Error('Failed to load sites')
+        const data = await response.json()
+        if (cancelled) return
+        const next = (data.sites || []).map((site: Site) => ({
+          ...site,
+          hasVoted: hasVoted(site.id),
+        }))
+        setSites(next)
+      } catch (error) {
+        console.error('Error loading sites:', error)
+        if (!cancelled) setSites([])
+      } finally {
+        if (!cancelled) setLoaded(true)
       }
-
-      const data = await response.json()
-
-      const sitesWithVoteStatus = (data.sites || []).map((site: Site) => ({
-        ...site,
-        hasVoted: hasVoted(site.id),
-      }))
-
-      setSites(sitesWithVoteStatus)
-      setFilteredSites(sitesWithVoteStatus)
-    } catch (error) {
-      console.error("Error loading sites:", error)
-      setSites([])
-      setFilteredSites([])
-    } finally {
-      setLoading(false)
+    })
+    return () => {
+      cancelled = true
     }
   }, [sortBy, hasVoted])
 
-  useEffect(() => {
-    loadSites()
-  }, [loadSites])
-
-  useEffect(() => {
-    if (searchQuery.trim()) {
-      const filtered = sites.filter(
-        (site) =>
-          site.domain.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          site.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          site.description?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-      setFilteredSites(filtered)
-    } else {
-      setFilteredSites(sites)
-    }
+  const filteredSites = useMemo(() => {
+    if (!searchQuery.trim()) return sites
+    const q = searchQuery.toLowerCase()
+    return sites.filter(
+      (site) =>
+        site.domain.toLowerCase().includes(q) ||
+        site.title?.toLowerCase().includes(q) ||
+        site.description?.toLowerCase().includes(q)
+    )
   }, [searchQuery, sites])
 
   const handleVote = async (siteId: string) => {
-    if (hasVoted(siteId)) {
-      return
-    }
-
+    if (hasVoted(siteId)) return
     setVotingId(siteId)
-
     try {
-      const response = await fetch("/api/community/vote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/community/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ siteId }),
       })
-
-      if (response.ok) {
-        addVote(siteId)
-
-        // Find the site being voted on
-        const votedSite = sites.find(site => site.id === siteId)
-
-        // Add real-time activity for the vote
-        if (votedSite) {
-          addActivity({
-            id: Math.random().toString(36).substring(7),
-            type: 'user_joined' as const,
-            message: `Someone voted for ${votedSite.domain}`,
-            domain: votedSite.domain,
-            timestamp: Date.now(),
-            data: { votes: votedSite.votes + 1 }
-          })
-        }
-
-        setSites((prev) =>
-          prev.map((site) =>
-            site.id === siteId
-              ? {
-                  ...site,
-                  votes: site.votes + 1,
-                  popularity: site.popularity + 1,
-                  hasVoted: true,
-                }
-              : site
-          )
+      if (!response.ok) return
+      addVote(siteId)
+      setSites((prev) =>
+        prev.map((site) =>
+          site.id === siteId
+            ? {
+                ...site,
+                votes: site.votes + 1,
+                popularity: site.popularity + 1,
+                hasVoted: true,
+              }
+            : site
         )
-        setFilteredSites((prev) =>
-          prev.map((site) =>
-            site.id === siteId
-              ? {
-                  ...site,
-                  votes: site.votes + 1,
-                  popularity: site.popularity + 1,
-                  hasVoted: true,
-                }
-              : site
-          )
-        )
-      }
+      )
     } catch (error) {
-      console.error("Error voting:", error)
+      console.error('Error voting:', error)
     } finally {
       setVotingId(null)
     }
   }
 
-  const formatTimeAgo = (dateString: string | null) => {
-    if (!dateString) return "Never"
-    const date = new Date(dateString)
-    const now = new Date()
-    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-
-    if (seconds < 60) return "Just now"
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
-    if (seconds < 2592000) return `${Math.floor(seconds / 86400)}d ago`
-    return `${Math.floor(seconds / 2592000)}mo ago`
-  }
+  const loading = !loaded || isPending
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <MarketingHeader currentPage="community" showSearch={true} />
+    <div className="relative flex min-h-screen flex-col bg-background text-foreground">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(900px 420px at 15% -10%, oklch(0.45 0.04 185 / 0.14), transparent 55%), radial-gradient(700px 400px at 100% 0%, oklch(1 0 0 / 0.03), transparent 45%)',
+        }}
+      />
 
-      <main className="flex-1 w-full" id="main-content" role="main" aria-label="Community design token database">
-        {/* Hero Section */}
-        <div className="border-b border-grep-2 bg-gradient-to-b from-grep-0 to-background">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-            <div className="text-center max-w-3xl mx-auto">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-                Design Token Community
+      <div className="relative z-10 flex min-h-screen flex-col">
+        <VercelHeader currentPage="community" showSearch />
+
+        <main id="main-content" className="flex-1" role="main" aria-label="Design Contracts library">
+          <section className="border-b border-[color:var(--soft-border)] px-4 pb-10 pt-12 sm:px-6 sm:pb-14 sm:pt-16">
+            <div className="mx-auto max-w-5xl">
+              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                Library
+              </p>
+              <h1 className="mt-3 font-serif text-4xl tracking-tight text-foreground sm:text-5xl">
+                Scanned systems
               </h1>
-              <p className="text-base sm:text-lg text-grep-9 mb-8">
-                Explore design tokens from top brands and design systems. Browse curated collections of colors, typography, spacing, and more.
+              <p className="mt-3 max-w-xl text-muted-foreground">
+                Browse Design Contracts pulled from public sites. Open one, or ask Scan to gather a
+                new system.
               </p>
 
-              {/* Live Community Stats */}
-              {liveMetrics && (
-                <div className="mb-8">
-                  <LiveMetricsDashboard layout="compact" className="justify-center text-sm" />
-                </div>
-              )}
-
-              {/* Search Bar */}
-              <div className="relative max-w-xl mx-auto mb-8">
-                <label htmlFor="community-search" className="sr-only">
-                  Search sites, brands, or design systems
-                </label>
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-grep-9" aria-hidden="true" />
+              <div className="relative mt-8 max-w-xl">
+                <Search
+                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden
+                />
                 <Input
                   id="community-search"
                   type="search"
-                  placeholder="Search sites, brands, or design systems..."
+                  placeholder="Search domains…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-11 sm:h-12 text-sm sm:text-base bg-background border-grep-4 focus-visible:border-grep-12"
-                  aria-label="Search community design tokens database"
+                  className="h-11 border-[color:var(--soft-border)] bg-background/70 pl-10"
+                  aria-label="Search scanned sites"
                 />
               </div>
-
-              {/* Live Activity Feed */}
-              {activities.length > 0 && (
-                <div className="max-w-2xl mx-auto">
-                  <LiveActivityFeed compact={true} limit={3} className="border-0 bg-transparent p-0" />
-                </div>
-              )}
             </div>
-          </div>
-        </div>
+          </section>
 
-        {/* Filters & Sort */}
-        <div className="border-b border-grep-2 bg-background sticky top-0 z-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 text-sm text-grep-9">
-                  <Palette className="h-4 w-4" aria-hidden="true" />
-                  <span className="hidden sm:inline">
-                    {filteredSites.length} {filteredSites.length === 1 ? "site" : "sites"}
-                  </span>
-                  <span className="sm:hidden">{filteredSites.length}</span>
-                </div>
-
-                {/* Live connection indicator */}
-                {isConnected && (
-                  <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true" />
-                    <span className="hidden md:inline">Live</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-grep-9 hidden sm:inline">Sort by:</span>
-                <div className="flex gap-1 bg-grep-0 rounded-lg p-1 border border-grep-2" role="tablist" aria-label="Sort options">
-                  <button
-                    onClick={() => setSortBy("votes")}
-                    className={cn(
-                      "px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all",
-                      sortBy === "votes"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-grep-9 hover:text-foreground"
-                    )}
-                    role="tab"
-                    aria-selected={sortBy === "votes"}
-                    aria-label="Sort by popularity"
-                  >
-                    <TrendingUp className="h-3.5 w-3.5 sm:hidden" aria-hidden="true" />
-                    <span className="hidden sm:inline">Popular</span>
-                  </button>
-                  <button
-                    onClick={() => setSortBy("recent")}
-                    className={cn(
-                      "px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all",
-                      sortBy === "recent"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-grep-9 hover:text-foreground"
-                    )}
-                    role="tab"
-                    aria-selected={sortBy === "recent"}
-                    aria-label="Sort by most recent"
-                  >
-                    <Clock className="h-3.5 w-3.5 sm:hidden" aria-hidden="true" />
-                    <span className="hidden sm:inline">Recent</span>
-                  </button>
-                  <button
-                    onClick={() => setSortBy("tokens")}
-                    className={cn(
-                      "px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all",
-                      sortBy === "tokens"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-grep-9 hover:text-foreground"
-                    )}
-                    role="tab"
-                    aria-selected={sortBy === "tokens"}
-                    aria-label="Sort by token count"
-                  >
-                    <Sparkles className="h-3.5 w-3.5 sm:hidden" aria-hidden="true" />
-                    <span className="hidden sm:inline">Tokens</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Sites Grid */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" role="status" aria-label="Loading sites">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i} className="p-6 border-grep-2">
-                  <div className="space-y-4 animate-pulse">
-                    <div className="h-4 w-3/4 bg-grep-2 rounded" />
-                    <div className="h-3 w-full bg-grep-2 rounded" />
-                    <div className="h-3 w-2/3 bg-grep-2 rounded" />
-                  </div>
-                </Card>
-              ))}
-            </div>
-          ) : filteredSites.length === 0 ? (
-            <div className="text-center py-16">
-              <Globe className="h-12 w-12 text-grep-7 mx-auto mb-4" aria-hidden="true" />
-              <h2 className="text-lg font-medium text-foreground mb-2">No sites found</h2>
-              <p className="text-sm text-grep-9 mb-6">
-                {searchQuery ? "Try adjusting your search query" : "Check back soon for new design systems"}
+          <section className="sticky top-14 z-20 border-b border-[color:var(--soft-border)] bg-background/85 backdrop-blur-xl">
+            <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+              <p className="font-mono text-[11px] text-muted-foreground">
+                {filteredSites.length} {filteredSites.length === 1 ? 'site' : 'sites'}
               </p>
-              {searchQuery && (
-                <Button onClick={() => setSearchQuery("")} variant="outline" size="sm">
-                  Clear search
-                </Button>
-              )}
+              <div
+                className="flex gap-1 border border-[color:var(--soft-border)] p-1"
+                role="tablist"
+                aria-label="Sort options"
+              >
+                {(
+                  [
+                    ['votes', 'Popular'],
+                    ['recent', 'Recent'],
+                    ['tokens', 'Tokens'],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="tab"
+                    aria-selected={sortBy === value}
+                    onClick={() => setSortBy(value)}
+                    className={cn(
+                      'px-3 py-1.5 text-xs transition-colors sm:text-sm',
+                      sortBy === value
+                        ? 'bg-secondary text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" role="grid" aria-label="Design token sites">
-              {filteredSites.map((site) => (
-                <Card
-                  key={site.id}
-                  className="group hover:border-grep-4 transition-all duration-200 border-grep-2 overflow-hidden"
-                  role="gridcell"
-                >
-                  <div className="p-6">
-                    {/* Header */}
-                    <div className="flex items-start justify-between gap-3 mb-4">
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
+          </section>
+
+          <section className="px-4 py-8 sm:px-6 sm:py-10">
+            <div className="mx-auto max-w-5xl">
+              {loading ? (
+                <div className="space-y-3" role="status" aria-label="Loading sites">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-20 animate-pulse border border-[color:var(--soft-border)] bg-muted/20"
+                    />
+                  ))}
+                </div>
+              ) : filteredSites.length === 0 ? (
+                <div className="border border-[color:var(--soft-border)] px-6 py-16 text-center">
+                  <h2 className="font-serif text-2xl text-foreground">No sites yet</h2>
+                  <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                    {searchQuery
+                      ? 'Nothing matched that search.'
+                      : 'Scan a public site and it will show up here.'}
+                  </p>
+                  <div className="mt-6 flex justify-center gap-2">
+                    {searchQuery ? (
+                      <Button variant="outline" onClick={() => setSearchQuery('')}>
+                        Clear search
+                      </Button>
+                    ) : null}
+                    <Button asChild>
+                      <Link href="/scan">Open Scan</Link>
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <ul className="divide-y divide-[color:var(--soft-border)] border border-[color:var(--soft-border)]">
+                  {filteredSites.map((site) => (
+                    <li
+                      key={site.id}
+                      className="group flex flex-col gap-4 px-4 py-5 transition-colors hover:bg-secondary/40 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+                    >
+                      <div className="flex min-w-0 items-start gap-3 sm:items-center">
                         {site.favicon ? (
-                          <img src={site.favicon} alt={`${site.domain} favicon`} className="h-8 w-8 rounded flex-shrink-0" />
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={site.favicon}
+                            alt=""
+                            className="mt-0.5 h-8 w-8 shrink-0 border border-[color:var(--soft-border)] bg-background object-cover sm:mt-0"
+                          />
                         ) : (
-                          <div className="h-8 w-8 rounded bg-gradient-to-br from-blue-500 to-purple-500 flex-shrink-0" aria-hidden="true" />
+                          <div
+                            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center border border-[color:var(--soft-border)] bg-muted/40 font-mono text-[10px] text-muted-foreground sm:mt-0"
+                            aria-hidden
+                          >
+                            {site.domain.slice(0, 2).toUpperCase()}
+                          </div>
                         )}
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold text-foreground text-sm truncate">
+                        <div className="min-w-0">
+                          <Link
+                            href={`/site/${site.domain}`}
+                            className="font-serif text-xl tracking-tight text-foreground transition-colors hover:text-[oklch(0.78_0.08_185)]"
+                          >
                             {site.title || site.domain}
-                          </h3>
-                          <p className="text-xs text-grep-9 truncate">{site.domain}</p>
+                          </Link>
+                          <p className="truncate font-mono text-[11px] text-muted-foreground">
+                            {site.domain}
+                          </p>
+                          {site.description ? (
+                            <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
+                              {site.description}
+                            </p>
+                          ) : null}
+                          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] text-muted-foreground">
+                            <span className="inline-flex items-center gap-1">
+                              <Sparkles className="h-3 w-3" aria-hidden />
+                              {site.tokensCount} tokens
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                              <Clock className="h-3 w-3" aria-hidden />
+                              {formatTimeAgo(site.lastScanned)}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Vote Button */}
-                      <button
-                        onClick={() => handleVote(site.id)}
-                        disabled={site.hasVoted || votingId === site.id}
-                        className={cn(
-                          "flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg border transition-all flex-shrink-0",
-                          site.hasVoted
-                            ? "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900 text-blue-600 dark:text-blue-400"
-                            : "border-grep-2 hover:border-grep-4 hover:bg-grep-0 text-grep-9 hover:text-foreground"
-                        )}
-                        aria-label={`Vote for ${site.domain} (${site.votes} votes)`}
-                        aria-pressed={site.hasVoted}
-                      >
-                        <ArrowUp className={cn("h-3.5 w-3.5", site.hasVoted && "fill-current")} aria-hidden="true" />
-                        <span className="text-xs font-medium">{site.votes}</span>
-                      </button>
-                    </div>
-
-                    {/* Description */}
-                    {site.description && (
-                      <p className="text-sm text-grep-9 mb-4 line-clamp-2">{site.description}</p>
-                    )}
-
-                    {/* Stats */}
-                    <div className="flex items-center gap-4 mb-4 text-xs text-grep-9">
-                      <div className="flex items-center gap-1.5">
-                        <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                        <span>{site.tokensCount} tokens</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="h-3.5 w-3.5" aria-hidden="true" />
-                        <span>{formatTimeAgo(site.lastScanned)}</span>
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-2">
-                      <Link href={`/site/${site.domain}`} className="flex-1">
-                        <Button variant="outline" size="sm" className="w-full text-xs">
-                          View Tokens
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        asChild
-                        className="px-2"
-                      >
-                        <a
-                          href={`https://${site.domain}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label={`Visit ${site.domain} website`}
+                      <div className="flex shrink-0 items-center gap-2 self-end sm:self-center">
+                        <button
+                          type="button"
+                          onClick={() => void handleVote(site.id)}
+                          disabled={site.hasVoted || votingId === site.id}
+                          className={cn(
+                            'inline-flex h-9 items-center gap-1.5 border px-2.5 font-mono text-xs transition-colors',
+                            site.hasVoted
+                              ? 'border-[oklch(0.78_0.08_185_/0.45)] bg-[oklch(0.78_0.08_185_/0.08)] text-[oklch(0.78_0.08_185)]'
+                              : 'border-[color:var(--soft-border)] text-muted-foreground hover:border-foreground/30 hover:text-foreground'
+                          )}
+                          aria-label={`Vote for ${site.domain}`}
+                          aria-pressed={site.hasVoted}
                         >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </a>
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
+                          <ArrowUp className={cn('h-3.5 w-3.5', site.hasVoted && 'fill-current')} />
+                          {site.votes}
+                        </button>
+                        <Button asChild size="sm" variant="outline" className="h-9 rounded-md">
+                          <Link href={`/site/${site.domain}`}>View</Link>
+                        </Button>
+                        <Button asChild size="sm" variant="ghost" className="h-9 w-9 rounded-md px-0">
+                          <a
+                            href={`https://${site.domain}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`Visit ${site.domain}`}
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-          )}
-        </div>
-      </main>
+          </section>
+        </main>
 
-      <MarketingFooter />
+        <MarketingFooter />
+      </div>
     </div>
   )
 }

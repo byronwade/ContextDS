@@ -1,48 +1,15 @@
-import type { Metadata } from 'next'
-import { Suspense } from 'react'
-import { MarketingFooter } from '@/components/organisms/marketing-footer'
-import { VercelHeader } from '@/components/organisms/vercel-header'
-import { AgentChat } from './client'
+import { redirect } from 'next/navigation'
 
-export const metadata: Metadata = {
-  title: 'Agent — Design Contracts',
-  description:
-    'The Design Contracts agent scans public sites with the scanner as a tool, then surfaces installable contracts inline.',
+type AgentPageProps = {
+  searchParams?: Promise<{ url?: string }> | { url?: string }
 }
 
-export default function AgentPage() {
-  return (
-    <div className="relative flex min-h-screen flex-col bg-background">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(800px 400px at 20% -10%, oklch(0.45 0.04 185 / 0.12), transparent 55%)',
-        }}
-      />
-      <div className="relative z-10 flex min-h-screen flex-col">
-        <VercelHeader currentPage="agent" />
-        <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-10 sm:px-6">
-          <header className="mb-8">
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-              Agent · scanner as a tool
-            </p>
-            <h1 className="mt-3 font-serif text-4xl tracking-tight text-foreground sm:text-5xl">
-              designcontracts
-              <span className="font-mono text-[0.55em] text-[oklch(0.78_0.08_185)]">.sh</span>
-            </h1>
-            <p className="mt-3 max-w-2xl text-muted-foreground">
-              Ask for a site. The agent gathers tokens, layout DNA, and a Design Contract — results
-              appear inline; open the full page when you need every tab.
-            </p>
-          </header>
-          <Suspense fallback={<div className="text-sm text-muted-foreground">Loading agent…</div>}>
-            <AgentChat />
-          </Suspense>
-        </main>
-        <MarketingFooter />
-      </div>
-    </div>
-  )
+/** Legacy /agent route — Scan is the product name. */
+export default async function AgentPage({ searchParams }: AgentPageProps) {
+  const params = searchParams instanceof Promise ? await searchParams : searchParams
+  const url = params?.url?.trim()
+  if (url) {
+    redirect(`/scan?url=${encodeURIComponent(url)}`)
+  }
+  redirect('/scan')
 }

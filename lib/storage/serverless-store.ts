@@ -1,5 +1,5 @@
 /**
- * Free serverless persistence for ContextDS.
+ * Free serverless persistence for Design Contracts.
  *
  * Priority order:
  * 1. Vercel Blob  — durable JSON payloads (Hobby-friendly)
@@ -246,6 +246,69 @@ export async function getSite(domain: string): Promise<SiteIndexEntry | null> {
 
   const directory = await loadDirectoryFromBlob()
   return directory.find((site) => site.domain === key) ?? null
+}
+
+async function persistSiteIndex(site: SiteIndexEntry): Promise<void> {
+  MEMORY_SITES.set(site.domain, site)
+  const redis = getRedis()
+  if (redis) {
+    await Promise.all([
+      redis.set(SITE_KEY(site.domain), site),
+      redis.zadd(POPULAR_KEY, { score: site.popularity, member: site.domain }),
+    ])
+    return
+  }
+
+  const directory = await loadDirectoryFromBlob()
+  const next = directory.filter((entry) => entry.domain !== site.domain)
+  next.push(site)
+  next.sort((a, b) => b.popularity - a.popularity)
+  await saveDirectoryToBlob(next.slice(0, 500))
+}
+
+/** Increment popularity for library voting (id or domain). */
+export async function bumpSitePopularity(
+  siteIdOrDomain: string
+): Promise<SiteIndexEntry | null> {
+  const redis = getRedis()
+  let site: SiteIndexEntry | null = null
+
+  if (redis) {
+    const domains = await redis.zrange<string[]>(POPULAR_KEY, 0, -1)
+    for (const domain of domains) {
+      const entry = await redis.get<SiteIndexEntry>(SITE_KEY(String(domain)))
+      if (entry && (entry.id === siteIdOrDomain || entry.domain === siteIdOrDomain)) {
+        site = entry
+        break
+      }
+    }
+  }
+
+  if (!site) {
+    for (const entry of MEMORY_SITES.values()) {
+      if (entry.id === siteIdOrDomain || entry.domain === siteIdOrDomain) {
+        site = entry
+        break
+      }
+    }
+  }
+
+  if (!site) {
+    const directory = await loadDirectoryFromBlob()
+    site =
+      directory.find(
+        (entry) => entry.id === siteIdOrDomain || entry.domain === siteIdOrDomain
+      ) ?? null
+  }
+
+  if (!site) return null
+
+  const next: SiteIndexEntry = {
+    ...site,
+    popularity: (site.popularity ?? 0) + 1,
+  }
+  await persistSiteIndex(next)
+  return next
 }
 
 export async function getScan(domain: string): Promise<StoredScanResult | null> {
