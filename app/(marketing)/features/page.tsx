@@ -68,10 +68,10 @@ export default function FeaturesPage() {
 
         <div className="mt-16 flex flex-wrap gap-3">
           <Link
-            href="/scan"
+            href="/agent"
             className="inline-flex h-11 items-center rounded-md bg-foreground px-5 text-sm font-medium text-background"
           >
-            Scan a site
+            Open the agent
           </Link>
           <Link
             href="/docs"

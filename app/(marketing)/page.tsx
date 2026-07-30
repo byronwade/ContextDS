@@ -21,7 +21,7 @@ function HomePageContent() {
       .replace(/^https?:\/\//, "")
       .replace(/^www\./, "")
       .split("/")[0]
-    router.push(`/scan?url=${encodeURIComponent(domain)}`)
+    router.push(`/agent?url=${encodeURIComponent(domain)}`)
   }
 
   return (
@@ -65,8 +65,8 @@ function HomePageContent() {
                 </span>
               </h1>
               <p className="mt-6 max-w-lg animate-fade-in text-base leading-relaxed text-muted-foreground sm:text-lg">
-                Scan any public site. Install a Design Contract agents can resolve, check, and
-                verify.
+                Ask the agent. It runs the scanner as a tool and hands you an installable Design
+                Contract — resolve, check, verify.
               </p>
 
               <form
@@ -90,7 +90,7 @@ function HomePageContent() {
                     disabled={!url.trim()}
                     className="h-11 gap-2 rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground hover:opacity-90"
                   >
-                    Scan site
+                    Ask agent
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </div>
@@ -139,12 +139,12 @@ $ npx github:byronwade/Design install stripe-com
             <div className="mx-auto grid w-full max-w-5xl gap-12 sm:grid-cols-3 sm:gap-8">
               {[
                 {
-                  title: "World-class scan",
-                  body: "Static CSS, Wallace extractors, optional Playwright for CSS-in-JS.",
+                  title: "Agent-first",
+                  body: "Chat is the product. The scanner is a tool the agent calls when it needs fresh data.",
                 },
                 {
-                  title: "Installable contract",
-                  body: "DESIGN.md, AGENTS.md, Skill, and references in one pack.",
+                  title: "Inline contracts",
+                  body: "Results land in-chat as a Design Contract widget — open the full page when you need every tab.",
                 },
                 {
                   title: "Enforced forever",

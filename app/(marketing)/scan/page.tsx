@@ -1,28 +1,21 @@
-import { Suspense } from "react"
-import { Metadata } from "next"
-import ScanClient from "./client"
+import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
-  title: "Scan → Design Contract | Design Contracts",
+  title: 'Scan → Agent | Design Contracts',
   description:
-    "Turn any public site into an installable Design Contract — DESIGN.md grammar, agent skills, references, and check/verify workflow.",
-  openGraph: {
-    title: "Scan → Design Contract | Design Contracts",
-    description:
-      "Scan a site, download a Design Contract pack, and keep every new component on-brand.",
-  },
+    'Scanning is handled by the Design Contracts agent. Paste a URL and get an installable contract inline.',
 }
 
-export default function ScanPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground">
-          Loading scanner…
-        </div>
-      }
-    >
-      <ScanClient />
-    </Suspense>
-  )
+type ScanPageProps = {
+  searchParams?: Promise<{ url?: string }> | { url?: string }
+}
+
+export default async function ScanPage({ searchParams }: ScanPageProps) {
+  const params = searchParams instanceof Promise ? await searchParams : searchParams
+  const url = params?.url?.trim()
+  if (url) {
+    redirect(`/agent?url=${encodeURIComponent(url)}`)
+  }
+  redirect('/agent')
 }

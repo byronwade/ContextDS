@@ -38,7 +38,6 @@ interface VercelHeaderProps {
 }
 
 const NAV = [
-  { href: "/scan", label: "Scan" },
   { href: "/agent", label: "Agent" },
   { href: "/docs", label: "Docs" },
   { href: "/community", label: "Library" },
@@ -77,7 +76,7 @@ export function VercelHeader({
       .split("/")[0]
     if (!domain) return
     if (onScan) onScan(domain)
-    else router.push(`/scan?url=${encodeURIComponent(domain)}`)
+    else router.push(`/agent?url=${encodeURIComponent(domain)}`)
     setMobileMenuOpen(false)
   }
 

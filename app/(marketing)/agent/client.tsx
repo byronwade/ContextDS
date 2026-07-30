@@ -1,16 +1,27 @@
 'use client'
 
 import { useChat } from '@ai-sdk/react'
-import { DefaultChatTransport, isToolUIPart, type UIMessage } from 'ai'
+import {
+  DefaultChatTransport,
+  getToolName,
+  isToolUIPart,
+  type UIMessage,
+} from 'ai'
 import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import {
+  ScanResultWidget,
+  asScanWidgetPayload,
+  isScanResultToolName,
+} from '@/components/molecules/scan-result-widget'
 import type { DesignContractAgentUIMessage } from '@/lib/agent/design-contract-agent'
 import { cn } from '@/lib/utils'
 
 const SUGGESTIONS = [
-  'Scan stripe.com and summarize the design system',
-  'What roles and components are in the vercel.com graph?',
-  'Give me the Design Contract download for example.com after scanning it',
+  'Scan stripe.com and install the Design Contract',
+  'Pull the design system from linear.app',
+  'Compare the type + color systems on vercel.com',
 ] as const
 
 function partText(part: UIMessage['parts'][number]): string {
@@ -18,15 +29,32 @@ function partText(part: UIMessage['parts'][number]): string {
   return ''
 }
 
-function ToolChip({ part }: { part: UIMessage['parts'][number] }) {
+function ToolPart({ part }: { part: UIMessage['parts'][number] }) {
   if (!isToolUIPart(part)) return null
-  const name = part.type.replace(/^tool-/, '')
+
+  const name = getToolName(part)
   const state = 'state' in part ? String(part.state) : 'unknown'
+  const output = 'output' in part ? part.output : undefined
+  const input = 'input' in part && part.input && typeof part.input === 'object' ? part.input : null
+  const inputDomain =
+    input && 'url' in input
+      ? String((input as { url?: string }).url || '')
+      : input && 'domain' in input
+        ? String((input as { domain?: string }).domain || '')
+        : ''
+
+  if (isScanResultToolName(name)) {
+    const payload = asScanWidgetPayload(output) || {
+      domain: inputDomain.replace(/^https?:\/\//, '').split('/')[0] || undefined,
+    }
+    return <ScanResultWidget data={payload} state={state} />
+  }
+
   return (
-    <div className="rounded-lg border border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-      <span className="font-medium text-foreground">{name}</span>
-      <span className="mx-2 text-border">·</span>
-      <span>{state}</span>
+    <div className="rounded-md border border-[color:var(--soft-border)] bg-muted/30 px-3 py-2 font-mono text-[11px] text-muted-foreground">
+      <span className="text-foreground">{name}</span>
+      <span className="mx-2 opacity-40">·</span>
+      <span>{state.replace(/-/g, ' ')}</span>
     </div>
   )
 }
@@ -34,6 +62,8 @@ function ToolChip({ part }: { part: UIMessage['parts'][number] }) {
 export function AgentChat() {
   const [input, setInput] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
+  const startedUrl = useRef<string | null>(null)
+  const searchParams = useSearchParams()
 
   const { messages, sendMessage, status, error, stop } = useChat<DesignContractAgentUIMessage>({
     transport: new DefaultChatTransport({ api: '/api/agent/chat' }),
@@ -44,6 +74,21 @@ export function AgentChat() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, status])
+
+  // Home / nav "scan" entry: /agent?url=stripe.com → kick off the agent
+  useEffect(() => {
+    const raw = searchParams.get('url')?.trim()
+    if (!raw || startedUrl.current === raw || messages.length > 0 || busy) return
+    startedUrl.current = raw
+    const domain = raw
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .split('/')[0]
+    if (!domain) return
+    void sendMessage({
+      text: `Scan ${domain} and show me the Design Contract — summarize the system and how to install it.`,
+    })
+  }, [searchParams, messages.length, busy, sendMessage])
 
   const onSubmit = (event: React.FormEvent) => {
     event.preventDefault()
@@ -56,19 +101,21 @@ export function AgentChat() {
   return (
     <div className="flex min-h-[60vh] flex-1 flex-col">
       <div className="flex-1 space-y-5 overflow-y-auto pb-4">
-        {messages.length === 0 ? (
-          <div className="space-y-4 border border-[color:var(--soft-border)] bg-card/30 p-5">
-            <p className="text-sm text-muted-foreground">Try one of these:</p>
+        {messages.length === 0 && !searchParams.get('url') ? (
+          <div className="space-y-4 border border-[color:var(--soft-border)] bg-card/20 p-5">
+            <p className="text-sm text-muted-foreground">
+              Paste a URL or ask for a system. The agent runs the scanner as a tool and drops results
+              inline.
+            </p>
             <div className="flex flex-col gap-2">
               {SUGGESTIONS.map((suggestion) => (
                 <button
                   key={suggestion}
                   type="button"
                   onClick={() => {
-                    setInput(suggestion)
                     void sendMessage({ text: suggestion })
                   }}
-                  className="rounded-md border border-[color:var(--soft-border)] bg-background/60 px-4 py-3 text-left text-sm text-foreground transition-colors hover:border-foreground/25"
+                  className="border border-[color:var(--soft-border)] bg-background/60 px-4 py-3 text-left text-sm text-foreground transition-colors hover:border-foreground/25"
                 >
                   {suggestion}
                 </button>
@@ -81,23 +128,32 @@ export function AgentChat() {
           <article
             key={message.id}
             className={cn(
-              'rounded-lg px-4 py-3 text-sm leading-relaxed',
-              message.role === 'user'
-                ? 'ml-8 bg-primary text-primary-foreground'
-                : 'mr-4 border border-[color:var(--soft-border)] bg-card/40 text-foreground'
+              'px-1 py-1 text-sm leading-relaxed',
+              message.role === 'user' ? 'ml-6 sm:ml-12' : 'mr-2 sm:mr-8'
             )}
           >
-            <p className="mb-2 text-[11px] uppercase tracking-[0.18em] opacity-70">
+            <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               {message.role === 'user' ? 'You' : 'Agent'}
             </p>
-            <div className="space-y-3 whitespace-pre-wrap">
+            <div
+              className={cn(
+                'space-y-3',
+                message.role === 'user'
+                  ? 'border border-[color:var(--soft-border)] bg-primary px-4 py-3 text-primary-foreground'
+                  : 'text-foreground'
+              )}
+            >
               {message.parts.map((part, index) => {
                 if (part.type === 'text') {
                   const text = partText(part)
-                  return text ? <p key={`${message.id}-t-${index}`}>{text}</p> : null
+                  return text ? (
+                    <p key={`${message.id}-t-${index}`} className="whitespace-pre-wrap">
+                      {text}
+                    </p>
+                  ) : null
                 }
                 if (isToolUIPart(part)) {
-                  return <ToolChip key={`${message.id}-tool-${index}`} part={part} />
+                  return <ToolPart key={`${message.id}-tool-${index}`} part={part} />
                 }
                 return null
               })}
@@ -106,7 +162,7 @@ export function AgentChat() {
         ))}
 
         {error ? (
-          <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <div className="border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
             {error.message || 'Something went wrong talking to the agent.'}
           </div>
         ) : null}
@@ -116,23 +172,19 @@ export function AgentChat() {
 
       <form
         onSubmit={onSubmit}
-        className="sticky bottom-0 border-t border-border/60 bg-background/95 py-4 backdrop-blur"
+        className="sticky bottom-0 border-t border-[color:var(--soft-border)] bg-background/95 py-4 backdrop-blur"
       >
         <div className="flex gap-2">
           <input
             value={input}
             onChange={(event) => setInput(event.target.value)}
-            placeholder="Scan a site, ask about roles, or request a contract pack…"
-            className="h-11 flex-1 rounded-md border border-[color:var(--soft-border)] bg-background px-4 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            placeholder="stripe.com — or ask how to rebuild a screen from the contract…"
+            className="h-11 flex-1 border border-[color:var(--soft-border)] bg-background px-4 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
             disabled={busy}
+            aria-label="Message the Design Contract agent"
           />
           {busy ? (
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 rounded-md"
-              onClick={() => stop()}
-            >
+            <Button type="button" variant="outline" className="h-11 rounded-md" onClick={() => stop()}>
               Stop
             </Button>
           ) : (
@@ -141,10 +193,6 @@ export function AgentChat() {
             </Button>
           )}
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Tools call your existing scan pipeline. Accurate mode needs{' '}
-          <code className="text-foreground">SCANNER_SERVICE_URL</code>.
-        </p>
       </form>
     </div>
   )

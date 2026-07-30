@@ -49,13 +49,16 @@ export default function DocsPage() {
           <ol className="list-decimal space-y-3 pl-5 text-muted-foreground">
             <li>
               Open{' '}
-              <Link href="/scan" className="text-foreground underline-offset-4 hover:underline">
-                /scan
+              <Link href="/agent" className="text-foreground underline-offset-4 hover:underline">
+                /agent
               </Link>{' '}
-              and paste a public URL.
+              and paste a public URL (or use the home search).
             </li>
-            <li>Choose Fast (static CSS) or Accurate (Docker Playwright when configured).</li>
-            <li>Download the Design Contract pack and install it with the Design CLI.</li>
+            <li>
+              The agent runs the scanner as a tool and shows an inline Design Contract widget —
+              open View full results for every tab.
+            </li>
+            <li>Download the pack and install it with the Design CLI.</li>
           </ol>
           <pre className="overflow-x-auto rounded-lg border border-border/60 bg-muted/40 p-4 text-sm">
             {`npx --yes github:byronwade/Design init

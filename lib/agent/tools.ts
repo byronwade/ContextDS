@@ -35,7 +35,7 @@ function slimTokens(tokens: unknown) {
 export const designContractTools = {
   scan_site: tool({
     description:
-      'Scan a public website and produce curated design tokens, layout DNA, a semantic graph, and an installable Design Contract pack. Use when the user provides a URL or asks to extract a design system.',
+      'Primary gather tool: scan a public website into curated tokens, layout DNA, a semantic graph, and an installable Design Contract pack. The chat UI renders the result as an inline widget — keep follow-up text short.',
     inputSchema: z.object({
       url: z
         .string()
@@ -108,6 +108,7 @@ export const designContractTools = {
       return {
         found: true,
         domain: key,
+        status: 'cached',
         site,
         scannedAt: scan.scannedAt,
         summary: scan.summary,
@@ -126,6 +127,7 @@ export const designContractTools = {
               download: scan.designContract.download || contractDownloadPath(key),
             }
           : null,
+        screenshots: scan.screenshots,
       }
     },
   }),
