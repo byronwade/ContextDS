@@ -36,7 +36,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 COPY package.json ./
-RUN npm install --omit=dev \
+RUN npm install --omit=dev --include=optional \
     && npx playwright install chromium \
     && rm -rf /root/.npm /tmp/*
 

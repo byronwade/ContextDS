@@ -18,17 +18,22 @@ export SCANNER_SERVICE_URL=http://localhost:4040
 bun dev
 ```
 
-## Deploy to Vercel (container)
+## Deploy to Vercel
 
-1. In Vercel → **Add New Project** → import this repo
-2. **Root Directory**: `scanner`
-3. Framework Preset: **Other** (uses `Dockerfile` / `Dockerfile.vercel`)
-4. Set env:
+Uploaded as project **`designcontracts-scanner`** (Node + `@sparticuz/chromium` on Vercel; full Playwright in Docker locally).
+
+Production alias: `https://designcontracts-scanner.vercel.app`
+
+1. In Vercel → project **designcontracts-scanner** (or Add New → Root Directory `scanner`)
+2. Set env on the scanner project:
    - `SCANNER_SERVICE_SECRET` — shared secret
    - `SCANNER_MAX_CONCURRENCY` — default `2`
-5. Deploy, copy the HTTPS URL
-6. On the **designcontracts.sh** Next.js project, set:
-   - `SCANNER_SERVICE_URL=https://<scanner-deployment>.vercel.app`
+3. On the **designcontracts.sh** Next.js project, set:
+   - `SCANNER_SERVICE_URL=https://designcontracts-scanner.vercel.app`
    - `SCANNER_SERVICE_SECRET=<same secret>`
 
 Fast mode still works without this service (static CSS only).
+
+## Docker (self-hosted)
+
+`Dockerfile` / `Dockerfile.vercel` install full Playwright Chromium for non-Vercel hosts.

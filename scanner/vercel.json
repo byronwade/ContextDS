@@ -1,8 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "name": "designcontracts-scanner",
-  "framework": null,
-  "installCommand": null,
-  "buildCommand": null,
-  "outputDirectory": null
+  "functions": {
+    "server.mjs": {
+      "maxDuration": 300,
+      "memory": 3008,
+      "includeFiles": "node_modules/@sparticuz/chromium/**"
+    }
+  }
 }
