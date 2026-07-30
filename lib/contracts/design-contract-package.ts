@@ -13,11 +13,11 @@
  *   contract.json  (scan provenance metadata)
  */
 
-import { zipSync, strToU8 } from 'fflate'
+import { strToU8, zipSync } from 'fflate'
 import {
-  generateDesignMd,
-  type DesignMdInput,
   type DesignMdArtifact,
+  type DesignMdInput,
+  generateDesignMd,
 } from '@/lib/analyzers/design-md-generator'
 import { generateDesignSkill } from '@/lib/analyzers/design-skill-generator'
 
@@ -169,7 +169,10 @@ Point project rules at \`DESIGN.md\` and the \`design\` skill before generating 
 `
 }
 
-function referencesMd(domain: string, screenshots: DesignContractPackageInput['screenshots']): string {
+function referencesMd(
+  domain: string,
+  screenshots: DesignContractPackageInput['screenshots']
+): string {
   const lines = [
     '---',
     'kind: visual-references',
@@ -190,7 +193,9 @@ function referencesMd(domain: string, screenshots: DesignContractPackageInput['s
     for (const shot of screenshots) {
       lines.push(`### ${shot.label}`)
       if (shot.url) lines.push(`- Source: ${shot.url}`)
-      lines.push(`- Note: ${shot.note || 'Preserve hierarchy, density, and material — do not copy pixel-perfect chrome.'}`)
+      lines.push(
+        `- Note: ${shot.note || 'Preserve hierarchy, density, and material — do not copy pixel-perfect chrome.'}`
+      )
       lines.push('')
     }
   } else {
@@ -244,8 +249,7 @@ function referencesManifest(
 function configJson(profile: string, appType?: string): string {
   return `${JSON.stringify(
     {
-      $schema:
-        'https://raw.githubusercontent.com/byronwade/Design/main/schemas/config.schema.json',
+      $schema: 'https://raw.githubusercontent.com/byronwade/Design/main/schemas/config.schema.json',
       schemaVersion: 1,
       targets: [
         {

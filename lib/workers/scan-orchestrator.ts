@@ -1,46 +1,67 @@
-import { db, sites, scans, tokenSets, cssSources, cssContent, layoutProfiles, tokenVersions, tokenChanges } from '@/lib/db'
-import { eq, desc } from 'drizzle-orm'
-import { collectStaticCss, type CssSource } from '@/lib/extractors/static-css'
-import { collectComputedCss } from '@/lib/extractors/computed-css'
-import { generateTokenSet as generateTokenSetLegacy, hashTokenSet } from '@/lib/analyzers/basic-tokenizer'
-import { extractW3CTokens, hashTokenSet as hashW3CTokenSet } from '@/lib/analyzers/w3c-tokenizer'
-import { buildAiPromptPack } from '@/lib/analyzers/ai-prompt-pack'
-import { curateTokens } from '@/lib/analyzers/token-curator'
-import { generateDesignInsights } from '@/lib/ai/design-insights'
+import { desc, eq } from 'drizzle-orm'
 import { analyzeDesignSystemComprehensive } from '@/lib/ai/comprehensive-analyzer'
-import { analyzeLayout } from '@/lib/analyzers/layout-inspector'
-import { buildPromptPack } from '@/lib/analyzers/prompt-pack'
-import { compareTokenSets } from '@/lib/analyzers/version-diff'
-import { collectLayoutWireframe } from '@/lib/analyzers/layout-wireframe'
-import { MetricsCollector } from '@/lib/observability/metrics'
-import { analyzeBrand } from '@/lib/analyzers/brand-analyzer'
-import { extractComponents, type ComponentLibrary } from '@/lib/analyzers/component-extractor'
-import { detectComponents, type ComponentLibrary as AdvancedComponentLibrary } from '@/lib/analyzers/advanced-component-detector'
+import { generateDesignInsights } from '@/lib/ai/design-insights'
 import { buildDesignSystemSpec, type DesignSystemSpec } from '@/lib/ai/design-system-builder'
-import { detectLogo, downloadLogoAsBase64 } from '@/lib/utils/logo-detector'
-import { withTimeout, createMemoryLimit, createCircuitBreaker, createProgressiveScanner } from '@/lib/utils/resilience'
-import { ultraProfiler, profile, profileAsync } from '@/lib/utils/ultra-profiler'
-import { ultraCache, getCachedScan, cacheScanResult, type CacheKey } from '@/lib/cache/ultra-cache'
 import {
-  findSiteByDomain,
-  getLatestTokenSet,
-  bulkInsertCssContent,
+  type ComponentLibrary as AdvancedComponentLibrary,
+  detectComponents,
+} from '@/lib/analyzers/advanced-component-detector'
+import { buildAiPromptPack } from '@/lib/analyzers/ai-prompt-pack'
+import {
+  generateTokenSet as generateTokenSetLegacy,
+  hashTokenSet,
+} from '@/lib/analyzers/basic-tokenizer'
+import { analyzeBrand } from '@/lib/analyzers/brand-analyzer'
+import { type ComponentLibrary, extractComponents } from '@/lib/analyzers/component-extractor'
+import { analyzeLayout } from '@/lib/analyzers/layout-inspector'
+import { collectLayoutWireframe } from '@/lib/analyzers/layout-wireframe'
+import { buildPromptPack } from '@/lib/analyzers/prompt-pack'
+import { curateTokens } from '@/lib/analyzers/token-curator'
+import { compareTokenSets } from '@/lib/analyzers/version-diff'
+import { extractW3CTokens, hashTokenSet as hashW3CTokenSet } from '@/lib/analyzers/w3c-tokenizer'
+import { type CacheKey, cacheScanResult, getCachedScan, ultraCache } from '@/lib/cache/ultra-cache'
+import {
+  cssContent,
+  cssSources,
+  db,
+  layoutProfiles,
+  scans,
+  sites,
+  tokenChanges,
+  tokenSets,
+  tokenVersions,
+} from '@/lib/db'
+import {
   batchInsertCssSources,
+  bulkInsertCssContent,
   completeScanTransaction,
-  getDatabaseMetrics
+  findSiteByDomain,
+  getDatabaseMetrics,
+  getLatestTokenSet,
 } from '@/lib/db/optimizations'
+import { collectComputedCss } from '@/lib/extractors/computed-css'
+import { type CssSource, collectStaticCss } from '@/lib/extractors/static-css'
+import { MetricsCollector } from '@/lib/observability/metrics'
+import { detectLogo, downloadLogoAsBase64 } from '@/lib/utils/logo-detector'
 import {
-  executeInParallel,
-  ultraFetch,
+  createCircuitBreaker,
+  createMemoryLimit,
+  createProgressiveScanner,
+  withTimeout,
+} from '@/lib/utils/resilience'
+import {
   createUltraStream,
-  type ParallelTask
+  executeInParallel,
+  type ParallelTask,
+  ultraFetch,
 } from '@/lib/utils/ultra-parallel'
+import { profile, profileAsync, ultraProfiler } from '@/lib/utils/ultra-profiler'
 
 export type ScanJobInput = {
   url: string
   prettify: boolean
   includeComputed: boolean
-  mode?: 'fast' | 'accurate'  // fast = static only, accurate = full scan
+  mode?: 'fast' | 'accurate' // fast = static only, accurate = full scan
   memoryLimitMb?: number // Custom memory limit
   timeoutMs?: number // Custom timeout
 }
@@ -55,13 +76,13 @@ const LARGE_SITE_THRESHOLD = 50 // 50+ CSS files = large site
 const tokenGenerationBreaker = createCircuitBreaker({
   failureThreshold: 3,
   resetTimeout: 30000,
-  name: 'token-generation'
+  name: 'token-generation',
 })
 
 const aiAnalysisBreaker = createCircuitBreaker({
   failureThreshold: 2,
   resetTimeout: 60000,
-  name: 'ai-analysis'
+  name: 'ai-analysis',
 })
 
 export type ScanJobResult = {
@@ -106,7 +127,7 @@ export async function runScanJob({
   includeComputed,
   mode = 'accurate',
   memoryLimitMb,
-  timeoutMs
+  timeoutMs,
 }: ScanJobInput): Promise<ScanJobResult> {
   const normalized = url.startsWith('http') ? url : `https://${url}`
   const target = new URL(normalized)
@@ -119,19 +140,23 @@ export async function runScanJob({
   const scanTimeout = timeoutMs ?? (mode === 'fast' ? FAST_SCAN_TIMEOUT : MAX_SCAN_TIMEOUT)
   const memoryLimit = createMemoryLimit(memoryBytes)
 
-  console.log(`[scan-orchestrator] Starting ${mode} scan of ${domain} (memory: ${Math.round(memoryBytes/1024/1024)}MB, timeout: ${scanTimeout}ms)`)
+  console.log(
+    `[scan-orchestrator] Starting ${mode} scan of ${domain} (memory: ${Math.round(memoryBytes / 1024 / 1024)}MB, timeout: ${scanTimeout}ms)`
+  )
 
   // ULTRA-FAST CACHE CHECK (5-150ms vs 5000-15000ms full scan)
   const cacheParams: CacheKey = {
     url: normalized,
     mode,
     includeComputed,
-    version: '2.1.0'
+    version: '2.1.0',
   }
 
   const cachedResult = await profile('cache-lookup', () => getCachedScan(cacheParams))
   if (cachedResult) {
-    console.log(`⚡ ULTRA-FAST: Returning cached result for ${domain} (${cachedResult.cacheInfo.cacheHit})`)
+    console.log(
+      `⚡ ULTRA-FAST: Returning cached result for ${domain} (${cachedResult.cacheInfo.cacheHit})`
+    )
     return cachedResult
   }
 
@@ -141,7 +166,6 @@ export async function runScanJob({
   ultraProfiler.start()
 
   return withTimeout(async () => {
-
     // PERFORMANCE: Fast mode skips browser automation entirely
     const isFastMode = mode === 'fast'
     const actuallyIncludeComputed = isFastMode ? false : includeComputed
@@ -161,7 +185,7 @@ export async function runScanJob({
             robotsStatus: 'allowed',
             status: 'scanning',
             firstSeen: new Date(),
-            popularity: 0
+            popularity: 0,
           })
           .returning()
         site = newSite
@@ -178,7 +202,7 @@ export async function runScanJob({
         siteId: siteRecord.id,
         method: actuallyIncludeComputed ? 'computed' : 'static',
         prettify,
-        startedAt: new Date()
+        startedAt: new Date(),
       })
       .returning()
 
@@ -188,8 +212,8 @@ export async function runScanJob({
         name: 'collect-static-css',
         task: () => collectStaticCss(target.toString()),
         priority: 'critical',
-        timeout: 15000
-      }
+        timeout: 15000,
+      },
     ]
 
     // Add computed CSS task if needed
@@ -200,7 +224,7 @@ export async function runScanJob({
           try {
             return await collectComputedCss(target.toString(), {
               fastMode: isFastMode,
-              maxMemoryMb: Math.max(20, memoryLimit.remaining() / (1024 * 1024))
+              maxMemoryMb: Math.max(20, memoryLimit.remaining() / (1024 * 1024)),
             })
           } catch (error) {
             console.warn('[scan-orchestrator] Computed CSS collection failed:', error)
@@ -209,7 +233,7 @@ export async function runScanJob({
         },
         priority: 'high',
         timeout: 20000,
-        canFail: true
+        canFail: true,
       })
     }
 
@@ -229,7 +253,9 @@ export async function runScanJob({
                   .set({ favicon: logoBase64 })
                   .where(eq(sites.id, siteRecord.id))
                 siteRecord.favicon = logoBase64
-                console.log(`[scan-orchestrator] Logo detected and stored from ${logoResult.source}`)
+                console.log(
+                  `[scan-orchestrator] Logo detected and stored from ${logoResult.source}`
+                )
               }
             }
             return logoResult
@@ -240,7 +266,7 @@ export async function runScanJob({
         },
         priority: 'medium',
         timeout: 8000,
-        canFail: true
+        canFail: true,
       })
     }
 
@@ -250,12 +276,15 @@ export async function runScanJob({
       concurrency: 3,
       onProgress: (completed, total) => {
         console.log(`⚡ CSS collection progress: ${completed}/${total}`)
-      }
+      },
     })
 
     // Extract results
     const staticCss = cssResults.get('collect-static-css')?.result || []
-    const computedResult = cssResults.get('collect-computed-css')?.result || { sources: [], computedStyles: [] }
+    const computedResult = cssResults.get('collect-computed-css')?.result || {
+      sources: [],
+      computedStyles: [],
+    }
     const computedCss = computedResult.sources || []
     const computedStyles = computedResult.computedStyles || []
 
@@ -267,17 +296,23 @@ export async function runScanJob({
     // Check if this is a large site
     const isLargeSite = staticCss.length >= LARGE_SITE_THRESHOLD
     if (isLargeSite) {
-      console.log(`[scan-orchestrator] Large site detected: ${staticCss.length} CSS sources, ${Math.round(staticCssBytes/1024/1024)}MB`)
+      console.log(
+        `[scan-orchestrator] Large site detected: ${staticCss.length} CSS sources, ${Math.round(staticCssBytes / 1024 / 1024)}MB`
+      )
     }
 
-    console.log(`⚡ Ultra-parallel CSS collection complete: ${staticCss.length} static, ${computedCss.length} computed sources`)
+    console.log(
+      `⚡ Ultra-parallel CSS collection complete: ${staticCss.length} static, ${computedCss.length} computed sources`
+    )
 
     const endDedupePhase = metrics.startPhase('dedupe_css_sources')
     const cssArtifacts = dedupeCssSources([...staticCss, ...computedCss])
     endDedupePhase()
 
     const totalCssBytes = cssArtifacts.reduce((sum, css) => sum + css.bytes, 0)
-    console.log(`[scan-orchestrator] Final CSS artifacts: ${cssArtifacts.length} sources, ${Math.round(totalCssBytes/1024/1024)}MB`)
+    console.log(
+      `[scan-orchestrator] Final CSS artifacts: ${cssArtifacts.length} sources, ${Math.round(totalCssBytes / 1024 / 1024)}MB`
+    )
 
     if (cssArtifacts.length === 0) {
       throw new Error('No CSS sources discovered for the requested URL')
@@ -289,19 +324,23 @@ export async function runScanJob({
     if (cssArtifacts.length > 0) {
       await profile('bulk-insert-css-ultra-fast', async () => {
         // Step 1: Ultra-fast bulk insert CSS content with conflict resolution
-        await bulkInsertCssContent(cssArtifacts.map(artifact => ({
-          sha: artifact.sha,
-          content: artifact.content,
-          contentCompressed: false,
-          bytes: artifact.bytes,
-          compressedBytes: artifact.bytes,
-          referenceCount: 1
-        })))
+        await bulkInsertCssContent(
+          cssArtifacts.map((artifact) => ({
+            sha: artifact.sha,
+            content: artifact.content,
+            contentCompressed: false,
+            bytes: artifact.bytes,
+            compressedBytes: artifact.bytes,
+            referenceCount: 1,
+          }))
+        )
 
         // Step 2: Ultra-fast batch insert CSS sources
         await batchInsertCssSources(scanRecord.id, cssArtifacts)
 
-        console.log(`⚡ Ultra-fast CSS persistence: ${cssArtifacts.length} artifacts in batch operation`)
+        console.log(
+          `⚡ Ultra-fast CSS persistence: ${cssArtifacts.length} artifacts in batch operation`
+        )
       })
     }
 
@@ -316,7 +355,7 @@ export async function runScanJob({
         name: 'generate-legacy-tokens',
         task: () => generateTokenSetLegacy(cssArtifacts, { domain, url: target.toString() }),
         priority: 'critical',
-        timeout: 8000
+        timeout: 8000,
       },
 
       // High: W3C token extraction (runs in parallel with legacy)
@@ -325,7 +364,7 @@ export async function runScanJob({
         task: () => extractW3CTokens(cssArtifacts, { domain, url: target.toString() }),
         priority: 'high',
         timeout: isLargeSite ? 15000 : 10000,
-        canFail: true
+        canFail: true,
       },
 
       // High: Layout analysis (can run in parallel with token generation)
@@ -333,8 +372,8 @@ export async function runScanJob({
         name: 'analyze-layout',
         task: () => analyzeLayout(cssArtifacts),
         priority: 'high',
-        timeout: 5000
-      }
+        timeout: 5000,
+      },
     ]
 
     // Execute token generation tasks in ultra-parallel
@@ -343,7 +382,7 @@ export async function runScanJob({
       concurrency: 3,
       onProgress: (completed, total, latest) => {
         console.log(`⚡ Token generation progress: ${completed}/${total} (latest: ${latest?.name})`)
-      }
+      },
     })
 
     // Extract results
@@ -358,15 +397,29 @@ export async function runScanJob({
     // Curate tokens if W3C extraction succeeded
     let curatedTokens = null
     if (w3cExtraction) {
-      const curationLimits = isLargeSite ? {
-        maxColors: 6, maxFonts: 3, maxSizes: 4, maxSpacing: 6,
-        maxRadius: 3, maxShadows: 3, maxMotion: 2,
-        minUsage: 3, minConfidence: 70
-      } : {
-        maxColors: 8, maxFonts: 4, maxSizes: 6, maxSpacing: 8,
-        maxRadius: 4, maxShadows: 4, maxMotion: 4,
-        minUsage: 2, minConfidence: 65
-      }
+      const curationLimits = isLargeSite
+        ? {
+            maxColors: 6,
+            maxFonts: 3,
+            maxSizes: 4,
+            maxSpacing: 6,
+            maxRadius: 3,
+            maxShadows: 3,
+            maxMotion: 2,
+            minUsage: 3,
+            minConfidence: 70,
+          }
+        : {
+            maxColors: 8,
+            maxFonts: 4,
+            maxSizes: 6,
+            maxSpacing: 8,
+            maxRadius: 4,
+            maxShadows: 4,
+            maxMotion: 4,
+            minUsage: 2,
+            minConfidence: 65,
+          }
 
       try {
         curatedTokens = curateTokens(w3cExtraction.tokenSet, curationLimits)
@@ -377,247 +430,278 @@ export async function runScanJob({
       }
     }
 
-    console.log(`⚡ Ultra-parallel token generation complete: legacy=${!!legacyGenerated}, w3c=${!!w3cExtraction}, curated=${!!curatedTokens}`)
+    console.log(
+      `⚡ Ultra-parallel token generation complete: legacy=${!!legacyGenerated}, w3c=${!!w3cExtraction}, curated=${!!curatedTokens}`
+    )
 
     // Create unified result with proper type checking
-    const generated = w3cExtraction && curatedTokens && legacyGenerated ? {
-      tokenSet: w3cExtraction.tokenSet,
-      curatedTokens,
-      tokenGroups: legacyGenerated.tokenGroups,
-      summary: {
-        tokensExtracted: w3cExtraction.summary.totalTokens,
-        curatedCount: {
-          colors: curatedTokens.colors.length,
-          fonts: curatedTokens.typography.families.length,
-          sizes: curatedTokens.typography.sizes.length,
-          spacing: curatedTokens.spacing.length,
-          radius: curatedTokens.radius.length,
-          shadows: curatedTokens.shadows.length
-        },
-        confidence: w3cExtraction.summary.confidence,
-        completeness: legacyGenerated.summary.completeness,
-        reliability: legacyGenerated.summary.reliability
+    const generated =
+      w3cExtraction && curatedTokens && legacyGenerated
+        ? {
+            tokenSet: w3cExtraction.tokenSet,
+            curatedTokens,
+            tokenGroups: legacyGenerated.tokenGroups,
+            summary: {
+              tokensExtracted: w3cExtraction.summary.totalTokens,
+              curatedCount: {
+                colors: curatedTokens.colors.length,
+                fonts: curatedTokens.typography.families.length,
+                sizes: curatedTokens.typography.sizes.length,
+                spacing: curatedTokens.spacing.length,
+                radius: curatedTokens.radius.length,
+                shadows: curatedTokens.shadows.length,
+              },
+              confidence: w3cExtraction.summary.confidence,
+              completeness: legacyGenerated.summary.completeness,
+              reliability: legacyGenerated.summary.reliability,
+            },
+            qualityInsights: legacyGenerated.qualityInsights,
+            w3cInsights: w3cExtraction.insights,
+          }
+        : {
+            // Fallback to legacy only
+            tokenSet: legacyGenerated?.tokenSet || {},
+            curatedTokens: null,
+            tokenGroups: legacyGenerated?.tokenGroups || {
+              colors: [],
+              typography: { families: [], sizes: [] },
+              spacing: [],
+              radius: [],
+              shadows: [],
+              motion: [],
+            },
+            summary: {
+              tokensExtracted: legacyGenerated?.summary?.tokensExtracted || 0,
+              curatedCount: null,
+              confidence: legacyGenerated?.summary?.confidence || 0,
+              completeness: legacyGenerated?.summary?.completeness || 0,
+              reliability: legacyGenerated?.summary?.reliability || 0,
+            },
+            qualityInsights: legacyGenerated?.qualityInsights || {},
+            w3cInsights: null,
+          }
+
+    endTokenPhase()
+
+    // Extract component library from computed styles (if available)
+    // Must happen before parallel AI analysis since design system spec needs it
+    // Use advanced multi-strategy detection for comprehensive component analysis
+    const advancedComponents: AdvancedComponentLibrary | null =
+      computedStyles.length > 0 ? detectComponents(computedStyles, generated.tokenSet) : null
+
+    // Keep legacy extraction for backward compatibility
+    const legacyComponents: ComponentLibrary | null =
+      computedStyles.length > 0 ? extractComponents(computedStyles, generated.tokenSet) : null
+
+    // Merge both for comprehensive coverage
+    const componentLibrary = advancedComponents
+
+    // ULTRA-PARALLEL: Execute all analysis tasks with maximum concurrency
+    const analysisTasks: ParallelTask<any>[] = [
+      // Critical: Build prompt pack (lightweight, always run)
+      {
+        name: 'build-prompt-pack',
+        task: () => ({
+          legacyPromptPack: buildPromptPack(generated.tokenGroups, layoutDNA),
+          aiPromptPack: w3cExtraction
+            ? buildAiPromptPack(w3cExtraction, { domain, url: target.toString() })
+            : null,
+        }),
+        priority: 'critical',
+        timeout: 5000,
       },
-      qualityInsights: legacyGenerated.qualityInsights,
-      w3cInsights: w3cExtraction.insights
-    } : {
-      // Fallback to legacy only
-      tokenSet: legacyGenerated?.tokenSet || {},
-      curatedTokens: null,
-      tokenGroups: legacyGenerated?.tokenGroups || { colors: [], typography: { families: [], sizes: [] }, spacing: [], radius: [], shadows: [], motion: [] },
-      summary: {
-        tokensExtracted: legacyGenerated?.summary?.tokensExtracted || 0,
-        curatedCount: null,
-        confidence: legacyGenerated?.summary?.confidence || 0,
-        completeness: legacyGenerated?.summary?.completeness || 0,
-        reliability: legacyGenerated?.summary?.reliability || 0
+
+      // Critical: Brand analysis (lightweight, always run)
+      {
+        name: 'brand-analysis',
+        task: () =>
+          buildBrandAnalysis(
+            (generated.curatedTokens?.colors as any) || (generated.tokenGroups?.colors as any) || []
+          ),
+        priority: 'critical',
+        timeout: 3000,
       },
-      qualityInsights: legacyGenerated?.qualityInsights || {},
-      w3cInsights: null
+    ]
+
+    // Add wireframe task if computed CSS is available
+    if (actuallyIncludeComputed && !isFastMode) {
+      analysisTasks.push({
+        name: 'layout-wireframe',
+        task: () => collectLayoutWireframe(target.toString()),
+        priority: 'high',
+        timeout: 15000,
+        canFail: true,
+      })
     }
 
-  endTokenPhase()
-
-  // Extract component library from computed styles (if available)
-  // Must happen before parallel AI analysis since design system spec needs it
-  // Use advanced multi-strategy detection for comprehensive component analysis
-  const advancedComponents: AdvancedComponentLibrary | null = computedStyles.length > 0
-    ? detectComponents(computedStyles, generated.tokenSet)
-    : null
-
-  // Keep legacy extraction for backward compatibility
-  const legacyComponents: ComponentLibrary | null = computedStyles.length > 0
-    ? extractComponents(computedStyles, generated.tokenSet)
-    : null
-
-  // Merge both for comprehensive coverage
-  const componentLibrary = advancedComponents
-
-  // ULTRA-PARALLEL: Execute all analysis tasks with maximum concurrency
-  const analysisTasks: ParallelTask<any>[] = [
-    // Critical: Build prompt pack (lightweight, always run)
-    {
-      name: 'build-prompt-pack',
-      task: () => ({
-        legacyPromptPack: buildPromptPack(generated.tokenGroups, layoutDNA),
-        aiPromptPack: w3cExtraction ? buildAiPromptPack(w3cExtraction, { domain, url: target.toString() }) : null
-      }),
-      priority: 'critical',
-      timeout: 5000
-    },
-
-    // Critical: Brand analysis (lightweight, always run)
-    {
-      name: 'brand-analysis',
-      task: () => buildBrandAnalysis((generated.curatedTokens?.colors as any) || (generated.tokenGroups?.colors as any) || []),
-      priority: 'critical',
-      timeout: 3000
+    // Add AI insights task if curated tokens are available
+    if (curatedTokens) {
+      analysisTasks.push({
+        name: 'ai-insights',
+        task: () => generateDesignInsights(curatedTokens, { domain, url: target.toString() }),
+        priority: 'high',
+        timeout: 10000,
+        canFail: true,
+      })
     }
-  ]
 
-  // Add wireframe task if computed CSS is available
-  if (actuallyIncludeComputed && !isFastMode) {
-    analysisTasks.push({
-      name: 'layout-wireframe',
-      task: () => collectLayoutWireframe(target.toString()),
-      priority: 'high',
-      timeout: 15000,
-      canFail: true
+    // Add comprehensive AI analysis if not in fast mode
+    if (curatedTokens && !isFastMode) {
+      analysisTasks.push({
+        name: 'comprehensive-analysis',
+        task: () =>
+          analyzeDesignSystemComprehensive(curatedTokens, { domain, url: target.toString() }),
+        priority: 'medium',
+        timeout: 20000,
+        canFail: true,
+      })
+    }
+
+    // Add design system spec if not in fast mode and components are available
+    if (curatedTokens && !isFastMode) {
+      analysisTasks.push({
+        name: 'design-system-spec',
+        task: () =>
+          buildDesignSystemSpec(curatedTokens, advancedComponents, {
+            domain,
+            url: target.toString(),
+          }),
+        priority: 'medium',
+        timeout: 15000,
+        dependencies: ['comprehensive-analysis'], // Depends on comprehensive analysis
+        canFail: true,
+      })
+    }
+
+    // Execute all analysis tasks in ultra-parallel
+    console.log(`🚀 Executing ${analysisTasks.length} analysis tasks in ultra-parallel`)
+    const analysisResults = await executeInParallel(analysisTasks, {
+      concurrency: 6, // Maximum concurrency for analysis
+      onProgress: (completed, total, latest) => {
+        console.log(`⚡ Analysis progress: ${completed}/${total} (latest: ${latest?.name})`)
+      },
+      onResult: (result) => {
+        if (result.status === 'completed') {
+          console.log(`✅ ${result.name} completed in ${Math.round(result.duration)}ms`)
+        } else {
+          console.warn(`⚠️ ${result.name} ${result.status} after ${Math.round(result.duration)}ms`)
+        }
+      },
     })
-  }
 
-  // Add AI insights task if curated tokens are available
-  if (curatedTokens) {
-    analysisTasks.push({
-      name: 'ai-insights',
-      task: () => generateDesignInsights(curatedTokens, { domain, url: target.toString() }),
-      priority: 'high',
-      timeout: 10000,
-      canFail: true
+    // Extract results from ultra-parallel execution
+    const wireframeSections = analysisResults.get('layout-wireframe')?.result || []
+    const promptPackData = analysisResults.get('build-prompt-pack')?.result || {
+      legacyPromptPack: {},
+      aiPromptPack: null,
+    }
+    const { legacyPromptPack, aiPromptPack } = promptPackData
+    const aiInsights = analysisResults.get('ai-insights')?.result || null
+    const comprehensiveAnalysis = analysisResults.get('comprehensive-analysis')?.result || null
+    const designSystemSpec = analysisResults.get('design-system-spec')?.result || null
+    const brandAnalysis =
+      analysisResults.get('brand-analysis')?.result ||
+      buildBrandAnalysis(
+        (generated.curatedTokens?.colors as any) || (generated.tokenGroups?.colors as any) || []
+      )
+
+    console.log(`⚡ Ultra-parallel analysis complete: ${analysisResults.size} tasks executed`)
+
+    // Augment layout with wireframe (if available)
+    if (wireframeSections.length > 0) {
+      layoutDNA.wireframe = { sections: wireframeSections }
+      augmentArchetypesWithWireframe(layoutDNA, wireframeSections)
+    }
+
+    // Assemble prompt pack
+    const promptPack = {
+      ...legacyPromptPack,
+      aiOptimized: aiPromptPack,
+      aiInsights,
+      comprehensiveAnalysis,
+      version: '2.1.0',
+      format: 'ai-lean-core-plus',
+    }
+
+    // PERFORMANCE OPTIMIZATION: Batch all final database writes into single transaction
+    const durationMs = Date.now() - startedAt
+    const sha = hashW3CTokenSet(generated.tokenSet)
+
+    metrics.record('persist_summary', {
+      cssSources: cssArtifacts.length,
     })
-  }
+    const metricsSummary = metrics.summary()
 
-  // Add comprehensive AI analysis if not in fast mode
-  if (curatedTokens && !isFastMode) {
-    analysisTasks.push({
-      name: 'comprehensive-analysis',
-      task: () => analyzeDesignSystemComprehensive(curatedTokens, { domain, url: target.toString() }),
-      priority: 'medium',
-      timeout: 20000,
-      canFail: true
-    })
-  }
+    // ULTRA-FAST: Get previous token set with optimized query
+    const previousTokenSet = await profile('get-previous-token-set-ultra-fast', () =>
+      getLatestTokenSet(siteRecord.id)
+    )
+    const newVersionNumber = previousTokenSet ? (previousTokenSet.versionNumber || 0) + 1 : 1
 
-  // Add design system spec if not in fast mode and components are available
-  if (curatedTokens && !isFastMode) {
-    analysisTasks.push({
-      name: 'design-system-spec',
-      task: () => buildDesignSystemSpec(curatedTokens, advancedComponents, { domain, url: target.toString() }),
-      priority: 'medium',
-      timeout: 15000,
-      dependencies: ['comprehensive-analysis'], // Depends on comprehensive analysis
-      canFail: true
-    })
-  }
-
-  // Execute all analysis tasks in ultra-parallel
-  console.log(`🚀 Executing ${analysisTasks.length} analysis tasks in ultra-parallel`)
-  const analysisResults = await executeInParallel(analysisTasks, {
-    concurrency: 6, // Maximum concurrency for analysis
-    onProgress: (completed, total, latest) => {
-      console.log(`⚡ Analysis progress: ${completed}/${total} (latest: ${latest?.name})`)
-    },
-    onResult: (result) => {
-      if (result.status === 'completed') {
-        console.log(`✅ ${result.name} completed in ${Math.round(result.duration)}ms`)
-      } else {
-        console.warn(`⚠️ ${result.name} ${result.status} after ${Math.round(result.duration)}ms`)
+    // Calculate diff if there's a previous version
+    let tokenDiff = null
+    if (previousTokenSet && generated.tokenSet) {
+      try {
+        tokenDiff = compareTokenSets(previousTokenSet.tokensJson, generated.tokenSet)
+      } catch (error) {
+        console.warn('Failed to generate token diff:', error)
       }
     }
-  })
 
-  // Extract results from ultra-parallel execution
-  const wireframeSections = analysisResults.get('layout-wireframe')?.result || []
-  const promptPackData = analysisResults.get('build-prompt-pack')?.result || { legacyPromptPack: {}, aiPromptPack: null }
-  const { legacyPromptPack, aiPromptPack } = promptPackData
-  const aiInsights = analysisResults.get('ai-insights')?.result || null
-  const comprehensiveAnalysis = analysisResults.get('comprehensive-analysis')?.result || null
-  const designSystemSpec = analysisResults.get('design-system-spec')?.result || null
-  const brandAnalysis = analysisResults.get('brand-analysis')?.result || buildBrandAnalysis((generated.curatedTokens?.colors as any) || (generated.tokenGroups?.colors as any) || [])
+    // ULTRA-FAST: Single optimized transaction for all final operations
+    const tokenSetRecord = await profile('complete-scan-transaction-ultra-fast', () =>
+      completeScanTransaction({
+        siteId: siteRecord.id,
+        scanId: scanRecord.id,
+        versionNumber: newVersionNumber,
+        tokensJson: generated.tokenSet,
+        packJson: promptPack,
+        consensusScore: (generated.summary.confidence / 100).toFixed(2),
+        layoutDNA: layoutDNA || {},
+        archetypes: layoutDNA?.archetypes || [],
+        containers: layoutDNA?.containers || [],
+        gridFlex: layoutDNA?.gridSystem ? { system: layoutDNA.gridSystem } : null,
+        spacingScale: layoutDNA?.spacingBase ? { base: layoutDNA.spacingBase } : null,
+        cssSourceCount: cssArtifacts.length,
+        sha,
+        metricsJson: {
+          ...metricsSummary,
+          tokenQuality: generated.qualityInsights,
+        },
+      })
+    )
 
-  console.log(`⚡ Ultra-parallel analysis complete: ${analysisResults.size} tasks executed`)
+    console.log(
+      `⚡ Ultra-fast transaction completed: ${getDatabaseMetrics().totalQueries} queries, ${Math.round(getDatabaseMetrics().queryTime)}ms total`
+    )
 
-  // Augment layout with wireframe (if available)
-  if (wireframeSections.length > 0) {
-    layoutDNA.wireframe = { sections: wireframeSections }
-    augmentArchetypesWithWireframe(layoutDNA, wireframeSections)
-  }
+    // SERVERLESS OPTIMIZATION: Don't capture screenshots during scan
+    // Screenshots are captured separately by the frontend after scan completes
+    // This keeps scan responses fast and avoids serverless timeout issues
+    //
+    // In serverless environments (Vercel), background tasks are killed when the
+    // response is sent. Therefore, we return siteId and scanId in the response,
+    // and the frontend will call /api/screenshot to trigger async screenshot capture.
+    //
+    // This approach:
+    // 1. Keeps scan API fast (~5-15s instead of 30-45s)
+    // 2. Makes screenshots truly async and non-blocking
+    // 3. Works reliably in serverless environments
+    // 4. Allows frontend to show progress/loading states
 
-  // Assemble prompt pack
-  const promptPack = {
-    ...legacyPromptPack,
-    aiOptimized: aiPromptPack,
-    aiInsights,
-    comprehensiveAnalysis,
-    version: '2.1.0',
-    format: 'ai-lean-core-plus'
-  }
-
-  // PERFORMANCE OPTIMIZATION: Batch all final database writes into single transaction
-  const durationMs = Date.now() - startedAt
-  const sha = hashW3CTokenSet(generated.tokenSet)
-
-  metrics.record('persist_summary', {
-    cssSources: cssArtifacts.length
-  })
-  const metricsSummary = metrics.summary()
-
-  // ULTRA-FAST: Get previous token set with optimized query
-  const previousTokenSet = await profile('get-previous-token-set-ultra-fast', () =>
-    getLatestTokenSet(siteRecord.id)
-  )
-  const newVersionNumber = previousTokenSet ? (previousTokenSet.versionNumber || 0) + 1 : 1
-
-  // Calculate diff if there's a previous version
-  let tokenDiff = null
-  if (previousTokenSet && generated.tokenSet) {
-    try {
-      tokenDiff = compareTokenSets(previousTokenSet.tokensJson, generated.tokenSet)
-    } catch (error) {
-      console.warn('Failed to generate token diff:', error)
-    }
-  }
-
-  // ULTRA-FAST: Single optimized transaction for all final operations
-  const tokenSetRecord = await profile('complete-scan-transaction-ultra-fast', () =>
-    completeScanTransaction({
+    console.log('[scan-orchestrator] Screenshots will be captured by frontend after scan completes')
+    console.log('[scan-orchestrator] Frontend should call POST /api/screenshot with:', {
       siteId: siteRecord.id,
       scanId: scanRecord.id,
-      versionNumber: newVersionNumber,
-      tokensJson: generated.tokenSet,
-      packJson: promptPack,
-      consensusScore: (generated.summary.confidence / 100).toFixed(2),
-      layoutDNA: layoutDNA || {},
-      archetypes: layoutDNA?.archetypes || [],
-      containers: layoutDNA?.containers || [],
-      gridFlex: layoutDNA?.gridSystem ? { system: layoutDNA.gridSystem } : null,
-      spacingScale: layoutDNA?.spacingBase ? { base: layoutDNA.spacingBase } : null,
-      cssSourceCount: cssArtifacts.length,
-      sha,
-      metricsJson: {
-        ...metricsSummary,
-        tokenQuality: generated.qualityInsights
-      }
+      url: target.toString(),
     })
-  )
-
-  console.log(`⚡ Ultra-fast transaction completed: ${getDatabaseMetrics().totalQueries} queries, ${Math.round(getDatabaseMetrics().queryTime)}ms total`)
-
-  // SERVERLESS OPTIMIZATION: Don't capture screenshots during scan
-  // Screenshots are captured separately by the frontend after scan completes
-  // This keeps scan responses fast and avoids serverless timeout issues
-  //
-  // In serverless environments (Vercel), background tasks are killed when the
-  // response is sent. Therefore, we return siteId and scanId in the response,
-  // and the frontend will call /api/screenshot to trigger async screenshot capture.
-  //
-  // This approach:
-  // 1. Keeps scan API fast (~5-15s instead of 30-45s)
-  // 2. Makes screenshots truly async and non-blocking
-  // 3. Works reliably in serverless environments
-  // 4. Allows frontend to show progress/loading states
-
-  console.log('[scan-orchestrator] Screenshots will be captured by frontend after scan completes')
-  console.log('[scan-orchestrator] Frontend should call POST /api/screenshot with:', {
-    siteId: siteRecord.id,
-    scanId: scanRecord.id,
-    url: target.toString()
-  })
 
     const finalDurationMs = Date.now() - startedAt
     const memoryUsed = memoryLimit.used()
 
-    console.log(`[scan-orchestrator] Scan completed in ${finalDurationMs}ms, used ${Math.round(memoryUsed/1024/1024)}MB memory`)
+    console.log(
+      `[scan-orchestrator] Scan completed in ${finalDurationMs}ms, used ${Math.round(memoryUsed / 1024 / 1024)}MB memory`
+    )
 
     // Print ultra performance report
     ultraProfiler.printReport()
@@ -633,7 +717,7 @@ export async function runScanJob({
         confidence: generated.summary.confidence,
         completeness: generated.summary.completeness,
         reliability: generated.summary.reliability,
-        processingTime: Math.max(1, Math.round(finalDurationMs / 1000))
+        processingTime: Math.max(1, Math.round(finalDurationMs / 1000)),
       },
       tokens: generated.tokenGroups,
       curatedTokens: generated.curatedTokens,
@@ -649,7 +733,7 @@ export async function runScanJob({
         isNewVersion: !!previousTokenSet,
         previousVersionNumber: previousTokenSet?.versionNumber,
         changeCount: tokenDiff?.summary.totalChanges || 0,
-        diff: tokenDiff
+        diff: tokenDiff,
       },
       metadata: {
         cssSources: cssArtifacts.length,
@@ -661,14 +745,14 @@ export async function runScanJob({
         metrics: metricsSummary,
         tokenQuality: generated.qualityInsights,
         isLargeSite,
-        memoryUsedMb: Math.round(memoryUsed / 1024 / 1024)
+        memoryUsedMb: Math.round(memoryUsed / 1024 / 1024),
       },
       database: {
         siteId: siteRecord.id,
         scanId: scanRecord.id,
         tokenSetId: tokenSetRecord.id,
-        stored: true
-      }
+        stored: true,
+      },
     }
 
     // ULTRA-FAST: Cache the complete result for instant future retrieval
@@ -702,14 +786,14 @@ function buildBrandAnalysis(colors: { value: string }[]): {
     return {
       style: 'unknown',
       maturity: 'prototype',
-      consistency: 40
+      consistency: 40,
     }
   }
 
   return {
     style: inferStyle(colors),
     maturity: colors.length > 12 ? 'systematic' : colors.length > 6 ? 'mature' : 'developing',
-    consistency: Math.min(95, 60 + colors.length * 3)
+    consistency: Math.min(95, 60 + colors.length * 3),
   }
 }
 
@@ -723,7 +807,10 @@ function inferStyle(colors: { value: string }[]): string {
   return 'modern'
 }
 
-function augmentArchetypesWithWireframe(layoutDNA: ReturnType<typeof analyzeLayout>, sections: any[]): void {
+function augmentArchetypesWithWireframe(
+  layoutDNA: ReturnType<typeof analyzeLayout>,
+  sections: any[]
+): void {
   const archetypes = new Map(layoutDNA.archetypes.map((item) => [item.type, item.confidence]))
 
   sections.forEach((section: any, index: number) => {
@@ -734,7 +821,12 @@ function augmentArchetypesWithWireframe(layoutDNA: ReturnType<typeof analyzeLayo
       archetypes.set('navigation', 80)
     }
 
-    if (tag === 'header' && section.columns && section.columns >= 2 && !archetypes.has('marketing-hero')) {
+    if (
+      tag === 'header' &&
+      section.columns &&
+      section.columns >= 2 &&
+      !archetypes.has('marketing-hero')
+    ) {
       archetypes.set('marketing-hero', 75)
     }
 
@@ -750,11 +842,21 @@ function augmentArchetypesWithWireframe(layoutDNA: ReturnType<typeof analyzeLayo
       archetypes.set('marketing-footer', 60)
     }
 
-    if (description.includes('grid layout') && section.columns && section.columns >= 3 && !archetypes.has('feature-grid')) {
+    if (
+      description.includes('grid layout') &&
+      section.columns &&
+      section.columns >= 3 &&
+      !archetypes.has('feature-grid')
+    ) {
       archetypes.set('feature-grid', 70)
     }
 
-    if (description.includes('flex') && section.columns && section.columns > 3 && !archetypes.has('carousel')) {
+    if (
+      description.includes('flex') &&
+      section.columns &&
+      section.columns > 3 &&
+      !archetypes.has('carousel')
+    ) {
       archetypes.set('carousel', 55)
     }
 
@@ -763,5 +865,8 @@ function augmentArchetypesWithWireframe(layoutDNA: ReturnType<typeof analyzeLayo
     }
   })
 
-  layoutDNA.archetypes = Array.from(archetypes.entries()).map(([type, confidence]) => ({ type, confidence }))
+  layoutDNA.archetypes = Array.from(archetypes.entries()).map(([type, confidence]) => ({
+    type,
+    confidence,
+  }))
 }

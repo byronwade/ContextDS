@@ -6,29 +6,19 @@
  * No Postgres required.
  */
 
-import { collectStaticCss, type CssSource } from '@/lib/extractors/static-css'
-import { collectComputedCss } from '@/lib/extractors/computed-css'
-import { extractW3CTokens } from '@/lib/analyzers/w3c-tokenizer'
-import { curateTokens, type CuratedTokenSet } from '@/lib/analyzers/token-curator'
 import { generateTokenSet as generateTokenSetLegacy } from '@/lib/analyzers/basic-tokenizer'
-import { analyzeLayout } from '@/lib/analyzers/layout-inspector'
-import { buildPromptPack } from '@/lib/analyzers/prompt-pack'
 import { generateDesignMd } from '@/lib/analyzers/design-md-generator'
 import { generateDesignSkill } from '@/lib/analyzers/design-skill-generator'
+import { analyzeLayout } from '@/lib/analyzers/layout-inspector'
+import { buildPromptPack } from '@/lib/analyzers/prompt-pack'
+import { type CuratedTokenSet, curateTokens } from '@/lib/analyzers/token-curator'
+import { extractW3CTokens } from '@/lib/analyzers/w3c-tokenizer'
 import { buildDesignContractPackage } from '@/lib/contracts/design-contract-package'
-import {
-  analyzeWithWallace,
-  mergeCuratedSets,
-} from '@/lib/scanner/wallace-bridge'
-import {
-  isBrowserServiceConfigured,
-  scanWithBrowserService,
-} from '@/lib/scanner/browser-service'
-import {
-  getScan,
-  saveScan,
-  type StoredScanResult,
-} from '@/lib/storage/serverless-store'
+import { collectComputedCss } from '@/lib/extractors/computed-css'
+import { type CssSource, collectStaticCss } from '@/lib/extractors/static-css'
+import { isBrowserServiceConfigured, scanWithBrowserService } from '@/lib/scanner/browser-service'
+import { analyzeWithWallace, mergeCuratedSets } from '@/lib/scanner/wallace-bridge'
+import { getScan, type StoredScanResult, saveScan } from '@/lib/storage/serverless-store'
 
 export type SimpleScanInput = {
   url: string
@@ -90,9 +80,7 @@ function storageMeta(
     backend: {
       blob: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
       redis: Boolean(
-        process.env.UPSTASH_REDIS_REST_URL ||
-          process.env.REDIS_URL ||
-          process.env.KV_REST_API_URL
+        process.env.UPSTASH_REDIS_REST_URL || process.env.REDIS_URL || process.env.KV_REST_API_URL
       ),
       memory: true,
     },
@@ -267,10 +255,7 @@ export async function runSimpleScan({
       }
     }
 
-    if (
-      computedCss.length === 0 &&
-      process.env.DISABLE_COMPUTED_CSS !== '1'
-    ) {
+    if (computedCss.length === 0 && process.env.DISABLE_COMPUTED_CSS !== '1') {
       try {
         const computed = await collectComputedCss(target.toString(), {
           fastMode: true,
@@ -381,10 +366,7 @@ export async function runSimpleScan({
   const promptPack = buildPromptPack(
     {
       colors: curated.colors as never,
-      typography: [
-        ...curated.typography.families,
-        ...curated.typography.sizes,
-      ] as never,
+      typography: [...curated.typography.families, ...curated.typography.sizes] as never,
       spacing: curated.spacing as never,
     },
     layoutDNA

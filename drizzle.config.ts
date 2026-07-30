@@ -1,21 +1,19 @@
 import { defineConfig } from 'drizzle-kit'
 import * as dotenv from 'dotenv'
 
-// Load environment variables
+// Load environment variables (optional for tooling like Knip)
 dotenv.config({ path: '.env.local' })
 
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL environment variable is required')
-}
+const databaseUrl = process.env.DATABASE_URL || 'postgres://localhost:5432/designcontracts'
 
 export default defineConfig({
   schema: './lib/db/schema.ts',
   out: './lib/db/migrations',
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: databaseUrl,
   },
-  verbose: true,
+  verbose: Boolean(process.env.DATABASE_URL),
   strict: true,
   migrations: {
     prefix: 'supabase',

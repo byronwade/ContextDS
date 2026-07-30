@@ -8,10 +8,14 @@ import type { CuratedToken, CuratedTokenSet } from '@/lib/analyzers/token-curato
 
 type UniqueMap = Record<string, number>
 
-function uniqueEntries(bucket: { unique?: UniqueMap; total?: number } | undefined): Array<[string, number]> {
+function uniqueEntries(
+  bucket: { unique?: UniqueMap; total?: number } | undefined
+): Array<[string, number]> {
   if (!bucket?.unique || typeof bucket.unique !== 'object') return []
   return Object.entries(bucket.unique)
-    .filter(([value]) => value && value !== 'transparent' && value !== 'inherit' && value !== 'initial')
+    .filter(
+      ([value]) => value && value !== 'transparent' && value !== 'inherit' && value !== 'initial'
+    )
     .sort((a, b) => b[1] - a[1])
 }
 
@@ -55,7 +59,13 @@ function extractSpacingFromUnits(analysis: ReturnType<typeof analyze>): CuratedT
     const n = Number.parseFloat(value)
     if (!Number.isFinite(n) || n <= 0 || n > 128) continue
     spacing.push(
-      toToken(`space-${slug(value, String(++i))}`, value, usage, units?.total || entries.length, 'spacing')
+      toToken(
+        `space-${slug(value, String(++i))}`,
+        value,
+        usage,
+        units?.total || entries.length,
+        'spacing'
+      )
     )
     if (spacing.length >= 24) break
   }
@@ -83,53 +93,68 @@ export function analyzeWithWallace(css: string): {
   }
 
   const colorEntries = uniqueEntries(values.colors)
-  const colors = colorEntries.slice(0, 32).map(([value, usage], index) =>
-    toToken(
-      `color-${slug(value, String(index + 1))}`,
-      value,
-      usage,
-      values.colors?.total || colorEntries.length,
-      'color'
+  const colors = colorEntries
+    .slice(0, 32)
+    .map(([value, usage], index) =>
+      toToken(
+        `color-${slug(value, String(index + 1))}`,
+        value,
+        usage,
+        values.colors?.total || colorEntries.length,
+        'color'
+      )
     )
-  )
 
   const familyEntries = uniqueEntries(values.fontFamilies)
-  const families = familyEntries.slice(0, 10).map(([value, usage], index) =>
-    toToken(
-      `font-${slug(value.split(',')[0] || value, String(index + 1))}`,
-      value,
-      usage,
-      values.fontFamilies?.total || familyEntries.length,
-      'typography',
-      'family'
+  const families = familyEntries
+    .slice(0, 10)
+    .map(([value, usage], index) =>
+      toToken(
+        `font-${slug(value.split(',')[0] || value, String(index + 1))}`,
+        value,
+        usage,
+        values.fontFamilies?.total || familyEntries.length,
+        'typography',
+        'family'
+      )
     )
-  )
 
   const sizeEntries = uniqueEntries(values.fontSizes)
-  const sizes = sizeEntries.slice(0, 16).map(([value, usage], index) =>
-    toToken(
-      `size-${slug(value, String(index + 1))}`,
-      value,
-      usage,
-      values.fontSizes?.total || sizeEntries.length,
-      'typography',
-      'size'
+  const sizes = sizeEntries
+    .slice(0, 16)
+    .map(([value, usage], index) =>
+      toToken(
+        `size-${slug(value, String(index + 1))}`,
+        value,
+        usage,
+        values.fontSizes?.total || sizeEntries.length,
+        'typography',
+        'size'
+      )
     )
-  )
 
   const weightEntries = uniqueEntries(
-    (analysis.declarations as { byProperty?: Record<string, Array<{ value: string; count?: number }>> })
-      ?.byProperty?.['font-weight']
+    (
+      analysis.declarations as {
+        byProperty?: Record<string, Array<{ value: string; count?: number }>>
+      }
+    )?.byProperty?.['font-weight']
       ? {
           unique: Object.fromEntries(
             (
-              (analysis.declarations as { byProperty: Record<string, Array<{ value: string; count?: number }>> })
-                .byProperty['font-weight'] || []
+              (
+                analysis.declarations as {
+                  byProperty: Record<string, Array<{ value: string; count?: number }>>
+                }
+              ).byProperty['font-weight'] || []
             ).map((decl) => [decl.value, decl.count || 1])
           ),
           total: (
-            (analysis.declarations as { byProperty: Record<string, Array<{ value: string; count?: number }>> })
-              .byProperty['font-weight'] || []
+            (
+              analysis.declarations as {
+                byProperty: Record<string, Array<{ value: string; count?: number }>>
+              }
+            ).byProperty['font-weight'] || []
           ).reduce((sum, decl) => sum + (decl.count || 1), 0),
         }
       : undefined
@@ -151,37 +176,43 @@ export function analyzeWithWallace(css: string): {
       : []
 
   const radiusEntries = uniqueEntries(values.borderRadiuses)
-  const radius = radiusEntries.slice(0, 12).map(([value, usage], index) =>
-    toToken(
-      `radius-${slug(value, String(index + 1))}`,
-      value,
-      usage,
-      values.borderRadiuses?.total || radiusEntries.length,
-      'radius'
+  const radius = radiusEntries
+    .slice(0, 12)
+    .map(([value, usage], index) =>
+      toToken(
+        `radius-${slug(value, String(index + 1))}`,
+        value,
+        usage,
+        values.borderRadiuses?.total || radiusEntries.length,
+        'radius'
+      )
     )
-  )
 
   const shadowEntries = uniqueEntries(values.boxShadows)
-  const shadows = shadowEntries.slice(0, 10).map(([value, usage], index) =>
-    toToken(
-      `shadow-${slug(value, String(index + 1))}`,
-      value,
-      usage,
-      values.boxShadows?.total || shadowEntries.length,
-      'shadow'
+  const shadows = shadowEntries
+    .slice(0, 10)
+    .map(([value, usage], index) =>
+      toToken(
+        `shadow-${slug(value, String(index + 1))}`,
+        value,
+        usage,
+        values.boxShadows?.total || shadowEntries.length,
+        'shadow'
+      )
     )
-  )
 
   const motionEntries = uniqueEntries(values.animations)
-  const motion = motionEntries.slice(0, 10).map(([value, usage], index) =>
-    toToken(
-      `motion-${slug(value, String(index + 1))}`,
-      value,
-      usage,
-      values.animations?.total || motionEntries.length,
-      'motion'
+  const motion = motionEntries
+    .slice(0, 10)
+    .map(([value, usage], index) =>
+      toToken(
+        `motion-${slug(value, String(index + 1))}`,
+        value,
+        usage,
+        values.animations?.total || motionEntries.length,
+        'motion'
+      )
     )
-  )
 
   const spacing = extractSpacingFromUnits(analysis)
 

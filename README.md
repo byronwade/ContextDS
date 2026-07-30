@@ -80,17 +80,53 @@ DISABLE_COMPUTED_CSS=1
 
 ---
 
+## Tooling
+
+| Tool | Role |
+|------|------|
+| **Biome** | Fast format + lint |
+| **ESLint** (`eslint-config-next`) | Next.js Core Web Vitals rules |
+| **Knip** | Unused deps / exports / files |
+| **Vitest** | Unit tests (scanner, contracts) |
+| **Playwright** | E2E / a11y / stress |
+| **Bundle Analyzer** | `bun run analyze` |
+
+```bash
+bun run check          # typecheck + lint + unit + knip
+bun run test:unit
+bun run test:unit:coverage
+bun run knip
+bun run analyze        # @next/bundle-analyzer
+```
+
 ## Scripts
 
 ```bash
 bun dev
-bun run build
+bun run build          # Turbopack production build
 bun lint
 bun run test
 bun run scanner:up
 bun run scanner:logs
 bun run scanner:down
 ```
+
+## Performance (Next 16 canary-grade)
+
+Already enabled in `next.config.ts`:
+
+- React Compiler
+- Turbopack (dev + build) + filesystem cache for dev
+- `inlineCss` for critical CSS
+- Expanded `optimizePackageImports`
+- `serverExternalPackages` for Playwright / Wallace / Chromium
+- Stable `generateBuildId` (git SHA) for CDN reuse
+- Image AVIF/WebP + long cache TTL
+- Router `staleTimes` for snappy soft navigations
+- Typed routes
+- Vercel Analytics + Speed Insights
+
+`cacheComponents` is intentionally deferred until API routes migrate to `connection()` / `"use cache"`.
 
 ---
 

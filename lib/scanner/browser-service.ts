@@ -3,8 +3,8 @@
  * Set SCANNER_SERVICE_URL (e.g. http://localhost:4040 or https://scanner.designcontracts.sh)
  */
 
-import type { CssSource } from '@/lib/extractors/static-css'
 import { createHash } from 'node:crypto'
+import type { CssSource } from '@/lib/extractors/static-css'
 
 export type BrowserServiceResult = {
   url: string
@@ -15,11 +15,7 @@ export type BrowserServiceResult = {
   sourceCount: number
 }
 
-function createCssSource(
-  kind: CssSource['kind'],
-  content: string,
-  url?: string | null
-): CssSource {
+function createCssSource(kind: CssSource['kind'], content: string, url?: string | null): CssSource {
   const bytes = Buffer.byteLength(content, 'utf8')
   const sha = createHash('sha256').update(content).digest('hex')
   return {
@@ -79,11 +75,7 @@ export async function scanWithBrowserService(
     }
 
     const sources = (data.sources || []).map((source) =>
-      createCssSource(
-        (source.kind as CssSource['kind']) || 'computed',
-        source.content,
-        source.url
-      )
+      createCssSource((source.kind as CssSource['kind']) || 'computed', source.content, source.url)
     )
 
     return {

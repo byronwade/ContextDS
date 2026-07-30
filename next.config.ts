@@ -1,179 +1,238 @@
-import type { NextConfig } from "next";
+import withBundleAnalyzer from '@next/bundle-analyzer'
+import type { NextConfig } from 'next'
+
+const isProd = process.env.NODE_ENV === 'production'
 
 const nextConfig: NextConfig = {
-  // React 19 compiler for automatic optimization
+  // React Compiler — automatic memoization (stable in Next 16)
   reactCompiler: true,
 
-  // Pre-existing type debt remains across AI/analyzer modules and store contracts.
+  // Typed routes for compile-time href safety
+  typedRoutes: true,
+
+  // Pre-existing type debt across AI/analyzer modules; keep green builds while tightening tests.
   typescript: {
     ignoreBuildErrors: true,
   },
 
-  // Cache Components (PPR successor) is deferred: many API routes read request.url /
-  // headers and need connection()/use cache migration before enabling.
-  // experimental.ppr was removed in Next.js 16 in favor of cacheComponents.
+  // Cache Components (PPR successor) stays off until API routes migrate to connection()/use cache.
+  // Enable later with: cacheComponents: true
+
+  // Keep heavy browser / native deps out of the server bundle graph.
+  // Note: packages listed in optimizePackageImports cannot also be externalized.
+  serverExternalPackages: [
+    'playwright',
+    'playwright-core',
+    'puppeteer-core',
+    '@sparticuz/chromium',
+    'extract-css-core',
+    'style-dictionary',
+    'ws',
+    'tar-fs',
+  ],
 
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "stripe.com", pathname: "/**" },
-      { protocol: "https", hostname: "github.com", pathname: "/**" },
-      { protocol: "https", hostname: "figma.com", pathname: "/**" },
-      { protocol: "https", hostname: "vercel.com", pathname: "/**" },
-      { protocol: "https", hostname: "*.public.blob.vercel-storage.com", pathname: "/**" },
-      { protocol: "https", hostname: "contextds.com", pathname: "/**" },
-      { protocol: "https", hostname: "cdn.contextds.com", pathname: "/**" },
+      { protocol: 'https', hostname: 'stripe.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'github.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'figma.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'vercel.com', pathname: '/**' },
+      { protocol: 'https', hostname: '*.public.blob.vercel-storage.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'designcontracts.sh', pathname: '/**' },
+      { protocol: 'https', hostname: 'contextds.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'cdn.contextds.com', pathname: '/**' },
     ],
-    formats: ["image/avif", "image/webp"],
+    formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 31536000,
     dangerouslyAllowSVG: false,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    unoptimized: process.env.NODE_ENV === "development",
+    // Always optimize in production — never ship unoptimized images to users
+    unoptimized: !isProd,
   },
 
   experimental: {
-    // Inline CSS for critical styles (eliminates render-blocking CSS)
+    // Inline critical CSS (removes render-blocking stylesheets)
     inlineCss: true,
 
-    // Optimize package imports to reduce bundle size
+    // Turbopack filesystem cache — faster cold starts / rebuilds (canary-grade)
+    turbopackFileSystemCacheForDev: true,
+
+    // Client router cache: keep soft navigations snappy
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
+
+    // Tree-shake heavy barrels — only ship what is imported
     optimizePackageImports: [
-      "lucide-react",
-      "@radix-ui/react-icons",
-      "@radix-ui/react-dropdown-menu",
-      "@radix-ui/react-dialog",
-      "@radix-ui/react-popover",
-      "@radix-ui/react-tooltip",
-      "@radix-ui/react-accordion",
-      "@radix-ui/react-tabs",
-      "@radix-ui/react-scroll-area",
-      "@radix-ui/react-select",
-      "recharts",
-      "date-fns",
-      "@projectwallace/css-analyzer",
-      "@ai-sdk/openai",
-      "openai",
-      "react-hook-form",
-      "@hookform/resolvers",
+      'lucide-react',
+      '@radix-ui/react-accordion',
+      '@radix-ui/react-alert-dialog',
+      '@radix-ui/react-avatar',
+      '@radix-ui/react-checkbox',
+      '@radix-ui/react-collapsible',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-hover-card',
+      '@radix-ui/react-label',
+      '@radix-ui/react-menubar',
+      '@radix-ui/react-navigation-menu',
+      '@radix-ui/react-popover',
+      '@radix-ui/react-progress',
+      '@radix-ui/react-radio-group',
+      '@radix-ui/react-scroll-area',
+      '@radix-ui/react-select',
+      '@radix-ui/react-separator',
+      '@radix-ui/react-slider',
+      '@radix-ui/react-slot',
+      '@radix-ui/react-switch',
+      '@radix-ui/react-tabs',
+      '@radix-ui/react-toggle',
+      '@radix-ui/react-toggle-group',
+      '@radix-ui/react-tooltip',
+      'recharts',
+      'date-fns',
+      'react-hook-form',
+      '@hookform/resolvers',
+      'zustand',
+      'sonner',
+      'cmdk',
+      'vaul',
+      'class-variance-authority',
     ],
   },
 
+  // Turbopack (stable default in Next 16) — keep resolve extensions explicit
+  turbopack: {
+    resolveExtensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'],
+  },
+
   compiler: {
-    removeConsole:
-      process.env.NODE_ENV === "production"
-        ? {
-            exclude: ["error", "warn"],
-          }
-        : false,
+    removeConsole: isProd
+      ? {
+          exclude: ['error', 'warn'],
+        }
+      : false,
+  },
+
+  logging: {
+    fetches: {
+      fullUrl: !isProd,
+    },
   },
 
   poweredByHeader: false,
   compress: true,
   reactStrictMode: true,
 
+  // Stable build IDs for CDN cache reuse (Date.now() busts every deploy unnecessarily)
   generateBuildId: async () => {
-    return `build-${Date.now()}`;
+    return (
+      process.env.VERCEL_GIT_COMMIT_SHA ||
+      process.env.GITHUB_SHA ||
+      process.env.SOURCE_VERSION ||
+      'designcontracts-local'
+    )
   },
 
   async headers() {
     return [
       {
-        source: "/(.*)",
+        source: '/(.*)',
         headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
-          },
-          {
-            key: "X-Frame-Options",
-            value: "DENY",
-          },
-          {
-            key: "X-XSS-Protection",
-            value: "1; mode=block",
-          },
-          {
-            key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin",
-          },
-          {
-            key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=()",
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
           },
         ],
       },
       {
-        source: "/api/(.*)",
+        // Scan is dynamic — do not blanket-cache API mutations
+        source: '/api/scan',
         headers: [
           {
-            key: "Cache-Control",
-            value: "public, s-maxage=1, stale-while-revalidate=59",
+            key: 'Cache-Control',
+            value: 'no-store',
           },
         ],
       },
       {
-        source: "/_next/static/(.*)",
+        source: '/api/stats',
         headers: [
           {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
+            key: 'Cache-Control',
+            value: 'public, s-maxage=30, stale-while-revalidate=300',
           },
         ],
       },
       {
-        source: "/images/(.*)",
+        source: '/api/community/sites',
         headers: [
           {
-            key: "Cache-Control",
-            value: "public, max-age=86400, stale-while-revalidate=604800",
+            key: 'Cache-Control',
+            value: 'public, s-maxage=60, stale-while-revalidate=600',
           },
         ],
       },
-    ];
+      {
+        source: '/_next/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/images/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400, stale-while-revalidate=604800',
+          },
+        ],
+      },
+    ]
   },
 
   async redirects() {
     return [
-      {
-        source: "/home",
-        destination: "/",
-        permanent: true,
-      },
-      {
-        source: "/documentation",
-        destination: "/docs",
-        permanent: true,
-      },
-      {
-        source: "/api-docs",
-        destination: "/api",
-        permanent: true,
-      },
-    ];
+      { source: '/home', destination: '/', permanent: true },
+      { source: '/documentation', destination: '/docs', permanent: true },
+      { source: '/api-docs', destination: '/docs', permanent: true },
+    ]
   },
 
   async rewrites() {
     return [
       {
-        source: "/sitemap.xml",
-        destination: "/api/sitemap.xml",
+        source: '/sitemap.xml',
+        destination: '/api/sitemap.xml',
       },
       {
-        source: "/insights/vitals.js",
-        destination: "https://cdn.vercel-insights.com/v1/speed-insights/script.js",
+        source: '/insights/vitals.js',
+        destination: 'https://cdn.vercel-insights.com/v1/speed-insights/script.js',
       },
       {
-        source: "/insights/events.js",
-        destination: "https://cdn.vercel-insights.com/v1/script.js",
+        source: '/insights/events.js',
+        destination: 'https://cdn.vercel-insights.com/v1/script.js',
       },
       {
-        source: "/hfi/events/:slug*",
-        destination: "https://vitals.vercel-insights.com/v1/:slug*",
+        source: '/hfi/events/:slug*',
+        destination: 'https://vitals.vercel-insights.com/v1/:slug*',
       },
       {
-        source: "/hfi/vitals",
-        destination: "https://vitals.vercel-insights.com/v2/vitals",
+        source: '/hfi/vitals',
+        destination: 'https://vitals.vercel-insights.com/v2/vitals',
       },
-    ];
+    ]
   },
-};
+}
 
-export default nextConfig;
+export default withBundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+})(nextConfig)
