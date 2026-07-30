@@ -72,6 +72,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.24",
+    "@ai-sdk/react": "^4.0.45",
     "@hookform/resolvers": "^5.2.2",
     "@neondatabase/serverless": "^1.0.2",
     "@projectwallace/css-analyzer": "^7.6.0",

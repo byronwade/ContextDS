@@ -31,6 +31,10 @@ const features = [
     body: 'Vercel Blob + Upstash Redis (with memory fallback). No paid Postgres required for the scan path.',
   },
   {
+    title: 'Design Contract agent',
+    body: 'A ToolLoopAgent on Vercel AI Gateway that scans sites, reads the semantic graph, and hands you an installable contract pack via chat.',
+  },
+  {
     title: 'MCP-ready',
     body: 'scan_tokens / get_tokens expose the same curated packs and contract download URLs to Claude Code and other agents.',
   },
