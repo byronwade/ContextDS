@@ -111,7 +111,7 @@ export default function ScanClient() {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(1100px 560px at 8% -12%, oklch(0.9 0.04 190 / 0.5), transparent 55%), radial-gradient(900px 480px at 92% 0%, oklch(0.94 0.015 230 / 0.4), transparent 50%), linear-gradient(180deg, oklch(0.99 0.004 210) 0%, oklch(0.97 0.01 205) 48%, oklch(0.985 0.004 210) 100%)",
+            "radial-gradient(900px 480px at 50% -10%, oklch(0.45 0.04 185 / 0.16), transparent 55%), radial-gradient(700px 500px at 100% 10%, oklch(1 0 0 / 0.04), transparent 45%), linear-gradient(180deg, oklch(0.14 0.006 260) 0%, oklch(0.11 0.005 260) 100%)",
         }}
       />
 
@@ -127,40 +127,38 @@ export default function ScanClient() {
           {!showResults ? (
             <section className="relative flex flex-1 flex-col justify-center px-4 pb-20 pt-10 sm:px-8">
               <div className="mx-auto w-full max-w-3xl">
-                <p className="mb-4 animate-fade-in font-mono text-[11px] uppercase tracking-[0.28em] text-teal-800/80 dark:text-teal-300/80">
-                  designcontracts.sh
-                </p>
-                <h1 className="max-w-3xl animate-slide-in font-serif text-5xl leading-[0.95] tracking-tight sm:text-6xl md:text-7xl">
-                  Scan the design.
-                  <br />
-                  Keep the contract.
+                <h1 className="animate-slide-in font-serif text-[clamp(3rem,8vw,5.25rem)] leading-[0.92] tracking-[-0.03em] text-foreground">
+                  designcontracts
+                  <span className="font-mono text-[0.55em] tracking-normal text-[oklch(0.78_0.08_185)]">
+                    .sh
+                  </span>
                 </h1>
                 <p className="mt-5 max-w-xl animate-fade-in text-base text-muted-foreground sm:text-lg">
-                  The best path from a live site to an installable Design Contract —
-                  tokens, layout DNA, DESIGN.md, and agent enforcement in one pass.
+                  Scan a live site into an installable Design Contract — tokens, layout DNA,
+                  DESIGN.md, and agent enforcement.
                 </p>
 
                 <form
-                  className="mt-10"
+                  className="mt-10 max-w-xl"
                   onSubmit={(event) => {
                     event.preventDefault()
                     void handleScan(url, mode)
                   }}
                 >
-                  <div className="rounded-[1.4rem] border border-[color:var(--soft-border)] bg-card/80 p-2 shadow-[var(--soft-shadow)] backdrop-blur-sm">
+                  <div className="border border-[color:var(--soft-border)] bg-background/60 p-1.5 backdrop-blur-md sm:rounded-lg">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                       <Input
                         value={url}
                         onChange={(event) => setUrl(event.target.value)}
                         placeholder="stripe.com"
                         disabled={isScanning}
-                        className="h-12 flex-1 border-0 bg-transparent text-base shadow-none focus-visible:ring-0"
+                        className="h-11 flex-1 rounded-md border-0 bg-transparent text-base shadow-none focus-visible:ring-0"
                         aria-label="Website URL to scan"
                       />
                       <Button
                         type="submit"
                         disabled={!url.trim() || isScanning}
-                        className="h-12 gap-2 rounded-2xl bg-primary px-6 text-primary-foreground hover:opacity-90"
+                        className="h-11 gap-2 rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground hover:opacity-90"
                       >
                         {isScanning ? "Scanning…" : "Scan site"}
                         <ArrowRight className="h-4 w-4" />
@@ -181,10 +179,10 @@ export default function ScanClient() {
                         type="button"
                         onClick={() => setMode(option.id)}
                         className={cn(
-                          "rounded-xl border px-3 py-1.5 text-xs transition",
+                          "rounded-md border px-3 py-1.5 text-xs transition",
                           mode === option.id
-                            ? "border-teal-700/30 bg-teal-700/10 text-teal-900 dark:text-teal-200"
-                            : "border-[color:var(--soft-border)] bg-card/50 text-muted-foreground hover:text-foreground"
+                            ? "border-[oklch(0.78_0.08_185_/0.45)] bg-[oklch(0.78_0.08_185_/0.1)] text-foreground"
+                            : "border-[color:var(--soft-border)] bg-card/40 text-muted-foreground hover:text-foreground"
                         )}
                         title={option.hint}
                       >
@@ -195,13 +193,13 @@ export default function ScanClient() {
                 </form>
 
                 {error && (
-                  <p className="mt-4 text-sm text-red-700" role="alert">
+                  <p className="mt-4 text-sm text-destructive" role="alert">
                     {error}
                   </p>
                 )}
 
                 <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-                  <span className="inline-flex items-center gap-1.5 text-teal-800 dark:text-teal-300">
+                  <span className="inline-flex items-center gap-1.5 text-[oklch(0.78_0.08_185)]">
                     <Sparkles className="h-3.5 w-3.5" />
                     Installable contract pack
                   </span>
@@ -209,38 +207,36 @@ export default function ScanClient() {
                   <span>resolve → check → verify</span>
                 </div>
 
-                <div className="mt-10">
-                  <p className="mb-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Try
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {EXAMPLES.map((site) => (
+                <p className="mt-8 text-sm text-muted-foreground">
+                  Try{" "}
+                  {EXAMPLES.map((site, index) => (
+                    <span key={site}>
+                      {index > 0 ? (index === EXAMPLES.length - 1 ? ", or " : ", ") : null}
                       <button
-                        key={site}
                         type="button"
                         onClick={() => {
                           setUrl(site)
                           void handleScan(site, mode)
                         }}
                         disabled={isScanning}
-                        className="rounded-xl border border-[color:var(--soft-border)] bg-card/60 px-3 py-1.5 text-sm text-muted-foreground transition hover:border-teal-700/25 hover:text-foreground"
+                        className="text-foreground/90 underline decoration-[color:var(--soft-border)] underline-offset-4 transition hover:decoration-[oklch(0.78_0.08_185)]"
                       >
                         {site}
                       </button>
-                    ))}
-                  </div>
-                </div>
+                    </span>
+                  ))}
+                </p>
               </div>
             </section>
           ) : (
             <div className="flex flex-1 flex-col">
-              <div className="border-b border-[color:var(--soft-border)] bg-card/50 px-4 py-3 backdrop-blur sm:px-6">
+              <div className="border-b border-[color:var(--soft-border)] bg-background/70 px-4 py-3 backdrop-blur sm:px-6">
                 <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={handleBack}
-                    className="gap-2 rounded-xl"
+                    className="gap-2 rounded-md"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Scanner

@@ -3,11 +3,12 @@
 import { Suspense, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowRight } from "lucide-react"
+import { MarketingFooter } from "@/components/organisms/marketing-footer"
 import { VercelHeader } from "@/components/organisms/vercel-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
-const EXAMPLES = ["stripe.com", "linear.app", "vercel.com", "notion.so"]
+const EXAMPLES = ["stripe.com", "linear.app", "vercel.com", "cursor.com"]
 
 function HomePageContent() {
   const router = useRouter()
@@ -25,22 +26,23 @@ function HomePageContent() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
+      {/* Full-bleed atmospheric plane — Vercel dark density */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(1000px 520px at 12% -8%, oklch(0.9 0.04 190 / 0.55), transparent 58%), radial-gradient(800px 420px at 88% 0%, oklch(0.93 0.02 230 / 0.45), transparent 52%), linear-gradient(180deg, oklch(0.99 0.004 210) 0%, oklch(0.975 0.008 205) 50%, oklch(0.985 0.004 210) 100%)",
+            "radial-gradient(900px 480px at 50% -10%, oklch(0.45 0.04 185 / 0.18), transparent 55%), radial-gradient(700px 500px at 100% 20%, oklch(1 0 0 / 0.04), transparent 45%), linear-gradient(180deg, oklch(0.14 0.006 260) 0%, oklch(0.11 0.005 260) 55%, oklch(0.12 0.005 260) 100%)",
         }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.28]"
+        className="pointer-events-none absolute inset-0 opacity-[0.35] [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_72%)]"
         style={{
           backgroundImage:
-            "radial-gradient(oklch(0.4 0.02 230 / 0.08) 0.7px, transparent 0.7px)",
-          backgroundSize: "22px 22px",
-          maskImage: "radial-gradient(ellipse at center, black 35%, transparent 78%)",
+            "linear-gradient(oklch(1 0 0 / 0.04) 1px, transparent 1px), linear-gradient(90deg, oklch(1 0 0 / 0.04) 1px, transparent 1px)",
+          backgroundSize: "64px 64px",
+          animation: "grid-drift 28s linear infinite",
         }}
       />
 
@@ -49,85 +51,122 @@ function HomePageContent() {
 
         <main
           id="main-content"
-          className="flex flex-1 flex-col justify-center px-4 pb-20 pt-10 sm:px-6"
+          className="flex flex-1 flex-col"
           role="main"
           aria-label="designcontracts.sh home"
         >
-          <section className="mx-auto w-full max-w-3xl">
-            <h1 className="animate-slide-in font-serif text-5xl leading-[0.95] tracking-tight text-foreground sm:text-6xl md:text-7xl">
-              designcontracts
-              <span className="text-teal-800/80 dark:text-teal-300/90">.sh</span>
-            </h1>
-            <p className="mt-5 max-w-xl animate-fade-in text-base text-muted-foreground sm:text-lg">
-              Scan any public site. Download a Design Contract agents can resolve, check, and verify.
-            </p>
+          {/* Hero — brand first, one CTA, no cards */}
+          <section className="relative flex min-h-[calc(100svh-4rem)] flex-col justify-center px-4 pb-16 pt-10 sm:px-6">
+            <div className="mx-auto w-full max-w-3xl">
+              <h1 className="animate-slide-in font-serif text-[clamp(3.25rem,9vw,5.75rem)] leading-[0.92] tracking-[-0.03em] text-foreground">
+                designcontracts
+                <span className="font-mono text-[0.55em] tracking-normal text-[oklch(0.78_0.08_185)]">
+                  .sh
+                </span>
+              </h1>
+              <p className="mt-6 max-w-lg animate-fade-in text-base leading-relaxed text-muted-foreground sm:text-lg">
+                Scan any public site. Install a Design Contract agents can resolve, check, and
+                verify.
+              </p>
 
-            <form
-              className="mt-10 animate-slide-in"
-              onSubmit={(event) => {
-                event.preventDefault()
-                startScan(url)
-              }}
+              <form
+                className="mt-10 max-w-xl animate-slide-in"
+                style={{ animationDelay: "80ms" }}
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  startScan(url)
+                }}
+              >
+                <div className="flex flex-col gap-2 border border-[color:var(--soft-border)] bg-background/60 p-1.5 backdrop-blur-md sm:flex-row sm:items-center sm:rounded-lg">
+                  <Input
+                    value={url}
+                    onChange={(event) => setUrl(event.target.value)}
+                    placeholder="stripe.com"
+                    className="h-11 flex-1 rounded-md border-0 bg-transparent text-base shadow-none focus-visible:ring-0"
+                    aria-label="Website URL to scan"
+                  />
+                  <Button
+                    type="submit"
+                    disabled={!url.trim()}
+                    className="h-11 gap-2 rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground hover:opacity-90"
+                  >
+                    Scan site
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </form>
+
+              <p
+                className="mt-5 animate-fade-in text-sm text-muted-foreground"
+                style={{ animationDelay: "140ms" }}
+              >
+                Try{" "}
+                {EXAMPLES.map((site, index) => (
+                  <span key={site}>
+                    {index > 0 ? (index === EXAMPLES.length - 1 ? ", or " : ", ") : null}
+                    <button
+                      type="button"
+                      onClick={() => startScan(site)}
+                      className="text-foreground/90 underline decoration-[color:var(--soft-border)] underline-offset-4 transition hover:decoration-[oklch(0.78_0.08_185)]"
+                    >
+                      {site}
+                    </button>
+                  </span>
+                ))}
+              </p>
+            </div>
+
+            {/* Dominant product visual — edge-to-edge contract preview plane */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-[38%] overflow-hidden opacity-50 [mask-image:linear-gradient(to_top,black_10%,transparent_95%)]"
             >
-              <div className="flex flex-col gap-3 rounded-[1.35rem] border border-[color:var(--soft-border)] bg-card/80 p-2 shadow-[var(--soft-shadow)] backdrop-blur-sm sm:flex-row sm:items-center">
-                <Input
-                  value={url}
-                  onChange={(event) => setUrl(event.target.value)}
-                  placeholder="stripe.com"
-                  className="h-12 flex-1 border-0 bg-transparent text-base shadow-none focus-visible:ring-0"
-                  aria-label="Website URL to scan"
-                />
-                <Button
-                  type="submit"
-                  disabled={!url.trim()}
-                  className="h-12 gap-2 rounded-2xl bg-primary px-6 text-primary-foreground hover:opacity-90"
-                >
-                  Scan site
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </form>
+              <pre className="mx-auto max-w-5xl px-4 font-mono text-[11px] leading-5 text-muted-foreground sm:text-xs">
+                {`# DESIGN.md — stripe.com
+tokens.color.brand.primary → #635BFF
+tokens.type.display → sohne · 600
+layout.archetype → marketing-hero
+graph.role.cta → component.button.primary
 
-            <div className="mt-6 flex flex-wrap gap-2">
-              {EXAMPLES.map((site) => (
-                <button
-                  key={site}
-                  type="button"
-                  onClick={() => startScan(site)}
-                  className="rounded-xl border border-[color:var(--soft-border)] bg-card/60 px-3 py-1.5 text-sm text-muted-foreground transition hover:border-teal-700/25 hover:bg-card hover:text-foreground"
-                >
-                  {site}
-                </button>
-              ))}
+$ npx github:byronwade/Design install stripe-com
+→ resolve · check · verify`}
+              </pre>
             </div>
           </section>
 
-          <section className="mx-auto mt-16 grid w-full max-w-3xl gap-3 sm:grid-cols-3">
-            {[
-              {
-                title: "World-class scan",
-                body: "Static CSS + Project Wallace + optional Docker Playwright for CSS-in-JS.",
-              },
-              {
-                title: "Installable contract",
-                body: "DESIGN.md, AGENTS.md, Skill, and references in one ZIP.",
-              },
-              {
-                title: "Enforced forever",
-                body: "resolve → check → verify keeps every new component on-brand.",
-              },
-            ].map((item, index) => (
-              <div
-                key={item.title}
-                className="rounded-2xl border border-[color:var(--soft-border)] bg-card/70 p-5 shadow-[var(--soft-shadow)] animate-fade-in"
-                style={{ animationDelay: `${120 + index * 80}ms` }}
-              >
-                <h2 className="text-sm font-medium text-foreground">{item.title}</h2>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.body}</p>
-              </div>
-            ))}
+          {/* Below fold — one job: what you get */}
+          <section className="border-t border-[color:var(--soft-border)] px-4 py-20 sm:px-6">
+            <div className="mx-auto grid w-full max-w-5xl gap-12 sm:grid-cols-3 sm:gap-8">
+              {[
+                {
+                  title: "World-class scan",
+                  body: "Static CSS, Wallace extractors, optional Playwright for CSS-in-JS.",
+                },
+                {
+                  title: "Installable contract",
+                  body: "DESIGN.md, AGENTS.md, Skill, and references in one pack.",
+                },
+                {
+                  title: "Enforced forever",
+                  body: "resolve → check → verify keeps every new component on-brand.",
+                },
+              ].map((item, index) => (
+                <div
+                  key={item.title}
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 60}ms` }}
+                >
+                  <h2 className="text-sm font-medium tracking-tight text-foreground">
+                    {item.title}
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.body}</p>
+                </div>
+              ))}
+            </div>
           </section>
         </main>
+
+        <MarketingFooter />
       </div>
     </div>
   )
