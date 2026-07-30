@@ -64,7 +64,10 @@ export class MCPServer {
   async scanTokens(params: z.infer<typeof scanTokensSchema>, _userId?: string) {
     try {
       const domain = normalizeDomain(params.url)
-      const requestedMode = params.mode ?? 'fast'
+      const scannerReady =
+        Boolean(process.env.SCANNER_SERVICE_URL?.trim()) &&
+        process.env.DISABLE_COMPUTED_CSS !== '1'
+      const requestedMode = params.mode ?? (scannerReady ? 'accurate' : 'fast')
       const mode =
         requestedMode === 'accurate' && process.env.DISABLE_COMPUTED_CSS === '1'
           ? 'fast'

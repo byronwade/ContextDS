@@ -1,14 +1,23 @@
-"use client"
+'use client'
 
-import { useParams } from "next/navigation"
-import { useEffect } from "react"
-import { AppChrome } from "@/components/organisms/app-chrome"
-import { ScanResultsLayout } from "@/components/organisms/scan-results-layout"
-import { useScanStore } from "@/stores/scan-store"
+import { useParams } from 'next/navigation'
+import { useEffect, useRef } from 'react'
+import { AppChrome } from '@/components/organisms/app-chrome'
+import { ScanResultsLayout } from '@/components/organisms/scan-results-layout'
+import { storedScanToClientResult } from '@/lib/scanner/scan-client-result'
+import { useScanStore } from '@/stores/scan-store'
+
+type SiteApiResponse = {
+  hasData?: boolean
+  shouldRescan?: boolean
+  domain?: string
+  scan?: Parameters<typeof storedScanToClientResult>[0] | null
+}
 
 export default function SitePage() {
   const params = useParams()
   const domain = params.domain as string
+  const loadedFor = useRef<string | null>(null)
 
   const {
     isScanning: scanLoading,
@@ -17,43 +26,39 @@ export default function SitePage() {
     progress: scanProgress,
     scanId,
     startScan,
-    resetScan
+    resetScan,
+    setResult,
   } = useScanStore()
 
   useEffect(() => {
-    if (domain) {
-      // Check if domain exists in database first, then scan if needed
-      void checkExistingData(domain)
-    }
+    if (!domain || loadedFor.current === domain) return
+    loadedFor.current = domain
+    void loadSite(domain)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once per domain
   }, [domain])
 
-  const checkExistingData = async (domain: string) => {
+  const loadSite = async (target: string) => {
+    resetScan()
     try {
-      // Check if we have existing data for this domain
-      const response = await fetch(`/api/sites/${encodeURIComponent(domain)}`)
-
+      const response = await fetch(`/api/sites/${encodeURIComponent(target)}`)
       if (response.ok) {
-        const existingData = await response.json()
-        if (existingData.hasData) {
-          // Domain exists with data, but still trigger a fresh scan to update
-          startScan(domain)
-        } else {
-          // No existing data, start fresh scan
-          startScan(domain)
+        const existing = (await response.json()) as SiteApiResponse
+        if (existing.hasData && existing.scan) {
+          // Already scanned (e.g. from chat widget) — show results, do not rescan.
+          setResult(storedScanToClientResult(existing.scan))
+          return
         }
-      } else {
-        // No existing data, start fresh scan
-        startScan(domain)
       }
     } catch (error) {
-      console.error('Error checking existing data:', error)
-      // Fall back to scanning
-      startScan(domain)
+      console.error('Error loading cached site data:', error)
     }
+
+    // No cached contract — run a quality scan via the browser scanner when configured.
+    await startScan(target, 'accurate')
   }
 
   const handleCopyToken = (value: string) => {
-    navigator.clipboard.writeText(value)
+    void navigator.clipboard.writeText(value)
   }
 
   const handleExport = (format: string) => {
@@ -89,11 +94,13 @@ export default function SitePage() {
     URL.revokeObjectURL(url)
   }
 
-  const generateCSS = (tokens: any) => {
+  const generateCSS = (tokens: {
+    colors?: Array<{ value: string }>
+  }) => {
     let css = ':root {\n'
     if (tokens.colors) {
       css += '  /* Colors */\n'
-      tokens.colors.forEach((token: any, i: number) => {
+      tokens.colors.forEach((token, i) => {
         css += `  --color-${i + 1}: ${token.value};\n`
       })
     }
@@ -103,7 +110,7 @@ export default function SitePage() {
 
   const handleShareUrl = () => {
     const shareUrl = `${window.location.origin}/site/${encodeURIComponent(domain)}`
-    navigator.clipboard.writeText(shareUrl)
+    void navigator.clipboard.writeText(shareUrl)
   }
 
   return (
@@ -121,9 +128,8 @@ export default function SitePage() {
         onShare={handleShareUrl}
         onNewScan={() => {
           resetScan()
-          // Restart scan for current domain
           if (domain) {
-            checkExistingData(domain)
+            void startScan(domain, 'accurate')
           }
         }}
       />

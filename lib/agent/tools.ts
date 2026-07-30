@@ -5,8 +5,23 @@
 import { tool } from 'ai'
 import { z } from 'zod'
 import { contractDownloadPath, ensureAbsoluteUrl, normalizeDomain } from '@/lib/domain'
+import { isBrowserServiceConfigured } from '@/lib/scanner/browser-service'
 import { getScan, getSite } from '@/lib/storage/serverless-store'
 import { runSimpleScan } from '@/lib/workers/simple-scan'
+
+/** Prefer the Vercel/Docker browser scanner when wired; otherwise static CSS. */
+function defaultScanMode(): 'fast' | 'accurate' {
+  if (process.env.DISABLE_COMPUTED_CSS === '1') return 'fast'
+  return isBrowserServiceConfigured() ? 'accurate' : 'fast'
+}
+
+function resolveScanMode(requested?: 'fast' | 'accurate'): 'fast' | 'accurate' {
+  if (requested === 'fast') return 'fast'
+  if (requested === 'accurate') {
+    return process.env.DISABLE_COMPUTED_CSS === '1' ? 'fast' : 'accurate'
+  }
+  return defaultScanMode()
+}
 
 function slimTokens(tokens: unknown) {
   if (!tokens || typeof tokens !== 'object') return tokens
@@ -42,15 +57,18 @@ export const designContractTools = {
         .describe('Absolute or bare website URL, e.g. stripe.com or https://stripe.com'),
       mode: z
         .enum(['fast', 'accurate'])
-        .default('fast')
-        .describe('fast = static CSS; accurate = Docker Playwright when configured'),
+        .optional()
+        .describe(
+          'fast = static CSS only; accurate = Vercel/Docker Playwright browser capture when SCANNER_SERVICE_URL is set. Omit to auto-pick accurate when the scanner is configured.'
+        ),
       force: z.boolean().default(false).describe('Bypass the 24h cache and rescan'),
     }),
     execute: async ({ url, mode, force }) => {
       const absolute = ensureAbsoluteUrl(url)
+      const resolvedMode = resolveScanMode(mode)
       const result = await runSimpleScan({
         url: absolute,
-        mode: mode === 'accurate' && process.env.DISABLE_COMPUTED_CSS !== '1' ? 'accurate' : 'fast',
+        mode: resolvedMode,
         force,
       })
 
@@ -60,6 +78,8 @@ export const designContractTools = {
         url: result.url,
         summary: result.summary,
         mode: result.metadata.mode,
+        browserEngine: result.metadata.browserEngine ?? null,
+        scannerConfigured: isBrowserServiceConfigured(),
         tokens: slimTokens(result.curatedTokens ?? result.tokens),
         brand: result.brandAnalysis,
         layout: {
@@ -112,6 +132,8 @@ export const designContractTools = {
         site,
         scannedAt: scan.scannedAt,
         summary: scan.summary,
+        mode: scan.metadata?.mode,
+        browserEngine: scan.metadata?.browserEngine ?? null,
         tokens: slimTokens(scan.curatedTokens ?? scan.tokens),
         brand: scan.brandAnalysis,
         graphSummary:

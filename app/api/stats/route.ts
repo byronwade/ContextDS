@@ -1,5 +1,27 @@
 import { NextResponse } from 'next/server'
+import { getScannerServiceUrl, isBrowserServiceConfigured } from '@/lib/scanner/browser-service'
 import { getDirectoryStats, getStorageBackend } from '@/lib/storage/serverless-store'
+
+function scannerStatus() {
+  const url = getScannerServiceUrl()
+  let host: string | null = null
+  if (url) {
+    try {
+      host = new URL(url).host
+    } catch {
+      host = 'configured'
+    }
+  }
+  return {
+    configured: isBrowserServiceConfigured(),
+    host,
+    computedCssDisabled: process.env.DISABLE_COMPUTED_CSS === '1',
+    defaultAgentMode:
+      isBrowserServiceConfigured() && process.env.DISABLE_COMPUTED_CSS !== '1'
+        ? 'accurate'
+        : 'fast',
+  }
+}
 
 export async function GET() {
   try {
@@ -12,6 +34,7 @@ export async function GET() {
       {
         ...stats,
         storage: backend,
+        scanner: scannerStatus(),
       },
       {
         headers: {
@@ -32,6 +55,7 @@ export async function GET() {
         recentActivity: [],
         popularSites: [],
         storage: getStorageBackend(),
+        scanner: scannerStatus(),
       },
       { status: 200 }
     )

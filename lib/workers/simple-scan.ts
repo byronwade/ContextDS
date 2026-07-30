@@ -313,12 +313,15 @@ export async function runSimpleScan({
         const browser = await scanWithBrowserService(target.toString())
         if (browser?.sources?.length) {
           computedCss = browser.sources
-          browserEngine = 'docker-playwright'
+          const serviceUrl = process.env.SCANNER_SERVICE_URL || ''
+          browserEngine = /vercel\.app/i.test(serviceUrl)
+            ? 'vercel-chromium'
+            : 'docker-playwright'
           pageTitle = browser.title
           browserScreenshot = browser.screenshot ?? null
         }
       } catch (error) {
-        console.warn('[simple-scan] Docker scanner service failed, falling back:', error)
+        console.warn('[simple-scan] Browser scanner service failed, falling back:', error)
       }
     }
 

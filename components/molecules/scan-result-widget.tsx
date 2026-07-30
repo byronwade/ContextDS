@@ -36,6 +36,8 @@ export type ScanWidgetPayload = {
   } | null
   screenshots?: Array<{ label?: string; url: string }>
   mode?: string
+  browserEngine?: string | null
+  scannerConfigured?: boolean
 }
 
 type GraphSummary = {
@@ -132,6 +134,12 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
               <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                 Contract
                 {typeof confidence === 'number' ? ` · ${Math.round(confidence)}%` : ''}
+                {data.mode ? ` · ${data.mode}` : ''}
+                {data.browserEngine === 'vercel-chromium'
+                  ? ' · vercel scanner'
+                  : data.browserEngine
+                    ? ` · ${data.browserEngine}`
+                    : ''}
               </p>
               <p className="mt-0.5 truncate font-medium tracking-tight text-foreground">
                 {domain}
