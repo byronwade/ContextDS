@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react'
 import { ThemeToggle } from '@/components/atoms/theme-toggle'
+import { AppStatsHeader } from '@/components/molecules/app-stats-header'
 import { Button } from '@/components/ui/button'
 import { pushRecent, readRecents, type RecentDomain } from '@/lib/recents'
 import { cn } from '@/lib/utils'
@@ -303,7 +304,7 @@ export function AppShell({
       ) : null}
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-12 shrink-0 items-center gap-2 border-b border-[color:var(--soft-border)] px-3 md:hidden">
+        <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-3 md:hidden">
           <Button
             variant="ghost"
             size="icon-sm"
@@ -317,6 +318,9 @@ export function AppShell({
             <span className="font-mono text-[10px] text-primary">.sh</span>
           </Link>
         </header>
+
+        {/* Desktop + mobile: Redis-backed live platform stats */}
+        <AppStatsHeader />
 
         <main className="flex min-h-0 flex-1 flex-col overflow-hidden" id="main-content">
           {children}

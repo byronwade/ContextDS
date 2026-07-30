@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { trackStatEvent } from '@/lib/storage/platform-stats'
 import { getScan } from '@/lib/storage/serverless-store'
 import {
   buildDesignContractPackage,
@@ -83,6 +84,8 @@ export async function GET(request: NextRequest) {
 
   const zip = zipDesignContractPackage(pack)
   const fileName = `${pack.slug}-design-contract.zip`
+
+  void trackStatEvent('download')
 
   return new NextResponse(Buffer.from(zip), {
     status: 200,

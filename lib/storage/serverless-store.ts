@@ -11,6 +11,11 @@
 
 import { Redis } from '@upstash/redis'
 import { del, get, list, put } from '@vercel/blob'
+import {
+  readPlatformCounters,
+  trackStatEvent,
+  writeDirectorySnapshot,
+} from '@/lib/storage/platform-stats'
 
 export interface SiteIndexEntry {
   id: string
@@ -124,7 +129,6 @@ const INDEX_BLOB_PATH = 'index/sites.json'
 const SITE_KEY = (domain: string) => `contextds:site:${normalizeDomain(domain)}`
 const RECENT_KEY = 'contextds:recent'
 const POPULAR_KEY = 'contextds:popular'
-const STATS_KEY = 'contextds:stats'
 
 function normalizeDomain(domain: string): string {
   return domain
@@ -272,12 +276,12 @@ async function saveDirectoryToBlob(sites: SiteIndexEntry[]): Promise<void> {
 function countTokens(tokens: unknown): number {
   if (!tokens || typeof tokens !== 'object') return 0
   const groups = tokens as Record<string, unknown>
-  return Object.values(groups).reduce((sum, value) => {
+  return Object.values(groups).reduce<number>((sum, value) => {
     if (Array.isArray(value)) return sum + value.length
     if (value && typeof value === 'object') {
       return (
         sum +
-        Object.values(value as Record<string, unknown>).reduce((inner, item) => {
+        Object.values(value as Record<string, unknown>).reduce<number>((inner, item) => {
           return inner + (Array.isArray(item) ? item.length : 0)
         }, 0)
       )
@@ -428,12 +432,17 @@ export async function saveScan(result: StoredScanResult): Promise<SiteIndexEntry
       redis.set(SITE_KEY(domain), site),
       redis.zadd(RECENT_KEY, { score: scannedAt, member: domain }),
       redis.zadd(POPULAR_KEY, { score: site.popularity, member: domain }),
-      redis.hincrby(STATS_KEY, 'scans', 1),
-      redis.hset(STATS_KEY, {
-        sites: String(await redis.zcard(POPULAR_KEY)),
-        tokens: String(tokenCount),
-      }),
     ])
+    // Keep header counters fresh in Redis
+    await trackStatEvent('scan', 1)
+    const allForSnap = await listSites({ sort: 'recent', limit: 500 })
+    const tokensTotal = allForSnap.reduce((sum, entry) => sum + entry.tokenCount, 0)
+    const scansTotal = allForSnap.reduce((sum, entry) => sum + entry.scanCount, 0)
+    await writeDirectorySnapshot({
+      sites: allForSnap.length,
+      tokens: tokensTotal,
+      scans: scansTotal,
+    })
   } else {
     const directory = await loadDirectoryFromBlob()
     const next = directory.filter((entry) => entry.domain !== domain)
@@ -497,6 +506,13 @@ export async function getDirectoryStats(): Promise<{
   tokenSets: number
   averageConfidence: number
   categories: Record<string, number>
+  cacheHits: number
+  cacheMisses: number
+  libraryViews: number
+  contractOpens: number
+  downloads: number
+  chatMessages: number
+  agentScans: number
   recentActivity: Array<{ domain: string; scannedAt: string | null; tokens: number }>
   popularSites: Array<{
     domain: string
@@ -505,18 +521,19 @@ export async function getDirectoryStats(): Promise<{
     lastScanned: string | null
   }>
 }> {
-  const recent = await listSites({ sort: 'recent', limit: 10 })
-  const popular = await listSites({ sort: 'popular', limit: 10 })
-  const all = await listSites({ sort: 'recent', limit: 500 })
+  const [recent, popular, all, counters] = await Promise.all([
+    listSites({ sort: 'recent', limit: 10 }),
+    listSites({ sort: 'popular', limit: 10 }),
+    listSites({ sort: 'recent', limit: 500 }),
+    readPlatformCounters(),
+  ])
 
-  const tokens = all.reduce((sum, site) => sum + site.tokenCount, 0)
-  const scans = all.reduce((sum, site) => sum + site.scanCount, 0)
+  const tokensFromDir = all.reduce((sum, site) => sum + site.tokenCount, 0)
+  const scansFromDir = all.reduce((sum, site) => sum + site.scanCount, 0)
   const withConfidence = all.filter((site) => typeof site.confidence === 'number')
   const averageConfidence = withConfidence.length
-    ? Math.round(
-        withConfidence.reduce((sum, site) => sum + (site.confidence ?? 0), 0) /
-          withConfidence.length
-      )
+    ? withConfidence.reduce((sum, site) => sum + (site.confidence ?? 0), 0) /
+      withConfidence.length
     : 0
 
   const categories = all.reduce(
@@ -533,13 +550,34 @@ export async function getDirectoryStats(): Promise<{
     { colors: 0, typography: 0, spacing: 0, shadows: 0, radius: 0, motion: 0 }
   )
 
+  // Prefer Redis snapshot when present; fall back to directory aggregation.
+  const sites = counters && counters.sites > 0 ? counters.sites : all.length
+  const tokens = counters && counters.tokens > 0 ? counters.tokens : tokensFromDir
+  const scans = counters && counters.scans > 0 ? counters.scans : scansFromDir
+
+  // Keep Redis snapshot warm when we have directory data but empty counters.
+  if (getRedis() && all.length > 0 && (!counters || counters.sites === 0)) {
+    void writeDirectorySnapshot({
+      sites: all.length,
+      tokens: tokensFromDir,
+      scans: scansFromDir,
+    })
+  }
+
   return {
-    sites: all.length,
+    sites,
     tokens,
     scans,
-    tokenSets: all.length,
+    tokenSets: sites,
     averageConfidence,
     categories,
+    cacheHits: counters?.cacheHits ?? 0,
+    cacheMisses: counters?.cacheMisses ?? 0,
+    libraryViews: counters?.libraryViews ?? 0,
+    contractOpens: counters?.contractOpens ?? 0,
+    downloads: counters?.downloads ?? 0,
+    chatMessages: counters?.chatMessages ?? 0,
+    agentScans: counters?.agentScans ?? 0,
     recentActivity: recent.map((site) => ({
       domain: site.domain,
       scannedAt: site.lastScanned,

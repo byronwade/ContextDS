@@ -25,6 +25,7 @@ import { type CssSource, collectStaticCss } from '@/lib/extractors/static-css'
 import { isBrowserServiceConfigured, scanWithBrowserService } from '@/lib/scanner/browser-service'
 import { analyzeWithWallace, mergeCuratedSets } from '@/lib/scanner/wallace-bridge'
 import { uploadScreenshot } from '@/lib/storage/blob-storage'
+import { trackStatEvent } from '@/lib/storage/platform-stats'
 import { getScan, type StoredScanResult, saveScan } from '@/lib/storage/serverless-store'
 import { ProgressEmitter } from '@/lib/workers/progress-emitter'
 
@@ -289,6 +290,7 @@ export async function runSimpleScan({
       if (ageMs < 24 * 60 * 60 * 1000 && sameMode) {
         const cachedResult = fromCache(cached)
         progress.complete({ domain, cacheHit: true })
+        void trackStatEvent('cache_hit')
         return cachedResult
       }
     }

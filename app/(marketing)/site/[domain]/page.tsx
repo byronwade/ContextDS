@@ -8,6 +8,7 @@ import { PageCanvas } from '@/components/molecules/page-canvas'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { storedScanToClientResult } from '@/lib/scanner/scan-client-result'
+import { trackClientEvent } from '@/lib/analytics/track-client'
 import {
   handoffToScanResult,
   normalizeDomain,
@@ -47,6 +48,7 @@ export default function SitePage() {
   useEffect(() => {
     if (!domain || loadedFor.current === domain) return
     loadedFor.current = domain
+    trackClientEvent('contract_open')
     void hydrateSite(domain)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- load once per domain
   }, [domain])

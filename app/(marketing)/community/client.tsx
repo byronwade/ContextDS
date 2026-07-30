@@ -6,6 +6,7 @@ import { ArrowUp, Clock, ExternalLink, Search, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AppShell } from '@/components/organisms/app-shell'
+import { trackClientEvent } from '@/lib/analytics/track-client'
 import { useVotingStore } from '@/stores/voting-store'
 import { cn } from '@/lib/utils'
 
@@ -47,6 +48,10 @@ export default function CommunityClient() {
   useEffect(() => {
     loadVotes()
   }, [loadVotes])
+
+  useEffect(() => {
+    trackClientEvent('library_view')
+  }, [])
 
   useEffect(() => {
     let cancelled = false

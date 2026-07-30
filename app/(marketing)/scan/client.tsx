@@ -39,6 +39,7 @@ import {
   isScanResultToolName,
 } from '@/components/molecules/scan-result-widget'
 import type { DesignContractAgentUIMessage } from '@/lib/agent/design-contract-agent'
+import { trackClientEvent } from '@/lib/analytics/track-client'
 import { pushRecent } from '@/lib/recents'
 import { cn } from '@/lib/utils'
 
@@ -171,6 +172,7 @@ export function ScanChat() {
     const next = message.text?.trim()
     if (!next || busy) return
     setText('')
+    trackClientEvent('chat_message')
     // Best-effort: if the message looks like a bare domain, stash it in Recents.
     const maybeDomain = next
       .replace(/^https?:\/\//, '')

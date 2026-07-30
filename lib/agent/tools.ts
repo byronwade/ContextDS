@@ -72,6 +72,9 @@ export const designContractTools = {
         force,
       })
 
+      const { trackStatEvent } = await import('@/lib/storage/platform-stats')
+      void trackStatEvent('agent_scan')
+
       return {
         status: result.cacheHit ? 'cached' : 'fresh',
         domain: result.domain,

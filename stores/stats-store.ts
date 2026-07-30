@@ -1,146 +1,86 @@
 import { create } from 'zustand'
-import { devtools } from 'zustand/middleware'
 
-export interface StatsData {
+export interface PlatformStats {
   sites: number
   tokens: number
+  avgConfidence: number
   scans: number
-  tokenSets: number
-  averageConfidence: number
-  categories: Record<string, number>
-  recentActivity: Array<{
-    domain: string | null
-    scannedAt: string | null
-    tokens: number
-  }>
-  popularSites: Array<{
-    domain: string | null
-    popularity: number | null
-    tokens: number
-    lastScanned: string | null
-  }>
+  cacheHits: number
+  cacheMisses: number
+  libraryViews: number
+  contractOpens: number
+  downloads: number
+  chatMessages: number
+  agentScans: number
+  lastUpdated: string
+  storage: {
+    redis: boolean
+    blob: boolean
+    mode: string
+  }
 }
 
 interface StatsState {
-  stats: StatsData | null
-  loading: boolean
+  stats: PlatformStats | null
+  isLoading: boolean
   error: string | null
-  lastUpdated: number | null
-  etag: string | null
-
-  // Actions
+  fetchStats: () => Promise<void>
+  /** @deprecated Use fetchStats */
   loadStats: () => Promise<void>
-  refreshStats: () => Promise<void>
-  setStats: (stats: StatsData) => void
+  startPolling: (intervalMs?: number) => () => void
 }
 
-export const useStatsStore = create<StatsState>()(
-  devtools(
-    (set, get) => ({
-      stats: null,
-      loading: false,
-      error: null,
-      lastUpdated: null,
-      etag: null,
+const EMPTY_STATS: PlatformStats = {
+  sites: 0,
+  tokens: 0,
+  avgConfidence: 0,
+  scans: 0,
+  cacheHits: 0,
+  cacheMisses: 0,
+  libraryViews: 0,
+  contractOpens: 0,
+  downloads: 0,
+  chatMessages: 0,
+  agentScans: 0,
+  lastUpdated: new Date(0).toISOString(),
+  storage: { redis: false, blob: false, mode: 'memory' },
+}
 
-      loadStats: async () => {
-        // Check loading state and set atomically
-        const currentState = get()
+export const useStatsStore = create<StatsState>((set, get) => {
+  const fetchStats = async () => {
+    if (get().isLoading) return
 
-        console.log('📊 [StatsStore] loadStats called', {
-          hasStats: !!currentState.stats,
-          loading: currentState.loading,
-          etag: currentState.etag
-        })
+    set({ isLoading: true, error: null })
 
-        // Skip if already loading
-        if (currentState.loading) {
-          console.log('⚠️ [StatsStore] Already loading, skipping')
-          return
-        }
+    try {
+      const response = await fetch('/api/stats', { cache: 'no-store' })
+      if (!response.ok) {
+        throw new Error('Failed to fetch stats')
+      }
 
-        set({ loading: true, error: null })
+      const data = (await response.json()) as PlatformStats
+      set({ stats: data, isLoading: false })
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Unknown error',
+        isLoading: false,
+        stats: get().stats ?? EMPTY_STATS,
+      })
+    }
+  }
 
-        try {
-          // Get fresh state each time we need it
-          const { etag } = get()
-
-          // Use ETag for conditional requests (304 Not Modified)
-          const headers: HeadersInit = {}
-          if (etag) {
-            headers['If-None-Match'] = etag
-            console.log('🔖 [StatsStore] Using ETag:', etag)
-          }
-
-          console.log('🌐 [StatsStore] Fetching /api/stats')
-          const response = await fetch('/api/stats', { headers })
-          console.log('✅ [StatsStore] Response:', response.status, response.statusText)
-
-          // 304 Not Modified - data hasn't changed, use cached version
-          if (response.status === 304) {
-            // Get fresh state to check for stats
-            const { stats } = get()
-            if (stats) {
-              set({ loading: false })
-              return
-            }
-            // If no cached stats, treat as error and try without ETag
-            throw new Error('304 with no cached data')
-          }
-
-          if (!response.ok) throw new Error(`HTTP ${response.status}`)
-
-          const data = await response.json()
-          const newEtag = response.headers.get('etag')
-
-          // Atomic update
-          set({
-            stats: data,
-            loading: false,
-            lastUpdated: Date.now(),
-            etag: newEtag,
-            error: null // Clear any previous errors
-          })
-        } catch (error) {
-          set({
-            error: error instanceof Error ? error.message : 'Failed to load stats',
-            loading: false,
-          })
-        }
-      },
-
-      refreshStats: async () => {
-        // Force refresh (ignore ETag)
-        set({ loading: true, error: null })
-
-        try {
-          const response = await fetch('/api/stats')
-          if (!response.ok) throw new Error(`HTTP ${response.status}`)
-
-          const data = await response.json()
-          const newEtag = response.headers.get('etag')
-
-          set({
-            stats: data,
-            loading: false,
-            lastUpdated: Date.now(),
-            etag: newEtag,
-          })
-        } catch (error) {
-          set({
-            error: error instanceof Error ? error.message : 'Failed to load stats',
-            loading: false,
-          })
-        }
-      },
-
-      setStats: (stats) => {
-        set({
-          stats,
-          lastUpdated: Date.now(),
-        })
-      },
-    }),
-    { name: 'StatsStore' }
-  )
-)
+  return {
+    stats: null,
+    isLoading: false,
+    error: null,
+    fetchStats,
+    loadStats: fetchStats,
+    startPolling: (intervalMs = 15_000) => {
+      void get().fetchStats()
+      const id = window.setInterval(() => {
+        void get().fetchStats()
+      }, intervalMs)
+      return () => window.clearInterval(id)
+    },
+  }
+})
