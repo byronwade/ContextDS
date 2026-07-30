@@ -11,6 +11,8 @@ import {
 } from '../db'
 import { eq, desc, and, or, sql } from 'drizzle-orm'
 import { intelligentCache } from '../cache/intelligent-cache'
+import { getScan, getSite } from '../storage/serverless-store'
+import { runSimpleScan } from '../workers/simple-scan'
 
 // Dynamic imports for AI features to prevent build-time errors
 
@@ -53,152 +55,78 @@ export const voteTokenSchema = z.object({
   note: z.string().optional()
 })
 
-// MCP Tool Implementations with Advanced AI
+// MCP Tool Implementations — serverless store (Blob + Redis), no Postgres required
 export class MCPServer {
-  async scanTokens(params: z.infer<typeof scanTokensSchema>, userId?: string) {
+  async scanTokens(params: z.infer<typeof scanTokensSchema>, _userId?: string) {
     try {
       const domain = new URL(params.url).hostname
-
-      // Check cache first
-      const cacheKey = `mcp-scan:${domain}:${JSON.stringify(params)}`
-      const cached = await intelligentCache.safeGet(cacheKey, 'mcp-responses')
-
-      if (cached) {
-        return {
-          status: 'cached',
-          site: { domain },
-          token_set: cached.tokenSet,
-          pack: cached.promptPack,
-          ai_metadata: cached.aiMetadata,
-          last_scanned: cached.timestamp
-        }
-      }
-
-      // Determine scan quality based on parameters
-      const quality = params.prettify ? 'premium' : 'standard'
-      const budget = quality === 'premium' ? 0.25 : 0.15
-
-      // Execute advanced AI-powered scan with dynamic import
-      let result
-      try {
-        const { scanAndAnalyze } = await import('../ai/ai-orchestrator')
-        result = await scanAndAnalyze(
-          params.url,
-          {
-            budget,
-            quality,
-            includeAudit: quality === 'premium',
-            priority: 'normal'
-          }
-        )
-      } catch (error) {
-        // Fallback to basic scan without AI features
-        result = {
-          status: 'completed',
-          tokens: { colors: [], typography: [], spacing: [] },
-          summary: { tokensExtracted: 0, confidence: 0 },
-          error: 'AI features unavailable'
-        }
-      }
-
-      // Store in database
-      const site = await this.upsertSite(domain, result)
-      await this.storeScanResult(site.id, result, userId)
-
-      // Cache result for future requests
-      await intelligentCache.safeSet(cacheKey, {
-        tokenSet: result.tokenSet,
-        promptPack: result.promptPack,
-        aiMetadata: result.aiMetadata,
-        timestamp: new Date().toISOString()
-      }, 'mcp-responses', {
-        strategy: 'mcp-scan-cache',
-        quality: result.confidence,
-        tags: ['mcp', 'scan', domain]
+      const result = await runSimpleScan({
+        url: params.url,
+        prettify: params.prettify,
+        mode: process.env.DISABLE_COMPUTED_CSS === '1' ? 'fast' : 'fast',
+        force: false,
       })
 
       return {
-        status: 'fresh',
+        status: result.cacheHit ? 'cached' : 'fresh',
         site: { domain },
-        token_set: result.tokenSet,
+        token_set: result.tokens,
+        curated_tokens: result.curatedTokens,
         pack: result.promptPack,
         layout_dna: result.layoutDNA,
         brand_analysis: result.brandAnalysis,
-        accessibility: result.accessibilityReport,
-        ai_metadata: {
-          models_used: result.aiMetadata.modelsUsed,
-          total_cost: result.aiMetadata.totalCost,
-          confidence: result.confidence,
-          quality_score: result.reliability
-        },
-        extraction_metadata: result.extractionMetadata,
-        last_scanned: new Date().toISOString()
+        storage: result.storage,
+        last_scanned: new Date().toISOString(),
+        summary: result.summary,
       }
-
     } catch (error) {
-      console.error('Advanced scan failed:', error)
+      console.error('Scan failed:', error)
       return {
         status: 'failed',
-        error: error instanceof Error ? error.message : 'Advanced scanning failed'
+        error: error instanceof Error ? error.message : 'Scanning failed',
       }
     }
   }
 
   async getTokens(params: z.infer<typeof getTokensSchema>) {
+    const domain = new URL(params.url).hostname
     try {
-      const domain = new URL(params.url).hostname
-      console.log(`🔍 Getting tokens for ${domain} from optimized database`)
+      const [site, scan] = await Promise.all([getSite(domain), getScan(domain)])
 
-      // Use optimized site lookup with caching
-      const siteData = await this.getSiteWithCache(domain)
-
-      if (!siteData) {
+      if (!scan) {
         return {
-          error: `No site found for domain: ${domain}. Try scanning first.`,
-          suggestion: `Use scan_tokens("${params.url}") to extract tokens first`
+          error: `No tokens found for domain: ${domain}. Try scanning first.`,
+          suggestion: `Use scan_tokens("${params.url}") to extract tokens first`,
         }
       }
 
-      // Use optimized token lookup with caching
-      const tokenData = await this.getTokensWithCache(siteData.id)
-
-      if (!tokenData) {
-        return {
-          error: `No tokens found for ${domain}. The site exists but hasn't been scanned yet.`,
-          suggestion: `Use scan_tokens("${params.url}") to extract design tokens`
-        }
-      }
-
-      // Calculate token statistics for metadata
-      const tokenStats = this.calculateTokenStats(tokenData.tokensJson)
-
-      console.log(`✅ Retrieved ${tokenStats.totalTokens} tokens for ${domain} (${tokenData.consensusScore}% confidence)`)
+      const tokenStats = this.calculateTokenStats(scan.tokens)
 
       return {
-        token_set: tokenData.tokensJson,
-        pack: tokenData.packJson,
-        consensus: parseFloat(tokenData.consensusScore || '0'),
-        last_scanned: tokenData.createdAt.toISOString(),
+        token_set: scan.tokens,
+        curated_tokens: scan.curatedTokens,
+        pack: scan.promptPack,
+        layout_dna: scan.layoutDNA,
+        consensus: scan.summary.confidence,
+        last_scanned: scan.scannedAt,
         statistics: {
-          totalTokens: tokenStats.totalTokens,
+          totalTokens: tokenStats.totalTokens || scan.summary.tokensExtracted,
           categories: tokenStats.categories,
-          confidence: parseFloat(tokenData.consensusScore || '0'),
-          lastUpdated: tokenData.createdAt.toISOString()
+          confidence: scan.summary.confidence,
+          lastUpdated: scan.scannedAt,
         },
         metadata: {
-          siteId: siteData.id,
-          tokenSetId: tokenData.id,
-          cached: false,
-          queryTime: Date.now() // Would track actual query time
-        }
+          siteId: site?.id ?? `site_${domain}`,
+          tokenSetId: scan.metadata.tokenSetId,
+          cached: true,
+        },
       }
-
     } catch (error) {
-      console.error('❌ Get tokens error:', error)
+      console.error('Get tokens error:', error)
       return {
         error: error instanceof Error ? error.message : 'Failed to retrieve tokens',
         domain,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       }
     }
   }
@@ -229,27 +157,15 @@ export class MCPServer {
   async layoutProfile(params: z.infer<typeof layoutProfileSchema>) {
     try {
       const domain = new URL(params.url).hostname
+      const scan = await getScan(domain)
 
-      const site = await db.query.sites.findFirst({
-        where: (sites, { eq }) => eq(sites.domain, domain),
-        with: {
-          layoutProfiles: {
-            orderBy: (profiles, { desc }) => desc(profiles.createdAt),
-            limit: 1
-          }
-        }
-      })
-
-      if (!site || site.layoutProfiles.length === 0) {
+      if (!scan?.layoutDNA) {
         return {
-          error: 'No layout profile found for this site.'
+          error: 'No layout profile found for this site. Run scan_tokens first.',
         }
       }
 
-      const profile = site.layoutProfiles[0]
-
-      return profile.profileJson
-
+      return scan.layoutDNA
     } catch (error) {
       console.error('Layout profile error:', error)
       return {
@@ -260,50 +176,12 @@ export class MCPServer {
 
   async researchCompanyArtifacts(params: z.infer<typeof researchCompanyArtifactsSchema>) {
     try {
-      const domain = new URL(params.url).hostname
-
-      // Check for existing artifacts
-      const site = await db.query.sites.findFirst({
-        where: (sites, { eq }) => eq(sites.domain, domain),
-        with: {
-          orgArtifacts: true
-        }
-      })
-
-      if (site?.orgArtifacts.length) {
-        const artifacts = site.orgArtifacts[0]
-        return {
-          docs: artifacts.docsUrls || [],
-          storybook: artifacts.storybookUrl,
-          figma: artifacts.figmaUrl,
-          github: artifacts.githubOrg ? {
-            org: artifacts.githubOrg,
-            repos: artifacts.reposJson || []
-          } : undefined
-        }
-      }
-
-      // Research new artifacts (simplified implementation)
-      const artifacts = await this.discoverDesignSystemArtifacts(params.url, params.github_org)
-
-      // Store results
-      if (site) {
-        await db.insert(orgArtifacts).values({
-          siteId: site.id,
-          docsUrls: artifacts.docs,
-          storybookUrl: artifacts.storybook,
-          figmaUrl: artifacts.figma,
-          githubOrg: artifacts.github?.org,
-          reposJson: artifacts.github?.repos
-        })
-      }
-
-      return artifacts
-
+      // Ephemeral discovery — no Postgres persistence required
+      return await this.discoverDesignSystemArtifacts(params.url, params.github_org)
     } catch (error) {
       console.error('Research artifacts error:', error)
       return {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       }
     }
   }

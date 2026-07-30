@@ -1,5 +1,5 @@
 # ContextDS — AI-Readable Design System Token Extractor
-_Fast, faithful “Wallace-parity+” token extraction with multi-page Layout DNA, AI Prompt Packs, MCP tools, Supabase directory, Drizzle ORM, Zustand state, and a shadcn-style UI. Also: we’re fun at parties._
+_Scan any public site → extract design tokens → store them on free serverless infra (Vercel Blob + Upstash Redis). No paid database required._
 
 ---
 
@@ -10,8 +10,7 @@ _Fast, faithful “Wallace-parity+” token extraction with multi-page Layout DN
 - [Tech Stack](#tech-stack)
 - [Quick Start](#quick-start)
 - [Environment Variables](#environment-variables)
-- [Database & Drizzle](#database--drizzle)
-- [Supabase Policies (RLS)](#supabase-policies-rls)
+- [Storage (no paid database)](#storage-no-paid-database)
 - [Running the App](#running-the-app)
 - [Directory & Submissions](#directory--submissions)
 - [Scanning & Tokenization (Wallace parity)](#scanning--tokenization-wallace-parity)
@@ -41,7 +40,7 @@ ContextDS turns **any public website** into an **AI-readable design system**. We
 4) **Organize** it all into a strict **AI Prompt Pack** so agents (Claude Code, etc.) can _obey_ the system instead of guessing,  
 5) **Publish** a browsable **Directory** and expose everything via **MCP tools** and **HTTP API**.
 
-Think **Project Wallace** design-tokens analyzer—but extended, productionized for agents, and bundled into a Next.js app with Supabase persistence.
+Think **Project Wallace** design-tokens analyzer—but simplified for serverless: scan → tokenize → persist as JSON on **Vercel Blob**, with an **Upstash Redis** index for recent/popular sites.
 
 ---
 
@@ -49,7 +48,7 @@ Think **Project Wallace** design-tokens analyzer—but extended, productionized 
 - **Wallace-parity design tokens**: Colors, Typography (family/size/line-height), Gradients, Shadows, Radii, Motion (duration/easing), plus Spacing scale inference.  
 - **Multi-page Layout DNA**: Container widths, grid/flex ratios, column counts, spacing base (4/8-px), radii/shadow taxonomies, motion norms, archetype detection (hero, grids, pricing, docs/blog).  
 - **AI Prompt Pack**: Provider-agnostic JSON guidance (instructions, mapping hints, pitfalls), generated via **Vercel AI Gateway**.  
-- **Directory & Community**: Supabase-backed gallery of scanned sites, submissions, votes (correct/alias/duplicate/low-contrast), consensus scoring.  
+- **Directory & Community**: Free serverless gallery (Blob + Redis) of scanned sites.  
 - **Remix Studio**: Blend 2–5 token sets under constraints (AAA contrast, preserve hue, typography scale), with AI reconciliation.  
 - **MCP Tools + HTTP API**: “Just plug an agent in.”  
 - **$9.95/month** flat plan with generous quotas.
@@ -92,121 +91,82 @@ Think **Project Wallace** design-tokens analyzer—but extended, productionized 
 ---
 
 ## Tech Stack
-- **Next.js (App Router)** + **TypeScript**
-- **Tailwind** + **shadcn-style** UI (clean, accessible, fast)
-- **Zustand** for UI state
-- **Supabase** (Postgres, Auth, Storage, RLS)
-- **Drizzle ORM** (schema + migrations)
-- **Headless Chromium** (computed styles, CSS-in-JS)
-- **Project Wallace-style analyzers** (MIT-licensed extraction/analyzer behavior)
-- **Vercel AI Gateway** (provider-agnostic LLM prompting)
+- **Next.js 16 (App Router)** + **React 19** + **TypeScript**
+- **Tailwind** + **shadcn-style** UI
+- **Zustand** for scan UI state
+- **Vercel Blob** — durable scan JSON (free Hobby tier)
+- **Upstash Redis** — directory index + rate limits (free tier)
+- **In-memory fallback** when Blob/Redis unset (local/dev)
+- **Headless Chromium** (optional computed CSS; off by default on Hobby)
+- **Project Wallace-style analyzers** (MIT)
+- **Vercel AI Gateway** (optional prompt packs)
 - **MCP server** (Claude Code-ready tools)
 
 ---
 
 ## Quick Start
 Prereqs:
-- Node 20+
-- pnpm 9+
-- A Supabase project
-- (Optional) Vercel AI Gateway
+- Node 22+
+- Bun (recommended)
+- Free Vercel Blob + Upstash Redis for durable storage (optional locally)
 
 ```bash
 # 1) Install deps
-pnpm install
+bun install
 
 # 2) Prepare environment
 cp .env.example .env.local
-# Fill with your Supabase and Gateway values (see below)
+# Add BLOB_READ_WRITE_TOKEN + UPSTASH_REDIS_REST_* for durable storage
+# Without them, scans work in-memory for the current process
 
-# 3) Generate & run Drizzle migrations
-pnpm drizzle:generate
-pnpm drizzle:migrate
-
-# 4) Dev server
-pnpm dev
-# open http://localhost:3000
-
-# 5) Start MCP server (optional, for agents)
-pnpm mcp
-# In Claude Code:
-# claude mcp add contextds -- npx -y tsx mcp/server.ts
+# 3) Dev server — no database migrate step
+bun dev
+# open http://localhost:3000/scan
 ```
 
 ---
 
 ## Environment Variables
-Create `.env.local`:
+Create `.env.local` (see `.env.example`):
 
 ```ini
-# App
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
-NODE_ENV=development
+# Durable serverless storage (free tiers)
+BLOB_READ_WRITE_TOKEN=
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
 
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOi...   # server-side ONLY, never exposed to client
+# Optional: skip Playwright (recommended on Hobby)
+DISABLE_COMPUTED_CSS=1
 
-# Crawl/Scan policy
-CONTEXTDS_ALLOWED_HOSTS=                 # comma-separated; empty allows all (unless strict below)
-CONTEXTDS_STRICT_ALLOWLIST=0             # 1 to block non-allowlisted hosts
-CONTEXTDS_INCLUDE_SOURCES=0              # 1 to include raw CSS source URLs in responses
+# Optional AI enrichment
+AI_GATEWAY_API_KEY=
 
-# Vercel AI Gateway
-VERCEL_AI_GATEWAY_URL=https://gateway.ai.vercel.com/api/v1/generate
-VERCEL_AI_GATEWAY_API_KEY=sk_live_...
-
-# Billing (stub or connect to provider)
-BILLING_PLAN_PRICE_USD=9.95
-```
-
-> **Security tip:** Never ship `SUPABASE_SERVICE_ROLE_KEY` to the client. Use server-only runtime.
-
----
-
-## Database & Drizzle
-We use Drizzle for schema/migrations and Supabase Postgres for storage.
-
-**Key entities (overview)**  
-- `sites` — one row per domain  
-- `scans`, `pages`, `css_sources` — provenance & crawl metadata  
-- `token_sets` — W3C tokens JSON + AI pack + consensus score  
-- `layout_profiles` — layout DNA JSON  
-- `org_artifacts` — docs/storybook/figma/github enrichments  
-- `submissions` — user-submitted URLs and status  
-- `token_votes` — correctness/alias/duplicate/low-contrast/rename  
-- `remixes` — multi-source packs with constraints  
-- `users`, `subscriptions`, `api_keys`, `mcp_usage`, `audit_log`
-
-**Common Drizzle commands**
-```bash
-# Generate SQL from schema
-pnpm drizzle:generate
-
-# Apply migrations
-pnpm drizzle:migrate
-
-# Check DB state
-pnpm drizzle:status
+# DEPRECATED — not required for scanning
+# DATABASE_URL=
 ```
 
 ---
 
-## Supabase Policies (RLS)
-- **Public read** for public `token_sets` / `layout_profiles` / `sites`.
-- **Owner-only read/write** for private remixes/packs.
-- **api_keys** scoped to user; `mcp_usage` logs without PII.
-- Opt-out tombstone record on `sites` prevents re-ingest.
+## Storage (no paid database)
+
+Default path uses **JSON documents**, not SQL:
+
+| Layer | Role | Free tier |
+|-------|------|-----------|
+| **Vercel Blob** | Full scan payloads (`scans/{domain}/latest.json`) | Hobby |
+| **Upstash Redis** | Site index, recent/popular, rate limits | Free |
+| **Memory** | Local/dev when neither is configured | — |
+
+Legacy Drizzle/Postgres under `lib/db/` remains in the repo for optional experimental routes but is **not** used by `/api/scan`, directory, stats, search, or core MCP tools.
 
 ---
 
 ## Running the App
-- **Dev**: `pnpm dev` → http://localhost:3000  
-- Navigate to **Scanner**. Paste a URL (e.g., `https://vercel.com`). Toggle **Prettify** if desired.  
+- **Dev**: `bun dev` → http://localhost:3000  
+- Open **Scanner** (`/scan`). Paste a URL (e.g., `https://vercel.com`).  
 - On success you’ll see:
   - Token groups (Color, Typography, Spacing, Radii, Shadows, Motion)
-  - **Layout DNA** summary (once multi-page sampling completes)
+  - **Layout DNA** summary
   - **Provenance** (CSS sources if enabled)
   - **AI Prompt Pack** (downloadable JSON)
   - “Use in Claude Code” copy button (MCP link)

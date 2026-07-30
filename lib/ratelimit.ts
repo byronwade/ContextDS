@@ -1,15 +1,24 @@
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 
-// Development mode - disable rate limiting
-const isDevelopment = !process.env.REDIS_URL || !process.env.REDIS_URL.startsWith('https')
+const redisUrl =
+  process.env.UPSTASH_REDIS_REST_URL ||
+  process.env.REDIS_URL ||
+  process.env.KV_REST_API_URL
+const redisToken =
+  process.env.UPSTASH_REDIS_REST_TOKEN ||
+  process.env.REDIS_TOKEN ||
+  process.env.KV_REST_API_TOKEN
+
+// Development mode - disable rate limiting when Redis isn't configured
+const isDevelopment = !redisUrl || !redisToken || !redisUrl.startsWith('https')
 
 // Create Redis instance or mock for development
 export const redis = isDevelopment
   ? null
   : new Redis({
-      url: process.env.REDIS_URL!,
-      token: process.env.REDIS_TOKEN!,
+      url: redisUrl!,
+      token: redisToken!,
     })
 
 // Simple mock rate limiter for development

@@ -48,8 +48,10 @@ components/
 
 lib/
 ├── utils.ts          # Core utilities (cn, formatters, etc.)
-├── db/               # Drizzle ORM schema and migrations
-├── auth/             # Supabase authentication
+├── storage/          # Serverless store (Vercel Blob + Upstash Redis)
+├── workers/          # simple-scan.ts (default pipeline; no Postgres)
+├── db/               # Legacy Drizzle (optional; unused by default scan)
+├── auth/             # Optional Supabase authentication
 ├── extractors/       # CSS extraction and analysis engines
 ├── analyzers/        # Token analysis and layout DNA computation
 ├── mcp/              # Model Context Protocol server tools
@@ -57,7 +59,6 @@ lib/
 
 hooks/                # Custom React hooks
 stores/               # Zustand state management
-workers/              # Background job processors
 public/               # Static assets
 ```
 
@@ -71,12 +72,12 @@ public/               # Static assets
 - **Icons**: Lucide React
 - **Forms**: React Hook Form with Zod validation
 
-**Backend & Data**
-- **Database**: Supabase Postgres with Row Level Security
-- **ORM**: Drizzle ORM for schema and migrations
-- **Authentication**: Supabase Auth (email/password, OAuth)
-- **Storage**: Supabase Storage for screenshots and assets
-- **Queue**: Background job processing for site scanning
+**Backend & Data (serverless, no paid DB)**
+- **Scan payloads**: Vercel Blob JSON
+- **Directory index + rate limits**: Upstash Redis (free tier)
+- **Local fallback**: in-memory when Blob/Redis unset
+- **Auth (optional)**: Supabase Auth — not required for scanning
+- **Legacy**: `lib/db` Drizzle/Postgres unused by default scan path
 
 **AI & Analysis**
 - **CSS Extraction**: Project Wallace's MIT-licensed extractors
