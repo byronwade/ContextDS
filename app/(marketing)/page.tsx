@@ -334,7 +334,7 @@ function HomePageContent() {
         }))}
       />
 
-      {/* Home View - Minimal ContextDS */}
+      {/* Home View - Design Contracts */}
       <main id="main-content" className="absolute top-[64px] flex h-[calc(100dvh-64px)] w-full flex-col items-center justify-between overflow-y-auto" role="main" aria-label="Main content">
         <div className="flex min-h-full w-full shrink-0 select-none flex-col items-center justify-center px-4 py-12">
 
@@ -344,14 +344,14 @@ function HomePageContent() {
             {/* Headline - SEO optimized heading hierarchy */}
             <div className="space-y-4">
               <h1 className="text-[2.5rem]/[3rem] sm:text-6xl font-bold tracking-tight text-foreground">
-                Extract Design Tokens<br />from Any Website
+                Design Contracts<br />from Any Website
               </h1>
               <p className="text-base sm:text-lg text-grep-9 max-w-2xl mx-auto leading-relaxed">
-                AI-powered CSS analysis and design token extraction. Scan sites like{" "}
+                Scan sites like{" "}
                 <button
                   onClick={() => handleScan('stripe.com')}
                   className="text-foreground font-medium hover:underline"
-                  aria-label="Scan Stripe.com for design tokens"
+                  aria-label="Scan Stripe.com for a design contract"
                 >
                   Stripe
                 </button>
@@ -359,7 +359,7 @@ function HomePageContent() {
                 <button
                   onClick={() => handleScan('linear.app')}
                   className="text-foreground font-medium hover:underline"
-                  aria-label="Scan Linear.app for design tokens"
+                  aria-label="Scan Linear.app for a design contract"
                 >
                   Linear
                 </button>
@@ -367,12 +367,11 @@ function HomePageContent() {
                 <button
                   onClick={() => handleScan('github.com')}
                   className="text-foreground font-medium hover:underline"
-                  aria-label="Scan GitHub.com for design tokens"
+                  aria-label="Scan GitHub.com for a design contract"
                 >
                   GitHub
                 </button>
-                {" "}to extract colors, typography, spacing across{" "}
-                <span className="text-foreground font-semibold">{(realtimeStats?.tokens || liveMetrics?.totalTokens || 62000).toLocaleString()}+ tokens</span>.
+                {" "}→ download an installable contract agents can resolve, check, and verify — so new UI stays on-brand.
               </p>
             </div>
 
@@ -515,7 +514,7 @@ function HomePageContent() {
                   <Link href="/">
                     <div className="flex items-center gap-2">
                       <Palette className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                      <span className="font-medium text-black dark:text-white">ContextDS</span>
+                      <span className="font-medium text-black dark:text-white">Design Contracts</span>
                     </div>
                   </Link>
                 </div>
@@ -538,7 +537,7 @@ function HomePageContent() {
                   <Link className="text-grep-9 hover:text-foreground" href="/terms">Terms</Link>
                 </div>
               </div>
-              <div className="flex items-center max-sm:h-8">© 2025, ContextDS Inc.</div>
+              <div className="flex items-center max-sm:h-8">© 2026, Design Contracts</div>
 
               {/* Theme Toggle - Exact Grep.app Style */}
               <div className="absolute right-0 max-sm:bottom-0">
@@ -569,7 +568,7 @@ export default function HomePage() {
       <div className="flex h-screen w-full items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-8 h-8 border-2 border-neutral-200 dark:border-neutral-800 border-t-blue-500 rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">Loading ContextDS...</p>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">Loading Design Contracts...</p>
         </div>
       </div>
     }>

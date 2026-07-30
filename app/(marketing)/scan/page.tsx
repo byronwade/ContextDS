@@ -3,13 +3,13 @@ import { Metadata } from "next"
 import ScanClient from "./client"
 
 export const metadata: Metadata = {
-  title: "Scan → DESIGN.md | ContextDS",
+  title: "Scan → Design Contract | Design Contracts",
   description:
-    "Turn any public site into W3C design tokens, a Google-compatible DESIGN.md, and a Cursor/Claude agent skill.",
+    "Turn any public site into an installable Design Contract — DESIGN.md grammar, agent skills, references, and check/verify workflow.",
   openGraph: {
-    title: "Scan → DESIGN.md | ContextDS",
+    title: "Scan → Design Contract | Design Contracts",
     description:
-      "Extract tokens and generate agent-readable DESIGN.md + skills from any public website.",
+      "Scan a site, download a Design Contract pack, and keep every new component on-brand.",
   },
 }
 

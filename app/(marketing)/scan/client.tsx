@@ -137,14 +137,14 @@ export default function ScanClient() {
             <section className="relative flex flex-1 flex-col justify-center px-6 pb-20 pt-10 sm:px-10">
               <div className="mx-auto w-full max-w-4xl">
                 <p className="mb-5 animate-fade-in font-mono text-xs uppercase tracking-[0.28em] text-teal-800">
-                  ContextDS
+                  Design Contracts
                 </p>
                 <h1 className="max-w-3xl animate-slide-in font-serif text-5xl leading-[0.95] tracking-tight text-slate-950 sm:text-6xl md:text-7xl">
-                  Turn any site into DESIGN.md
+                  Download a design that holds
                 </h1>
                 <p className="mt-5 max-w-xl animate-fade-in text-base text-slate-600 sm:text-lg">
-                  Scan public CSS → extract tokens → ship an agent-readable design system
-                  and Cursor skill in seconds.
+                  Scan any public site → get an installable Design Contract.
+                  Agents resolve, check, and verify against it — so new components stay on-brand.
                 </p>
 
                 <form
@@ -181,10 +181,10 @@ export default function ScanClient() {
                 <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-500">
                   <span className="inline-flex items-center gap-1.5 text-teal-800">
                     <Sparkles className="h-3.5 w-3.5" />
-                    Outputs DESIGN.md + skill
+                    Installable contract pack
                   </span>
-                  <span>W3C tokens</span>
-                  <span>No paid database</span>
+                  <span>DESIGN.md grammar</span>
+                  <span>resolve → check → verify</span>
                 </div>
 
                 <div className="mt-10">
@@ -217,19 +217,16 @@ export default function ScanClient() {
               >
                 <div className="absolute inset-6 rounded-[2px] border border-slate-900/10 bg-white/50 p-6 shadow-[0_30px_80px_rgba(15,23,42,0.08)] backdrop-blur-sm">
                   <div className="mb-4 font-mono text-[10px] uppercase tracking-[0.25em] text-teal-800">
-                    DESIGN.md preview
+                    Design Contract pack
                   </div>
                   <div className="space-y-2 font-mono text-[11px] leading-relaxed text-slate-700">
-                    <p>---</p>
-                    <p>name: your-site.com</p>
-                    <p>colors:</p>
-                    <p className="pl-3">primary: &quot;#0F172A&quot;</p>
-                    <p className="pl-3">tertiary: &quot;#0D9488&quot;</p>
-                    <p>typography:</p>
-                    <p className="pl-3">h1: …</p>
-                    <p>---</p>
-                    <p className="pt-2 text-slate-500">## Overview</p>
-                    <p className="text-slate-500">Agent-readable identity…</p>
+                    <p>DESIGN.md</p>
+                    <p>AGENTS.md</p>
+                    <p>.agents/skills/design/SKILL.md</p>
+                    <p>design/references/</p>
+                    <p>.design/config.json</p>
+                    <p className="pt-2 text-slate-500">npx github:byronwade/Design init</p>
+                    <p className="text-slate-500">→ resolve · check · verify</p>
                   </div>
                 </div>
               </div>

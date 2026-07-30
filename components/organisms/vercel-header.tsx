@@ -98,7 +98,7 @@ export function VercelHeader({
               className="flex items-center gap-2 outline-offset-4 transition-opacity hover:opacity-80"
             >
               <Palette className="h-5 w-5 text-primary" />
-              <span className="text-lg font-semibold text-foreground">ContextDS</span>
+              <span className="text-lg font-semibold text-foreground">Design Contracts</span>
               <span className="hidden xs:inline text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
                 Beta
               </span>

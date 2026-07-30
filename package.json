@@ -1,7 +1,8 @@
 {
-  "name": "designer",
-  "version": "0.2.0",
+  "name": "design-contracts",
+  "version": "0.3.0",
   "private": true,
+  "description": "Scan public sites into installable Design Contracts for AI agents (resolve → check → verify).",
   "engines": {
     "node": ">=22"
   },
@@ -105,6 +106,7 @@
     "embla-carousel-react": "^8.6.0",
     "esbuild": "^0.28.1",
     "extract-css-core": "^3.0.0",
+    "fflate": "^0.8.3",
     "gpt-tokenizer": "^3.4.0",
     "input-otp": "^1.4.2",
     "lru-cache": "^11.2.2",

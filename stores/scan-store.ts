@@ -74,6 +74,19 @@ export interface ScanResult {
     skillName: string
     description: string
   }
+  designContract?: {
+    slug: string
+    title: string
+    profile: string
+    installCommand: string
+    summary?: {
+      colorCount: number
+      typographyCount: number
+      spacingCount: number
+      fileCount: number
+    }
+    files?: Array<{ path: string; content: string }>
+  }
   cacheHit?: boolean
 }
 

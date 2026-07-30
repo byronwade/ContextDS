@@ -74,6 +74,16 @@ export class MCPServer {
         curated_tokens: result.curatedTokens,
         design_md: result.designMd,
         design_skill: result.designSkill,
+        design_contract: result.designContract
+          ? {
+              slug: result.designContract.slug,
+              title: result.designContract.title,
+              profile: result.designContract.profile,
+              installCommand: result.designContract.installCommand,
+              summary: result.designContract.summary,
+              download: `/api/contracts/download?domain=${encodeURIComponent(domain)}`,
+            }
+          : undefined,
         pack: result.promptPack,
         layout_dna: result.layoutDNA,
         brand_analysis: result.brandAnalysis,

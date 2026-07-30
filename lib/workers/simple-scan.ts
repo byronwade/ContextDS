@@ -15,6 +15,7 @@ import { analyzeLayout } from '@/lib/analyzers/layout-inspector'
 import { buildPromptPack } from '@/lib/analyzers/prompt-pack'
 import { generateDesignMd } from '@/lib/analyzers/design-md-generator'
 import { generateDesignSkill } from '@/lib/analyzers/design-skill-generator'
+import { buildDesignContractPackage } from '@/lib/contracts/design-contract-package'
 import {
   getScan,
   saveScan,
@@ -40,6 +41,7 @@ export type SimpleScanResult = {
   brandAnalysis?: StoredScanResult['brandAnalysis']
   designMd?: StoredScanResult['designMd']
   designSkill?: StoredScanResult['designSkill']
+  designContract?: StoredScanResult['designContract']
   metadata: StoredScanResult['metadata']
   /** @deprecated use `storage` */
   database: SimpleScanResult['storage']
@@ -175,6 +177,19 @@ function slimCuratedForClient(curated: CuratedTokenSet): CuratedTokenSet {
   }
 }
 
+function slimContract(
+  contract: StoredScanResult['designContract']
+): StoredScanResult['designContract'] {
+  if (!contract) return undefined
+  return {
+    ...contract,
+    files: (contract.files || []).map((file) => ({
+      path: file.path,
+      content: '',
+    })),
+  }
+}
+
 function fromCache(cached: StoredScanResult): SimpleScanResult {
   const storage = storageMeta(
     `site_${cached.domain}`,
@@ -193,6 +208,7 @@ function fromCache(cached: StoredScanResult): SimpleScanResult {
     brandAnalysis: cached.brandAnalysis,
     designMd: cached.designMd,
     designSkill: cached.designSkill,
+    designContract: slimContract(cached.designContract),
     metadata: cached.metadata,
     database: storage,
     storage,
@@ -324,7 +340,7 @@ export async function runSimpleScan({
   )
 
   // 3) DESIGN.md + agent skill (trending agent-readable design artifacts)
-  const designMd = generateDesignMd({
+  const designMdInput = {
     domain,
     url: target.toString(),
     curatedTokens: curated,
@@ -340,7 +356,8 @@ export async function runSimpleScan({
     },
     brandAnalysis,
     confidence,
-  })
+  }
+  const designMd = generateDesignMd(designMdInput)
   const designSkill = generateDesignSkill({
     domain,
     url: target.toString(),
@@ -353,6 +370,29 @@ export async function runSimpleScan({
   const tokenSetId = createId('tokens')
   const processingTime = Date.now() - startedAt
   const clientCurated = slimCuratedForClient(curated)
+
+  const contractPack = buildDesignContractPackage({
+    ...designMdInput,
+    scanId,
+    profile: 'web-marketing',
+    appType: 'marketing-site',
+    screenshots: [
+      {
+        label: 'homepage',
+        url: target.toString(),
+        note: 'Preserve hierarchy, density, and material from the live homepage observation.',
+      },
+    ],
+  })
+  const designContract: StoredScanResult['designContract'] = {
+    slug: contractPack.slug,
+    title: contractPack.title,
+    profile: contractPack.profile,
+    installCommand: contractPack.installCommand,
+    summary: contractPack.summary,
+    // Keep file bodies for download; clients may also hit /api/contracts/download
+    files: contractPack.files,
+  }
 
   const stored: StoredScanResult = {
     id: scanId,
@@ -394,6 +434,7 @@ export async function runSimpleScan({
       skillName: designSkill.skillName,
       description: designSkill.description,
     },
+    designContract,
     metadata: {
       cssSources: cssArtifacts.length,
       staticCssSources: staticCss.length,
@@ -401,12 +442,23 @@ export async function runSimpleScan({
       scanId,
       tokenSetId,
       mode,
-      engine: 'w3c+design-md',
+      engine: 'design-contracts',
     },
   }
 
   const site = await saveScan(stored)
   const storage = storageMeta(site.id, scanId, tokenSetId)
+
+  // Slim contract for API clients — full files stay in Blob for ZIP download
+  const designContractSummary = stored.designContract
+    ? {
+        ...stored.designContract,
+        files: stored.designContract.files.map((file) => ({
+          path: file.path,
+          content: '',
+        })),
+      }
+    : undefined
 
   return {
     status: 'completed',
@@ -421,6 +473,7 @@ export async function runSimpleScan({
     brandAnalysis: stored.brandAnalysis,
     designMd: stored.designMd,
     designSkill: stored.designSkill,
+    designContract: designContractSummary,
     metadata: stored.metadata,
     database: storage,
     storage,

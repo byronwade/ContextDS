@@ -62,6 +62,18 @@ type ScanResult = {
     skillName: string
     description: string
   }
+  designContract?: {
+    slug: string
+    title: string
+    profile: string
+    installCommand: string
+    summary?: {
+      colorCount: number
+      typographyCount: number
+      spacingCount: number
+      fileCount: number
+    }
+  }
   cacheHit?: boolean
   metadata?: {
     cssSources?: number
@@ -206,12 +218,15 @@ export function ScanResultsLayout({
             </Badge>
           </div>
           <h2 className="font-serif text-3xl tracking-tight text-foreground sm:text-4xl">
-            Design system extracted
+            Design Contract ready
           </h2>
           <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
             {result.summary?.tokensExtracted || tokenCount} tokens ·{" "}
             {Math.round(result.summary?.confidence || 0)}% confidence ·{" "}
             {Math.round((result.summary?.processingTime || 0) / 100) / 10}s
+            {result.designContract
+              ? ` · ${result.designContract.summary?.fileCount ?? 0} pack files`
+              : ""}
             {result.brandAnalysis?.personality
               ? ` · ${result.brandAnalysis.personality}`
               : ""}
@@ -219,17 +234,30 @@ export function ScanResultsLayout({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {result.designMd && (
+          {result.domain && (
             <Button
               variant="default"
               size="sm"
               className="gap-2 bg-teal-800 hover:bg-teal-900"
+              onClick={() => {
+                window.location.href = `/api/contracts/download?domain=${encodeURIComponent(result.domain!)}`
+              }}
+            >
+              <Download className="h-4 w-4" />
+              Download Design Contract
+            </Button>
+          )}
+          {result.designMd && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
               onClick={() =>
                 downloadText(result.designMd!.fileName, result.designMd!.markdown)
               }
             >
               <FileText className="h-4 w-4" />
-              Download DESIGN.md
+              DESIGN.md only
             </Button>
           )}
           {result.designSkill && (
@@ -242,11 +270,10 @@ export function ScanResultsLayout({
               }
             >
               <Sparkles className="h-4 w-4" />
-              Download skill
+              Skill
             </Button>
           )}
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => onExport("json")}>
-            <Download className="h-4 w-4" />
+          <Button variant="ghost" size="sm" className="gap-2" onClick={() => onExport("json")}>
             Tokens JSON
           </Button>
           <Button variant="ghost" size="sm" className="gap-2" onClick={onShare}>
@@ -331,8 +358,28 @@ export function ScanResultsLayout({
 
             <section className="grid gap-4 md:grid-cols-2">
               <ArtifactCard
-                title="DESIGN.md"
-                subtitle="Google Stitch–compatible agent design file"
+                title="Design Contract pack"
+                subtitle={
+                  result.designContract?.installCommand ||
+                  "ZIP with DESIGN.md, AGENTS.md, skills, references, config"
+                }
+                ready={Boolean(result.designContract || result.designMd)}
+                onCopy={() =>
+                  result.designContract?.installCommand &&
+                  void copyText("install", result.designContract.installCommand)
+                }
+                onOpen={() => {
+                  if (result.domain) {
+                    window.location.href = `/api/contracts/download?domain=${encodeURIComponent(result.domain)}`
+                  }
+                }}
+                copied={copiedKey === "install"}
+                openLabel="Download ZIP"
+                copyLabel="Copy install cmd"
+              />
+              <ArtifactCard
+                title="DESIGN.md grammar"
+                subtitle="Product grammar + Google token front matter for agents"
                 ready={Boolean(result.designMd)}
                 onCopy={() =>
                   result.designMd &&
@@ -340,17 +387,6 @@ export function ScanResultsLayout({
                 }
                 onOpen={() => setActiveTab("design-md")}
                 copied={copiedKey === "design-md"}
-              />
-              <ArtifactCard
-                title="Agent skill"
-                subtitle={result.designSkill?.skillName || "SKILL.md for Cursor / Claude"}
-                ready={Boolean(result.designSkill)}
-                onCopy={() =>
-                  result.designSkill &&
-                  void copyText("skill", result.designSkill.markdown)
-                }
-                onOpen={() => setActiveTab("skill")}
-                copied={copiedKey === "skill"}
               />
             </section>
           </div>
@@ -476,6 +512,8 @@ function ArtifactCard({
   onCopy,
   onOpen,
   copied,
+  openLabel = "View",
+  copyLabel = "Copy",
 }: {
   title: string
   subtitle: string
@@ -483,6 +521,8 @@ function ArtifactCard({
   onCopy: () => void
   onOpen: () => void
   copied: boolean
+  openLabel?: string
+  copyLabel?: string
 }) {
   return (
     <div className="border-t border-border/70 pt-4">
@@ -496,12 +536,12 @@ function ArtifactCard({
       </div>
       <p className="mb-4 text-sm text-muted-foreground">{subtitle}</p>
       <div className="flex gap-2">
-        <Button size="sm" variant="outline" onClick={onOpen}>
-          View
+        <Button size="sm" variant="outline" onClick={onOpen} disabled={!ready}>
+          {openLabel}
         </Button>
         <Button size="sm" variant="ghost" className="gap-1" onClick={onCopy} disabled={!ready}>
           <Copy className="h-3.5 w-3.5" />
-          {copied ? "Copied" : "Copy"}
+          {copied ? "Copied" : copyLabel}
         </Button>
       </div>
     </div>

@@ -40,7 +40,7 @@ export function generateDesignSkill(input: DesignSkillInput): DesignSkillArtifac
   const radii = (input.curatedTokens.radius ?? []).slice(0, 4).map((r) => r.value)
   const personality = input.personality || 'match the extracted visual language'
 
-  const description = `Apply the ${input.domain} design system from ContextDS (${designMd}). Use before generating any UI.`
+  const description = `Apply the ${input.domain} design contract (${designMd}). Use before generating any UI.`
 
   const markdown = `---
 name: ${skillName}
