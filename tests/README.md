@@ -2,7 +2,7 @@
 
 ## Overview
 
-ContextDS uses **Playwright** for comprehensive E2E testing, API testing, stress testing, and visual regression testing.
+Design Contracts uses **Playwright** for comprehensive E2E testing, API testing, stress testing, and visual regression testing.
 
 ## Quick Start
 

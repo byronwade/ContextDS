@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright Configuration for ContextDS Scanner Testing
+ * Playwright Configuration for Design Contracts Scanner Testing
  *
  * Testing Strategy:
  * 1. E2E tests - Full user flows through the UI

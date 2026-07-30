@@ -1,21 +1,21 @@
 #!/usr/bin/env node
 
 /**
- * ContextDS MCP Server Wrapper
+ * Design Contracts MCP Server Wrapper
  *
  * This wrapper enables Claude Desktop and other MCP clients to communicate
- * with the ContextDS API for design token extraction and analysis.
+ * with the Design Contracts API for design token extraction and analysis.
  *
  * Usage:
  *   Add to Claude Desktop config:
  *   {
  *     "mcpServers": {
- *       "contextds": {
+ *       "designcontracts": {
  *         "command": "node",
  *         "args": ["/path/to/mcp-server-wrapper.js"],
  *         "env": {
- *           "CONTEXTDS_API_KEY": "your-key",
- *           "CONTEXTDS_API_URL": "http://localhost:3000/api/mcp"
+ *           "DESIGNCONTRACTS_API_KEY": "your-key",
+ *           "DESIGNCONTRACTS_API_URL": "http://localhost:3000/api/mcp"
  *         }
  *       }
  *     }
@@ -26,17 +26,17 @@ const { stdin, stdout, stderr } = require('process');
 const https = require('https');
 const http = require('http');
 
-const API_KEY = process.env.CONTEXTDS_API_KEY;
-const API_URL = process.env.CONTEXTDS_API_URL || 'https://contextds.com/api/mcp';
-const DEBUG = process.env.CONTEXTDS_DEBUG === 'true';
+const API_KEY = process.env.DESIGNCONTRACTS_API_KEY || process.env.CONTEXTDS_API_KEY;
+const API_URL = process.env.DESIGNCONTRACTS_API_URL || process.env.CONTEXTDS_API_URL || 'https://designcontracts.sh/api/mcp';
+const DEBUG = (process.env.DESIGNCONTRACTS_DEBUG || process.env.CONTEXTDS_DEBUG) === 'true';
 
 if (!API_KEY) {
-  stderr.write('ERROR: CONTEXTDS_API_KEY environment variable is required\n');
+  stderr.write('ERROR: DESIGNCONTRACTS_API_KEY (or CONTEXTDS_API_KEY) environment variable is required\n');
   process.exit(1);
 }
 
 if (DEBUG) {
-  stderr.write(`ContextDS MCP Server initialized\n`);
+  stderr.write(`Design Contracts MCP Server initialized\n`);
   stderr.write(`API URL: ${API_URL}\n`);
 }
 
@@ -68,7 +68,7 @@ stdin.on('data', async (chunk) => {
           result: {
             protocolVersion: '0.1.0',
             serverInfo: {
-              name: 'contextds',
+              name: 'designcontracts',
               version: '1.0.0'
             },
             capabilities: {
@@ -286,7 +286,7 @@ function makeRequest(url, body) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${API_KEY}`,
         'Content-Length': Buffer.byteLength(requestBody),
-        'User-Agent': 'ContextDS-MCP-Client/1.0.0'
+        'User-Agent': 'Design Contracts-MCP-Client/1.0.0'
       },
       timeout: 120000 // 2 minute timeout for scans
     };
@@ -351,5 +351,5 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 if (DEBUG) {
-  stderr.write('ContextDS MCP Server ready and listening on stdin...\n');
+  stderr.write('Design Contracts MCP Server ready and listening on stdin...\n');
 }

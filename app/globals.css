@@ -785,7 +785,7 @@
   }
 }
 
-/* ContextDS: Enhanced spacing and layout system */
+/* Design Contracts: Enhanced spacing and layout system */
 @layer utilities {
   /* Precise spacing scale based on 8px grid */
   .space-context-xs { gap: 0.25rem; }    /* 4px */

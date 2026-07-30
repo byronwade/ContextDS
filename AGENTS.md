@@ -34,5 +34,5 @@
 
 ## Security & Configuration Tips
 - Store secrets in `.env.local`; never commit Blob, Redis, or AI gateway keys.
-- Tune `CONTEXTDS_*` / `DISABLE_COMPUTED_CSS` cautiously before scanning production domains.
+- Tune `DESIGNCONTRACTS_*` (legacy `CONTEXTDS_*`) / `DISABLE_COMPUTED_CSS` cautiously before scanning production domains.
 - Audit new API endpoints for robots/ToS compliance before deploy.

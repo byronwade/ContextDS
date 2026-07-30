@@ -145,12 +145,12 @@ export function generateOrganizationSchema(): OrganizationSchema {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "designcontracts.sh",
+    name: "Design Contracts",
     description: "AI-powered design token extraction and analysis platform. Extract design tokens from any website and analyze layout DNA for design systems.",
     url: "https://designcontracts.sh",
     logo: "https://designcontracts.sh/logo.png",
     sameAs: [
-      "https://github.com/byronwade/ContextDS",
+      "https://github.com/byronwade/designcontracts.sh",
       "https://twitter.com/designcontracts"
     ],
     contactPoint: {
@@ -161,7 +161,7 @@ export function generateOrganizationSchema(): OrganizationSchema {
     foundingDate: "2024",
     founder: {
       "@type": "Person",
-      name: "designcontracts.sh Team"
+      name: "Design Contracts Team"
     },
     keywords: [
       "design tokens",
@@ -179,7 +179,7 @@ export function generateWebsiteSchema(): WebsiteSchema {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "designcontracts.sh - Design Tokens Made Fast",
+    name: "Design Contracts — designcontracts.sh",
     description: "Extract design tokens from any website. AI-powered CSS analysis and layout DNA profiling for design systems.",
     url: "https://designcontracts.sh",
     potentialAction: {
@@ -192,7 +192,7 @@ export function generateWebsiteSchema(): WebsiteSchema {
     },
     mainEntity: {
       "@type": "Organization",
-      name: "designcontracts.sh"
+      name: "Design Contracts"
     }
   }
 }
@@ -201,7 +201,7 @@ export function generateSoftwareApplicationSchema(): SoftwareApplicationSchema {
   return {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "designcontracts.sh",
+    name: "Design Contracts",
     description: "AI-powered design token extraction platform. Scan websites to extract colors, typography, spacing, and layout patterns automatically.",
     url: "https://designcontracts.sh",
     applicationCategory: "DesignApplication",

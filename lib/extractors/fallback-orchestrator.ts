@@ -50,7 +50,7 @@ export class FallbackOrchestrator {
         backoffMultiplier: 2,
         contextModification: (context) => ({
           ...context,
-          userAgent: 'Mozilla/5.0 (compatible; ContextDS-Bot/1.0)'
+          userAgent: 'Mozilla/5.0 (compatible; Design Contracts-Bot/1.0)'
         })
       },
 

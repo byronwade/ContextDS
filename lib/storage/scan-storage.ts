@@ -90,8 +90,8 @@ export interface ScanHistory {
 }
 
 class ScanStorage {
-  private readonly STORAGE_KEY = 'contextds-scan-results'
-  private readonly HISTORY_KEY = 'contextds-scan-history'
+  private readonly STORAGE_KEY = 'designcontracts-scan-results'
+  private readonly HISTORY_KEY = 'designcontracts-scan-history'
   private readonly MAX_STORED_SCANS = 50 // Limit localStorage usage
 
   // Store scan result with deduplication and optimization
@@ -489,7 +489,7 @@ class ScanStorage {
 
       const a = document.createElement('a')
       a.href = url
-      a.download = `contextds-scan-backup-${new Date().toISOString().split('T')[0]}.json`
+      a.download = `designcontracts-scan-backup-${new Date().toISOString().split('T')[0]}.json`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)

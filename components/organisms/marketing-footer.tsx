@@ -73,7 +73,7 @@ export function MarketingFooter() {
             © {new Date().getFullYear()} designcontracts.sh
           </p>
           <a
-            href="https://github.com/byronwade/ContextDS"
+            href="https://github.com/byronwade/designcontracts.sh"
             target="_blank"
             rel="noopener noreferrer"
             className="text-muted-foreground transition-colors hover:text-foreground"

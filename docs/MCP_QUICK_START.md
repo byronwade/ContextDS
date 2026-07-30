@@ -1,6 +1,6 @@
-# ContextDS MCP Server - Quick Start Guide
+# Design Contracts MCP Server - Quick Start Guide
 
-Get started with the ContextDS Model Context Protocol server in 5 minutes.
+Get started with the Design Contracts Model Context Protocol server in 5 minutes.
 
 ---
 
@@ -45,14 +45,14 @@ notepad %APPDATA%\Claude\claude_desktop_config.json
 ```json
 {
   "mcpServers": {
-    "contextds": {
+    "designcontracts": {
       "command": "node",
       "args": [
         "/Users/byronwade/designer/mcp-server-wrapper.js"
       ],
       "env": {
-        "CONTEXTDS_API_KEY": "paste-your-api-key-here",
-        "CONTEXTDS_API_URL": "http://localhost:3000/api/mcp"
+        "DESIGNCONTRACTS_API_KEY": "paste-your-api-key-here",
+        "DESIGNCONTRACTS_API_URL": "http://localhost:3000/api/mcp"
       }
     }
   }
@@ -61,7 +61,7 @@ notepad %APPDATA%\Claude\claude_desktop_config.json
 
 ---
 
-### 3️⃣ Start ContextDS Server (30 seconds)
+### 3️⃣ Start Design Contracts Server (30 seconds)
 
 ```bash
 cd /Users/byronwade/designer
@@ -82,7 +82,7 @@ Completely quit and restart Claude Desktop to load the MCP server.
 
 **Verify it's working:**
 - Open Claude Desktop
-- Look for "contextds" in available tools
+- Look for "designcontracts" in available tools
 - You should see: scan_tokens, get_tokens, layout_profile, etc.
 
 ---
@@ -92,7 +92,7 @@ Completely quit and restart Claude Desktop to load the MCP server.
 In Claude Desktop, try:
 
 ```
-Use the contextds MCP server to scan https://stripe.com and show me their color palette
+Use the designcontracts MCP server to scan https://stripe.com and show me their color palette
 ```
 
 Claude will:
@@ -151,19 +151,19 @@ echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | node mcp-server-wrapper.
 ```
 
 **Expected:** JSON-RPC response with tool list
-**Error:** Check CONTEXTDS_API_KEY is set
+**Error:** Check DESIGNCONTRACTS_API_KEY is set
 
 ### Check 3: Claude Desktop Logs
 
 ```bash
 # macOS
-tail -f ~/Library/Logs/Claude/mcp-server-contextds.log
+tail -f ~/Library/Logs/Claude/mcp-server-designcontracts.log
 
 # Linux
-tail -f ~/.config/Claude/logs/mcp-server-contextds.log
+tail -f ~/.config/Claude/logs/mcp-server-designcontracts.log
 ```
 
-**Expected:** "ContextDS MCP Server ready and listening on stdin..."
+**Expected:** "Design Contracts MCP Server ready and listening on stdin..."
 
 ---
 
@@ -174,10 +174,10 @@ tail -f ~/.config/Claude/logs/mcp-server-contextds.log
 **Fix:**
 ```bash
 # Verify API key is set
-echo $CONTEXTDS_API_KEY
+echo $DESIGNCONTRACTS_API_KEY
 
 # If empty, export it:
-export CONTEXTDS_API_KEY="your-64-char-key"
+export DESIGNCONTRACTS_API_KEY="your-64-char-key"
 
 # Or add to Claude Desktop config env
 ```
@@ -186,7 +186,7 @@ export CONTEXTDS_API_KEY="your-64-char-key"
 
 **Fix:**
 ```bash
-# Make sure ContextDS is running
+# Make sure Design Contracts is running
 bun run dev
 
 # Check it's accessible
@@ -222,7 +222,7 @@ bun run scripts/upgrade-api-key.ts --key-id="your-key-id" --tier="pro"
 1. **Read full documentation:** `/docs/MCP_SETUP.md`
 2. **Try example workflows:** `/docs/MCP_EXAMPLES.md`
 3. **API reference:** `/docs/API_REFERENCE.md`
-4. **Join community:** https://discord.gg/contextds
+4. **Join community:** https://designcontracts.sh
 
 ---
 
@@ -258,6 +258,6 @@ Great for matching implementation to design
 **Setup Time:** ~5 minutes
 **First Scan:** ~60 seconds
 **Cached Lookups:** <200ms
-**Support:** support@contextds.com
+**Support:** support@designcontracts.sh
 
 **Ready to build? Scan your first site!** 🚀

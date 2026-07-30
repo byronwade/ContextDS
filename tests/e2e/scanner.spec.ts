@@ -9,7 +9,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Scanner Basic Functionality', () => {
 	test('should load the homepage successfully', async ({ page }) => {
 		await page.goto('/');
-		await expect(page).toHaveTitle(/ContextDS/i);
+		await expect(page).toHaveTitle(/Design Contracts/i);
 	});
 
 	test('should scan a simple website successfully', async ({ page }) => {

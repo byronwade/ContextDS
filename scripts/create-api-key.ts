@@ -50,16 +50,16 @@ async function createApiKey(options: {
     console.log('═'.repeat(80))
     console.log('\n⚠️  IMPORTANT: Save this API key now! It cannot be retrieved later.\n')
     console.log('Add to your environment:')
-    console.log(`export CONTEXTDS_API_KEY="${rawKey}"`)
+    console.log(`export DESIGNCONTRACTS_API_KEY="${rawKey}"`)
     console.log('\nOr add to Claude Desktop config:')
     console.log(JSON.stringify({
       mcpServers: {
-        contextds: {
+        designcontracts: {
           command: 'node',
           args: ['/path/to/mcp-server-wrapper.js'],
           env: {
-            CONTEXTDS_API_KEY: rawKey,
-            CONTEXTDS_API_URL: API_URL || 'http://localhost:3000/api/mcp'
+            DESIGNCONTRACTS_API_KEY: rawKey,
+            DESIGNCONTRACTS_API_URL: API_URL || 'http://localhost:3000/api/mcp'
           }
         }
       }

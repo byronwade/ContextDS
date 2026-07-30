@@ -6,7 +6,7 @@ import * as dotenv from 'dotenv'
 // Load environment variables
 dotenv.config({ path: '.env.local' })
 
-console.log('📊 ContextDS Database Performance Statistics')
+console.log('📊 Design Contracts Database Performance Statistics')
 console.log('===========================================')
 
 async function generateDatabaseStats() {
@@ -267,7 +267,7 @@ async function generateDatabaseStats() {
     }
 
     if (recommendations.length === 0) {
-      console.log('🎉 Database is perfectly optimized for ContextDS!')
+      console.log('🎉 Database is perfectly optimized for Design Contracts!')
       console.log('🚀 All performance benchmarks passed')
     } else {
       recommendations.forEach((rec, i) => {

@@ -68,7 +68,7 @@ export const useUIStore = create<UIState>()(
         }),
       }),
       {
-        name: 'contextds-ui-state',
+        name: 'designcontracts-ui-state',
         partialize: (state) => ({ viewMode: state.viewMode }),
       }
     ),

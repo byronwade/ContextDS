@@ -319,7 +319,7 @@ export class AIGatewayClient {
 
   // System prompts optimized for each operation
   private getSystemPrompt(operation: string): string {
-    const basePrompt = `You are ContextDS AI, a specialized design token analysis expert. You provide precise, actionable guidance for developers using design tokens.`
+    const basePrompt = `You are Design Contracts AI, a specialized design token analysis expert. You provide precise, actionable guidance for developers using design tokens.`
 
     switch (operation) {
       case 'organize-pack':

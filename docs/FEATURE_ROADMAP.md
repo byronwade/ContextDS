@@ -1,4 +1,4 @@
-# ContextDS Feature Roadmap - ULTRATHINK Edition
+# Design Contracts Feature Roadmap - ULTRATHINK Edition
 
 ## 🎯 Core Philosophy
 Every feature must be:
@@ -232,7 +232,7 @@ v2.8.0               Oct 12, 2024  [compare]
 **Solution:** Chrome/Firefox extension with live extraction
 
 ```
-ContextDS Extension (Chrome DevTools)
+Design Contracts Extension (Chrome DevTools)
 ─────────────────────────────────────
 
 Current Page: stripe.com/pricing
@@ -249,7 +249,7 @@ Extracted:
 ├─ 3 fonts (Inter detected)
 └─ 8 spacing values (8px scale)
 
-[Save to ContextDS] [Export]
+[Save to Design Contracts] [Export]
 ```
 
 **Features:**
@@ -269,10 +269,10 @@ Extracted:
 
 ### 8. **Figma Plugin** 🎨 DESIGNER TOOL
 **Problem:** Designers work in Figma, need tokens there
-**Solution:** Bidirectional Figma ↔ ContextDS sync
+**Solution:** Bidirectional Figma ↔ Design Contracts sync
 
 ```
-ContextDS Figma Plugin
+Design Contracts Figma Plugin
 ─────────────────────────────────────
 
 Import Tokens:
@@ -287,7 +287,7 @@ Tokens → Figma Styles:
 Export Figma → Tokens:
 ✓ Extract from current file
 ✓ Generate W3C token JSON
-✓ Upload to ContextDS
+✓ Upload to Design Contracts
 
 [Sync Now]
 ```
@@ -308,7 +308,7 @@ Export Figma → Tokens:
 **Solution:** CLI tool for automated token validation
 
 ```bash
-$ contextds lint --compare stripe.com
+$ designcontracts lint --compare stripe.com
 
 Analyzing design-system.css...
 
@@ -486,7 +486,7 @@ Esc        Clear search
 ### **2. URL Sharing** (3 hours)
 ```
 Share scan results:
-contextds.com/scan/stripe.com
+designcontracts.sh/scan/stripe.com
 
 Anyone can view tokens without API key
 Cached for 24 hours

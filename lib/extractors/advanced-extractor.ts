@@ -302,7 +302,7 @@ export class AdvancedExtractor {
     const context: ScanContext = {
       url,
       domain,
-      userAgent: 'ContextDS/1.0 (+https://contextds.com/bot)',
+      userAgent: 'DesignContracts/1.0 (+https://designcontracts.sh/bot)',
       viewports: [
         { width: 360, height: 640, name: 'mobile' },
         { width: 768, height: 1024, name: 'tablet' },

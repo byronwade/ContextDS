@@ -1,4 +1,4 @@
--- ContextDS Performance Optimization Indexes
+-- Design Contracts Performance Optimization Indexes
 -- Critical indexes for production performance
 
 -- Token search performance indexes

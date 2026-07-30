@@ -1,5 +1,5 @@
 /**
- * Free serverless persistence for ContextDS.
+ * Free serverless persistence for Design Contracts.
  *
  * Priority order:
  * 1. Vercel Blob  — durable JSON payloads (Hobby-friendly)

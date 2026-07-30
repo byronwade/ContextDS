@@ -7,7 +7,7 @@ import * as dotenv from 'dotenv'
 // Load environment variables
 dotenv.config({ path: '.env.local' })
 
-console.log('🏥 ContextDS Database Health Check')
+console.log('🏥 Design Contracts Database Health Check')
 console.log('====================================')
 
 async function runHealthCheck() {
@@ -167,7 +167,7 @@ async function runHealthCheck() {
         state,
         COUNT(*) as connection_count
       FROM pg_stat_activity
-      WHERE application_name LIKE '%contextds%'
+      WHERE application_name LIKE '%designcontracts%'
       GROUP BY application_name, state
     `)
 
@@ -221,7 +221,7 @@ async function runHealthCheck() {
     console.log('  • Run `bun db:optimize` to apply performance optimizations')
     console.log('  • Consider reviewing slow query logs')
   } else {
-    console.log('  • Database is well optimized for ContextDS workloads!')
+    console.log('  • Database is well optimized for Design Contracts workloads!')
   }
 
   console.log('\n🎯 Health check completed!')

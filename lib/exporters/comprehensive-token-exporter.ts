@@ -122,7 +122,7 @@ function exportToW3C(options: ExportOptions): string {
         ...(metadata.author && { author: metadata.author }),
         ...(metadata.homepage && { homepage: metadata.homepage }),
         createdAt: new Date().toISOString(),
-        tool: 'ContextDS',
+        tool: 'Design Contracts',
         toolVersion: '1.0.0'
       }
     })

@@ -34,7 +34,7 @@ export interface SchemaGuardrails {
   escalationThreshold: number
 }
 
-// Core schemas for ContextDS
+// Core schemas for Design Contracts
 export const TokenPackSchema = z.object({
   metadata: z.object({
     name: z.string().min(1),
@@ -850,7 +850,7 @@ Return the corrected JSON:`
     return migrations[version] ? migrations[version](data) : data
   }
 
-  // Custom validators for ContextDS-specific patterns
+  // Custom validators for Design Contracts-specific patterns
   validateTokenPack(data: any): Promise<ValidationResult<any>> {
     return this.validateWithRepair(data, TokenPackSchema, {
       operation: 'token-pack-validation',
