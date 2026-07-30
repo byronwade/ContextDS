@@ -29,10 +29,11 @@ When adding pages:
 4. Never introduce a second competing nav (`MarketingHeader` / `MarketingFooter` / `VercelHeader`) on public routes.
 
 ## Design & UI rules (summary)
-- **Warm Paper Workbench:** outer canvas `#f3eee5` + inset paper `#fffdf8` + terracotta `#9b4f32`.
+- **Warm Paper Workbench (dark-first):** canvas `#161310` + paper `#1f1b16` + terracotta accent; light cream optional.
+- Soft borders only (`--ui-border-soft` / `--ui-border`) — avoid hard outlines.
 - App shell: 240px sidebar on canvas → inset 12px-radius paper workspace (stats strip + body).
-- Controls: 28/32px with Shopify-style bevel shadows (`--shadow-control` / `--shadow-control-primary`).
-- Inter + JetBrains Mono. Soft warm borders; paper lift only on meaningful surfaces.
+- Controls: 28/32px with Shopify-style bevel shadows; theme toggle is a full-width segment in the sidebar.
+- Inter + JetBrains Mono. Paper lift only on meaningful surfaces.
 - Archetypes: chat = centered action (712px); library = dense operational list; docs = document (~760px).
 - No marketing footer / competing headers on AppShell routes. No nested card-shadow stacks.
 - Inline scan widgets stay compact; Open uses cache/handoff (no auto-rescan).

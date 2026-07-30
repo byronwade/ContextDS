@@ -181,11 +181,13 @@ function SidebarBody({
         </div>
       </nav>
 
-      <div className="mt-1 flex items-center justify-between border-t border-[var(--ui-border-soft)] px-1 pt-2">
-        <span className="px-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ui-ink-muted)]">
-          App
-        </span>
-        <ThemeToggle />
+      <div className="mt-1 flex flex-col gap-2 border-t border-[var(--ui-border-soft)] px-1 pt-2">
+        <div className="flex items-center justify-between px-1">
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ui-ink-muted)]">
+            Theme
+          </span>
+        </div>
+        <ThemeToggle className="w-full" />
       </div>
     </div>
   )

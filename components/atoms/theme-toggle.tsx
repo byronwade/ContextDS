@@ -1,46 +1,77 @@
-"use client"
+'use client'
 
-import { useTheme } from "@/hooks/use-theme"
-import { Monitor, Sun, Moon } from "lucide-react"
+import { Monitor, Moon, Sun } from 'lucide-react'
+import { useTheme, type Theme } from '@/hooks/use-theme'
+import { cn } from '@/lib/utils'
 
-export function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
+const OPTIONS: Array<{
+  value: Theme
+  icon: typeof Moon
+  label: string
+  short: string
+}> = [
+  { value: 'dark', icon: Moon, label: 'Dark', short: 'Dark' },
+  { value: 'light', icon: Sun, label: 'Light', short: 'Light' },
+  { value: 'system', icon: Monitor, label: 'System', short: 'Auto' },
+]
 
-  const themes = [
-    { value: "dark" as const, icon: Moon, label: "Switch to dark theme" },
-    { value: "light" as const, icon: Sun, label: "Switch to light theme" },
-    { value: "system" as const, icon: Monitor, label: "Switch to system theme" },
-  ]
-
+/**
+ * Compact segmented theme control — bevel track + sliding active pill.
+ */
+export function ThemeToggle({ className }: { className?: string }) {
+  const { theme, setTheme, mounted } = useTheme()
   const activeIndex = Math.max(
     0,
-    themes.findIndex((t) => t.value === theme)
+    OPTIONS.findIndex((option) => option.value === theme)
   )
 
   return (
-    <div className="relative flex h-8 w-[96px] items-center justify-between rounded-md border border-border bg-card">
+    <div
+      role="radiogroup"
+      aria-label="Color theme"
+      className={cn(
+        'relative inline-flex h-8 items-stretch rounded-[8px] bg-[var(--ui-paper-subtle)] p-0.5 shadow-[var(--shadow-control)]',
+        className
+      )}
+      data-mounted={mounted || undefined}
+    >
+      {/* Sliding active pill */}
       <div
-        className="absolute h-7 w-7 rounded-sm border border-border bg-background transition-transform duration-200"
+        aria-hidden
+        className="pointer-events-none absolute top-0.5 bottom-0.5 w-[calc((100%-4px)/3)] rounded-[6px] bg-[var(--ui-paper)] shadow-[var(--shadow-control)] transition-transform duration-200 ease-out"
         style={{
-          transform: `translateX(calc(${activeIndex * 32}px + 2px))`,
+          transform: `translateX(calc(${activeIndex} * 100%))`,
+          left: 2,
         }}
       />
 
-      {themes.map((themeOption) => {
-        const Icon = themeOption.icon
-        const isActive = theme === themeOption.value
-
+      {OPTIONS.map((option) => {
+        const Icon = option.icon
+        const active = theme === option.value
         return (
           <button
-            key={themeOption.value}
-            onClick={() => setTheme(themeOption.value)}
-            className={`relative z-10 flex h-8 w-8 items-center justify-center transition-colors duration-200 ${
-              isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
-            aria-label={themeOption.label}
-            title={themeOption.label}
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            aria-label={option.label}
+            title={option.label}
+            onClick={() => setTheme(option.value)}
+            className={cn(
+              'relative z-10 flex h-7 min-w-[30px] flex-1 items-center justify-center gap-1 rounded-[6px] px-1.5 text-[11px] font-medium transition-colors duration-150',
+              active
+                ? 'text-[var(--ui-ink)]'
+                : 'text-[var(--ui-ink-muted)] hover:text-[var(--ui-ink-secondary)]'
+            )}
           >
-            <Icon className="h-3.5 w-3.5" />
+            <Icon
+              className={cn(
+                'size-3.5 shrink-0',
+                active && 'text-[var(--ui-accent)]'
+              )}
+              aria-hidden
+            />
+            <span className="sr-only sm:not-sr-only sm:inline">{option.short}</span>
           </button>
         )
       })}

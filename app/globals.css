@@ -179,36 +179,11 @@
 
 /*
  * Warm Paper Workbench — Design Contracts
- * Cream canvas · warm-white paper · terracotta accent · Shopify-style bevels.
+ * Dark-first warm paper · soft borders · terracotta accent · bevel controls.
  * See DESIGN.md.
  */
 :root {
   --radius: 0.5rem;
-
-  /* Warm paper primitives */
-  --ui-canvas: #f3eee5;
-  --ui-paper: #fffdf8;
-  --ui-paper-subtle: #faf5ec;
-  --ui-paper-hover: #f5eee3;
-  --ui-paper-selected: #ede3d5;
-  --ui-ink: #2b2723;
-  --ui-ink-secondary: #675f57;
-  --ui-ink-muted: #766e65;
-  --ui-border-soft: rgba(67, 52, 38, 0.1);
-  --ui-border: rgba(67, 52, 38, 0.15);
-  --ui-border-edge: rgba(67, 52, 38, 0.22);
-  --ui-accent: #9b4f32;
-  --ui-accent-hover: #7a3f2a;
-  --ui-accent-soft: #f4e5db;
-  --ui-focus: #7d4936;
-  --ui-success: #356548;
-  --ui-success-soft: #e8f2e7;
-  --ui-warning: #7a5417;
-  --ui-warning-soft: #fff1d6;
-  --ui-danger: #9c3c32;
-  --ui-danger-soft: #f9e4e0;
-  --ui-info: #3e6670;
-  --ui-info-soft: #e5f0f1;
   --font-ui: var(--font-inter), Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   --radius-xs: 4px;
@@ -225,35 +200,166 @@
   --space-6: 24px;
   --space-8: 32px;
 
+  /* Dark-first default palette */
+  --ui-canvas: #161310;
+  --ui-paper: #1f1b16;
+  --ui-paper-subtle: #1a1612;
+  --ui-paper-hover: #29241e;
+  --ui-paper-selected: #342e26;
+  --ui-ink: #f0ebe3;
+  --ui-ink-secondary: #a89f94;
+  --ui-ink-muted: #7f766c;
+  /* Softer borders — barely-there edges */
+  --ui-border-soft: rgba(240, 235, 227, 0.05);
+  --ui-border: rgba(240, 235, 227, 0.08);
+  --ui-border-edge: rgba(240, 235, 227, 0.12);
+  --ui-accent: #c47a5a;
+  --ui-accent-hover: #d48b6c;
+  --ui-accent-soft: rgba(196, 122, 90, 0.16);
+  --ui-focus: #d4a08a;
+  --ui-success: #6fad88;
+  --ui-success-soft: rgba(111, 173, 136, 0.14);
+  --ui-warning: #d4a45a;
+  --ui-warning-soft: rgba(212, 164, 90, 0.14);
+  --ui-danger: #d4786e;
+  --ui-danger-soft: rgba(212, 120, 110, 0.14);
+  --ui-info: #7a9aa3;
+  --ui-info-soft: rgba(122, 154, 163, 0.14);
+
   --shadow-control:
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(240, 235, 227, 0.06),
+    inset 0 0.5px 0 1.5px rgba(255, 255, 255, 0.035),
+    0 1px 1px rgba(0, 0, 0, 0.22);
+  --shadow-control-hover:
+    inset 0 -1px 0 rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(240, 235, 227, 0.09),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.28);
+  --shadow-control-primary:
+    inset 0 -1px 0 1px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(196, 122, 90, 0.85),
+    inset 0 0.5px 0 1.5px rgba(255, 255, 255, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-paper:
+    0 1px 0 rgba(0, 0, 0, 0.18),
+    0 4px 14px -6px rgba(0, 0, 0, 0.45),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.035);
+  --shadow-paper-hover:
+    0 1px 0 rgba(0, 0, 0, 0.2),
+    0 8px 18px -8px rgba(0, 0, 0, 0.5),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.045);
+  --shadow-float:
+    0 16px 40px -12px rgba(0, 0, 0, 0.55),
+    0 4px 12px -4px rgba(0, 0, 0, 0.4),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.04);
+
+  --background: var(--ui-canvas);
+  --foreground: var(--ui-ink);
+  --card: var(--ui-paper);
+  --card-foreground: var(--ui-ink);
+  --popover: var(--ui-paper);
+  --popover-foreground: var(--ui-ink);
+  --primary: var(--ui-accent);
+  --primary-foreground: #161310;
+  --secondary: var(--ui-paper-subtle);
+  --secondary-foreground: var(--ui-ink);
+  --muted: var(--ui-paper-subtle);
+  --muted-foreground: var(--ui-ink-secondary);
+  --accent: var(--ui-accent-soft);
+  --accent-foreground: var(--ui-ink);
+  --destructive: var(--ui-danger);
+  --destructive-foreground: #161310;
+  --warning: var(--ui-warning);
+  --warning-foreground: #161310;
+  --success: var(--ui-success);
+  --success-foreground: #161310;
+  --border: var(--ui-border);
+  --input: var(--ui-border);
+  --ring: var(--ui-focus);
+  --chart-1: var(--ui-accent);
+  --chart-2: #9fc9a2;
+  --chart-3: #9fbbe0;
+  --chart-4: #c0a8dd;
+  --chart-5: var(--ui-warning);
+  --sidebar: transparent;
+  --sidebar-foreground: var(--ui-ink);
+  --sidebar-primary: var(--ui-accent);
+  --sidebar-primary-foreground: #161310;
+  --sidebar-accent: var(--ui-paper-selected);
+  --sidebar-accent-foreground: var(--ui-ink);
+  --sidebar-border: var(--ui-border-soft);
+  --sidebar-ring: var(--ui-focus);
+  --soft-shadow: var(--shadow-paper);
+  --soft-border: var(--ui-border-soft);
+
+  --timeline-thinking: #dfa88f;
+  --timeline-grep: #9fc9a2;
+  --timeline-read: #9fbbe0;
+  --timeline-edit: #c0a8dd;
+  --timeline-done: #c08532;
+  --canvas-soft: var(--ui-paper-subtle);
+  --primary-active: var(--ui-accent-hover);
+  --ink-muted: var(--ui-ink-muted);
+}
+
+.dark {
+  /* aliases :root dark-first tokens */
+}
+
+.light {
+  --ui-canvas: #f3eee5;
+  --ui-paper: #fffdf8;
+  --ui-paper-subtle: #faf5ec;
+  --ui-paper-hover: #f5eee3;
+  --ui-paper-selected: #ede3d5;
+  --ui-ink: #2b2723;
+  --ui-ink-secondary: #675f57;
+  --ui-ink-muted: #766e65;
+  --ui-border-soft: rgba(67, 52, 38, 0.055);
+  --ui-border: rgba(67, 52, 38, 0.09);
+  --ui-border-edge: rgba(67, 52, 38, 0.13);
+  --ui-accent: #9b4f32;
+  --ui-accent-hover: #7a3f2a;
+  --ui-accent-soft: #f4e5db;
+  --ui-focus: #7d4936;
+  --ui-success: #356548;
+  --ui-success-soft: #e8f2e7;
+  --ui-warning: #7a5417;
+  --ui-warning-soft: #fff1d6;
+  --ui-danger: #9c3c32;
+  --ui-danger-soft: #f9e4e0;
+  --ui-info: #3e6670;
+  --ui-info-soft: #e5f0f1;
+
+  --shadow-control:
+    inset 0 -1px 0 rgba(72, 56, 40, 0.22),
+    inset 0 0 0 1px rgba(72, 56, 40, 0.07),
+    inset 0 0.5px 0 1.5px rgba(255, 255, 255, 0.78),
+    0 1px 1px rgba(72, 56, 40, 0.04);
+  --shadow-control-hover:
     inset 0 -1px 0 rgba(72, 56, 40, 0.28),
     inset 0 0 0 1px rgba(72, 56, 40, 0.1),
-    inset 0 0.5px 0 1.5px rgba(255, 255, 255, 0.78),
-    0 1px 1px rgba(72, 56, 40, 0.05);
-  --shadow-control-hover:
-    inset 0 -1px 0 rgba(72, 56, 40, 0.34),
-    inset 0 0 0 1px rgba(72, 56, 40, 0.13),
     inset 0 1px 0 rgba(255, 255, 255, 0.88),
-    0 1px 2px rgba(72, 56, 40, 0.07);
+    0 1px 2px rgba(72, 56, 40, 0.06);
   --shadow-control-primary:
-    inset 0 -1px 0 1px rgba(65, 31, 21, 0.62),
-    inset 0 0 0 1px rgba(105, 49, 31, 0.92),
+    inset 0 -1px 0 1px rgba(65, 31, 21, 0.55),
+    inset 0 0 0 1px rgba(105, 49, 31, 0.88),
     inset 0 0.5px 0 1.5px rgba(255, 255, 255, 0.26),
-    0 1px 2px rgba(72, 35, 24, 0.16);
+    0 1px 2px rgba(72, 35, 24, 0.14);
   --shadow-paper:
-    0 1px 0 rgba(67, 52, 38, 0.07),
-    0 3px 8px -5px rgba(67, 52, 38, 0.22),
+    0 1px 0 rgba(67, 52, 38, 0.05),
+    0 3px 10px -5px rgba(67, 52, 38, 0.16),
     inset 0 0.5px 0 rgba(255, 255, 255, 0.72);
   --shadow-paper-hover:
-    0 1px 0 rgba(67, 52, 38, 0.08),
-    0 6px 14px -8px rgba(67, 52, 38, 0.28),
+    0 1px 0 rgba(67, 52, 38, 0.06),
+    0 6px 14px -8px rgba(67, 52, 38, 0.2),
     inset 0 0.5px 0 rgba(255, 255, 255, 0.78);
   --shadow-float:
-    0 16px 40px -12px rgba(52, 40, 29, 0.28),
-    0 4px 12px -4px rgba(52, 40, 29, 0.18),
+    0 16px 40px -12px rgba(52, 40, 29, 0.24),
+    0 4px 12px -4px rgba(52, 40, 29, 0.14),
     inset 0 0.5px 0 rgba(255, 255, 255, 0.75);
 
-  /* shadcn semantic map → warm paper */
   --background: var(--ui-canvas);
   --foreground: var(--ui-ink);
   --card: var(--ui-paper);
@@ -292,112 +398,6 @@
   --sidebar-ring: var(--ui-focus);
   --soft-shadow: var(--shadow-paper);
   --soft-border: var(--ui-border-soft);
-
-  --timeline-thinking: #dfa88f;
-  --timeline-grep: #9fc9a2;
-  --timeline-read: #9fbbe0;
-  --timeline-edit: #c0a8dd;
-  --timeline-done: #c08532;
-  --canvas-soft: var(--ui-paper-subtle);
-  --primary-active: var(--ui-accent-hover);
-  --ink-muted: var(--ui-ink-muted);
-}
-
-.light {
-  /* inherits :root warm paper */
-}
-
-.dark {
-  --ui-canvas: #1c1916;
-  --ui-paper: #26221d;
-  --ui-paper-subtle: #221e19;
-  --ui-paper-hover: #2e2923;
-  --ui-paper-selected: #3a332b;
-  --ui-ink: #f3eee5;
-  --ui-ink-secondary: #b4aaa0;
-  --ui-ink-muted: #8f857a;
-  --ui-border-soft: rgba(243, 238, 229, 0.08);
-  --ui-border: rgba(243, 238, 229, 0.14);
-  --ui-border-edge: rgba(243, 238, 229, 0.22);
-  --ui-accent: #c47a5a;
-  --ui-accent-hover: #d48b6c;
-  --ui-accent-soft: rgba(196, 122, 90, 0.18);
-  --ui-focus: #d4a08a;
-  --ui-success: #6fad88;
-  --ui-success-soft: rgba(111, 173, 136, 0.16);
-  --ui-warning: #d4a45a;
-  --ui-warning-soft: rgba(212, 164, 90, 0.16);
-  --ui-danger: #d4786e;
-  --ui-danger-soft: rgba(212, 120, 110, 0.16);
-  --ui-info: #7a9aa3;
-  --ui-info-soft: rgba(122, 154, 163, 0.16);
-
-  --shadow-control:
-    inset 0 -1px 0 rgba(0, 0, 0, 0.35),
-    inset 0 0 0 1px rgba(243, 238, 229, 0.08),
-    inset 0 0.5px 0 1.5px rgba(255, 255, 255, 0.04),
-    0 1px 1px rgba(0, 0, 0, 0.2);
-  --shadow-control-hover:
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
-    inset 0 0 0 1px rgba(243, 238, 229, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 1px 2px rgba(0, 0, 0, 0.25);
-  --shadow-control-primary:
-    inset 0 -1px 0 1px rgba(0, 0, 0, 0.45),
-    inset 0 0 0 1px rgba(196, 122, 90, 0.9),
-    inset 0 0.5px 0 1.5px rgba(255, 255, 255, 0.12),
-    0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-paper:
-    0 1px 0 rgba(0, 0, 0, 0.2),
-    0 3px 8px -5px rgba(0, 0, 0, 0.4),
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.04);
-  --shadow-paper-hover:
-    0 1px 0 rgba(0, 0, 0, 0.22),
-    0 6px 14px -8px rgba(0, 0, 0, 0.45),
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.05);
-  --shadow-float:
-    0 16px 40px -12px rgba(0, 0, 0, 0.5),
-    0 4px 12px -4px rgba(0, 0, 0, 0.35),
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.05);
-
-  --background: var(--ui-canvas);
-  --foreground: var(--ui-ink);
-  --card: var(--ui-paper);
-  --card-foreground: var(--ui-ink);
-  --popover: var(--ui-paper);
-  --popover-foreground: var(--ui-ink);
-  --primary: var(--ui-accent);
-  --primary-foreground: #1c1916;
-  --secondary: var(--ui-paper-subtle);
-  --secondary-foreground: var(--ui-ink);
-  --muted: var(--ui-paper-subtle);
-  --muted-foreground: var(--ui-ink-secondary);
-  --accent: var(--ui-accent-soft);
-  --accent-foreground: var(--ui-ink);
-  --destructive: var(--ui-danger);
-  --destructive-foreground: #1c1916;
-  --warning: var(--ui-warning);
-  --warning-foreground: #1c1916;
-  --success: var(--ui-success);
-  --success-foreground: #1c1916;
-  --border: var(--ui-border);
-  --input: var(--ui-border);
-  --ring: var(--ui-focus);
-  --chart-1: var(--ui-accent);
-  --chart-2: #9fc9a2;
-  --chart-3: #9fbbe0;
-  --chart-4: #c0a8dd;
-  --chart-5: var(--ui-warning);
-  --sidebar: transparent;
-  --sidebar-foreground: var(--ui-ink);
-  --sidebar-primary: var(--ui-accent);
-  --sidebar-primary-foreground: #1c1916;
-  --sidebar-accent: var(--ui-paper-selected);
-  --sidebar-accent-foreground: var(--ui-ink);
-  --sidebar-border: var(--ui-border-soft);
-  --sidebar-ring: var(--ui-focus);
-  --soft-shadow: var(--shadow-paper);
-  --soft-border: var(--ui-border-soft);
   --canvas-soft: var(--ui-paper-subtle);
   --primary-active: var(--ui-accent-hover);
   --ink-muted: var(--ui-ink-muted);
@@ -408,14 +408,14 @@
   overflow: clip;
   background: var(--ui-paper);
   color: var(--ui-ink);
-  border: 1px solid var(--ui-border);
+  border: 1px solid var(--ui-border-soft);
   border-radius: var(--radius-paper);
   box-shadow: var(--shadow-paper);
 }
 
 .paper--shell {
   border-radius: var(--radius-shell);
-  border-color: var(--ui-border-edge);
+  border-color: var(--ui-border);
 }
 
 .paper__toolbar,

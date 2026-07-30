@@ -282,7 +282,7 @@ export function ScanChat() {
           <div className="mx-auto w-full max-w-[712px] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 sm:px-6">
             <PromptInput
               onSubmit={onSubmit}
-              className="overflow-hidden rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper)] shadow-[var(--shadow-control)]"
+              className="overflow-hidden rounded-[10px] border border-[var(--ui-border-soft)] bg-[var(--ui-paper)] shadow-[var(--shadow-control)]"
             >
               <PromptInputBody>
                 <PromptInputTextarea

@@ -36,8 +36,9 @@ Design Contracts is an **app workbench**, not a brochure site.
 ## Shell geometry
 
 ```
-Outer warm canvas (#f3eee5)
+Outer warm canvas (dark `#161310` / light `#f3eee5`)
 ├── Global sidebar: 240px (on canvas, no card chrome)
+│   └── Theme segment (Dark / Light / Auto)
 └── Inset workspace: 8px inset, 12px radius paper
     ├── Utility strip: live Redis stats (36–44px)
     ├── Optional location / view bars (integrated paper__toolbar)
@@ -46,8 +47,8 @@ Outer warm canvas (#f3eee5)
 
 Rules:
 - Toolbar + body + footer = **one paper sheet** (no floating toolbars).
-- Stronger borders only on shell edges (`--ui-border-edge`).
-- Soft borders for internal dividers (`--ui-border-soft`).
+- Prefer `--ui-border-soft` everywhere; `--ui-border` only for shell edges.
+- Theme defaults to **dark**; FOUC script + `html.dark` enforce it.
 
 ---
 
