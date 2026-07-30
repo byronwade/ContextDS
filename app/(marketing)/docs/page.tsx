@@ -34,7 +34,7 @@ export default function DocsPage() {
     <AppShell currentPage="docs">
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-12">
-          <h1 className="font-serif text-3xl tracking-tight text-foreground sm:text-4xl">Docs</h1>
+          <h1 className="font-normal tracking-tight text-3xl tracking-tight text-foreground sm:text-4xl">Docs</h1>
           <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
             Turn any public website into an installable Design Contract — tokens, layout DNA, a
             semantic graph, and agent-ready guidance.

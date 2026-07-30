@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { SkipLinks } from "@/components/atoms/skip-links";
 import { ErrorBoundary } from "@/components/atoms/error-boundary";
 import { WebVitalsReporter } from "@/components/atoms/web-vitals-reporter";
@@ -11,28 +11,21 @@ import { generateOrganizationSchema, generateWebsiteSchema, generateSoftwareAppl
 import { RESOURCE_HINTS } from "@/lib/seo/performance";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: "swap", // Non-blocking font loading
-  preload: true,   // Preload critical font
-  fallback: ['system-ui', 'arial'] // Add fallback fonts
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+/** CursorGothic substitute — Inter @ 400 with tight tracking for display */
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
   display: "swap",
-  preload: false,  // Don't preload monospace (used less)
-  fallback: ['ui-monospace', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+  preload: true,
+  fallback: ["system-ui", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
 });
 
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument-serif",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
   subsets: ["latin"],
-  weight: "400",
   display: "swap",
   preload: false,
+  fallback: ["Fira Code", "ui-monospace", "Menlo", "Monaco", "Consolas", "monospace"],
 });
 
 export const metadata: Metadata = {
@@ -53,7 +46,7 @@ export default function RootLayout({
   const softwareApplicationSchema = generateSoftwareApplicationSchema();
 
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" className="light" suppressHydrationWarning>
       <head>
         {/* SEO Meta Tags */}
         <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
@@ -92,10 +85,10 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
 
-        {/* Dark-first brand theme colors */}
-        <meta name="theme-color" content="#141418" />
-        <meta name="theme-color" content="#141418" media="(prefers-color-scheme: dark)" />
-        <meta name="theme-color" content="#F7F7F8" media="(prefers-color-scheme: light)" />
+        {/* Cream-first brand theme colors (Cursor editorial) */}
+        <meta name="theme-color" content="#f7f7f4" />
+        <meta name="theme-color" content="#f7f7f4" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#1a1916" media="(prefers-color-scheme: dark)" />
 
         {/* Structured Data - JSON-LD */}
         <script
@@ -136,10 +129,10 @@ export default function RootLayout({
                 }
 
                 try {
-                  const stored = localStorage.getItem('theme') || 'dark';
+                  const stored = localStorage.getItem('theme') || 'light';
                   setTheme(stored);
                 } catch (e) {
-                  setTheme('dark');
+                  setTheme('light');
                 }
 
                 // Performance optimizations
@@ -176,7 +169,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} antialiased`}
+        className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <SkipLinks />

@@ -183,7 +183,7 @@ export default function MetricsPage() {
         {/* Page Header with Live Status */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="font-serif text-3xl tracking-tight text-foreground">Metrics</h1>
+            <h1 className="font-normal tracking-tight text-3xl tracking-tight text-foreground">Metrics</h1>
             <p className="text-sm text-muted-foreground mt-1">Live platform performance and usage analytics</p>
           </div>
 

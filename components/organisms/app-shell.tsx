@@ -73,18 +73,18 @@ function SidebarBody({
         className="mb-2 flex items-baseline gap-0.5 rounded-lg px-2 py-1.5 outline-offset-4 transition-opacity hover:opacity-90"
         aria-label="designcontracts.sh home"
       >
-        <span className="font-serif text-[15px] tracking-tight text-sidebar-foreground">
+        <span className="text-[15px] font-normal tracking-tight text-sidebar-foreground">
           designcontracts
         </span>
-        <span className="font-mono text-[10px] text-muted-foreground">.sh</span>
+        <span className="font-mono text-[10px] text-primary">.sh</span>
       </Link>
 
       <Link
         href="/"
         onClick={onNavigate}
-        className="mb-2 inline-flex items-center gap-2 rounded-xl border border-sidebar-border bg-sidebar-accent/40 px-2.5 py-2 text-sm text-sidebar-foreground transition hover:bg-sidebar-accent"
+        className="mb-2 inline-flex items-center gap-2 rounded-lg bg-primary px-2.5 py-2 text-sm font-medium text-primary-foreground transition hover:bg-[var(--primary-active)]"
       >
-        <Plus className="size-3.5 opacity-80" aria-hidden />
+        <Plus className="size-3.5 opacity-90" aria-hidden />
         New chat
       </Link>
 
@@ -231,10 +231,12 @@ export function AppShell({
           <div className="flex h-full flex-col items-center gap-2 px-1.5 py-3">
             <Link
               href="/"
-              className="flex size-9 items-center justify-center rounded-lg font-serif text-sm text-sidebar-foreground hover:bg-sidebar-accent"
+              className="flex size-9 items-center justify-center rounded-lg text-sm font-normal text-sidebar-foreground hover:bg-sidebar-accent"
               aria-label="Chat"
             >
-              d
+              <span>
+                d<span className="text-primary">.</span>
+              </span>
             </Link>
             {PRIMARY_NAV.map((item) => {
               const Icon = item.icon
@@ -311,8 +313,8 @@ export function AppShell({
             {mobileOpen ? <X className="size-4" /> : <Menu className="size-4" />}
           </Button>
           <Link href="/" className="flex items-baseline gap-0.5">
-            <span className="font-serif text-base tracking-tight">designcontracts</span>
-            <span className="font-mono text-[10px] text-muted-foreground">.sh</span>
+            <span className="text-base font-normal tracking-tight">designcontracts</span>
+            <span className="font-mono text-[10px] text-primary">.sh</span>
           </Link>
         </header>
 

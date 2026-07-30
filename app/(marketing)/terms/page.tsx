@@ -16,7 +16,7 @@ export default function TermsPage() {
     <AppShell currentPage="terms">
       <PageCanvas innerClassName="max-w-3xl">
           <div className="prose prose-gray dark:prose-invert max-w-none">
-            <h1 className="font-serif text-3xl tracking-tight mb-8 sm:text-4xl">Terms of Service</h1>
+            <h1 className="font-normal tracking-tight text-3xl tracking-tight mb-8 sm:text-4xl">Terms of Service</h1>
             <p className="text-muted-foreground mb-8">
               Last updated: December 2024
             </p>

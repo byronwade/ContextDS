@@ -111,13 +111,11 @@ function EmptyState({
 }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-4 pb-8 pt-16 animate-fade-in">
-      <h1 className="font-serif text-[clamp(2.5rem,7vw,3.75rem)] leading-[0.95] tracking-[-0.03em] text-foreground">
+      <h1 className="text-[clamp(2.5rem,7vw,3.75rem)] font-normal leading-[1.1] tracking-[-0.03em] text-foreground">
         designcontracts
-        <span className="font-mono text-[0.5em] tracking-normal text-[oklch(0.78_0.08_185)]">
-          .sh
-        </span>
+        <span className="font-mono text-[0.45em] tracking-normal text-primary">.sh</span>
       </h1>
-      <p className="mt-4 max-w-md text-center text-[15px] leading-relaxed text-muted-foreground">
+      <p className="mt-4 max-w-md text-center text-base font-normal leading-relaxed text-muted-foreground">
         Paste a URL. Get an installable Design Contract.
       </p>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
@@ -128,8 +126,8 @@ function EmptyState({
             disabled={disabled}
             onClick={() => onPick(example.prompt)}
             className={cn(
-              'rounded-full border border-[color:var(--soft-border)] bg-card/50 px-3.5 py-1.5 font-mono text-xs text-muted-foreground transition',
-              'hover:border-foreground/20 hover:bg-card hover:text-foreground disabled:opacity-50',
+              'rounded-full border border-border bg-card px-3.5 py-1.5 font-mono text-xs text-muted-foreground transition',
+              'hover:border-[var(--hairline-strong,#cfcdc4)] hover:text-foreground disabled:opacity-50',
               'animate-slide-in'
             )}
             style={{ animationDelay: `${index * 40}ms` }}
@@ -186,13 +184,13 @@ export function ScanChat() {
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
-      {/* Soft atmosphere — not a marketing hero */}
+      {/* Soft cream atmosphere — hairline-only product, no glow */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            'radial-gradient(720px 360px at 50% 0%, oklch(0.42 0.035 185 / 0.10), transparent 60%)',
+            'radial-gradient(720px 320px at 50% 0%, color-mix(in srgb, var(--primary) 6%, transparent), transparent 65%)',
         }}
       />
 
@@ -291,7 +289,7 @@ export function ScanChat() {
           <div className="mx-auto w-full max-w-2xl px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-1 sm:px-6">
             <PromptInput
               onSubmit={onSubmit}
-              className="rounded-2xl border-[color:var(--soft-border)] bg-card/80 shadow-[0_0_0_1px_oklch(1_0_0_/_0.03)] backdrop-blur-md"
+              className="rounded-xl border border-border bg-card"
             >
               <PromptInputBody>
                 <PromptInputTextarea

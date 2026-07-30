@@ -18,9 +18,9 @@ export function ThemeToggle() {
   )
 
   return (
-    <div className="relative flex h-8 w-[96px] items-center justify-between rounded-md border border-[color:var(--soft-border)] bg-secondary/40">
+    <div className="relative flex h-8 w-[96px] items-center justify-between rounded-md border border-border bg-card">
       <div
-        className="absolute h-7 w-7 rounded-sm bg-background shadow-[var(--soft-shadow)] transition-transform duration-200"
+        className="absolute h-7 w-7 rounded-sm border border-border bg-background transition-transform duration-200"
         style={{
           transform: `translateX(calc(${activeIndex * 32}px + 2px))`,
         }}

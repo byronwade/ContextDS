@@ -59,7 +59,7 @@ export default function PricingPage() {
   return (
     <AppShell currentPage="pricing">
       <PageCanvas innerClassName="max-w-4xl">
-        <h1 className="font-serif text-3xl tracking-tight text-foreground sm:text-4xl">
+        <h1 className="font-normal tracking-tight text-3xl tracking-tight text-foreground sm:text-4xl">
           Pricing
         </h1>
         <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
@@ -105,7 +105,7 @@ export default function PricingPage() {
                 className={cn(
                   'mt-6 inline-flex h-10 items-center justify-center rounded-xl text-sm font-medium transition',
                   plan.highlighted
-                    ? 'bg-foreground text-background hover:opacity-90'
+                    ? 'bg-primary text-primary-foreground hover:bg-[var(--primary-active)]'
                     : 'border border-[color:var(--soft-border)] text-foreground hover:bg-muted/40'
                 )}
               >

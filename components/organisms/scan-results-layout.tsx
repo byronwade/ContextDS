@@ -187,7 +187,7 @@ export function ScanResultsLayout({
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-destructive">
             Scan failed
           </p>
-          <h2 className="font-serif text-3xl tracking-tight text-foreground">{error}</h2>
+          <h2 className="font-normal tracking-tight text-3xl tracking-tight text-foreground">{error}</h2>
           <div className="flex flex-wrap gap-2">
             <Button onClick={onNewScan}>Try again</Button>
             <Button variant="outline" onClick={() => (window.location.href = "/")}>
@@ -242,7 +242,7 @@ export function ScanResultsLayout({
               {result.metadata?.mode || result.metadata?.engine || "scan"}
             </Badge>
           </div>
-          <h1 className="font-serif text-3xl tracking-tight text-foreground sm:text-4xl">
+          <h1 className="font-normal tracking-tight text-3xl tracking-tight text-foreground sm:text-4xl">
             {result.domain}
           </h1>
           <p className="max-w-2xl text-sm text-muted-foreground">
@@ -343,7 +343,7 @@ export function ScanResultsLayout({
                     <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                       Semantic design graph
                     </p>
-                    <h3 className="mt-1 font-serif text-2xl tracking-tight">
+                    <h3 className="mt-1 font-normal tracking-tight text-2xl tracking-tight">
                       How the system links together
                     </h3>
                     <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
@@ -660,7 +660,7 @@ function MarkdownPanel({
     <div className="animate-fade-in space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h3 className="font-serif text-2xl text-foreground">{title}</h3>
+          <h3 className="font-normal tracking-tight text-2xl text-foreground">{title}</h3>
           <p className="text-sm text-muted-foreground">{subtitle}</p>
         </div>
         <div className="flex gap-2">

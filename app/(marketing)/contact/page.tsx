@@ -30,7 +30,7 @@ export default function ContactPage() {
   return (
     <AppShell currentPage="contact">
       <PageCanvas>
-        <h1 className="font-serif text-3xl tracking-tight text-foreground sm:text-4xl">
+        <h1 className="font-normal tracking-tight text-3xl tracking-tight text-foreground sm:text-4xl">
           Contact
         </h1>
         <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">

@@ -121,7 +121,7 @@ export default function CommunityClient() {
       <div className="min-h-0 flex-1 overflow-y-auto" role="region" aria-label="Design Contracts library">
           <section className="border-b border-[color:var(--soft-border)] px-4 pb-6 pt-8 sm:px-6">
             <div className="mx-auto max-w-3xl">
-              <h1 className="font-serif text-3xl tracking-tight text-foreground">Library</h1>
+              <h1 className="font-normal tracking-tight text-3xl tracking-tight text-foreground">Library</h1>
               <p className="mt-2 max-w-xl text-sm text-muted-foreground">
                 Design Contracts from public sites. Open one, or ask Chat to gather a new system.
               </p>
@@ -194,7 +194,7 @@ export default function CommunityClient() {
                 </div>
               ) : filteredSites.length === 0 ? (
                 <div className="rounded-2xl border border-[color:var(--soft-border)] bg-card/40 px-6 py-16 text-center">
-                  <h2 className="font-serif text-2xl text-foreground">No sites yet</h2>
+                  <h2 className="font-normal tracking-tight text-2xl text-foreground">No sites yet</h2>
                   <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
                     {searchQuery
                       ? 'Nothing matched that search.'
@@ -237,7 +237,7 @@ export default function CommunityClient() {
                         <div className="min-w-0">
                           <Link
                             href={`/site/${site.domain}`}
-                            className="font-serif text-xl tracking-tight text-foreground transition-colors hover:text-[oklch(0.78_0.08_185)]"
+                            className="font-normal tracking-tight text-xl tracking-tight text-foreground transition-colors hover:text-[oklch(0.78_0.08_185)]"
                           >
                             {site.title || site.domain}
                           </Link>

@@ -30,10 +30,11 @@ When adding pages:
 
 ## Design & UI rules (summary)
 - App-like: sidebar + canvas, **no marketing footer** on any AppShell route.
-- Dark-first; mint accent (hue ~185); Geist + Instrument Serif; no purple-glow themes.
+- **Cream-first** (`#f7f7f4`) + warm ink (`#26251e`) + scarce **Contract Orange** (`#f54e00`) — Cursor editorial system.
+- Inter (display/body weight 400) + JetBrains Mono (code). Hairline borders only — no shadows.
 - Chat empty state = brand + one line + chips + composer. No hero cards/stats.
-- Secondary pages: one title, one supporting line, list/sections — not card grids or blue gradient heroes.
-- Inline scan widgets stay compact; Open uses cached scan.
+- Timeline pastels only for scan/agent stages — never CTAs.
+- Inline scan widgets stay compact; Open uses cache/handoff (no auto-rescan).
 - Details: [`DESIGN.md`](./DESIGN.md).
 
 ## Build, Test, and Development Commands

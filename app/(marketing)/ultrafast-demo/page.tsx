@@ -171,7 +171,7 @@ export default function UltraFastDemoPage() {
     <AppShell currentPage="metrics">
       <PageCanvas innerClassName="max-w-6xl px-4 py-8 sm:px-6">
           <div className="mb-8">
-            <h1 className="font-serif text-3xl tracking-tight text-foreground">Scan demo</h1>
+            <h1 className="font-normal tracking-tight text-3xl tracking-tight text-foreground">Scan demo</h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
               Progressive scan timing demo — same app shell as the rest of the product.
             </p>
@@ -268,7 +268,7 @@ export default function UltraFastDemoPage() {
           </Card>
 
       {/* Performance Metrics */}
-        <h2 className="mb-6 mt-10 font-serif text-2xl tracking-tight text-foreground">
+        <h2 className="mb-6 mt-10 font-normal tracking-tight text-2xl tracking-tight text-foreground">
           Performance metrics
         </h2>
 

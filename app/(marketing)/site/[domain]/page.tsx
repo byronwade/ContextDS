@@ -183,7 +183,7 @@ export default function SitePage() {
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
             Contract
           </p>
-          <h1 className="mt-2 font-serif text-3xl tracking-tight text-foreground sm:text-4xl">
+          <h1 className="mt-2 font-normal tracking-tight text-3xl tracking-tight text-foreground sm:text-4xl">
             {domain}
           </h1>
           <p className="mt-2 max-w-lg text-[15px] text-muted-foreground">

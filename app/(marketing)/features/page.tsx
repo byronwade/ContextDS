@@ -44,7 +44,7 @@ export default function FeaturesPage() {
   return (
     <AppShell currentPage="features">
       <PageCanvas>
-        <h1 className="font-serif text-3xl tracking-tight text-foreground sm:text-4xl">
+        <h1 className="font-normal tracking-tight text-3xl tracking-tight text-foreground sm:text-4xl">
           Features
         </h1>
         <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
@@ -68,7 +68,7 @@ export default function FeaturesPage() {
         <div className="mt-14 flex flex-wrap gap-3">
           <Link
             href="/"
-            className="inline-flex h-10 items-center rounded-xl bg-foreground px-4 text-sm font-medium text-background transition hover:opacity-90"
+            className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90"
           >
             Open Chat
           </Link>
