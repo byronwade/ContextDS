@@ -76,7 +76,7 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
           className
         )}
       >
-        <Loader2 className="size-3.5 shrink-0 animate-spin text-[oklch(0.78_0.08_185)]" />
+        <Loader2 className="size-3.5 shrink-0 animate-spin text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
           Scanning{data.domain ? ` ${data.domain}` : ''}…
         </p>
