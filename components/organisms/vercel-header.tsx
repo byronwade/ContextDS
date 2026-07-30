@@ -23,6 +23,7 @@ interface VercelHeaderProps {
     | "contact"
     | "privacy"
     | "terms"
+    | "agent"
   showSearch?: boolean
   searchValue?: string
   onSearchChange?: (value: string) => void
@@ -38,6 +39,7 @@ interface VercelHeaderProps {
 
 const NAV = [
   { href: "/scan", label: "Scan" },
+  { href: "/agent", label: "Agent" },
   { href: "/docs", label: "Docs" },
   { href: "/community", label: "Library" },
   { href: "/about", label: "About" },
@@ -135,6 +137,7 @@ export function VercelHeader({
               const active =
                 currentPage === item.label.toLowerCase() ||
                 (item.href === "/scan" && currentPage === "scan") ||
+                (item.href === "/agent" && currentPage === "agent") ||
                 (item.href === "/community" && currentPage === "community")
               return (
                 <Link

@@ -25,6 +25,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: BASE_URL, lastModified: new Date(), changeFrequency: 'daily', priority: 1.0 },
     { url: `${BASE_URL}/scan`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
     {
+      url: `${BASE_URL}/agent`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.85,
+    },
+    {
       url: `${BASE_URL}/community`,
       lastModified: new Date(),
       changeFrequency: 'hourly',

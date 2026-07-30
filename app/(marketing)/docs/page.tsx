@@ -84,6 +84,30 @@ npx --yes github:byronwade/Design resolve --request "rebuild the hero"`}
         </section>
 
         <section className="mt-14 space-y-4">
+          <h2 className="text-xl font-semibold text-foreground">Design Contract agent</h2>
+          <p className="text-muted-foreground">
+            Chat with the ToolLoopAgent at{' '}
+            <Link href="/agent" className="text-foreground underline-offset-4 hover:underline">
+              /agent
+            </Link>
+            . It uses the Vercel AI SDK + AI Gateway and tools that call this same scan pipeline (
+            <code className="text-foreground">scan_site</code>,{' '}
+            <code className="text-foreground">get_tokens</code>,{' '}
+            <code className="text-foreground">resolve_graph</code>,{' '}
+            <code className="text-foreground">get_contract_download</code>).
+          </p>
+          <pre className="overflow-x-auto rounded-lg border border-border/60 bg-muted/40 p-4 text-sm">
+            {`POST /api/agent/chat
+{ "messages": [ /* UIMessage[] from useChat */ ] }
+
+# .env.local
+AI_GATEWAY_API_KEY=...
+# optional model override
+DESIGN_AGENT_MODEL=openai/gpt-5.4-mini`}
+          </pre>
+        </section>
+
+        <section className="mt-14 space-y-4">
           <h2 className="text-xl font-semibold text-foreground">MCP</h2>
           <p className="text-muted-foreground">
             Agents can call <code className="text-foreground">scan_tokens</code> and{' '}
