@@ -1,6 +1,6 @@
 {
   "name": "designcontracts-scanner",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "description": "Playwright Chromium microservice for Design Contracts accurate scans",
@@ -9,6 +9,10 @@
     "dev": "node server.mjs"
   },
   "dependencies": {
+    "@sparticuz/chromium": "^133.0.0",
+    "playwright-core": "1.52.0"
+  },
+  "optionalDependencies": {
     "playwright": "1.52.0"
   },
   "engines": {

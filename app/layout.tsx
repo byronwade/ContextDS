@@ -52,7 +52,7 @@ export default function RootLayout({
   const softwareApplicationSchema = generateSoftwareApplicationSchema();
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         {/* SEO Meta Tags */}
         <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
@@ -91,9 +91,10 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
 
-        {/* Soft brand theme colors */}
-        <meta name="theme-color" content="#F4F8F9" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#1A2228" media="(prefers-color-scheme: dark)" />
+        {/* Dark-first brand theme colors */}
+        <meta name="theme-color" content="#141418" />
+        <meta name="theme-color" content="#141418" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#F7F7F8" media="(prefers-color-scheme: light)" />
 
         {/* Structured Data - JSON-LD */}
         <script
@@ -134,10 +135,10 @@ export default function RootLayout({
                 }
 
                 try {
-                  const stored = localStorage.getItem('theme') || 'system';
+                  const stored = localStorage.getItem('theme') || 'dark';
                   setTheme(stored);
                 } catch (e) {
-                  setTheme('system');
+                  setTheme('dark');
                 }
 
                 // Performance optimizations

@@ -57,15 +57,17 @@ export function VercelHeader({
   const router = useRouter()
   const { stats, loadStats } = useStatsStore()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [localSearchValue, setLocalSearchValue] = useState(searchValue)
+  const [internalSearch, setInternalSearch] = useState("")
+  const localSearchValue = onSearchChange ? searchValue : internalSearch
 
   useEffect(() => {
     if (!stats) loadStats()
   }, [stats, loadStats])
 
-  useEffect(() => {
-    setLocalSearchValue(searchValue)
-  }, [searchValue])
+  const setLocalSearchValue = (value: string) => {
+    if (onSearchChange) onSearchChange(value)
+    else setInternalSearch(value)
+  }
 
   const goScan = (url: string) => {
     const domain = url
@@ -82,23 +84,21 @@ export function VercelHeader({
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 w-full border-b border-[color:var(--soft-border)] bg-background/70 backdrop-blur-xl",
+        "sticky top-0 z-50 w-full border-b border-[color:var(--soft-border)] bg-background/80 backdrop-blur-xl",
         className
       )}
       role="banner"
       aria-label="Site header"
     >
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
+      <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link
           href="/"
-          className="group flex items-baseline gap-1.5 outline-offset-4 transition-opacity hover:opacity-80"
+          className="group flex items-baseline gap-1 outline-offset-4 transition-opacity hover:opacity-80"
         >
-          <span className="font-serif text-xl tracking-tight text-foreground sm:text-2xl">
+          <span className="font-serif text-lg tracking-tight text-foreground sm:text-xl">
             designcontracts
           </span>
-          <span className="font-mono text-xs text-teal-700/80 dark:text-teal-300/80">
-            .sh
-          </span>
+          <span className="font-mono text-[11px] text-[oklch(0.78_0.08_185)]">.sh</span>
         </Link>
 
         {showSearch && (
@@ -113,26 +113,25 @@ export function VercelHeader({
               value={localSearchValue}
               onChange={(e) => {
                 setLocalSearchValue(e.target.value)
-                onSearchChange?.(e.target.value)
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && localSearchValue.trim()) {
                   goScan(localSearchValue.trim())
                 }
               }}
-              className="h-10 w-full rounded-2xl border border-[color:var(--soft-border)] bg-card/80 px-4 text-sm shadow-[var(--soft-shadow)] outline-none transition focus:border-teal-700/30 focus:ring-2 focus:ring-teal-700/15"
+              className="h-9 w-full rounded-md border border-[color:var(--soft-border)] bg-card/70 px-3 text-sm outline-none transition focus:border-[oklch(0.78_0.08_185_/0.45)] focus:ring-2 focus:ring-[oklch(0.78_0.08_185_/0.2)]"
               aria-label="Enter website URL to scan"
             />
             {isScanning && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2" aria-hidden>
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-teal-700" />
+                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-border border-t-[oklch(0.78_0.08_185)]" />
               </div>
             )}
           </div>
         )}
 
-        <div className="flex items-center gap-2">
-          <nav className="hidden items-center gap-1 md:flex" aria-label="Main navigation">
+        <div className="flex items-center gap-1.5">
+          <nav className="hidden items-center gap-0.5 md:flex" aria-label="Main navigation">
             {NAV.map((item) => {
               const active =
                 currentPage === item.label.toLowerCase() ||
@@ -144,7 +143,7 @@ export function VercelHeader({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "rounded-xl px-3 py-2 text-sm transition-colors",
+                    "rounded-md px-2.5 py-1.5 text-sm transition-colors",
                     active
                       ? "bg-secondary text-foreground"
                       : "text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
@@ -158,7 +157,7 @@ export function VercelHeader({
 
           <Link
             href="/scan"
-            className="hidden rounded-2xl bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground shadow-[var(--soft-shadow)] transition hover:opacity-90 sm:inline-flex"
+            className="hidden rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition hover:opacity-90 sm:inline-flex"
           >
             Start scan
           </Link>
@@ -179,13 +178,16 @@ export function VercelHeader({
 
       {mobileMenuOpen && (
         <div className="border-t border-[color:var(--soft-border)] bg-background/95 backdrop-blur-xl md:hidden">
-          <nav className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-4" aria-label="Mobile navigation">
+          <nav
+            className="mx-auto flex max-w-6xl flex-col gap-0.5 px-4 py-3"
+            aria-label="Mobile navigation"
+          >
             {NAV.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+                className="rounded-md px-3 py-2.5 text-sm text-muted-foreground transition hover:bg-secondary hover:text-foreground"
               >
                 {item.label}
               </Link>
@@ -193,7 +195,7 @@ export function VercelHeader({
             <Link
               href="/scan"
               onClick={() => setMobileMenuOpen(false)}
-              className="mt-2 rounded-2xl bg-primary px-3 py-2.5 text-center text-sm font-medium text-primary-foreground"
+              className="mt-2 rounded-md bg-primary px-3 py-2.5 text-center text-sm font-medium text-primary-foreground"
             >
               Start scan
             </Link>

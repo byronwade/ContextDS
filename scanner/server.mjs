@@ -8,15 +8,44 @@
  */
 
 import http from 'node:http'
-import { chromium } from 'playwright'
 
 const PORT = Number(process.env.PORT || 4040)
 const MAX_CSS_BYTES = 8 * 1024 * 1024
 const SCANNER_SECRET = process.env.SCANNER_SERVICE_SECRET?.trim() || ''
 const MAX_CONCURRENCY = Number(process.env.SCANNER_MAX_CONCURRENCY || 2)
+const ON_VERCEL = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME)
 
 let browserPromise = null
 let activeScans = 0
+
+async function launchBrowser() {
+  // Vercel/Lambda: bundled Chromium. Local/Docker: full Playwright browsers.
+  if (ON_VERCEL) {
+    const chromium = (await import('@sparticuz/chromium')).default
+    const { chromium: playwright } = await import('playwright-core')
+    return playwright.launch({
+      args: chromium.args,
+      executablePath: await chromium.executablePath(),
+      headless: true,
+    })
+  }
+
+  try {
+    const { chromium } = await import('playwright')
+    return chromium.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+    })
+  } catch {
+    const chromium = (await import('@sparticuz/chromium')).default
+    const { chromium: playwright } = await import('playwright-core')
+    return playwright.launch({
+      args: chromium.args,
+      executablePath: await chromium.executablePath(),
+      headless: true,
+    })
+  }
+}
 
 function isPrivateIPv4(ip) {
   const parts = ip.split('.').map(Number)
@@ -60,15 +89,10 @@ function assertPublicUrl(rawUrl) {
 
 async function getBrowser() {
   if (!browserPromise) {
-    browserPromise = chromium
-      .launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
-      })
-      .catch((error) => {
-        browserPromise = null
-        throw error
-      })
+    browserPromise = launchBrowser().catch((error) => {
+      browserPromise = null
+      throw error
+    })
   }
 
   const browser = await browserPromise
@@ -228,6 +252,7 @@ const server = http.createServer(async (req, res) => {
         service: 'designcontracts-scanner',
         activeScans,
         browserReady: Boolean(browserPromise),
+        runtime: ON_VERCEL ? 'vercel' : 'node',
       })
     }
 
@@ -270,8 +295,8 @@ const server = http.createServer(async (req, res) => {
   }
 })
 
-server.listen(PORT, () => {
-  console.log(`[designcontracts-scanner] listening on :${PORT}`)
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`[designcontracts-scanner] listening on 0.0.0.0:${PORT}`)
   // Warm the browser so the first scan is faster
   getBrowser().catch((error) => {
     console.warn('[scanner] browser warm-up failed:', error)

@@ -57,7 +57,7 @@ export function AgentChat() {
     <div className="flex min-h-[60vh] flex-1 flex-col">
       <div className="flex-1 space-y-5 overflow-y-auto pb-4">
         {messages.length === 0 ? (
-          <div className="space-y-4 rounded-2xl border border-border/60 bg-card/40 p-6">
+          <div className="space-y-4 border border-[color:var(--soft-border)] bg-card/30 p-5">
             <p className="text-sm text-muted-foreground">Try one of these:</p>
             <div className="flex flex-col gap-2">
               {SUGGESTIONS.map((suggestion) => (
@@ -68,7 +68,7 @@ export function AgentChat() {
                     setInput(suggestion)
                     void sendMessage({ text: suggestion })
                   }}
-                  className="rounded-xl border border-border/60 bg-background px-4 py-3 text-left text-sm text-foreground transition-colors hover:border-foreground/30"
+                  className="rounded-md border border-[color:var(--soft-border)] bg-background/60 px-4 py-3 text-left text-sm text-foreground transition-colors hover:border-foreground/25"
                 >
                   {suggestion}
                 </button>
@@ -81,10 +81,10 @@ export function AgentChat() {
           <article
             key={message.id}
             className={cn(
-              'rounded-2xl px-4 py-3 text-sm leading-relaxed',
+              'rounded-lg px-4 py-3 text-sm leading-relaxed',
               message.role === 'user'
-                ? 'ml-8 bg-foreground text-background'
-                : 'mr-4 border border-border/60 bg-card/50 text-foreground'
+                ? 'ml-8 bg-primary text-primary-foreground'
+                : 'mr-4 border border-[color:var(--soft-border)] bg-card/40 text-foreground'
             )}
           >
             <p className="mb-2 text-[11px] uppercase tracking-[0.18em] opacity-70">
@@ -123,20 +123,20 @@ export function AgentChat() {
             value={input}
             onChange={(event) => setInput(event.target.value)}
             placeholder="Scan a site, ask about roles, or request a contract pack…"
-            className="h-11 flex-1 rounded-xl border border-border bg-background px-4 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-11 flex-1 rounded-md border border-[color:var(--soft-border)] bg-background px-4 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
             disabled={busy}
           />
           {busy ? (
             <Button
               type="button"
               variant="outline"
-              className="h-11 rounded-xl"
+              className="h-11 rounded-md"
               onClick={() => stop()}
             >
               Stop
             </Button>
           ) : (
-            <Button type="submit" className="h-11 rounded-xl" disabled={!input.trim()}>
+            <Button type="submit" className="h-11 rounded-md" disabled={!input.trim()}>
               Send
             </Button>
           )}
