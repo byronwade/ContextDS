@@ -74,6 +74,20 @@ type ScanResult = {
       fileCount: number
     }
   }
+  semanticGraph?: {
+    schemaVersion: number
+    summary: {
+      nodeCount: number
+      edgeCount: number
+      tokenCount: number
+      roleCount: number
+      componentCount: number
+      layoutCount: number
+      patternCount: number
+    }
+    nodes?: unknown[]
+    edges?: unknown[]
+  }
   cacheHit?: boolean
   metadata?: {
     cssSources?: number
