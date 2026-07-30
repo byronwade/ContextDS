@@ -13,6 +13,8 @@ const scanRequestSchema = z.object({
   // Default fast (static CSS) — accurate needs Docker/Playwright scanner service
   mode: z.enum(['fast', 'accurate']).default('fast'),
   force: z.boolean().default(false),
+  /** Optional client id so /api/scan/progress can stream phases */
+  scanId: z.string().min(3).max(120).optional(),
   /** @deprecated mapped to mode when present */
   quality: z.enum(['basic', 'standard', 'premium', 'thorough']).optional(),
   /** @deprecated ignored */
@@ -228,6 +230,7 @@ export async function POST(request: NextRequest) {
       prettify: params.prettify,
       mode,
       force: params.force,
+      scanId: params.scanId,
     })
 
     return NextResponse.json(result)

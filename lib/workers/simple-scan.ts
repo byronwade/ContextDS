@@ -24,13 +24,17 @@ import { collectComputedCss } from '@/lib/extractors/computed-css'
 import { type CssSource, collectStaticCss } from '@/lib/extractors/static-css'
 import { isBrowserServiceConfigured, scanWithBrowserService } from '@/lib/scanner/browser-service'
 import { analyzeWithWallace, mergeCuratedSets } from '@/lib/scanner/wallace-bridge'
+import { uploadScreenshot } from '@/lib/storage/blob-storage'
 import { getScan, type StoredScanResult, saveScan } from '@/lib/storage/serverless-store'
+import { ProgressEmitter } from '@/lib/workers/progress-emitter'
 
 export type SimpleScanInput = {
   url: string
   mode?: 'fast' | 'accurate'
   prettify?: boolean
   force?: boolean
+  /** Client-supplied id so SSE can subscribe before POST completes */
+  scanId?: string
 }
 
 export type SimpleScanResult = {
@@ -47,6 +51,7 @@ export type SimpleScanResult = {
   designSkill?: StoredScanResult['designSkill']
   designContract?: StoredScanResult['designContract']
   semanticGraph?: SemanticGraph
+  screenshots?: StoredScanResult['screenshots']
   metadata: StoredScanResult['metadata']
   /** @deprecated use `storage` */
   database: SimpleScanResult['storage']
@@ -226,10 +231,39 @@ function fromCache(cached: StoredScanResult): SimpleScanResult {
     semanticGraph: cached.semanticGraph
       ? slimSemanticGraph(cached.semanticGraph as SemanticGraph)
       : undefined,
+    screenshots: cached.screenshots,
     metadata: cached.metadata,
     database: storage,
     storage,
     cacheHit: true,
+  }
+}
+
+async function persistBrowserScreenshot(
+  scanId: string,
+  screenshot: { mime?: string; base64: string } | null | undefined
+): Promise<StoredScanResult['screenshots']> {
+  if (!screenshot?.base64 || !process.env.BLOB_READ_WRITE_TOKEN) return undefined
+
+  try {
+    const buffer = Buffer.from(screenshot.base64, 'base64')
+    const uploaded = await uploadScreenshot({
+      scanId,
+      viewport: 'desktop',
+      buffer,
+      label: 'homepage',
+    })
+    return [
+      {
+        label: 'homepage',
+        url: uploaded.url,
+        mime: screenshot.mime || 'image/jpeg',
+        viewport: 'desktop',
+      },
+    ]
+  } catch (error) {
+    console.warn('[simple-scan] screenshot upload failed:', error)
+    return undefined
   }
 }
 
@@ -238,10 +272,13 @@ export async function runSimpleScan({
   mode = 'fast',
   prettify = false,
   force = false,
+  scanId: providedScanId,
 }: SimpleScanInput): Promise<SimpleScanResult> {
   const target = normalizeUrl(url)
   const domain = normalizeDomain(target.hostname)
   const startedAt = Date.now()
+  const scanId = providedScanId || createId('scan')
+  const progress = new ProgressEmitter(scanId, 6)
   void prettify
 
   if (!force) {
@@ -250,10 +287,17 @@ export async function runSimpleScan({
       const ageMs = Date.now() - new Date(cached.scannedAt).getTime()
       const sameMode = !cached.metadata.mode || cached.metadata.mode === mode
       if (ageMs < 24 * 60 * 60 * 1000 && sameMode) {
-        return fromCache(cached)
+        const cachedResult = fromCache(cached)
+        progress.complete({ domain, cacheHit: true })
+        return cachedResult
       }
     }
   }
+
+  progress.phase(
+    'collect',
+    mode === 'accurate' ? 'Browser capture + public CSS' : 'Collecting public CSS'
+  )
 
   // 1) Collect CSS — static first; accurate mode prefers Docker Playwright service
   const staticCss = await collectStaticCss(target.toString())
@@ -261,6 +305,7 @@ export async function runSimpleScan({
   let browserEngine: string | undefined
   let pageTitle: string | undefined
   let usedWallace = false
+  let browserScreenshot: { mime?: string; base64: string } | null = null
 
   if (mode === 'accurate') {
     if (isBrowserServiceConfigured()) {
@@ -270,6 +315,7 @@ export async function runSimpleScan({
           computedCss = browser.sources
           browserEngine = 'docker-playwright'
           pageTitle = browser.title
+          browserScreenshot = browser.screenshot ?? null
         }
       } catch (error) {
         console.warn('[simple-scan] Docker scanner service failed, falling back:', error)
@@ -292,8 +338,11 @@ export async function runSimpleScan({
 
   const cssArtifacts = prioritizeCss(dedupeBySha([...staticCss, ...computedCss]), mode)
   if (cssArtifacts.length === 0) {
+    progress.error('No CSS sources discovered for the requested URL')
     throw new Error('No CSS sources discovered for the requested URL')
   }
+
+  progress.phase('tokenize', 'W3C tokens + Project Wallace')
 
   // 2) Tokenize + layout (W3C preferred; Wallace merge; legacy fallback)
   let curated: CuratedTokenSet
@@ -379,6 +428,7 @@ export async function runSimpleScan({
     console.warn('[simple-scan] Wallace merge skipped:', error)
   }
 
+  progress.phase('layout', 'Profiling layout DNA')
   // Layout on a smaller CSS subset for speed
   const layoutSources = cssArtifacts.slice(0, Math.min(16, cssArtifacts.length))
   const layoutDNA = analyzeLayout(layoutSources)
@@ -393,8 +443,7 @@ export async function runSimpleScan({
     layoutDNA
   )
 
-  // 3) Semantic graph — linked token↔role↔component↔layout model for agents
-  const scanId = createId('scan')
+  progress.phase('graph', 'Building semantic design graph')
   const tokenSetId = createId('tokens')
   const semanticGraph = buildSemanticGraph({
     domain,
@@ -411,7 +460,9 @@ export async function runSimpleScan({
     pageTitle,
   })
 
-  // 4) DESIGN.md + agent skill + installable contract pack
+  progress.phase('design-md', 'Composing Design Contract pack')
+  const screenshots = (await persistBrowserScreenshot(scanId, browserScreenshot)) || undefined
+
   const designMdInput = {
     domain,
     url: target.toString(),
@@ -443,19 +494,27 @@ export async function runSimpleScan({
   const clientCurated = slimCuratedForClient(curated)
   const clientGraph = slimSemanticGraph(semanticGraph)
 
+  const contractScreenshots = screenshots?.length
+    ? screenshots.map((shot) => ({
+        label: shot.label,
+        url: shot.url,
+        note: 'Captured during accurate browser scan — use as visual ground truth.',
+      }))
+    : [
+        {
+          label: 'homepage',
+          url: target.toString(),
+          note: 'Preserve hierarchy, density, and material from the live homepage observation.',
+        },
+      ]
+
   const contractPack = buildDesignContractPackage({
     ...designMdInput,
     scanId,
     profile: 'web-marketing',
     appType: 'marketing-site',
     semanticGraph,
-    screenshots: [
-      {
-        label: 'homepage',
-        url: target.toString(),
-        note: 'Preserve hierarchy, density, and material from the live homepage observation.',
-      },
-    ],
+    screenshots: contractScreenshots,
   })
   const designContract: StoredScanResult['designContract'] = {
     slug: contractPack.slug,
@@ -465,6 +524,8 @@ export async function runSimpleScan({
     summary: contractPack.summary,
     files: contractPack.files,
   }
+
+  progress.phase('persist', 'Saving scan results')
 
   const stored: StoredScanResult = {
     id: scanId,
@@ -508,6 +569,7 @@ export async function runSimpleScan({
     },
     designContract,
     semanticGraph,
+    screenshots,
     metadata: {
       cssSources: cssArtifacts.length,
       staticCssSources: staticCss.length,
@@ -525,6 +587,13 @@ export async function runSimpleScan({
   const site = await saveScan(stored)
   const storage = storageMeta(site.id, scanId, tokenSetId)
 
+  progress.metrics({
+    tokens: tokensExtracted,
+    colors: curated.colors.length,
+    qualityScore: confidence,
+  })
+  progress.complete({ domain, cacheHit: false })
+
   return {
     status: 'completed',
     domain,
@@ -539,6 +608,7 @@ export async function runSimpleScan({
     designSkill: stored.designSkill,
     designContract: slimContract(stored.designContract, domain),
     semanticGraph: clientGraph,
+    screenshots,
     metadata: stored.metadata,
     database: storage,
     storage,

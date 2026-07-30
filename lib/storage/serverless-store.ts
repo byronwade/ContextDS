@@ -9,8 +9,8 @@
  * No Postgres / Neon / Supabase database required.
  */
 
-import { put, list, del } from '@vercel/blob'
 import { Redis } from '@upstash/redis'
+import { del, get, list, put } from '@vercel/blob'
 
 export interface SiteIndexEntry {
   id: string
@@ -95,6 +95,13 @@ export interface StoredScanResult {
   }
   /** Linked token↔role↔component↔layout model for agents */
   semanticGraph?: unknown
+  /** Captured page screenshots (Blob URLs when available) */
+  screenshots?: Array<{
+    label: string
+    url: string
+    mime?: string
+    viewport?: 'mobile' | 'tablet' | 'desktop'
+  }>
   metadata: {
     cssSources: number
     staticCssSources: number
@@ -134,13 +141,9 @@ function hasBlob(): boolean {
 
 function getRedis(): Redis | null {
   const url =
-    process.env.UPSTASH_REDIS_REST_URL ||
-    process.env.REDIS_URL ||
-    process.env.KV_REST_API_URL
+    process.env.UPSTASH_REDIS_REST_URL || process.env.REDIS_URL || process.env.KV_REST_API_URL
   const token =
-    process.env.UPSTASH_REDIS_REST_TOKEN ||
-    process.env.REDIS_TOKEN ||
-    process.env.KV_REST_API_TOKEN
+    process.env.UPSTASH_REDIS_REST_TOKEN || process.env.REDIS_TOKEN || process.env.KV_REST_API_TOKEN
 
   if (!url || !token || !url.startsWith('https')) {
     return null
@@ -161,6 +164,14 @@ async function readBlobJson<T>(pathname: string): Promise<T | null> {
   if (!hasBlob()) return null
 
   try {
+    // Prefer private get() — scan payloads are no longer world-readable.
+    const privateResult = await get(pathname, { access: 'private', useCache: false })
+    if (privateResult?.stream) {
+      const text = await new Response(privateResult.stream).text()
+      return JSON.parse(text) as T
+    }
+
+    // Backward-compatible fallback for older public blobs
     const { blobs } = await list({ prefix: pathname, limit: 1 })
     const match = blobs.find((blob) => blob.pathname === pathname) ?? blobs[0]
     if (!match) return null
@@ -179,7 +190,7 @@ async function writeBlobJson(pathname: string, data: unknown): Promise<string | 
 
   try {
     const blob = await put(pathname, JSON.stringify(data), {
-      access: 'public',
+      access: 'private',
       contentType: 'application/json',
       addRandomSuffix: false,
       allowOverwrite: true,
@@ -310,8 +321,7 @@ export async function saveScan(result: StoredScanResult): Promise<SiteIndexEntry
     const next = directory.filter((entry) => entry.domain !== domain)
     next.push(site)
     next.sort(
-      (a, b) =>
-        new Date(b.lastScanned ?? 0).getTime() - new Date(a.lastScanned ?? 0).getTime()
+      (a, b) => new Date(b.lastScanned ?? 0).getTime() - new Date(a.lastScanned ?? 0).getTime()
     )
     await saveDirectoryToBlob(next.slice(0, 500))
   }
@@ -332,7 +342,9 @@ export async function listSites(options?: {
   if (redis) {
     const key = sort === 'popular' || sort === 'votes' ? POPULAR_KEY : RECENT_KEY
     const domains = await redis.zrange<string[]>(key, 0, limit - 1, { rev: true })
-    const entries = await Promise.all(domains.map((domain) => redis.get<SiteIndexEntry>(SITE_KEY(domain))))
+    const entries = await Promise.all(
+      domains.map((domain) => redis.get<SiteIndexEntry>(SITE_KEY(domain)))
+    )
     sites = entries.filter((entry): entry is SiteIndexEntry => Boolean(entry))
   } else if (MEMORY_SITES.size > 0) {
     sites = Array.from(MEMORY_SITES.values())
@@ -352,8 +364,7 @@ export async function listSites(options?: {
     case 'recent':
     default:
       sorted.sort(
-        (a, b) =>
-          new Date(b.lastScanned ?? 0).getTime() - new Date(a.lastScanned ?? 0).getTime()
+        (a, b) => new Date(b.lastScanned ?? 0).getTime() - new Date(a.lastScanned ?? 0).getTime()
       )
       break
   }
