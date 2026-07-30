@@ -53,7 +53,7 @@ export default function RootLayout({
         <meta name="googlebot" content="index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1" />
 
         {/* Canonical URL */}
-        <link rel="canonical" href="https://contextds.com" />
+        <link rel="canonical" href="https://designcontracts.sh" />
 
         {/* Resource hints for performance */}
         {RESOURCE_HINTS.dnsPrefetch.map((href) => (

@@ -1,4 +1,4 @@
-# Design Contracts
+# designcontracts.sh
 
 _Scan any public site → download an installable Design Contract → agents uphold that design forever._
 
@@ -8,23 +8,17 @@ Better than a prompt pack. Stronger than a token dump. Compatible with the open-
 
 ## What this is
 
-**Design Contracts** (formerly ContextDS) turns a live website into a project pack your AI coding tools can enforce:
+**designcontracts.sh** (Design Contracts) turns a live website into a project pack your AI coding tools can enforce:
 
 ```text
 public URL
-  → W3C tokens + layout DNA
-  → DESIGN.md grammar (Google + Design engine sections)
-  → AGENTS.md + universal design Skill
-  → design/references/ (structured visual memory)
+  → static CSS (+ Docker Playwright in accurate mode)
+  → W3C tokens + Project Wallace merge
+  → layout DNA
+  → DESIGN.md grammar + AGENTS.md + Skill + references
   → ZIP you drop into a repo
   → npx github:byronwade/Design init / resolve / check / verify
 ```
-
-The end goal: someone downloads a contract into their project, and **every new component stays on-brand** — not because the model remembered a vibe, but because `resolve → check → verify` refuses unreviewed drift.
-
-This product is the **scanner + contract library**. The **enforcement engine** lives in [`byronwade/Design`](https://github.com/byronwade/Design).
-
-Vs [TypeUI](https://www.typeui.sh/): we generate contracts from real sites (and, next, images/structured references), then hand them to an open local compiler with receipts — not only a hosted MCP catalog of skills.
 
 ---
 
@@ -32,18 +26,23 @@ Vs [TypeUI](https://www.typeui.sh/): we generate contracts from real sites (and,
 
 ```bash
 bun install
-cp .env.example .env.local   # optional Blob + Upstash for durable storage
 bun dev
 # open http://localhost:3000/scan
 ```
 
-Scan a site → **Download Design Contract** → unzip into a project →:
+### Accurate browser scans (Docker)
+
+Fast mode runs entirely in the Next.js function (static CSS + Wallace).  
+Accurate mode uses a Playwright microservice when configured:
 
 ```bash
-npx --yes github:byronwade/Design init --profile web-marketing
-npx --yes github:byronwade/Design resolve --request "Add a pricing section"
-npx --yes github:byronwade/Design check
+bun run scanner:up
+# in .env.local
+SCANNER_SERVICE_URL=http://localhost:4040
+bun dev
 ```
+
+On Vercel: deploy `scanner/` to Fly.io / Railway / ECS, then set `SCANNER_SERVICE_URL` to that HTTPS URL. The Next.js app stays on Vercel; only the heavy browser work runs in Docker.
 
 ---
 
@@ -75,6 +74,7 @@ Download API: `GET /api/contracts/download?domain=stripe.com`
 BLOB_READ_WRITE_TOKEN=
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
+SCANNER_SERVICE_URL=http://localhost:4040
 DISABLE_COMPUTED_CSS=1
 ```
 
@@ -87,6 +87,9 @@ bun dev
 bun run build
 bun lint
 bun run test
+bun run scanner:up
+bun run scanner:logs
+bun run scanner:down
 ```
 
 ---

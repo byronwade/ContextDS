@@ -1,5 +1,5 @@
 /**
- * SEO Meta Tags Generation for ContextDS
+ * SEO Meta Tags Generation for designcontracts.sh
  * Comprehensive meta tag and Open Graph optimization
  */
 
@@ -32,9 +32,9 @@ export interface SiteMetadata {
 }
 
 const DEFAULT_CONFIG = {
-  siteName: "ContextDS",
+  siteName: "designcontracts.sh",
   defaultImage: "/images/og-default.png",
-  twitterHandle: "@contextds",
+  twitterHandle: "@designcontracts",
   locale: "en_US",
   type: "website" as const
 }
@@ -46,7 +46,7 @@ export function generateSEOMetadata(config: SEOConfig): Metadata {
     keywords = [],
     canonical,
     robots = "index, follow",
-    author = "ContextDS Team",
+    author = "designcontracts.sh",
     image = DEFAULT_CONFIG.defaultImage,
     type = DEFAULT_CONFIG.type,
     locale = DEFAULT_CONFIG.locale,
@@ -149,19 +149,19 @@ export function generateSEOMetadata(config: SEOConfig): Metadata {
 
 export function generateHomepageMetadata(): Metadata {
   return generateSEOMetadata({
-    title: "ContextDS - Design Tokens Made Fast",
-    description: "Extract design tokens from any website instantly. AI-powered CSS analysis, layout DNA profiling, and W3C token generation for modern design systems.",
+    title: "designcontracts.sh — Scan sites into Design Contracts",
+    description: "Scan any public website into an installable Design Contract. W3C tokens, Project Wallace, layout DNA, DESIGN.md, and agent resolve → check → verify.",
     keywords: [
+      "design contracts",
       "design token extraction",
       "CSS analyzer",
       "layout DNA",
-      "design system analysis",
-      "web scraping design",
-      "token generator",
-      "design automation",
-      "component library analysis"
+      "DESIGN.md",
+      "design system scanner",
+      "agent design enforcement",
+      "designcontracts.sh"
     ],
-    canonical: "https://contextds.com",
+    canonical: "https://designcontracts.sh",
     image: "/images/og-homepage.png",
     type: "website"
   })
@@ -178,7 +178,7 @@ export function generateScanPageMetadata(): Metadata {
       "layout analysis tool",
       "design system scanner"
     ],
-    canonical: "https://contextds.com/scan",
+    canonical: "https://designcontracts.sh/scan",
     image: "/images/og-scan.png"
   })
 }
@@ -194,7 +194,7 @@ export function generateCommunityMetadata(): Metadata {
       "design inspiration",
       "component patterns"
     ],
-    canonical: "https://contextds.com/community",
+    canonical: "https://designcontracts.sh/community",
     image: "/images/og-community.png"
   })
 }
@@ -222,7 +222,7 @@ export function generateSiteMetadata(siteData: SiteMetadata & { domain: string }
       `${domain} design`,
       ...categories.map(cat => `${domain} ${cat}`)
     ],
-    canonical: `https://contextds.com/community/${domain}`,
+    canonical: `https://designcontracts.sh/community/${domain}`,
     image: `/api/og/site?domain=${encodeURIComponent(domain)}&tokens=${tokens}`,
     type: "article"
   })
@@ -234,7 +234,7 @@ export function generateDocsMetadata(section?: string): Metadata {
 
   return generateSEOMetadata({
     title: `Documentation${sectionTitle}`,
-    description: `Complete documentation for ContextDS design token extraction platform.${sectionDesc} API reference, guides, and integration examples.`,
+    description: `Complete documentation for designcontracts.sh design token extraction platform.${sectionDesc} API reference, guides, and integration examples.`,
     keywords: [
       "documentation",
       "API reference",
@@ -242,7 +242,7 @@ export function generateDocsMetadata(section?: string): Metadata {
       "integration guide",
       "developer docs"
     ],
-    canonical: `https://contextds.com/docs${section ? `/${section.toLowerCase()}` : ''}`,
+    canonical: `https://designcontracts.sh/docs${section ? `/${section.toLowerCase()}` : ''}`,
     image: "/images/og-docs.png"
   })
 }
@@ -258,7 +258,7 @@ export function generatePricingMetadata(): Metadata {
       "free tier",
       "enterprise pricing"
     ],
-    canonical: "https://contextds.com/pricing",
+    canonical: "https://designcontracts.sh/pricing",
     image: "/images/og-pricing.png"
   })
 }
@@ -266,7 +266,7 @@ export function generatePricingMetadata(): Metadata {
 export function generateAPIMetadata(): Metadata {
   return generateSEOMetadata({
     title: "API Reference - Design Token Extraction API",
-    description: "RESTful API for programmatic design token extraction. Integrate ContextDS into your workflow with our comprehensive API.",
+    description: "RESTful API for programmatic design token extraction. Integrate designcontracts.sh into your workflow with our comprehensive API.",
     keywords: [
       "API",
       "REST API",
@@ -275,7 +275,7 @@ export function generateAPIMetadata(): Metadata {
       "API documentation",
       "developer tools"
     ],
-    canonical: "https://contextds.com/api",
+    canonical: "https://designcontracts.sh/api",
     image: "/images/og-api.png"
   })
 }
@@ -295,7 +295,7 @@ export function generateDynamicMetadata(
       return generateSEOMetadata({
         title: `Scan Results - ${data.domain}`,
         description: `Design token extraction results for ${data.domain}. ${data.tokens || 0} tokens found across ${data.categories?.length || 0} categories.`,
-        canonical: `https://contextds.com/scan/${data.domain}`,
+        canonical: `https://designcontracts.sh/scan/${data.domain}`,
         robots: "index, follow",
         image: `/api/og/scan-result?domain=${encodeURIComponent(data.domain)}`
       })
@@ -313,7 +313,7 @@ export function generateDynamicMetadata(
  */
 export function getCanonicalUrl(path: string): string {
   const baseUrl = process.env.NODE_ENV === 'production'
-    ? 'https://contextds.com'
+    ? 'https://designcontracts.sh'
     : 'http://localhost:3000'
 
   // Ensure path starts with /
@@ -327,7 +327,7 @@ export function getCanonicalUrl(path: string): string {
  */
 export function generateBreadcrumbs(path: string): Array<{ name: string; url: string }> {
   const segments = path.split('/').filter(Boolean)
-  const breadcrumbs = [{ name: 'Home', url: 'https://contextds.com' }]
+  const breadcrumbs = [{ name: 'Home', url: 'https://designcontracts.sh' }]
 
   let currentPath = ''
 
@@ -342,7 +342,7 @@ export function generateBreadcrumbs(path: string): Array<{ name: string; url: st
 
     breadcrumbs.push({
       name,
-      url: `https://contextds.com${currentPath}`
+      url: `https://designcontracts.sh${currentPath}`
     })
   }
 

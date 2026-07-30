@@ -104,7 +104,7 @@ interface ScanState {
   eventSource: EventSource | null
 
   // Actions
-  startScan: (domain: string) => Promise<void>
+  startScan: (domain: string, mode?: 'fast' | 'accurate') => Promise<void>
   updateProgress: (progress: ScanProgress) => void
   updateMetrics: (metrics: ScanMetrics) => void
   setResult: (result: ScanResult) => void
@@ -125,7 +125,7 @@ export const useScanStore = create<ScanState>()(
       error: null,
       eventSource: null,
 
-      startScan: async (domain: string) => {
+      startScan: async (domain: string, mode: 'fast' | 'accurate' = 'fast') => {
         const state = get()
 
         // Cancel any existing scan
@@ -145,14 +145,20 @@ export const useScanStore = create<ScanState>()(
         })
 
         try {
-          // Start the scan API call (returns immediately with scanId)
           // Client-side phase feedback while the serverless scan runs
           const phases = [
-            { step: 1, phase: 'collect', message: 'Collecting public CSS' },
-            { step: 2, phase: 'tokenize', message: 'Extracting W3C design tokens' },
+            {
+              step: 1,
+              phase: 'collect',
+              message:
+                mode === 'accurate'
+                  ? 'Browser capture + public CSS'
+                  : 'Collecting public CSS',
+            },
+            { step: 2, phase: 'tokenize', message: 'W3C tokens + Project Wallace' },
             { step: 3, phase: 'layout', message: 'Profiling layout DNA' },
-            { step: 4, phase: 'design-md', message: 'Composing DESIGN.md + agent skill' },
-            { step: 5, phase: 'persist', message: 'Saving to serverless storage' },
+            { step: 4, phase: 'design-md', message: 'Composing Design Contract pack' },
+            { step: 5, phase: 'persist', message: 'Saving scan results' },
           ]
           let phaseIndex = 0
           const tick = () => {
@@ -179,8 +185,7 @@ export const useScanStore = create<ScanState>()(
                 prettify: false,
                 quality: 'standard',
                 budget: 0.15,
-                // Fast path: static CSS — accurate needs Playwright and is slower
-                mode: 'fast',
+                mode,
               }),
             })
 

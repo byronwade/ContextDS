@@ -23,6 +23,13 @@ export interface CuratedTokenSet {
     modularScale?: any
     shadeSystem?: any[]
     spacingGrid?: any
+    wallace?: {
+      rules: number
+      selectors: number
+      declarations: number
+    }
+    merged?: boolean
+    [key: string]: unknown
   }
 }
 

@@ -17,6 +17,14 @@ import { generateDesignMd } from '@/lib/analyzers/design-md-generator'
 import { generateDesignSkill } from '@/lib/analyzers/design-skill-generator'
 import { buildDesignContractPackage } from '@/lib/contracts/design-contract-package'
 import {
+  analyzeWithWallace,
+  mergeCuratedSets,
+} from '@/lib/scanner/wallace-bridge'
+import {
+  isBrowserServiceConfigured,
+  scanWithBrowserService,
+} from '@/lib/scanner/browser-service'
+import {
   getScan,
   saveScan,
   type StoredScanResult,
@@ -238,19 +246,41 @@ export async function runSimpleScan({
     }
   }
 
-  // 1) Collect CSS — static first; computed only in accurate mode
+  // 1) Collect CSS — static first; accurate mode prefers Docker Playwright service
   const staticCss = await collectStaticCss(target.toString())
   let computedCss: CssSource[] = []
+  let browserEngine: string | undefined
+  let pageTitle: string | undefined
+  let usedWallace = false
 
-  if (mode === 'accurate' && process.env.DISABLE_COMPUTED_CSS !== '1') {
-    try {
-      const computed = await collectComputedCss(target.toString(), {
-        fastMode: true,
-        maxMemoryMb: 64,
-      })
-      computedCss = (computed.sources || []) as CssSource[]
-    } catch (error) {
-      console.warn('[simple-scan] computed CSS skipped:', error)
+  if (mode === 'accurate') {
+    if (isBrowserServiceConfigured()) {
+      try {
+        const browser = await scanWithBrowserService(target.toString())
+        if (browser?.sources?.length) {
+          computedCss = browser.sources
+          browserEngine = 'docker-playwright'
+          pageTitle = browser.title
+        }
+      } catch (error) {
+        console.warn('[simple-scan] Docker scanner service failed, falling back:', error)
+      }
+    }
+
+    if (
+      computedCss.length === 0 &&
+      process.env.DISABLE_COMPUTED_CSS !== '1'
+    ) {
+      try {
+        const computed = await collectComputedCss(target.toString(), {
+          fastMode: true,
+          maxMemoryMb: 64,
+        })
+        computedCss = (computed.sources || []) as CssSource[]
+        browserEngine = browserEngine || 'local-playwright'
+      } catch (error) {
+        console.warn('[simple-scan] computed CSS skipped:', error)
+      }
     }
   }
 
@@ -259,7 +289,7 @@ export async function runSimpleScan({
     throw new Error('No CSS sources discovered for the requested URL')
   }
 
-  // 2) Tokenize + layout (W3C preferred; legacy fallback)
+  // 2) Tokenize + layout (W3C preferred; Wallace merge; legacy fallback)
   let curated: CuratedTokenSet
   let tokenGroups: unknown
   let confidence = 70
@@ -320,6 +350,27 @@ export async function runSimpleScan({
     confidence = legacy.summary.confidence
     completeness = legacy.summary.completeness
     reliability = legacy.summary.reliability
+  }
+
+  // Project Wallace (correct values.* path) — merge for higher coverage
+  try {
+    const combinedCss = cssArtifacts
+      .map((source) => source.content)
+      .join('\n')
+      .slice(0, 6 * 1024 * 1024)
+    const wallace = analyzeWithWallace(combinedCss)
+    const before = countCurated(curated)
+    curated = mergeCuratedSets(curated, wallace.curated)
+    usedWallace = true
+    tokenGroups = toLegacyGroups(curated)
+    tokensExtracted = Math.max(tokensExtracted, countCurated(curated))
+    if (countCurated(curated) > before) {
+      confidence = Math.min(98, confidence + 4)
+      completeness = Math.min(100, completeness + 5)
+      reliability = Math.round((confidence + completeness) / 2)
+    }
+  } catch (error) {
+    console.warn('[simple-scan] Wallace merge skipped:', error)
   }
 
   // Layout on a smaller CSS subset for speed
@@ -443,6 +494,9 @@ export async function runSimpleScan({
       tokenSetId,
       mode,
       engine: 'design-contracts',
+      browserEngine,
+      wallace: usedWallace,
+      pageTitle,
     },
   }
 

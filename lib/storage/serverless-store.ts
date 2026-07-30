@@ -88,6 +88,9 @@ export interface StoredScanResult {
     tokenSetId: string
     mode: 'fast' | 'accurate'
     engine?: string
+    browserEngine?: string
+    wallace?: boolean
+    pageTitle?: string
   }
   error?: string
 }
