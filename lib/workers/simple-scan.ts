@@ -1,8 +1,8 @@
 /**
  * High-quality serverless scanner.
  *
- * Flow: CSS → W3C tokens → curation → layout DNA → DESIGN.md + design skill → store
- * Fast by default (static CSS). Accurate optionally adds computed CSS.
+ * Flow: CSS → W3C tokens → Wallace → layout DNA → semantic graph → Design Contract → store
+ * Fast by default (static CSS). Accurate optionally adds Docker/browser CSS.
  * No Postgres required.
  */
 
@@ -11,6 +11,11 @@ import { generateDesignMd } from '@/lib/analyzers/design-md-generator'
 import { generateDesignSkill } from '@/lib/analyzers/design-skill-generator'
 import { analyzeLayout } from '@/lib/analyzers/layout-inspector'
 import { buildPromptPack } from '@/lib/analyzers/prompt-pack'
+import {
+  buildSemanticGraph,
+  type SemanticGraph,
+  slimSemanticGraph,
+} from '@/lib/analyzers/semantic-graph'
 import { type CuratedTokenSet, curateTokens } from '@/lib/analyzers/token-curator'
 import { extractW3CTokens } from '@/lib/analyzers/w3c-tokenizer'
 import { buildDesignContractPackage } from '@/lib/contracts/design-contract-package'
@@ -40,6 +45,7 @@ export type SimpleScanResult = {
   designMd?: StoredScanResult['designMd']
   designSkill?: StoredScanResult['designSkill']
   designContract?: StoredScanResult['designContract']
+  semanticGraph?: SemanticGraph
   metadata: StoredScanResult['metadata']
   /** @deprecated use `storage` */
   database: SimpleScanResult['storage']
@@ -205,6 +211,9 @@ function fromCache(cached: StoredScanResult): SimpleScanResult {
     designMd: cached.designMd,
     designSkill: cached.designSkill,
     designContract: slimContract(cached.designContract),
+    semanticGraph: cached.semanticGraph
+      ? slimSemanticGraph(cached.semanticGraph as SemanticGraph)
+      : undefined,
     metadata: cached.metadata,
     database: storage,
     storage,
@@ -372,7 +381,25 @@ export async function runSimpleScan({
     layoutDNA
   )
 
-  // 3) DESIGN.md + agent skill (trending agent-readable design artifacts)
+  // 3) Semantic graph — linked token↔role↔component↔layout model for agents
+  const scanId = createId('scan')
+  const tokenSetId = createId('tokens')
+  const semanticGraph = buildSemanticGraph({
+    domain,
+    url: target.toString(),
+    scanId,
+    curatedTokens: curated,
+    layoutDNA,
+    brandAnalysis,
+    cssSources: cssArtifacts.slice(0, 28).map((source) => ({
+      content: source.content,
+      url: source.url,
+      kind: source.kind,
+    })),
+    pageTitle,
+  })
+
+  // 4) DESIGN.md + agent skill + installable contract pack
   const designMdInput = {
     domain,
     url: target.toString(),
@@ -389,6 +416,7 @@ export async function runSimpleScan({
     },
     brandAnalysis,
     confidence,
+    semanticGraph,
   }
   const designMd = generateDesignMd(designMdInput)
   const designSkill = generateDesignSkill({
@@ -399,16 +427,16 @@ export async function runSimpleScan({
     personality: brandAnalysis.personality,
   })
 
-  const scanId = createId('scan')
-  const tokenSetId = createId('tokens')
   const processingTime = Date.now() - startedAt
   const clientCurated = slimCuratedForClient(curated)
+  const clientGraph = slimSemanticGraph(semanticGraph)
 
   const contractPack = buildDesignContractPackage({
     ...designMdInput,
     scanId,
     profile: 'web-marketing',
     appType: 'marketing-site',
+    semanticGraph,
     screenshots: [
       {
         label: 'homepage',
@@ -423,7 +451,6 @@ export async function runSimpleScan({
     profile: contractPack.profile,
     installCommand: contractPack.installCommand,
     summary: contractPack.summary,
-    // Keep file bodies for download; clients may also hit /api/contracts/download
     files: contractPack.files,
   }
 
@@ -468,6 +495,7 @@ export async function runSimpleScan({
       description: designSkill.description,
     },
     designContract,
+    semanticGraph,
     metadata: {
       cssSources: cssArtifacts.length,
       staticCssSources: staticCss.length,
@@ -485,7 +513,6 @@ export async function runSimpleScan({
   const site = await saveScan(stored)
   const storage = storageMeta(site.id, scanId, tokenSetId)
 
-  // Slim contract for API clients — full files stay in Blob for ZIP download
   const designContractSummary = stored.designContract
     ? {
         ...stored.designContract,
@@ -501,7 +528,6 @@ export async function runSimpleScan({
     domain,
     url: target.toString(),
     summary: stored.summary,
-    // Prefer curated for clients; omit bulky raw groups in API response
     tokens: clientCurated,
     curatedTokens: clientCurated,
     layoutDNA: stored.layoutDNA,
@@ -510,6 +536,7 @@ export async function runSimpleScan({
     designMd: stored.designMd,
     designSkill: stored.designSkill,
     designContract: designContractSummary,
+    semanticGraph: clientGraph,
     metadata: stored.metadata,
     database: storage,
     storage,

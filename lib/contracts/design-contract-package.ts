@@ -20,6 +20,7 @@ import {
   generateDesignMd,
 } from '@/lib/analyzers/design-md-generator'
 import { generateDesignSkill } from '@/lib/analyzers/design-skill-generator'
+import { type SemanticGraph, semanticGraphToMarkdown } from '@/lib/analyzers/semantic-graph'
 
 export type DesignContractPackageInput = DesignMdInput & {
   scanId?: string
@@ -30,6 +31,7 @@ export type DesignContractPackageInput = DesignMdInput & {
     url?: string
     note?: string
   }>
+  semanticGraph?: SemanticGraph | null
 }
 
 export type DesignContractFile = {
@@ -76,14 +78,16 @@ The managed instructions below are the minimum routing surface for AI agents; pr
 3. Read \`DESIGN.md\` and only the returned task packet under \`.design/generated/TASK.json\`.
 4. Use the universal design Skill at \`.agents/skills/design/SKILL.md\`.
 5. Inspect production components, routes, tests, and applicable files under \`design/references/\`.
-6. Build with semantic tokens and mapped components from \`DESIGN.md\`. Missing capability is a design-system gap — do not invent page-local styles.
-7. Run \`npx --yes github:byronwade/Design check\`.
-8. Run \`npx --yes github:byronwade/Design verify --mode release\` with evidence for affected surfaces.
-9. Report the receipt path, revision, warnings, and remaining uncertainty.
+6. Read \`design/graph.json\` (and \`design/GRAPH.md\`) to understand how tokens, roles, components, and layout link together before inventing mappings.
+7. Build with semantic tokens and mapped components from \`DESIGN.md\`. Missing capability is a design-system gap — do not invent page-local styles.
+8. Run \`npx --yes github:byronwade/Design check\`.
+9. Run \`npx --yes github:byronwade/Design verify --mode release\` with evidence for affected surfaces.
+10. Report the receipt path, revision, warnings, and remaining uncertainty.
 
 ## Boundaries
 
 - \`DESIGN.md\` is the authored source of truth for visual identity and product grammar.
+- \`design/graph.json\` is the linked system model (token↔role↔component↔layout). Prefer edges over guesses.
 - Do not edit \`.design/generated/\` or \`.design/receipts/\` by hand.
 - Visual references under \`design/references/\` are optional project-owned media.
 - Scan-derived tokens seeded this contract; promote gaps intentionally after review.
@@ -284,6 +288,17 @@ export function buildDesignContractPackage(
     personality: input.brandAnalysis?.personality,
   })
 
+  const graph = input.semanticGraph ?? null
+  const packFileList = [
+    'DESIGN.md',
+    'AGENTS.md',
+    'INSTALL.md',
+    '.agents/skills/design/SKILL.md',
+    'design/references/manifest.json',
+    '.design/config.json',
+    ...(graph ? ['design/graph.json', 'design/GRAPH.md'] : []),
+  ]
+
   const files: DesignContractFile[] = [
     { path: 'DESIGN.md', content: designMd.markdown },
     { path: 'AGENTS.md', content: agentsMd(domain) },
@@ -306,35 +321,50 @@ export function buildDesignContractPackage(
       content: '',
     },
     { path: '.design/config.json', content: configJson(profile, input.appType) },
-    {
-      path: 'contract.json',
-      content: `${JSON.stringify(
-        {
-          schemaVersion: 1,
-          kind: 'design-contract-pack',
-          slug,
-          domain,
-          sourceUrl: input.url,
-          profile,
-          appType: input.appType ?? null,
-          scanId: input.scanId ?? null,
-          generatedAt: new Date().toISOString(),
-          engine: 'https://github.com/byronwade/Design',
-          generator: 'design-contracts',
-          files: [
-            'DESIGN.md',
-            'AGENTS.md',
-            'INSTALL.md',
-            '.agents/skills/design/SKILL.md',
-            'design/references/manifest.json',
-            '.design/config.json',
-          ],
-        },
-        null,
-        2
-      )}\n`,
-    },
   ]
+
+  if (graph) {
+    files.push(
+      {
+        path: 'design/graph.json',
+        content: `${JSON.stringify(graph, null, 2)}\n`,
+      },
+      {
+        path: 'design/GRAPH.md',
+        content: semanticGraphToMarkdown(graph),
+      }
+    )
+  }
+
+  files.push({
+    path: 'contract.json',
+    content: `${JSON.stringify(
+      {
+        schemaVersion: 1,
+        kind: 'design-contract-pack',
+        slug,
+        domain,
+        sourceUrl: input.url,
+        profile,
+        appType: input.appType ?? null,
+        scanId: input.scanId ?? null,
+        generatedAt: new Date().toISOString(),
+        engine: 'https://github.com/byronwade/Design',
+        generator: 'design-contracts',
+        semanticGraph: graph
+          ? {
+              schemaVersion: graph.schemaVersion,
+              nodeCount: graph.summary.nodeCount,
+              edgeCount: graph.summary.edgeCount,
+              componentCount: graph.summary.componentCount,
+            }
+          : null,
+        files: packFileList,
+      },
+      null,
+      2
+    )}\n`,
+  })
 
   return {
     slug,

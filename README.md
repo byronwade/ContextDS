@@ -15,7 +15,8 @@ public URL
   → static CSS (+ Docker Playwright in accurate mode)
   → W3C tokens + Project Wallace merge
   → layout DNA
-  → DESIGN.md grammar + AGENTS.md + Skill + references
+  → semantic design graph (token↔role↔component↔layout)
+  → DESIGN.md + design/graph.json + AGENTS.md + Skill + references
   → ZIP you drop into a repo
   → npx github:byronwade/Design init / resolve / check / verify
 ```
@@ -51,6 +52,8 @@ On Vercel: deploy `scanner/` to Fly.io / Railway / ECS, then set `SCANNER_SERVIC
 | Path | Role |
 |------|------|
 | `DESIGN.md` | Authored grammar + YAML tokens |
+| `design/graph.json` | Canonical semantic graph (nodes + edges) |
+| `design/GRAPH.md` | AI-readable narrative of the graph |
 | `AGENTS.md` | Agent router (managed block) |
 | `.agents/skills/design/SKILL.md` | Universal design Skill |
 | `design/references/manifest.json` | Structured visual reference index |

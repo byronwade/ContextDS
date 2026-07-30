@@ -48,6 +48,7 @@ export async function GET(request: NextRequest) {
       confidence: scan.summary.confidence,
       scanId: scan.metadata.scanId,
       profile: (scan.designContract?.profile as 'web-app' | 'web-marketing') || 'web-marketing',
+      semanticGraph: (scan.semanticGraph || null) as never,
     })
     files = rebuilt.files
   }

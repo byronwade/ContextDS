@@ -80,6 +80,8 @@ export interface StoredScanResult {
     }
     files: Array<{ path: string; content: string }>
   }
+  /** Linked token↔role↔component↔layout model for agents */
+  semanticGraph?: unknown
   metadata: {
     cssSources: number
     staticCssSources: number

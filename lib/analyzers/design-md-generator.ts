@@ -1,5 +1,5 @@
 /**
- * Generate a Design Contract DESIGN.md from extracted tokens.
+ * Generate a Design Contract DESIGN.md from extracted tokens + semantic graph.
  *
  * Compatible with:
  * - Google Stitch DESIGN.md (YAML front matter + visual sections)
@@ -9,6 +9,8 @@
  * - https://github.com/google-labs-code/design.md
  * - https://github.com/byronwade/Design
  */
+
+import { componentsYamlFromGraph, type SemanticGraph } from '@/lib/analyzers/semantic-graph'
 
 export type DesignMdInput = {
   domain: string
@@ -42,6 +44,8 @@ export type DesignMdInput = {
     personality?: string
   } | null
   confidence?: number
+  /** Linked token↔role↔component↔layout model for agents */
+  semanticGraph?: SemanticGraph | null
 }
 
 export type DesignMdArtifact = {
@@ -88,7 +92,8 @@ function pickColors(input: DesignMdInput) {
       slugToken(color.name || '', `color-${++i}`)
     if (!map[key]) map[key] = String(color.value)
     if (!map.primary) map.primary = String(color.value)
-    else if (!map.secondary && String(color.value) !== map.primary) map.secondary = String(color.value)
+    else if (!map.secondary && String(color.value) !== map.primary)
+      map.secondary = String(color.value)
     else if (
       !map.tertiary &&
       String(color.value) !== map.primary &&
@@ -170,9 +175,7 @@ export function generateDesignMd(input: DesignMdInput): DesignMdArtifact {
     .map((value) => (typeof value === 'number' ? `${value}px` : String(value)))
   const containerWidths =
     input.layoutDNA?.containers?.maxWidths ??
-    (input.layoutDNA?.containers?.maxWidth
-      ? [input.layoutDNA.containers.maxWidth]
-      : [])
+    (input.layoutDNA?.containers?.maxWidth ? [input.layoutDNA.containers.maxWidth] : [])
   const personality = input.brandAnalysis?.personality || 'extracted from live CSS'
 
   const frontMatterLines: string[] = [
@@ -191,7 +194,9 @@ export function generateDesignMd(input: DesignMdInput): DesignMdArtifact {
   for (const [key, style] of Object.entries(typography)) {
     frontMatterLines.push(`  ${key}:`)
     for (const [prop, val] of Object.entries(style)) {
-      frontMatterLines.push(`    ${prop}: ${typeof val === 'number' ? val : yamlEscape(String(val))}`)
+      frontMatterLines.push(
+        `    ${prop}: ${typeof val === 'number' ? val : yamlEscape(String(val))}`
+      )
     }
   }
 
@@ -205,22 +210,26 @@ export function generateDesignMd(input: DesignMdInput): DesignMdArtifact {
     frontMatterLines.push(`  ${key}: ${yamlEscape(value)}`)
   }
 
-  frontMatterLines.push('components:')
-  frontMatterLines.push('  button-primary:')
-  frontMatterLines.push('    backgroundColor: "{colors.primary}"')
-  frontMatterLines.push('    textColor: "{colors.neutral}"')
-  frontMatterLines.push('    rounded: "{rounded.md}"')
-  frontMatterLines.push(`    padding: ${yamlEscape(spacing.sm)}`)
-  frontMatterLines.push('  button-secondary:')
-  frontMatterLines.push('    backgroundColor: "{colors.secondary}"')
-  frontMatterLines.push('    textColor: "{colors.neutral}"')
-  frontMatterLines.push('    rounded: "{rounded.md}"')
-  frontMatterLines.push(`    padding: ${yamlEscape(spacing.sm)}`)
-  frontMatterLines.push('  surface-card:')
-  frontMatterLines.push('    backgroundColor: "{colors.neutral}"')
-  frontMatterLines.push('    textColor: "{colors.primary}"')
-  frontMatterLines.push('    rounded: "{rounded.lg}"')
-  frontMatterLines.push(`    padding: ${yamlEscape(spacing.md)}`)
+  if (input.semanticGraph) {
+    frontMatterLines.push(...componentsYamlFromGraph(input.semanticGraph))
+  } else {
+    frontMatterLines.push('components:')
+    frontMatterLines.push('  button-primary:')
+    frontMatterLines.push('    backgroundColor: "{colors.primary}"')
+    frontMatterLines.push('    textColor: "{colors.neutral}"')
+    frontMatterLines.push('    rounded: "{rounded.md}"')
+    frontMatterLines.push(`    padding: ${yamlEscape(spacing.sm)}`)
+    frontMatterLines.push('  button-secondary:')
+    frontMatterLines.push('    backgroundColor: "{colors.secondary}"')
+    frontMatterLines.push('    textColor: "{colors.neutral}"')
+    frontMatterLines.push('    rounded: "{rounded.md}"')
+    frontMatterLines.push(`    padding: ${yamlEscape(spacing.sm)}`)
+    frontMatterLines.push('  surface-card:')
+    frontMatterLines.push('    backgroundColor: "{colors.neutral}"')
+    frontMatterLines.push('    textColor: "{colors.primary}"')
+    frontMatterLines.push('    rounded: "{rounded.lg}"')
+    frontMatterLines.push(`    padding: ${yamlEscape(spacing.md)}`)
+  }
   frontMatterLines.push('---')
 
   const colorBullets = Object.entries(colors)
@@ -294,6 +303,23 @@ export function generateDesignMd(input: DesignMdInput): DesignMdArtifact {
     '',
     'Allowed component-source states: **none**, **custom**, or **shadcn reference** (behavior/naming only — never a required package identity).',
     '',
+    input.semanticGraph
+      ? [
+          '## Semantic System Graph',
+          '',
+          `This contract includes a linked model of how the UI system works (${input.semanticGraph.summary.nodeCount} nodes, ${input.semanticGraph.summary.edgeCount} edges).`,
+          'Read `design/graph.json` (canonical) and `design/GRAPH.md` (narrative) before inventing mappings.',
+          '',
+          `- Tokens: ${input.semanticGraph.summary.tokenCount}`,
+          `- Roles: ${input.semanticGraph.summary.roleCount}`,
+          `- Components: ${input.semanticGraph.summary.componentCount}`,
+          `- Layout nodes: ${input.semanticGraph.summary.layoutCount}`,
+          `- Patterns: ${input.semanticGraph.summary.patternCount}`,
+          '',
+          'Traverse edges instead of guessing: `FILLS_ROLE` (token→role), `USES_TOKEN` (component→token), `IMPLEMENTS_ROLE` (component→role), `LOCATED_IN` / `APPEARS_IN` (placement).',
+          '',
+        ].join('\n')
+      : '',
     '## Layout and Navigation',
     '',
     breakpointLabels.length

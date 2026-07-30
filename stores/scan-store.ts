@@ -87,6 +87,22 @@ export interface ScanResult {
     }
     files?: Array<{ path: string; content: string }>
   }
+  /** Linked token↔role↔component↔layout model */
+  semanticGraph?: {
+    schemaVersion: number
+    summary: {
+      nodeCount: number
+      edgeCount: number
+      tokenCount: number
+      roleCount: number
+      componentCount: number
+      layoutCount: number
+      patternCount: number
+    }
+    nodes: unknown[]
+    edges: unknown[]
+    index?: unknown
+  }
   cacheHit?: boolean
 }
 
@@ -157,8 +173,9 @@ export const useScanStore = create<ScanState>()(
             },
             { step: 2, phase: 'tokenize', message: 'W3C tokens + Project Wallace' },
             { step: 3, phase: 'layout', message: 'Profiling layout DNA' },
-            { step: 4, phase: 'design-md', message: 'Composing Design Contract pack' },
-            { step: 5, phase: 'persist', message: 'Saving scan results' },
+            { step: 4, phase: 'graph', message: 'Building semantic design graph' },
+            { step: 5, phase: 'design-md', message: 'Composing Design Contract pack' },
+            { step: 6, phase: 'persist', message: 'Saving scan results' },
           ]
           let phaseIndex = 0
           const tick = () => {
