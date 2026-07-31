@@ -18,8 +18,8 @@ const scanRequestSchema = z.object({
   /** Screenshot capture options — extra pages + authenticated capture of your own surfaces */
   capture: z
     .object({
-      pages: z.number().int().min(0).max(4).optional(),
-      paths: z.array(z.string().startsWith('/').max(120)).max(4).optional(),
+      pages: z.number().int().min(0).max(12).optional(),
+      paths: z.array(z.string().startsWith('/').max(120)).max(12).optional(),
       auth: z
         .object({
           cookies: z

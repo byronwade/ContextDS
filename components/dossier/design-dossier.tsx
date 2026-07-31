@@ -281,7 +281,9 @@ function ProvenanceSection({ result }: { result: ScanResult }) {
     dormantColors: number
     addedFromRender: number
     elementCount: number
+    pagesAudited?: number
   } | null
+  const crawl = (meta.crawl ?? null) as { pages: number; paths: string[] } | null
 
   return (
     <SectionShell
@@ -304,10 +306,18 @@ function ProvenanceSection({ result }: { result: ScanResult }) {
           />
           <FactRow label="Wallace analysis" value={meta.wallace ? 'yes' : 'no'} />
           <FactRow
+            label="Pages crawled"
+            value={
+              crawl
+                ? `${crawl.pages} — ${crawl.paths.slice(0, 5).join(', ')}${crawl.paths.length > 5 ? '…' : ''}`
+                : '1 (homepage)'
+            }
+          />
+          <FactRow
             label="Render audit"
             value={
               coverage
-                ? `${coverage.overall}% of painted page explained · ${coverage.elementCount} elements measured`
+                ? `${coverage.overall}% of painted site explained · ${coverage.elementCount} elements across ${coverage.pagesAudited ?? 1} page${(coverage.pagesAudited ?? 1) === 1 ? '' : 's'}`
                 : 'not run (fast scan)'
             }
           />

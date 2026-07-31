@@ -7,8 +7,8 @@
  *   POST /scan  {
  *     url,
  *     screenshot?: boolean,
- *     pages?: number,            // extra same-origin pages to capture (0–4, default 3)
- *     paths?: string[],          // explicit extra paths to capture (overrides discovery)
+ *     pages?: number,            // same-origin pages to CRAWL for CSS+audit+shots (0–12, default 6)
+ *     paths?: string[],          // explicit paths to crawl (overrides discovery)
  *     auth?: {                   // capture YOUR OWN authenticated surfaces (dashboards):
  *       cookies?: Array<{ name, value, domain?, path? }>,
  *       headers?: Record<string, string>,
@@ -39,10 +39,17 @@ async function launchBrowser() {
     })
   }
 
+  // Explicit executable override — self-hosted runners with a system Chromium
+  const explicitPath = process.env.SCANNER_CHROMIUM_PATH || process.env.CHROMIUM_EXECUTABLE_PATH
+  // Honor standard egress-proxy env (corp networks, sandboxed runners)
+  const proxyServer =
+    process.env.SCANNER_PROXY || process.env.HTTPS_PROXY || process.env.https_proxy || null
   try {
     const { chromium } = await import('playwright')
     return chromium.launch({
       headless: true,
+      executablePath: explicitPath || undefined,
+      proxy: proxyServer ? { server: proxyServer } : undefined,
       args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
     })
   } catch {
@@ -180,7 +187,244 @@ async function captureViewportSet(page, label, { includeFullPage = false } = {})
   return shots
 }
 
-async function collectPage(url, { screenshot = true, pages = 3, paths = null, auth = null } = {}) {
+/** Browser-side: collect same-page stylesheets, inline styles, computed samples, links. */
+function collectSheetsAndLinksInPage() {
+  const sheets = []
+  for (const sheet of Array.from(document.styleSheets)) {
+    try {
+      const href = sheet.href || null
+      const rules = Array.from(sheet.cssRules || [])
+        .map((rule) => rule.cssText)
+        .join('\n')
+      if (rules) {
+        sheets.push({ kind: href ? 'link' : 'inline', url: href, content: rules, bytes: rules.length })
+      }
+    } catch {
+      // cross-origin stylesheet — skip
+    }
+  }
+  for (const style of Array.from(document.querySelectorAll('style'))) {
+    const content = style.textContent || ''
+    if (content.trim()) {
+      sheets.push({ kind: 'inline', url: null, content, bytes: content.length })
+    }
+  }
+
+  const sampleSelectors = ['body', 'h1', 'h2', 'p', 'a', 'button', 'input', 'nav', 'main', 'header', 'footer']
+  const computedChunks = []
+  for (const selector of sampleSelectors) {
+    const el = document.querySelector(selector)
+    if (!el) continue
+    const cs = getComputedStyle(el)
+    const props = [
+      'color', 'background-color', 'font-family', 'font-size', 'font-weight',
+      'line-height', 'letter-spacing', 'border-radius', 'box-shadow', 'padding', 'margin', 'gap',
+    ]
+    const decls = props.map((prop) => `  ${prop}: ${cs.getPropertyValue(prop)};`).join('\n')
+    computedChunks.push(`${selector} {\n${decls}\n}`)
+  }
+  if (computedChunks.length) {
+    const content = computedChunks.join('\n\n')
+    sheets.push({ kind: 'computed', url: location.href, content, bytes: content.length })
+  }
+
+  const links = Array.from(document.querySelectorAll('a[href]'))
+    .map((anchor) => anchor.getAttribute('href') || '')
+    .filter(Boolean)
+    .slice(0, 300)
+
+  return { finalUrl: location.href, title: document.title, sheets, links }
+}
+
+/** Browser-side: measure what the page actually paints (area/text-mass weighted). */
+function auditInPage() {
+  const vw = innerWidth
+  const vh = innerHeight
+  const MAX_ELEMENTS = 3000
+  const colorMap = new Map()
+  const fontMap = new Map()
+  const sizeMap = new Map()
+  const weightMap = new Map()
+  const spaceMap = new Map()
+  const radiusMap = new Map()
+  const shadowMap = new Map()
+  const bump = (map, key, weight) => {
+    if (!key) return
+    map.set(key, (map.get(key) || 0) + weight)
+  }
+
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT)
+  let count = 0
+  let el = document.body
+  while (el && count < MAX_ELEMENTS) {
+    const current = el
+    el = walker.nextNode()
+    if (!(current instanceof Element)) continue
+    const rect = current.getBoundingClientRect()
+    if (rect.width < 2 || rect.height < 2) continue
+    if (rect.bottom < 0 || rect.top > vh * 3) continue
+    const cs = getComputedStyle(current)
+    if (cs.visibility === 'hidden' || cs.display === 'none') continue
+    if (Number(cs.opacity) === 0) continue
+    count += 1
+
+    const area = Math.min(rect.width, vw) * Math.min(rect.height, vh)
+    const bg = cs.backgroundColor
+    if (bg && bg !== 'transparent' && !/rgba\(\s*\d+,\s*\d+,\s*\d+,\s*0\s*\)/.test(bg)) {
+      bump(colorMap, 'bg|' + bg, area)
+    }
+
+    let chars = 0
+    for (const child of current.childNodes) {
+      if (child.nodeType === 3) chars += (child.textContent || '').trim().length
+    }
+    if (chars > 0) {
+      const fontSize = parseFloat(cs.fontSize) || 16
+      const textMass = chars * fontSize * fontSize
+      bump(colorMap, 'text|' + cs.color, textMass)
+      const family = (cs.fontFamily || '').split(',')[0].replace(/['"]/g, '').trim()
+      bump(fontMap, family, textMass)
+      bump(sizeMap, Math.round(fontSize) + 'px', chars)
+      bump(weightMap, String(cs.fontWeight), chars)
+    }
+
+    if (parseFloat(cs.borderTopWidth) > 0) {
+      bump(colorMap, 'border|' + cs.borderTopColor, (rect.width + rect.height) * 2)
+    }
+    for (const raw of [cs.marginTop, cs.marginBottom, cs.paddingTop, cs.paddingBottom, cs.rowGap, cs.columnGap]) {
+      const n = parseFloat(raw)
+      if (Number.isFinite(n) && n > 1 && n < 300) bump(spaceMap, Math.round(n) + 'px', 1)
+    }
+    const radius = parseFloat(cs.borderTopLeftRadius)
+    if (Number.isFinite(radius) && radius > 0 && radius < 200) {
+      bump(radiusMap, Math.round(radius) + 'px', 1)
+    }
+    if (cs.boxShadow && cs.boxShadow !== 'none') {
+      bump(shadowMap, cs.boxShadow.slice(0, 160), 1)
+    }
+  }
+
+  const top = (map, n) =>
+    Array.from(map.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, n)
+      .map(([value, weight]) => ({ value, weight: Math.round(weight) }))
+
+  let loadedFonts = []
+  try {
+    loadedFonts = Array.from(
+      new Set(
+        Array.from(document.fonts)
+          .filter((face) => face.status === 'loaded')
+          .map((face) => face.family.replace(/['"]/g, ''))
+      )
+    ).slice(0, 20)
+  } catch {
+    loadedFonts = []
+  }
+
+  return {
+    viewport: { width: vw, height: vh },
+    elementCount: count,
+    colors: top(colorMap, 64).map((entry) => {
+      const split = entry.value.indexOf('|')
+      return { kind: entry.value.slice(0, split), value: entry.value.slice(split + 1), weight: entry.weight }
+    }),
+    fonts: top(fontMap, 12),
+    fontSizes: top(sizeMap, 16),
+    fontWeights: top(weightMap, 8),
+    spacing: top(spaceMap, 24),
+    radius: top(radiusMap, 14),
+    shadows: top(shadowMap, 10),
+    loadedFonts,
+  }
+}
+
+/** Fold one page's audit into the site-wide accumulator. */
+function mergeAudit(target, audit) {
+  if (!audit) return target
+  if (!target) {
+    return {
+      viewport: audit.viewport,
+      elementCount: audit.elementCount,
+      pagesAudited: 1,
+      colors: [...audit.colors],
+      fonts: [...audit.fonts],
+      fontSizes: [...audit.fontSizes],
+      fontWeights: [...audit.fontWeights],
+      spacing: [...audit.spacing],
+      radius: [...audit.radius],
+      shadows: [...audit.shadows],
+      loadedFonts: [...audit.loadedFonts],
+    }
+  }
+  const mergeList = (into, from, key) => {
+    const index = new Map(into.map((entry) => [key(entry), entry]))
+    for (const entry of from) {
+      const existing = index.get(key(entry))
+      if (existing) existing.weight += entry.weight
+      else {
+        const copy = { ...entry }
+        into.push(copy)
+        index.set(key(entry), copy)
+      }
+    }
+    into.sort((a, b) => b.weight - a.weight)
+  }
+  mergeList(target.colors, audit.colors, (entry) => entry.kind + '|' + entry.value)
+  mergeList(target.fonts, audit.fonts, (entry) => entry.value)
+  mergeList(target.fontSizes, audit.fontSizes, (entry) => entry.value)
+  mergeList(target.fontWeights, audit.fontWeights, (entry) => entry.value)
+  mergeList(target.spacing, audit.spacing, (entry) => entry.value)
+  mergeList(target.radius, audit.radius, (entry) => entry.value)
+  mergeList(target.shadows, audit.shadows, (entry) => entry.value)
+  target.loadedFonts = Array.from(new Set([...target.loadedFonts, ...audit.loadedFonts])).slice(0, 24)
+  target.elementCount += audit.elementCount
+  target.pagesAudited += 1
+  return target
+}
+
+function contentHash(text) {
+  let hash = 5381
+  for (let i = 0; i < text.length; i += 1) {
+    hash = ((hash << 5) + hash + text.charCodeAt(i)) >>> 0
+  }
+  return hash.toString(36) + ':' + text.length
+}
+
+/** Paths that rarely add design signal — crawl them last, if at all. */
+const LOW_SIGNAL_PATHS = /\/(privacy|terms|legal|cookie|sitemap|rss|feed|cdn-cgi)\b/i
+
+function buildCrawlQueue(links, baseUrl, maxPages) {
+  const origin = new URL(baseUrl)
+  const seen = new Set()
+  const scored = []
+  for (const href of links) {
+    try {
+      const resolved = new URL(href, baseUrl)
+      if (resolved.hostname !== origin.hostname) continue
+      if (!/^https?:$/.test(resolved.protocol)) continue
+      const pathname = resolved.pathname.replace(/\/$/, '') || '/'
+      if (pathname === '/' || seen.has(pathname)) continue
+      if (/\.(png|jpe?g|svg|gif|webp|pdf|zip|xml|txt|ico|css|js|mp4|webm)$/i.test(pathname)) continue
+      seen.add(pathname)
+      const interesting = scorePath(pathname)
+      const depth = pathname.split('/').filter(Boolean).length
+      // Rank: interesting paths first, then shallow section pages, penalize low-signal.
+      let rank
+      if (interesting >= 0) rank = interesting
+      else if (LOW_SIGNAL_PATHS.test(pathname)) rank = 900 + depth
+      else rank = 100 + depth * 10 + Math.min(pathname.length, 80) / 100
+      scored.push({ pathname, rank })
+    } catch {
+      // ignore malformed hrefs
+    }
+  }
+  scored.sort((a, b) => a.rank - b.rank)
+  return scored.slice(0, maxPages).map((entry) => entry.pathname)
+}
+
+async function collectPage(url, { screenshot = true, pages = 6, paths = null, auth = null } = {}) {
   const browser = await getBrowser()
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
@@ -219,277 +463,94 @@ async function collectPage(url, { screenshot = true, pages = 3, paths = null, au
   try {
     const page = await context.newPage()
 
-    // Prefer domcontentloaded — networkidle hangs on modern SPAs with open sockets.
+    // ---- Homepage: full treatment -----------------------------------------
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 })
     await new Promise((resolve) => setTimeout(resolve, 1500))
 
-    const payload = await page.evaluate(() => {
-      const sheets = []
-      for (const sheet of Array.from(document.styleSheets)) {
-        try {
-          const href = sheet.href || null
-          const rules = Array.from(sheet.cssRules || [])
-            .map((rule) => rule.cssText)
-            .join('\n')
-          if (rules) {
-            sheets.push({
-              kind: href ? 'link' : 'inline',
-              url: href,
-              content: rules,
-              bytes: rules.length,
-            })
-          }
-        } catch {
-          // cross-origin stylesheet — skip
+    const home = await page.evaluate(collectSheetsAndLinksInPage)
+
+    const sheetIndex = new Map()
+    const addSheets = (sheets, sourcePath) => {
+      for (const sheet of sheets) {
+        const key = sheet.url || contentHash(sheet.content)
+        const existing = sheetIndex.get(key)
+        if (existing) {
+          existing.pages += 1
+          continue
         }
+        sheetIndex.set(key, { ...sheet, page: sourcePath, pages: 1 })
       }
+    }
+    addSheets(home.sheets, '/')
 
-      for (const style of Array.from(document.querySelectorAll('style'))) {
-        const content = style.textContent || ''
-        if (content.trim()) {
-          sheets.push({
-            kind: 'inline',
-            url: null,
-            content,
-            bytes: content.length,
-          })
-        }
-      }
-
-      const sampleSelectors = [
-        'body',
-        'h1',
-        'h2',
-        'p',
-        'a',
-        'button',
-        'input',
-        'nav',
-        'main',
-        'header',
-        'footer',
-      ]
-      const computedChunks = []
-      for (const selector of sampleSelectors) {
-        const el = document.querySelector(selector)
-        if (!el) continue
-        const cs = getComputedStyle(el)
-        const props = [
-          'color',
-          'background-color',
-          'font-family',
-          'font-size',
-          'font-weight',
-          'line-height',
-          'letter-spacing',
-          'border-radius',
-          'box-shadow',
-          'padding',
-          'margin',
-          'gap',
-        ]
-        const decls = props.map((prop) => `  ${prop}: ${cs.getPropertyValue(prop)};`).join('\n')
-        computedChunks.push(`${selector} {\n${decls}\n}`)
-      }
-
-      if (computedChunks.length) {
-        const content = computedChunks.join('\n\n')
-        sheets.push({
-          kind: 'computed',
-          url: location.href,
-          content,
-          bytes: content.length,
-        })
-      }
-
-      const links = Array.from(document.querySelectorAll('a[href]'))
-        .map((anchor) => anchor.getAttribute('href') || '')
-        .filter(Boolean)
-        .slice(0, 200)
-
-      return {
-        finalUrl: location.href,
-        title: document.title,
-        sheets,
-        links,
-      }
-    })
-
-    // Render audit — walk the visible DOM and measure what is actually painted,
-    // weighted by on-screen area / text mass. This is ground truth the CSS-text
-    // pipeline can never see (dormant rules, unused variables, dead themes).
     let audit = null
     try {
-      audit = await page.evaluate(() => {
-        const vw = innerWidth
-        const vh = innerHeight
-        const MAX_ELEMENTS = 3000
-        const colorMap = new Map()
-        const fontMap = new Map()
-        const sizeMap = new Map()
-        const weightMap = new Map()
-        const spaceMap = new Map()
-        const radiusMap = new Map()
-        const shadowMap = new Map()
-        const bump = (map, key, weight) => {
-          if (!key) return
-          map.set(key, (map.get(key) || 0) + weight)
-        }
-
-        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT)
-        let count = 0
-        let el = document.body
-        while (el && count < MAX_ELEMENTS) {
-          const current = el
-          el = walker.nextNode()
-          if (!(current instanceof Element)) continue
-          const rect = current.getBoundingClientRect()
-          if (rect.width < 2 || rect.height < 2) continue
-          // Sample the first ~3 viewports of the page
-          if (rect.bottom < 0 || rect.top > vh * 3) continue
-          const cs = getComputedStyle(current)
-          if (cs.visibility === 'hidden' || cs.display === 'none') continue
-          if (Number(cs.opacity) === 0) continue
-          count += 1
-
-          const area = Math.min(rect.width, vw) * Math.min(rect.height, vh)
-          const bg = cs.backgroundColor
-          if (bg && bg !== 'transparent' && !/rgba\(\s*\d+,\s*\d+,\s*\d+,\s*0\s*\)/.test(bg)) {
-            bump(colorMap, 'bg|' + bg, area)
-          }
-
-          let chars = 0
-          for (const child of current.childNodes) {
-            if (child.nodeType === 3) chars += (child.textContent || '').trim().length
-          }
-          if (chars > 0) {
-            const fontSize = parseFloat(cs.fontSize) || 16
-            const textMass = chars * fontSize * fontSize
-            bump(colorMap, 'text|' + cs.color, textMass)
-            const family = (cs.fontFamily || '').split(',')[0].replace(/['"]/g, '').trim()
-            bump(fontMap, family, textMass)
-            bump(sizeMap, Math.round(fontSize) + 'px', chars)
-            bump(weightMap, String(cs.fontWeight), chars)
-          }
-
-          if (parseFloat(cs.borderTopWidth) > 0) {
-            bump(colorMap, 'border|' + cs.borderTopColor, (rect.width + rect.height) * 2)
-          }
-          for (const raw of [
-            cs.marginTop,
-            cs.marginBottom,
-            cs.paddingTop,
-            cs.paddingBottom,
-            cs.rowGap,
-            cs.columnGap,
-          ]) {
-            const n = parseFloat(raw)
-            if (Number.isFinite(n) && n > 1 && n < 300) bump(spaceMap, Math.round(n) + 'px', 1)
-          }
-          const radius = parseFloat(cs.borderTopLeftRadius)
-          if (Number.isFinite(radius) && radius > 0 && radius < 200) {
-            bump(radiusMap, Math.round(radius) + 'px', 1)
-          }
-          if (cs.boxShadow && cs.boxShadow !== 'none') {
-            bump(shadowMap, cs.boxShadow.slice(0, 160), 1)
-          }
-        }
-
-        const top = (map, n) =>
-          Array.from(map.entries())
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, n)
-            .map(([value, weight]) => ({ value, weight: Math.round(weight) }))
-
-        let loadedFonts = []
-        try {
-          loadedFonts = Array.from(
-            new Set(
-              Array.from(document.fonts)
-                .filter((face) => face.status === 'loaded')
-                .map((face) => face.family.replace(/['"]/g, ''))
-            )
-          ).slice(0, 20)
-        } catch {
-          loadedFonts = []
-        }
-
-        return {
-          viewport: { width: vw, height: vh },
-          elementCount: count,
-          colors: top(colorMap, 48).map((entry) => {
-            const split = entry.value.indexOf('|')
-            return {
-              kind: entry.value.slice(0, split),
-              value: entry.value.slice(split + 1),
-              weight: entry.weight,
-            }
-          }),
-          fonts: top(fontMap, 10),
-          fontSizes: top(sizeMap, 14),
-          fontWeights: top(weightMap, 8),
-          spacing: top(spaceMap, 20),
-          radius: top(radiusMap, 12),
-          shadows: top(shadowMap, 8),
-          loadedFonts,
-        }
-      })
+      audit = mergeAudit(null, await page.evaluate(auditInPage))
     } catch {
       audit = null
     }
 
+    const pagesMeta = [{ path: '/', title: home.title || '', audited: Boolean(audit) }]
+
     const screenshots = []
     if (screenshot) {
       screenshots.push(...(await captureViewportSet(page, 'homepage', { includeFullPage: true })))
+    }
 
-      // Capture a few more same-origin pages — explicit paths win over discovery.
-      const origin = new URL(payload.finalUrl)
-      let extraPaths = []
-      if (Array.isArray(paths) && paths.length > 0) {
-        extraPaths = paths
-          .map((p) => String(p))
-          .filter((p) => p.startsWith('/'))
-          .slice(0, 4)
-      } else {
-        const maxPages = Math.max(0, Math.min(Number(pages) || 0, 4))
-        const seen = new Set()
-        const candidates = []
-        for (const href of payload.links) {
+    // ---- Crawl: aggregate evidence across the site under a time budget ----
+    const maxPages = Math.max(0, Math.min(Number(pages) || 0, 12))
+    const explicit = Array.isArray(paths)
+      ? paths.map((p) => String(p)).filter((p) => p.startsWith('/')).slice(0, 12)
+      : null
+    const queue =
+      explicit && explicit.length > 0
+        ? explicit
+        : buildCrawlQueue(home.links, home.finalUrl, maxPages)
+
+    const CRAWL_BUDGET_MS = ON_VERCEL ? 22000 : 30000
+    const crawlDeadline = Date.now() + CRAWL_BUDGET_MS
+    const MAX_SUBPAGE_SHOTS = 4
+    let subpageShots = 0
+
+    await page.setViewportSize({ width: 1440, height: 900 }).catch(() => {})
+
+    for (const pathname of queue) {
+      if (Date.now() > crawlDeadline) break
+      try {
+        await page.goto(new URL(pathname, home.finalUrl).toString(), {
+          waitUntil: 'domcontentloaded',
+          timeout: 12000,
+        })
+        await new Promise((resolve) => setTimeout(resolve, 700))
+
+        const sub = await page.evaluate(collectSheetsAndLinksInPage)
+        addSheets(sub.sheets, pathname)
+
+        let audited = false
+        try {
+          audit = mergeAudit(audit, await page.evaluate(auditInPage))
+          audited = Boolean(audit)
+        } catch {
+          audited = false
+        }
+        pagesMeta.push({ path: pathname, title: sub.title || '', audited })
+
+        if (screenshot && subpageShots < MAX_SUBPAGE_SHOTS) {
           try {
-            const resolved = new URL(href, payload.finalUrl)
-            if (resolved.hostname !== origin.hostname) continue
-            const pathname = resolved.pathname.replace(/\/$/, '') || '/'
-            if (pathname === '/' || seen.has(pathname)) continue
-            const score = scorePath(pathname)
-            if (score < 0) continue
-            seen.add(pathname)
-            candidates.push({ pathname, score })
+            const buffer = await page.screenshot({ type: 'jpeg', quality: 62, fullPage: false })
+            screenshots.push({
+              label: pathname.replace(/^\//, '') || 'page',
+              viewport: 'desktop',
+              mime: 'image/jpeg',
+              base64: buffer.toString('base64'),
+            })
+            subpageShots += 1
           } catch {
-            // ignore malformed hrefs
+            // screenshot is best-effort
           }
         }
-        candidates.sort((a, b) => a.score - b.score)
-        extraPaths = candidates.slice(0, maxPages).map((candidate) => candidate.pathname)
-      }
-
-      for (const pathname of extraPaths) {
-        try {
-          await page.goto(new URL(pathname, origin).toString(), {
-            waitUntil: 'domcontentloaded',
-            timeout: 15000,
-          })
-          await new Promise((resolve) => setTimeout(resolve, 900))
-          await page.setViewportSize({ width: 1440, height: 900 })
-          const buffer = await page.screenshot({ type: 'jpeg', quality: 62, fullPage: false })
-          screenshots.push({
-            label: pathname.replace(/^\//, '') || 'page',
-            viewport: 'desktop',
-            mime: 'image/jpeg',
-            base64: buffer.toString('base64'),
-          })
-        } catch {
-          // subpage capture is best-effort — keep going
-        }
+      } catch {
+        // subpage failed — keep crawling
       }
     }
 
@@ -497,22 +558,27 @@ async function collectPage(url, { screenshot = true, pages = 3, paths = null, au
       (shot) => shot.label === 'homepage' && shot.viewport === 'desktop'
     )
 
+    // Prioritize sheets seen on multiple pages (shared design CSS) within the cap.
+    const allSheets = Array.from(sheetIndex.values()).sort(
+      (a, b) => b.pages - a.pages || b.bytes - a.bytes
+    )
     let total = 0
     const sources = []
-    for (const sheet of payload.sheets) {
-      if (total + sheet.bytes > MAX_CSS_BYTES) break
-      sources.push(sheet)
+    for (const sheet of allSheets) {
+      if (total + sheet.bytes > MAX_CSS_BYTES) continue
+      sources.push({ kind: sheet.kind, url: sheet.url, content: sheet.content, bytes: sheet.bytes })
       total += sheet.bytes
     }
 
     return {
-      url: payload.finalUrl,
-      title: payload.title,
+      url: home.finalUrl,
+      title: home.title,
       sources,
       // Legacy single-shot field for older clients
       screenshot: primary ? { mime: primary.mime, base64: primary.base64 } : null,
       screenshots,
       audit,
+      pages: pagesMeta,
       bytes: total,
       sourceCount: sources.length,
     }

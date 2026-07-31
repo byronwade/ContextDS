@@ -135,7 +135,10 @@ export interface StoredScanResult {
       dormantColors: number
       addedFromRender: number
       elementCount: number
+      pagesAudited?: number
     }
+    /** Multi-page crawl summary */
+    crawl?: { pages: number; paths: string[] }
   }
   error?: string
 }

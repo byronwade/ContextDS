@@ -18,6 +18,7 @@ import type { CuratedToken, CuratedTokenSet } from '@/lib/analyzers/token-curato
 export type RenderAudit = {
   viewport: { width: number; height: number }
   elementCount: number
+  pagesAudited?: number
   colors: Array<{ kind: string; value: string; weight: number }>
   fonts: Array<{ value: string; weight: number }>
   fontSizes: Array<{ value: string; weight: number }>
@@ -37,6 +38,7 @@ export type RenderCoverage = {
   dormantColors: number
   addedFromRender: number
   elementCount: number
+  pagesAudited: number
 }
 
 type Rgb = { r: number; g: number; b: number }
@@ -272,6 +274,7 @@ export function reconcileWithAudit(
       dormantColors,
       addedFromRender,
       elementCount: audit.elementCount,
+      pagesAudited: audit.pagesAudited ?? 1,
     },
   }
 }

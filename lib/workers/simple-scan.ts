@@ -345,6 +345,7 @@ export async function runSimpleScan({
   let browserScreenshotSet: CapturedScreenshot[] | null = null
   let browserAudit: BrowserRenderAudit | null = null
   let renderCoverage: RenderCoverage | null = null
+  let crawledPages: Array<{ path: string; title: string; audited: boolean }> | null = null
 
   if (mode === 'accurate') {
     if (isBrowserServiceConfigured()) {
@@ -364,6 +365,7 @@ export async function runSimpleScan({
           browserScreenshot = browser.screenshot ?? null
           browserScreenshotSet = browser.screenshots ?? null
           browserAudit = browser.audit ?? null
+          crawledPages = browser.pages ?? null
         }
       } catch (error) {
         console.warn('[simple-scan] Browser scanner service failed, falling back:', error)
@@ -654,6 +656,9 @@ export async function runSimpleScan({
       wallace: usedWallace,
       pageTitle,
       renderCoverage: renderCoverage ?? undefined,
+      crawl: crawledPages
+        ? { pages: crawledPages.length, paths: crawledPages.map((entry) => entry.path) }
+        : undefined,
     },
   }
 

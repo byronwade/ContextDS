@@ -73,10 +73,10 @@ export const designContractTools = {
       force: z.boolean().default(false).describe('Bypass the 24h cache and rescan'),
       paths: z
         .array(z.string().startsWith('/'))
-        .max(4)
+        .max(12)
         .optional()
         .describe(
-          'Extra same-origin paths to screenshot during accurate scans, e.g. ["/pricing", "/docs"]. Omit to let the scanner discover key pages.'
+          'Explicit same-origin paths to crawl during accurate scans, e.g. ["/pricing", "/docs"]. Omit to let the crawler discover key pages itself (it crawls ~6 by default, aggregating CSS + render evidence across all of them).'
         ),
     }),
     execute: async ({ url, mode, force, paths }) => {

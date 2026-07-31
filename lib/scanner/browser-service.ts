@@ -22,6 +22,8 @@ export type BrowserCaptureAuth = {
 export type BrowserRenderAudit = {
   viewport: { width: number; height: number }
   elementCount: number
+  /** Number of pages folded into this audit (multi-page crawl) */
+  pagesAudited?: number
   colors: Array<{ kind: string; value: string; weight: number }>
   fonts: Array<{ value: string; weight: number }>
   fontSizes: Array<{ value: string; weight: number }>
@@ -40,6 +42,8 @@ export type BrowserServiceResult = {
   screenshots?: BrowserScreenshot[]
   /** Visible-DOM measurement of what the page actually paints */
   audit?: BrowserRenderAudit | null
+  /** Pages visited by the crawl */
+  pages?: Array<{ path: string; title: string; audited: boolean }>
   bytes: number
   sourceCount: number
 }
@@ -70,7 +74,7 @@ export async function scanWithBrowserService(
   targetUrl: string,
   options?: {
     timeoutMs?: number
-    /** Extra same-origin pages to capture (0–4); scanner discovers them from nav. */
+    /** Same-origin pages to crawl for CSS + audits + shots (0–12, default 6). */
     pages?: number
     /** Explicit paths to capture instead of discovery. */
     paths?: string[]
@@ -82,7 +86,7 @@ export async function scanWithBrowserService(
   if (!base) return null
 
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? 55000)
+  const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? 75000)
 
   try {
     const headers: Record<string, string> = {
@@ -123,6 +127,7 @@ export async function scanWithBrowserService(
       screenshot?: { mime: string; base64: string } | null
       screenshots?: BrowserScreenshot[]
       audit?: BrowserRenderAudit | null
+      pages?: Array<{ path: string; title: string; audited: boolean }>
       bytes?: number
       sourceCount?: number
     }
@@ -138,6 +143,7 @@ export async function scanWithBrowserService(
       screenshot: data.screenshot ?? null,
       screenshots: Array.isArray(data.screenshots) ? data.screenshots : undefined,
       audit: data.audit ?? null,
+      pages: Array.isArray(data.pages) ? data.pages : undefined,
       bytes: data.bytes || sources.reduce((sum, s) => sum + s.bytes, 0),
       sourceCount: data.sourceCount || sources.length,
     }
