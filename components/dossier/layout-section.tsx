@@ -16,8 +16,40 @@ type LayoutDNALike = {
   archetypes?: Array<{ type: string; confidence: number }>
 } & Record<string, unknown>
 
-export function LayoutSection({ layoutDNA }: { layoutDNA: LayoutDNALike | null }) {
+type UxDnaLike = {
+  shell?: {
+    header?: { height: number; sticky: boolean; background: string } | null
+    sidebar?: { width: number; fixed: boolean; background: string } | null
+    footer?: { height: number; background: string } | null
+  } | null
+  density?: {
+    elementsInViewport: number
+    imageAreaRatio: number
+    textChars: number
+  } | null
+  flow?: Array<{ from: string; to: string }>
+  keyframes?: Array<{ name: string; css: string }>
+} | null
+
+export function LayoutSection({
+  layoutDNA,
+  uxDna = null,
+}: {
+  layoutDNA: LayoutDNALike | null
+  uxDna?: UxDnaLike
+}) {
   if (!layoutDNA || Object.keys(layoutDNA).length === 0) return null
+  const shell = uxDna?.shell ?? null
+  const density = uxDna?.density ?? null
+  const flow = uxDna?.flow ?? []
+  const keyframes = uxDna?.keyframes ?? []
+  const flowTargets = new Map<string, number>()
+  for (const edge of flow) {
+    flowTargets.set(edge.to, (flowTargets.get(edge.to) ?? 0) + 1)
+  }
+  const hubPages = Array.from(flowTargets.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
   const breakpoints = (layoutDNA.breakpoints ?? []).filter(
     (bp) => typeof bp === 'number' && bp > 0 && bp <= 3000
   )
@@ -53,6 +85,52 @@ export function LayoutSection({ layoutDNA }: { layoutDNA: LayoutDNALike | null }
             label="Responsive"
             value={layoutDNA.containers?.responsive ? 'yes' : 'no'}
           />
+
+          {shell && (shell.header || shell.sidebar || shell.footer) ? (
+            <div className="mt-6">
+              <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                App shell
+              </p>
+              {shell.header ? (
+                <FactRow
+                  label="Header"
+                  value={`${shell.header.height}px${shell.header.sticky ? ' · sticky' : ''}`}
+                />
+              ) : null}
+              {shell.sidebar ? (
+                <FactRow
+                  label="Sidebar"
+                  value={`${shell.sidebar.width}px${shell.sidebar.fixed ? ' · fixed' : ''}`}
+                />
+              ) : null}
+              {shell.footer ? (
+                <FactRow label="Footer" value={`${shell.footer.height}px`} />
+              ) : null}
+            </div>
+          ) : null}
+
+          {density ? (
+            <div className="mt-6">
+              <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                First-viewport feel
+              </p>
+              <FactRow
+                label="Density"
+                value={`${density.elementsInViewport} elements — ${
+                  density.elementsInViewport > 420
+                    ? 'dense'
+                    : density.elementsInViewport > 180
+                      ? 'balanced'
+                      : 'spacious'
+                }`}
+              />
+              <FactRow
+                label="Imagery"
+                value={`${Math.round(density.imageAreaRatio * 100)}% of viewport`}
+              />
+              <FactRow label="Copy" value={`${density.textChars.toLocaleString()} chars`} />
+            </div>
+          ) : null}
 
           {archetypes.length > 0 && (
             <div className="mt-6">
@@ -106,6 +184,51 @@ export function LayoutSection({ layoutDNA }: { layoutDNA: LayoutDNALike | null }
               No media-query breakpoints detected.
             </p>
           )}
+
+          {hubPages.length > 0 ? (
+            <div className="mt-8">
+              <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                Navigation flow · {flow.length} internal links between crawled pages
+              </p>
+              <div className="space-y-1">
+                {hubPages.map(([path, count]) => (
+                  <div key={path} className="flex items-center gap-3">
+                    <span className="w-32 shrink-0 truncate font-mono text-[11px] text-foreground">
+                      {path}
+                    </span>
+                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-secondary/50">
+                      <span
+                        className="block h-full rounded-full bg-[color-mix(in_oklab,var(--ui-accent)_45%,transparent)]"
+                        style={{ width: `${(count / hubPages[0][1]) * 100}%` }}
+                      />
+                    </span>
+                    <span className="w-16 shrink-0 text-right font-mono text-[10px] text-muted-foreground">
+                      {count} inbound
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {keyframes.length > 0 ? (
+            <div className="mt-8">
+              <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                Motion vocabulary · {keyframes.length} named animations
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {keyframes.slice(0, 12).map((frame) => (
+                  <span
+                    key={frame.name}
+                    title={frame.css.slice(0, 400)}
+                    className="rounded-full border border-[color:var(--soft-border)] px-2.5 py-0.5 font-mono text-[11px] text-muted-foreground"
+                  >
+                    @{frame.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <details className="group mt-8">
             <summary className="cursor-pointer select-none font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground">

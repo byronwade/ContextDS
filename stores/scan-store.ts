@@ -104,6 +104,14 @@ export interface ScanResult {
     index?: unknown
   }
   screenshots?: Array<{ label: string; url: string; mime?: string; viewport?: string }>
+  /** UX DNA: app shell, page flow, motion vocabulary, density */
+  uxDna?: {
+    shell?: unknown
+    density?: unknown
+    flow?: Array<{ from: string; to: string }>
+    keyframes?: Array<{ name: string; css: string }>
+    transitions?: Array<{ value: string; weight: number }>
+  }
   cacheHit?: boolean
 }
 

@@ -107,6 +107,14 @@ export interface StoredScanResult {
   }
   /** Linked token↔role↔component↔layout model for agents */
   semanticGraph?: unknown
+  /** UX DNA: app shell, page flow, motion vocabulary, density */
+  uxDna?: {
+    shell?: unknown
+    density?: unknown
+    flow?: Array<{ from: string; to: string }>
+    keyframes?: Array<{ name: string; css: string }>
+    transitions?: Array<{ value: string; weight: number }>
+  }
   /** Captured page screenshots (Blob URLs when available) */
   screenshots?: Array<{
     label: string

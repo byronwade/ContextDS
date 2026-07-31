@@ -19,6 +19,9 @@ export type RenderAudit = {
   viewport: { width: number; height: number }
   elementCount: number
   pagesAudited?: number
+  shell?: unknown
+  density?: unknown
+  transitions?: Array<{ value: string; weight: number }>
   headings?: {
     h1?: { family: string; size: number; weight: number; count: number } | null
     h2?: { family: string; size: number; weight: number; count: number } | null
@@ -259,6 +262,26 @@ export function reconcileWithAudit(
     }
     tokens.sort((a, b) => b.usage - a.usage)
     return Math.round((matched / total) * 100)
+  }
+
+  // Rendered motion: add observed transitions the CSS pass missed
+  if (audit.transitions?.length) {
+    for (const entry of audit.transitions.slice(0, 8)) {
+      const exists = next.motion.some(
+        (token) => String(token.value).trim() === entry.value.trim()
+      )
+      if (exists) continue
+      addedFromRender += 1
+      next.motion.push({
+        name: `rendered-motion-${next.motion.length + 1}`,
+        value: entry.value,
+        usage: entry.weight,
+        confidence: 90,
+        percentage: 0,
+        category: 'motion',
+      })
+    }
+    next.motion.sort((a, b) => b.usage - a.usage)
   }
 
   const sizeScore = reweightByPx(next.typography.sizes, audit.fontSizes, 'typography', 0.04)

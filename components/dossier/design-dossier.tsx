@@ -596,7 +596,7 @@ export function DesignDossier({
           {result.semanticGraph ? (
             <GraphSection graph={result.semanticGraph} domain={domain} />
           ) : null}
-          <LayoutSection layoutDNA={result.layoutDNA ?? null} />
+          <LayoutSection layoutDNA={result.layoutDNA ?? null} uxDna={result.uxDna ?? null} />
           <ProvenanceSection result={result} />
           <ArtifactsSection
             domain={domain}

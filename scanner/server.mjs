@@ -233,7 +233,21 @@ function collectSheetsAndLinksInPage() {
     .filter(Boolean)
     .slice(0, 300)
 
-  return { finalUrl: location.href, title: document.title, sheets, links }
+  // Named animations — the site's motion vocabulary
+  const keyframes = []
+  for (const sheet of Array.from(document.styleSheets)) {
+    try {
+      for (const rule of Array.from(sheet.cssRules || [])) {
+        if (rule.type === 7 /* CSSKeyframesRule */ && keyframes.length < 24) {
+          keyframes.push({ name: rule.name, css: rule.cssText.slice(0, 2000) })
+        }
+      }
+    } catch {
+      // cross-origin sheet
+    }
+  }
+
+  return { finalUrl: location.href, title: document.title, sheets, links, keyframes }
 }
 
 /** Browser-side: measure what the page actually paints (area/text-mass weighted). */
@@ -248,6 +262,7 @@ function auditInPage() {
   const spaceMap = new Map()
   const radiusMap = new Map()
   const shadowMap = new Map()
+  const motionMap = new Map()
   const bump = (map, key, weight) => {
     if (!key) return
     map.set(key, (map.get(key) || 0) + weight)
@@ -302,6 +317,73 @@ function auditInPage() {
     if (cs.boxShadow && cs.boxShadow !== 'none') {
       bump(shadowMap, cs.boxShadow.slice(0, 160), 1)
     }
+    // Rendered motion: real transitions attached to visible elements
+    const duration = cs.transitionDuration
+    if (duration && duration !== '0s' && !duration.startsWith('0s,')) {
+      const easing = (cs.transitionTimingFunction || '').split(',')[0].trim()
+      const firstDuration = duration.split(',')[0].trim()
+      const property = (cs.transitionProperty || 'all').split(',')[0].trim()
+      bump(motionMap, firstDuration + ' ' + easing + ' (' + property + ')', 1)
+    }
+    if (cs.animationName && cs.animationName !== 'none') {
+      const animDuration = (cs.animationDuration || '').split(',')[0].trim()
+      bump(motionMap, 'animation ' + cs.animationName.split(',')[0].trim() + ' ' + animDuration, 1)
+    }
+  }
+
+  // App shell — the structural chrome that frames every page
+  const shell = { header: null, sidebar: null, footer: null }
+  const headerEl = document.querySelector('header, [role="banner"]')
+  if (headerEl) {
+    const rect = headerEl.getBoundingClientRect()
+    const cs = getComputedStyle(headerEl)
+    if (rect.width > vw * 0.6 && rect.height > 20 && rect.height < 220 && rect.top < 120) {
+      shell.header = {
+        height: Math.round(rect.height),
+        sticky: cs.position === 'fixed' || cs.position === 'sticky',
+        background: cs.backgroundColor,
+      }
+    }
+  }
+  for (const el of Array.from(document.querySelectorAll('aside, nav, [class*="sidebar" i]')).slice(0, 12)) {
+    const rect = el.getBoundingClientRect()
+    if (rect.height > vh * 0.55 && rect.width >= 44 && rect.width <= 420 && rect.left < 140) {
+      const cs = getComputedStyle(el)
+      shell.sidebar = {
+        width: Math.round(rect.width),
+        fixed: cs.position === 'fixed' || cs.position === 'sticky',
+        background: cs.backgroundColor,
+      }
+      break
+    }
+  }
+  const footerEl = document.querySelector('footer, [role="contentinfo"]')
+  if (footerEl) {
+    const rect = footerEl.getBoundingClientRect()
+    if (rect.height > 40) {
+      shell.footer = { height: Math.round(rect.height), background: getComputedStyle(footerEl).backgroundColor }
+    }
+  }
+
+  // Density & feel — first viewport only
+  let firstViewportEls = 0
+  let imageArea = 0
+  let textChars = 0
+  for (const el of Array.from(document.body.querySelectorAll('*')).slice(0, 4000)) {
+    const rect = el.getBoundingClientRect()
+    if (rect.bottom < 0 || rect.top > vh || rect.width < 2 || rect.height < 2) continue
+    firstViewportEls += 1
+    if (/^(IMG|VIDEO|SVG|PICTURE|CANVAS)$/.test(el.tagName)) {
+      imageArea += Math.min(rect.width, vw) * Math.min(rect.height, vh)
+    }
+    for (const child of el.childNodes) {
+      if (child.nodeType === 3) textChars += (child.textContent || '').trim().length
+    }
+  }
+  const density = {
+    elementsInViewport: firstViewportEls,
+    imageAreaRatio: Math.round((imageArea / (vw * vh)) * 100) / 100,
+    textChars,
   }
 
   const top = (map, n) =>
@@ -349,6 +431,9 @@ function auditInPage() {
     viewport: { width: vw, height: vh },
     elementCount: count,
     headings,
+    shell,
+    density,
+    transitions: top(motionMap, 12),
     colors: top(colorMap, 64).map((entry) => {
       const split = entry.value.indexOf('|')
       return { kind: entry.value.slice(0, split), value: entry.value.slice(split + 1), weight: entry.weight }
@@ -372,6 +457,9 @@ function mergeAudit(target, audit) {
       elementCount: audit.elementCount,
       pagesAudited: 1,
       headings: { ...(audit.headings || {}) },
+      shell: audit.shell || null,
+      density: audit.density || null,
+      transitions: [...(audit.transitions || [])],
       colors: [...audit.colors],
       fonts: [...audit.fonts],
       fontSizes: [...audit.fontSizes],
@@ -402,6 +490,19 @@ function mergeAudit(target, audit) {
   mergeList(target.spacing, audit.spacing, (entry) => entry.value)
   mergeList(target.radius, audit.radius, (entry) => entry.value)
   mergeList(target.shadows, audit.shadows, (entry) => entry.value)
+  if (audit.transitions) {
+    target.transitions = target.transitions || []
+    mergeList(target.transitions, audit.transitions, (entry) => entry.value)
+  }
+  if (!target.shell && audit.shell) target.shell = audit.shell
+  if (audit.shell && target.shell) {
+    // keep richest shell observation
+    if (!target.shell.sidebar && audit.shell.sidebar) target.shell.sidebar = audit.shell.sidebar
+    if (!target.shell.footer && audit.shell.footer) target.shell.footer = audit.shell.footer
+  }
+  if (audit.density) {
+    target.density = target.density || audit.density
+  }
   target.loadedFonts = Array.from(new Set([...target.loadedFonts, ...audit.loadedFonts])).slice(0, 24)
   if (audit.headings) {
     target.headings = target.headings || {}
@@ -457,7 +558,7 @@ function buildCrawlQueue(links, baseUrl, maxPages) {
   return scored.slice(0, maxPages).map((entry) => entry.pathname)
 }
 
-async function collectPage(url, { screenshot = true, pages = 6, paths = null, auth = null } = {}) {
+async function collectPage(url, { screenshot = true, pages = 8, paths = null, auth = null } = {}) {
   const browser = await getBrowser()
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
@@ -523,6 +624,35 @@ async function collectPage(url, { screenshot = true, pages = 6, paths = null, au
       audit = null
     }
 
+    const toSameOriginPaths = (links, baseUrl) => {
+      const origin = new URL(baseUrl)
+      const out = new Set()
+      for (const href of links) {
+        try {
+          const resolved = new URL(href, baseUrl)
+          if (resolved.hostname !== origin.hostname) continue
+          out.add(resolved.pathname.replace(/\/$/, '') || '/')
+        } catch {
+          // ignore
+        }
+        if (out.size >= 60) break
+      }
+      return Array.from(out)
+    }
+
+    const keyframesIndex = new Map()
+    const addKeyframes = (list) => {
+      for (const frame of list || []) {
+        if (!keyframesIndex.has(frame.name) && keyframesIndex.size < 24) {
+          keyframesIndex.set(frame.name, frame.css)
+        }
+      }
+    }
+    addKeyframes(home.keyframes)
+
+    const pageLinks = new Map()
+    pageLinks.set('/', toSameOriginPaths(home.links, home.finalUrl))
+
     const pagesMeta = [{ path: '/', title: home.title || '', audited: Boolean(audit) }]
 
     const screenshots = []
@@ -563,7 +693,7 @@ async function collectPage(url, { screenshot = true, pages = 6, paths = null, au
     }
 
     // ---- Crawl: aggregate evidence across the site under a time budget ----
-    const maxPages = Math.max(0, Math.min(Number(pages) || 0, 12))
+    const maxPages = Math.max(5, Math.min(Number(pages) || 8, 24))
     const explicit = Array.isArray(paths)
       ? paths.map((p) => String(p)).filter((p) => p.startsWith('/')).slice(0, 12)
       : null
@@ -590,6 +720,8 @@ async function collectPage(url, { screenshot = true, pages = 6, paths = null, au
 
         const sub = await page.evaluate(collectSheetsAndLinksInPage)
         addSheets(sub.sheets, pathname)
+        addKeyframes(sub.keyframes)
+        pageLinks.set(pathname, toSameOriginPaths(sub.links, home.finalUrl))
 
         let audited = false
         try {
@@ -635,6 +767,15 @@ async function collectPage(url, { screenshot = true, pages = 6, paths = null, au
       total += sheet.bytes
     }
 
+    // Flow graph: which crawled pages link to which
+    const crawledSet = new Set(pagesMeta.map((entry) => entry.path))
+    const flow = []
+    for (const [from, links] of pageLinks.entries()) {
+      for (const to of links) {
+        if (to !== from && crawledSet.has(to)) flow.push({ from, to })
+      }
+    }
+
     return {
       url: home.finalUrl,
       title: home.title,
@@ -644,6 +785,8 @@ async function collectPage(url, { screenshot = true, pages = 6, paths = null, au
       screenshots,
       audit,
       pages: pagesMeta,
+      keyframes: Array.from(keyframesIndex.entries()).map(([name, css]) => ({ name, css })),
+      flow,
       bytes: total,
       sourceCount: sources.length,
     }

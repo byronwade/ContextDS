@@ -66,6 +66,7 @@ export type SimpleScanResult = {
   designContract?: StoredScanResult['designContract']
   semanticGraph?: SemanticGraph
   screenshots?: StoredScanResult['screenshots']
+  uxDna?: StoredScanResult['uxDna']
   metadata: StoredScanResult['metadata']
   /** @deprecated use `storage` */
   database: SimpleScanResult['storage']
@@ -246,6 +247,7 @@ function fromCache(cached: StoredScanResult): SimpleScanResult {
       ? slimSemanticGraph(cached.semanticGraph as SemanticGraph)
       : undefined,
     screenshots: cached.screenshots,
+    uxDna: cached.uxDna,
     metadata: cached.metadata,
     database: storage,
     storage,
@@ -347,6 +349,8 @@ export async function runSimpleScan({
   let browserAudit: BrowserRenderAudit | null = null
   let renderCoverage: RenderCoverage | null = null
   let crawledPages: Array<{ path: string; title: string; audited: boolean }> | null = null
+  let browserKeyframes: Array<{ name: string; css: string }> | null = null
+  let browserFlow: Array<{ from: string; to: string }> | null = null
 
   if (mode === 'accurate') {
     if (isBrowserServiceConfigured()) {
@@ -367,6 +371,8 @@ export async function runSimpleScan({
           browserScreenshotSet = browser.screenshots ?? null
           browserAudit = browser.audit ?? null
           crawledPages = browser.pages ?? null
+          browserKeyframes = browser.keyframes ?? null
+          browserFlow = browser.flow ?? null
         }
       } catch (error) {
         console.warn('[simple-scan] Browser scanner service failed, falling back:', error)
@@ -621,6 +627,17 @@ export async function runSimpleScan({
 
   progress.phase('persist', 'Saving scan results')
 
+  const uxDna: StoredScanResult['uxDna'] =
+    browserAudit || browserKeyframes || browserFlow
+      ? {
+          shell: browserAudit?.shell ?? undefined,
+          density: browserAudit?.density ?? undefined,
+          flow: browserFlow ?? undefined,
+          keyframes: browserKeyframes?.slice(0, 16) ?? undefined,
+          transitions: browserAudit?.transitions?.slice(0, 12) ?? undefined,
+        }
+      : undefined
+
   const stored: StoredScanResult = {
     id: scanId,
     domain,
@@ -664,6 +681,7 @@ export async function runSimpleScan({
     designContract,
     semanticGraph,
     screenshots,
+    uxDna,
     metadata: {
       cssSources: cssArtifacts.length,
       staticCssSources: staticCss.length,
@@ -707,6 +725,7 @@ export async function runSimpleScan({
     designContract: slimContract(stored.designContract, domain),
     semanticGraph: clientGraph,
     screenshots,
+    uxDna,
     metadata: stored.metadata,
     database: storage,
     storage,

@@ -30,6 +30,20 @@ export type BrowserRenderAudit = {
     h2?: { family: string; size: number; weight: number; count: number } | null
     h3?: { family: string; size: number; weight: number; count: number } | null
   }
+  /** Structural chrome shared across pages */
+  shell?: {
+    header?: { height: number; sticky: boolean; background: string } | null
+    sidebar?: { width: number; fixed: boolean; background: string } | null
+    footer?: { height: number; background: string } | null
+  } | null
+  /** First-viewport feel metrics */
+  density?: {
+    elementsInViewport: number
+    imageAreaRatio: number
+    textChars: number
+  } | null
+  /** Rendered transitions/animations attached to visible elements */
+  transitions?: Array<{ value: string; weight: number }>
   colors: Array<{ kind: string; value: string; weight: number }>
   fonts: Array<{ value: string; weight: number }>
   fontSizes: Array<{ value: string; weight: number }>
@@ -50,6 +64,10 @@ export type BrowserServiceResult = {
   audit?: BrowserRenderAudit | null
   /** Pages visited by the crawl */
   pages?: Array<{ path: string; title: string; audited: boolean }>
+  /** Named @keyframes found across crawled pages */
+  keyframes?: Array<{ name: string; css: string }>
+  /** Which crawled pages link to which — the site's navigation flow */
+  flow?: Array<{ from: string; to: string }>
   bytes: number
   sourceCount: number
 }
@@ -134,6 +152,8 @@ export async function scanWithBrowserService(
       screenshots?: BrowserScreenshot[]
       audit?: BrowserRenderAudit | null
       pages?: Array<{ path: string; title: string; audited: boolean }>
+      keyframes?: Array<{ name: string; css: string }>
+      flow?: Array<{ from: string; to: string }>
       bytes?: number
       sourceCount?: number
     }
@@ -150,6 +170,8 @@ export async function scanWithBrowserService(
       screenshots: Array.isArray(data.screenshots) ? data.screenshots : undefined,
       audit: data.audit ?? null,
       pages: Array.isArray(data.pages) ? data.pages : undefined,
+      keyframes: Array.isArray(data.keyframes) ? data.keyframes : undefined,
+      flow: Array.isArray(data.flow) ? data.flow : undefined,
       bytes: data.bytes || sources.reduce((sum, s) => sum + s.bytes, 0),
       sourceCount: data.sourceCount || sources.length,
     }

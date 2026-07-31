@@ -19,6 +19,7 @@ type StoredLike = {
   designContract?: ScanResult['designContract'] & { download?: string }
   semanticGraph?: ScanResult['semanticGraph'] | unknown
   screenshots?: ScanResult['screenshots']
+  uxDna?: ScanResult['uxDna']
   metadata?: ScanResult['metadata'] & {
     scanId?: string
     tokenSetId?: string
@@ -53,6 +54,7 @@ export function storedScanToClientResult(scan: StoredLike): ScanResult {
     designContract: scan.designContract,
     semanticGraph: scan.semanticGraph as ScanResult['semanticGraph'],
     screenshots: scan.screenshots,
+    uxDna: scan.uxDna,
     metadata: {
       ...scan.metadata,
       scanId,
