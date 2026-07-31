@@ -46,6 +46,7 @@ export async function GET() {
       downloads: redisSnapshot.downloads || directory.downloads,
       chatMessages: redisSnapshot.chatMessages || directory.chatMessages,
       agentScans: redisSnapshot.agentScans || directory.agentScans,
+      systemsSaved: redisSnapshot.systemsSaved,
       lastUpdated: redisSnapshot.updatedAt || new Date().toISOString(),
       storage: {
         redis,
@@ -68,6 +69,7 @@ export async function GET() {
         downloads: 0,
         chatMessages: 0,
         agentScans: 0,
+        systemsSaved: 0,
         lastUpdated: new Date().toISOString(),
         storage: { redis: false, blob: false, mode: 'memory' },
         error: 'Failed to fetch stats',

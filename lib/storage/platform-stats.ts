@@ -16,6 +16,7 @@ export type StatEvent =
   | 'download'
   | 'chat_message'
   | 'agent_scan'
+  | 'system_saved'
 
 export type PlatformCounters = {
   sites: number
@@ -28,6 +29,7 @@ export type PlatformCounters = {
   downloads: number
   chatMessages: number
   agentScans: number
+  systemsSaved: number
 }
 
 const EVENT_TO_FIELD: Record<StatEvent, keyof PlatformCounters> = {
@@ -39,6 +41,7 @@ const EVENT_TO_FIELD: Record<StatEvent, keyof PlatformCounters> = {
   download: 'downloads',
   chat_message: 'chatMessages',
   agent_scan: 'agentScans',
+  system_saved: 'systemsSaved',
 }
 
 function getRedis(): Redis | null {
@@ -79,6 +82,7 @@ export function emptyCounters(): PlatformCounters {
     downloads: 0,
     chatMessages: 0,
     agentScans: 0,
+    systemsSaved: 0,
   }
 }
 
@@ -102,6 +106,7 @@ export async function readPlatformCounters(): Promise<PlatformCounters | null> {
       downloads: toNumber(raw.downloads),
       chatMessages: toNumber(raw.chatMessages),
       agentScans: toNumber(raw.agentScans),
+      systemsSaved: toNumber(raw.systemsSaved),
     }
   } catch (error) {
     console.warn('[platform-stats] read failed:', error)
@@ -176,6 +181,7 @@ export async function getPlatformStatsSnapshot(): Promise<PlatformStatsSnapshot>
       downloads: toNumber(raw.downloads),
       chatMessages: toNumber(raw.chatMessages),
       agentScans: toNumber(raw.agentScans),
+      systemsSaved: toNumber(raw.systemsSaved),
       updatedAt:
         typeof raw.updatedAt === 'string' && raw.updatedAt
           ? raw.updatedAt

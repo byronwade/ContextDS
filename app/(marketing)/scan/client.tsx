@@ -7,8 +7,12 @@ import {
   isToolUIPart,
   type UIMessage,
 } from 'ai'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { DesignCanvas } from '@/components/canvas/design-canvas'
+import { useCanvasStore } from '@/stores/canvas-store'
+import { extractCanvasDirectives } from '@/lib/design-system/canvas-sync'
+import type { WorkingSystem } from '@/lib/design-system/working-system'
 import {
   Conversation,
   ConversationContent,
@@ -418,6 +422,67 @@ export function ScanChat() {
   const busy = status === 'submitted' || status === 'streaming'
   const hasMessages = messages.length > 0 || Boolean(searchParams.get('url'))
 
+  // --- Canvas ------------------------------------------------------------
+  const canvasOpen = useCanvasStore((state) => state.open)
+  const openCanvas = useCanvasStore((state) => state.openCanvas)
+  const patchSystem = useCanvasStore((state) => state.patchSystem)
+  const markSaved = useCanvasStore((state) => state.markSaved)
+  const [savingSystem, setSavingSystem] = useState(false)
+  const appliedDirectives = useRef<Set<string>>(new Set())
+  const loadedSystemId = useRef<string | null>(null)
+
+  // The agent drives the canvas through its tool results; each directive is
+  // applied exactly once, in transcript order.
+  const directives = useMemo(() => extractCanvasDirectives(messages), [messages])
+  useEffect(() => {
+    for (const directive of directives) {
+      if (appliedDirectives.current.has(directive.id)) continue
+      appliedDirectives.current.add(directive.id)
+      if (directive.kind === 'open') openCanvas(directive.system)
+      else patchSystem(directive.patch, directive.reason)
+    }
+  }, [directives, openCanvas, patchSystem])
+
+  // "Continue editing" from the Library arrives as ?system=<id>.
+  useEffect(() => {
+    const systemId = searchParams.get('system')
+    if (!systemId || loadedSystemId.current === systemId) return
+    loadedSystemId.current = systemId
+    let cancelled = false
+    void (async () => {
+      try {
+        const response = await fetch(`/api/systems/${encodeURIComponent(systemId)}`)
+        if (!response.ok) return
+        const stored = (await response.json()) as { system?: WorkingSystem }
+        if (!cancelled && stored.system) openCanvas(stored.system)
+      } catch {
+        // A missing or unreachable system just leaves the canvas closed.
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [searchParams, openCanvas])
+
+  const onSaveSystem = async (system: WorkingSystem) => {
+    setSavingSystem(true)
+    try {
+      const response = await fetch('/api/systems', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ id: system.id ?? undefined, system, visibility: 'public' }),
+      })
+      if (!response.ok) return
+      const stored = (await response.json()) as { id?: string }
+      if (stored.id) {
+        markSaved(stored.id)
+        trackClientEvent('system_saved')
+      }
+    } finally {
+      setSavingSystem(false)
+    }
+  }
+
   useEffect(() => {
     const raw = searchParams.get('url')?.trim()
     if (!raw || startedUrl.current === raw || messages.length > 0 || busy) return
@@ -450,8 +515,15 @@ export function ScanChat() {
   }
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--ui-paper)]">
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--ui-paper)] lg:flex-row">
+      <div
+        className={cn(
+          'relative z-10 flex min-h-0 flex-1 flex-col',
+          // Canvas open: side by side on wide screens, stacked below on narrow
+          // ones — the conversation never gets squeezed into a column.
+          canvasOpen && 'lg:max-w-[560px] lg:border-r lg:border-[var(--ui-border-soft)]'
+        )}
+      >
         <Conversation className="min-h-0 flex-1">
           <ConversationContent
             className={cn(
@@ -583,6 +655,14 @@ export function ScanChat() {
           </div>
         </div>
       </div>
+
+      {canvasOpen ? (
+        <DesignCanvas
+          className="min-h-[55vh] shrink-0 border-t border-[var(--ui-border-soft)] lg:min-h-0 lg:flex-1 lg:shrink lg:border-t-0"
+          onSave={(system) => void onSaveSystem(system)}
+          saving={savingSystem}
+        />
+      ) : null}
     </div>
   )
 }

@@ -47,6 +47,15 @@ const FONTS = [
   { key: 'fontBody', label: 'Body' },
   { key: 'fontMono', label: 'Mono' },
 ] as const
+const SPACING_OPTIONS = [
+  { value: 4 as const, label: '4px' },
+  { value: 8 as const, label: '8px' },
+]
+const DEPTH_OPTIONS = [
+  { value: 'flat' as const, label: 'Flat' },
+  { value: 'soft' as const, label: 'Soft' },
+  { value: 'layered' as const, label: 'Layered' },
+]
 
 const OVERLINE = 'font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground'
 const HAIRLINE = 'border-[color:var(--soft-border)]'
@@ -498,20 +507,13 @@ export function DesignCanvas({
             <Segmented
               label="Spacing grid"
               value={system.spacingBase}
-              options={[
-                { value: 4 as const, label: '4px' },
-                { value: 8 as const, label: '8px' },
-              ]}
+              options={SPACING_OPTIONS}
               onChange={(next) => patch({ spacingBase: next }, `grid → ${next}px`)}
             />
             <Segmented
               label="Depth"
               value={system.depth}
-              options={[
-                { value: 'flat' as const, label: 'Flat' },
-                { value: 'soft' as const, label: 'Soft' },
-                { value: 'layered' as const, label: 'Layered' },
-              ]}
+              options={DEPTH_OPTIONS}
               onChange={(next) => patch({ depth: next }, `depth → ${next}`)}
             />
           </RailGroup>
