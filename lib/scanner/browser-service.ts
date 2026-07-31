@@ -6,11 +6,25 @@
 import { createHash } from 'node:crypto'
 import type { CssSource } from '@/lib/extractors/static-css'
 
+export type BrowserScreenshot = {
+  label: string
+  viewport: 'desktop' | 'tablet' | 'mobile'
+  mime: string
+  base64: string
+}
+
+export type BrowserCaptureAuth = {
+  /** Session cookies for surfaces the caller owns (their own dashboards). */
+  cookies?: Array<{ name: string; value: string; domain?: string; path?: string }>
+  headers?: Record<string, string>
+}
+
 export type BrowserServiceResult = {
   url: string
   title?: string
   sources: CssSource[]
   screenshot?: { mime: string; base64: string } | null
+  screenshots?: BrowserScreenshot[]
   bytes: number
   sourceCount: number
 }
@@ -39,7 +53,15 @@ export function isBrowserServiceConfigured(): boolean {
 
 export async function scanWithBrowserService(
   targetUrl: string,
-  options?: { timeoutMs?: number }
+  options?: {
+    timeoutMs?: number
+    /** Extra same-origin pages to capture (0–4); scanner discovers them from nav. */
+    pages?: number
+    /** Explicit paths to capture instead of discovery. */
+    paths?: string[]
+    /** Authenticated capture of the caller's own surfaces. */
+    auth?: BrowserCaptureAuth
+  }
 ): Promise<BrowserServiceResult | null> {
   const base = getScannerServiceUrl()
   if (!base) return null
@@ -59,7 +81,13 @@ export async function scanWithBrowserService(
     const response = await fetch(`${base}/scan`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ url: targetUrl, screenshot: true }),
+      body: JSON.stringify({
+        url: targetUrl,
+        screenshot: true,
+        pages: options?.pages,
+        paths: options?.paths,
+        auth: options?.auth,
+      }),
       signal: controller.signal,
     })
 
@@ -78,6 +106,7 @@ export async function scanWithBrowserService(
         bytes?: number
       }>
       screenshot?: { mime: string; base64: string } | null
+      screenshots?: BrowserScreenshot[]
       bytes?: number
       sourceCount?: number
     }
@@ -91,6 +120,7 @@ export async function scanWithBrowserService(
       title: data.title,
       sources,
       screenshot: data.screenshot ?? null,
+      screenshots: Array.isArray(data.screenshots) ? data.screenshots : undefined,
       bytes: data.bytes || sources.reduce((sum, s) => sum + s.bytes, 0),
       sourceCount: data.sourceCount || sources.length,
     }

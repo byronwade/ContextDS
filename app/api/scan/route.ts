@@ -15,6 +15,29 @@ const scanRequestSchema = z.object({
   force: z.boolean().default(false),
   /** Optional client id so /api/scan/progress can stream phases */
   scanId: z.string().min(3).max(120).optional(),
+  /** Screenshot capture options — extra pages + authenticated capture of your own surfaces */
+  capture: z
+    .object({
+      pages: z.number().int().min(0).max(4).optional(),
+      paths: z.array(z.string().startsWith('/').max(120)).max(4).optional(),
+      auth: z
+        .object({
+          cookies: z
+            .array(
+              z.object({
+                name: z.string().min(1).max(120),
+                value: z.string().min(1).max(4096),
+                domain: z.string().max(253).optional(),
+                path: z.string().max(120).optional(),
+              })
+            )
+            .max(30)
+            .optional(),
+          headers: z.record(z.string(), z.string().max(4096)).optional(),
+        })
+        .optional(),
+    })
+    .optional(),
   /** @deprecated mapped to mode when present */
   quality: z.enum(['basic', 'standard', 'premium', 'thorough']).optional(),
   /** @deprecated ignored */
@@ -231,6 +254,7 @@ export async function POST(request: NextRequest) {
       mode,
       force: params.force,
       scanId: params.scanId,
+      capture: params.capture,
     })
 
     return NextResponse.json(result)

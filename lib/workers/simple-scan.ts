@@ -22,7 +22,11 @@ import { buildDesignContractPackage } from '@/lib/contracts/design-contract-pack
 import { contractDownloadPath, normalizeDomain } from '@/lib/domain'
 import { collectComputedCss } from '@/lib/extractors/computed-css'
 import { type CssSource, collectStaticCss } from '@/lib/extractors/static-css'
-import { isBrowserServiceConfigured, scanWithBrowserService } from '@/lib/scanner/browser-service'
+import {
+  type BrowserCaptureAuth,
+  isBrowserServiceConfigured,
+  scanWithBrowserService,
+} from '@/lib/scanner/browser-service'
 import { analyzeWithWallace, mergeCuratedSets } from '@/lib/scanner/wallace-bridge'
 import { uploadScreenshot } from '@/lib/storage/blob-storage'
 import { trackStatEvent } from '@/lib/storage/platform-stats'
@@ -36,6 +40,12 @@ export type SimpleScanInput = {
   force?: boolean
   /** Client-supplied id so SSE can subscribe before POST completes */
   scanId?: string
+  /** Screenshot capture options — extra pages + authenticated capture of your own surfaces */
+  capture?: {
+    pages?: number
+    paths?: string[]
+    auth?: BrowserCaptureAuth
+  }
 }
 
 export type SimpleScanResult = {
@@ -240,32 +250,53 @@ function fromCache(cached: StoredScanResult): SimpleScanResult {
   }
 }
 
+type CapturedScreenshot = {
+  label?: string
+  viewport?: string
+  mime?: string
+  base64: string
+}
+
 async function persistBrowserScreenshot(
   scanId: string,
-  screenshot: { mime?: string; base64: string } | null | undefined
+  screenshot: { mime?: string; base64: string } | null | undefined,
+  screenshotSet?: CapturedScreenshot[] | null
 ): Promise<StoredScanResult['screenshots']> {
-  if (!screenshot?.base64 || !process.env.BLOB_READ_WRITE_TOKEN) return undefined
+  if (!process.env.BLOB_READ_WRITE_TOKEN) return undefined
 
-  try {
-    const buffer = Buffer.from(screenshot.base64, 'base64')
-    const uploaded = await uploadScreenshot({
-      scanId,
-      viewport: 'desktop',
-      buffer,
-      label: 'homepage',
-    })
-    return [
-      {
-        label: 'homepage',
+  const captures: CapturedScreenshot[] =
+    screenshotSet && screenshotSet.length > 0
+      ? screenshotSet
+      : screenshot?.base64
+        ? [{ label: 'homepage', viewport: 'desktop', mime: screenshot.mime, base64: screenshot.base64 }]
+        : []
+  if (captures.length === 0) return undefined
+
+  const persisted: NonNullable<StoredScanResult['screenshots']> = []
+  for (const capture of captures.slice(0, 12)) {
+    try {
+      const viewport =
+        capture.viewport === 'mobile' || capture.viewport === 'tablet'
+          ? capture.viewport
+          : 'desktop'
+      const label = (capture.label || 'homepage').slice(0, 48)
+      const uploaded = await uploadScreenshot({
+        scanId,
+        viewport,
+        buffer: Buffer.from(capture.base64, 'base64'),
+        label: label.replace(/[^a-z0-9·-]+/gi, '-').toLowerCase(),
+      })
+      persisted.push({
+        label,
         url: uploaded.url,
-        mime: screenshot.mime || 'image/jpeg',
-        viewport: 'desktop',
-      },
-    ]
-  } catch (error) {
-    console.warn('[simple-scan] screenshot upload failed:', error)
-    return undefined
+        mime: capture.mime || 'image/jpeg',
+        viewport,
+      })
+    } catch (error) {
+      console.warn('[simple-scan] screenshot upload failed:', error)
+    }
   }
+  return persisted.length > 0 ? persisted : undefined
 }
 
 export async function runSimpleScan({
@@ -274,6 +305,7 @@ export async function runSimpleScan({
   prettify = false,
   force = false,
   scanId: providedScanId,
+  capture,
 }: SimpleScanInput): Promise<SimpleScanResult> {
   const target = normalizeUrl(url)
   const domain = normalizeDomain(target.hostname)
@@ -308,11 +340,16 @@ export async function runSimpleScan({
   let pageTitle: string | undefined
   let usedWallace = false
   let browserScreenshot: { mime?: string; base64: string } | null = null
+  let browserScreenshotSet: CapturedScreenshot[] | null = null
 
   if (mode === 'accurate') {
     if (isBrowserServiceConfigured()) {
       try {
-        const browser = await scanWithBrowserService(target.toString())
+        const browser = await scanWithBrowserService(target.toString(), {
+          pages: capture?.pages,
+          paths: capture?.paths,
+          auth: capture?.auth,
+        })
         if (browser?.sources?.length) {
           computedCss = browser.sources
           const serviceUrl = process.env.SCANNER_SERVICE_URL || ''
@@ -321,6 +358,7 @@ export async function runSimpleScan({
             : 'docker-playwright'
           pageTitle = browser.title
           browserScreenshot = browser.screenshot ?? null
+          browserScreenshotSet = browser.screenshots ?? null
         }
       } catch (error) {
         console.warn('[simple-scan] Browser scanner service failed, falling back:', error)
@@ -466,7 +504,8 @@ export async function runSimpleScan({
   })
 
   progress.phase('design-md', 'Composing Design Contract pack')
-  const screenshots = (await persistBrowserScreenshot(scanId, browserScreenshot)) || undefined
+  const screenshots =
+    (await persistBrowserScreenshot(scanId, browserScreenshot, browserScreenshotSet)) || undefined
 
   const designMdInput = {
     domain,

@@ -4,7 +4,16 @@
  *
  * Endpoints:
  *   GET  /health
- *   POST /scan  { url, screenshot?: boolean }
+ *   POST /scan  {
+ *     url,
+ *     screenshot?: boolean,
+ *     pages?: number,            // extra same-origin pages to capture (0–4, default 3)
+ *     paths?: string[],          // explicit extra paths to capture (overrides discovery)
+ *     auth?: {                   // capture YOUR OWN authenticated surfaces (dashboards):
+ *       cookies?: Array<{ name, value, domain?, path? }>,
+ *       headers?: Record<string, string>,
+ *     }
+ *   }
  */
 
 import http from 'node:http'
@@ -108,13 +117,104 @@ async function getBrowser() {
   return browser
 }
 
-async function collectPage(url, { screenshot = true } = {}) {
+const VIEWPORTS = [
+  { name: 'desktop', width: 1440, height: 900 },
+  { name: 'tablet', width: 834, height: 1112 },
+  { name: 'mobile', width: 390, height: 844 },
+]
+
+/** Paths worth capturing on a marketing/product site, in priority order. */
+const INTERESTING_PATHS = [
+  /^\/pricing/i,
+  /^\/(features|product)/i,
+  /^\/docs/i,
+  /^\/(about|company)/i,
+  /^\/blog\/?$/i,
+  /^\/(login|signin|sign-in)/i,
+  /^\/(dashboard|app|admin|console)\b/i,
+  /^\/(templates|showcase|customers|examples)/i,
+]
+
+function scorePath(pathname) {
+  for (let i = 0; i < INTERESTING_PATHS.length; i++) {
+    if (INTERESTING_PATHS[i].test(pathname)) return i
+  }
+  return -1
+}
+
+async function captureViewportSet(page, label, { includeFullPage = false } = {}) {
+  const shots = []
+  for (const viewport of VIEWPORTS) {
+    try {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height })
+      await new Promise((resolve) => setTimeout(resolve, viewport.name === 'desktop' ? 250 : 450))
+      const buffer = await page.screenshot({ type: 'jpeg', quality: 62, fullPage: false })
+      shots.push({
+        label,
+        viewport: viewport.name,
+        mime: 'image/jpeg',
+        base64: buffer.toString('base64'),
+      })
+    } catch {
+      // keep whatever we captured
+    }
+  }
+
+  if (includeFullPage) {
+    try {
+      await page.setViewportSize({ width: 1440, height: 900 })
+      const height = await page.evaluate(() => document.documentElement.scrollHeight)
+      if (height > 1100 && height < 6500) {
+        const buffer = await page.screenshot({ type: 'jpeg', quality: 55, fullPage: true })
+        shots.push({
+          label: `${label} · full`,
+          viewport: 'desktop',
+          mime: 'image/jpeg',
+          base64: buffer.toString('base64'),
+        })
+      }
+    } catch {
+      // full-page capture is best-effort
+    }
+  }
+  return shots
+}
+
+async function collectPage(url, { screenshot = true, pages = 3, paths = null, auth = null } = {}) {
   const browser = await getBrowser()
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
     userAgent:
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 DesignContractsBot/1.0 (+https://designcontracts.sh)',
   })
+
+  // Authenticated capture — for surfaces the CALLER owns (their dashboards).
+  // Requires the caller to already hold a valid session; we never log in.
+  if (auth && typeof auth === 'object') {
+    const origin = new URL(url)
+    if (Array.isArray(auth.cookies) && auth.cookies.length > 0) {
+      const cookies = auth.cookies
+        .filter((cookie) => cookie && cookie.name && cookie.value)
+        .slice(0, 30)
+        .map((cookie) => ({
+          name: String(cookie.name),
+          value: String(cookie.value),
+          domain: cookie.domain ? String(cookie.domain) : origin.hostname,
+          path: cookie.path ? String(cookie.path) : '/',
+        }))
+      if (cookies.length > 0) {
+        await context.addCookies(cookies).catch(() => {})
+      }
+    }
+    if (auth.headers && typeof auth.headers === 'object') {
+      const entries = Object.entries(auth.headers)
+        .filter(([key, value]) => typeof key === 'string' && typeof value === 'string')
+        .slice(0, 10)
+      if (entries.length > 0) {
+        await context.setExtraHTTPHeaders(Object.fromEntries(entries)).catch(() => {})
+      }
+    }
+  }
 
   try {
     const page = await context.newPage()
@@ -202,22 +302,77 @@ async function collectPage(url, { screenshot = true } = {}) {
         })
       }
 
+      const links = Array.from(document.querySelectorAll('a[href]'))
+        .map((anchor) => anchor.getAttribute('href') || '')
+        .filter(Boolean)
+        .slice(0, 200)
+
       return {
         finalUrl: location.href,
         title: document.title,
         sheets,
+        links,
       }
     })
 
-    let screenshotBase64 = null
+    const screenshots = []
     if (screenshot) {
-      try {
-        const buffer = await page.screenshot({ type: 'jpeg', quality: 72, fullPage: false })
-        screenshotBase64 = buffer.toString('base64')
-      } catch {
-        screenshotBase64 = null
+      screenshots.push(...(await captureViewportSet(page, 'homepage', { includeFullPage: true })))
+
+      // Capture a few more same-origin pages — explicit paths win over discovery.
+      const origin = new URL(payload.finalUrl)
+      let extraPaths = []
+      if (Array.isArray(paths) && paths.length > 0) {
+        extraPaths = paths
+          .map((p) => String(p))
+          .filter((p) => p.startsWith('/'))
+          .slice(0, 4)
+      } else {
+        const maxPages = Math.max(0, Math.min(Number(pages) || 0, 4))
+        const seen = new Set()
+        const candidates = []
+        for (const href of payload.links) {
+          try {
+            const resolved = new URL(href, payload.finalUrl)
+            if (resolved.hostname !== origin.hostname) continue
+            const pathname = resolved.pathname.replace(/\/$/, '') || '/'
+            if (pathname === '/' || seen.has(pathname)) continue
+            const score = scorePath(pathname)
+            if (score < 0) continue
+            seen.add(pathname)
+            candidates.push({ pathname, score })
+          } catch {
+            // ignore malformed hrefs
+          }
+        }
+        candidates.sort((a, b) => a.score - b.score)
+        extraPaths = candidates.slice(0, maxPages).map((candidate) => candidate.pathname)
+      }
+
+      for (const pathname of extraPaths) {
+        try {
+          await page.goto(new URL(pathname, origin).toString(), {
+            waitUntil: 'domcontentloaded',
+            timeout: 15000,
+          })
+          await new Promise((resolve) => setTimeout(resolve, 900))
+          await page.setViewportSize({ width: 1440, height: 900 })
+          const buffer = await page.screenshot({ type: 'jpeg', quality: 62, fullPage: false })
+          screenshots.push({
+            label: pathname.replace(/^\//, '') || 'page',
+            viewport: 'desktop',
+            mime: 'image/jpeg',
+            base64: buffer.toString('base64'),
+          })
+        } catch {
+          // subpage capture is best-effort — keep going
+        }
       }
     }
+
+    const primary = screenshots.find(
+      (shot) => shot.label === 'homepage' && shot.viewport === 'desktop'
+    )
 
     let total = 0
     const sources = []
@@ -231,7 +386,9 @@ async function collectPage(url, { screenshot = true } = {}) {
       url: payload.finalUrl,
       title: payload.title,
       sources,
-      screenshot: screenshotBase64 ? { mime: 'image/jpeg', base64: screenshotBase64 } : null,
+      // Legacy single-shot field for older clients
+      screenshot: primary ? { mime: primary.mime, base64: primary.base64 } : null,
+      screenshots,
       bytes: total,
       sourceCount: sources.length,
     }
@@ -287,7 +444,12 @@ const server = http.createServer(async (req, res) => {
 
       activeScans += 1
       try {
-        const result = await collectPage(url, { screenshot: body.screenshot !== false })
+        const result = await collectPage(url, {
+          screenshot: body.screenshot !== false,
+          pages: body.pages,
+          paths: Array.isArray(body.paths) ? body.paths : null,
+          auth: body.auth && typeof body.auth === 'object' ? body.auth : null,
+        })
         return sendJson(res, 200, { status: 'completed', ...result })
       } finally {
         activeScans -= 1

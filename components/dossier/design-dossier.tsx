@@ -16,13 +16,15 @@ import {
   inkFor,
   type DesignPhilosophy,
 } from '@/lib/analyzers/design-philosophy'
-import { MonoStat, Overline, SectionShell } from './shared'
+import { FactRow, MonoStat, Overline, SectionShell } from './shared'
 import { ColorSection } from './color-section'
+import { ContrastSection } from './contrast-section'
 import { TypeSection } from './type-section'
 import { StructureSection } from './structure-section'
 import { ComponentLab } from './component-lab'
 import { GraphSection } from './graph-section'
 import { LayoutSection } from './layout-section'
+import { ScreensSection } from './screens-section'
 import { ArtifactsSection } from './artifacts-section'
 
 type SectionDef = { id: string; label: string }
@@ -265,6 +267,49 @@ function PhilosophySection({ philosophy }: { philosophy: DesignPhilosophy }) {
   )
 }
 
+function ProvenanceSection({ result }: { result: ScanResult }) {
+  const meta = (result.metadata ?? {}) as Record<string, unknown>
+  const summary = result.summary
+  const num = (value: unknown) => (typeof value === 'number' ? value : null)
+  const str = (value: unknown) => (typeof value === 'string' && value ? value : null)
+
+  return (
+    <SectionShell
+      id="meta"
+      overline="Provenance"
+      title="How this dossier was gathered"
+      lede="Everything here is measured, not guessed — this is the evidence trail for the scan behind this contract."
+    >
+      <div className="grid gap-x-12 gap-y-2 sm:grid-cols-2">
+        <div>
+          <FactRow label="Scan mode" value={str(meta.mode) ?? 'fast'} />
+          <FactRow label="Engine" value={str(meta.engine) ?? str(meta.browserEngine) ?? 'static-css'} />
+          <FactRow
+            label="CSS sources"
+            value={
+              num(meta.cssSources) !== null
+                ? `${num(meta.cssSources)} total · ${num(meta.staticCssSources) ?? 0} static · ${num(meta.computedCssSources) ?? 0} computed`
+                : '—'
+            }
+          />
+          <FactRow label="Wallace analysis" value={meta.wallace ? 'yes' : 'no'} />
+          <FactRow label="Page title" value={str(meta.pageTitle) ?? '—'} />
+        </div>
+        <div>
+          <FactRow label="Confidence" value={`${Math.round(summary?.confidence ?? 0)}%`} />
+          <FactRow label="Completeness" value={`${Math.round(summary?.completeness ?? 0)}%`} />
+          <FactRow label="Reliability" value={`${Math.round(summary?.reliability ?? 0)}%`} />
+          <FactRow
+            label="Processing time"
+            value={`${((summary?.processingTime ?? 0) / 1000).toFixed(1)}s`}
+          />
+          <FactRow label="Scan id" value={str(meta.scanId) ?? '—'} />
+        </div>
+      </div>
+    </SectionShell>
+  )
+}
+
 export function DesignDossier({
   result,
   isLoading,
@@ -332,11 +377,16 @@ export function DesignDossier({
     ) {
       defs.push({ id: 'space', label: 'Space' })
     }
+    if (philosophy.systems.color.all.length >= 4) {
+      defs.push({ id: 'contrast', label: 'Contrast' })
+    }
     defs.push({ id: 'components', label: 'Components' })
+    if ((result.screenshots?.length ?? 0) > 0) defs.push({ id: 'screens', label: 'Screens' })
     if (result.semanticGraph) defs.push({ id: 'graph', label: 'Graph' })
     if (result.layoutDNA && Object.keys(result.layoutDNA).length > 0) {
       defs.push({ id: 'layout', label: 'Layout' })
     }
+    defs.push({ id: 'meta', label: 'Provenance' })
     defs.push({ id: 'files', label: 'Files' })
     return defs
   }, [result, philosophy])
@@ -362,75 +412,115 @@ export function DesignDossier({
     return <ScanningState progress={progress} domain={domain} />
   }
 
+  const actions = (
+    <div className="flex shrink-0 items-center gap-1.5">
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={() => {
+          onShare()
+          setShared(true)
+          window.setTimeout(() => setShared(false), 1400)
+        }}
+        aria-label="Copy share link"
+        title={shared ? 'Link copied' : 'Copy share link'}
+      >
+        {shared ? (
+          <CheckIcon className="size-4 text-[var(--ui-accent)]" />
+        ) : (
+          <ShareNetworkIcon className="size-4" />
+        )}
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={onRescan}
+        aria-label="Re-scan site"
+        title="Re-scan site"
+      >
+        <ArrowsClockwiseIcon className="size-4" />
+      </Button>
+      <Button
+        size="sm"
+        className="gap-2"
+        onClick={() => {
+          window.location.href = `/api/contracts/download?domain=${encodeURIComponent(domain)}`
+        }}
+      >
+        <DownloadSimpleIcon className="size-3.5" />
+        <span className="hidden sm:inline">Contract</span>
+      </Button>
+    </div>
+  )
+
   return (
     <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
-      {/* Sticky dossier bar: identity + section nav + actions */}
-      <div className="sticky top-0 z-30 border-b border-[color:var(--soft-border)] bg-background/85 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:px-6">
-          <p className="hidden shrink-0 font-serif text-lg tracking-tight text-foreground md:block">
-            {domain}
-          </p>
-          <nav
-            className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto"
-            aria-label="Dossier sections"
-          >
-            {sections.map((section) => (
-              <a
-                key={section.id}
-                href={`#${section.id}`}
-                className={cn(
-                  'shrink-0 rounded-lg px-2.5 py-1.5 text-xs transition-colors sm:text-[13px]',
-                  activeId === section.id
-                    ? 'bg-secondary text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {section.label}
-              </a>
-            ))}
-          </nav>
-          <div className="flex shrink-0 items-center gap-1.5">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => {
-                onShare()
-                setShared(true)
-                window.setTimeout(() => setShared(false), 1400)
-              }}
-              aria-label="Copy share link"
-              title={shared ? 'Link copied' : 'Copy share link'}
-            >
-              {shared ? (
-                <CheckIcon className="size-4 text-[var(--ui-accent)]" />
-              ) : (
-                <ShareNetworkIcon className="size-4" />
+      {/* Compact mobile section nav — the floating rail takes over at xl */}
+      <div className="sticky top-0 z-30 bg-background/85 backdrop-blur-xl xl:hidden">
+        <nav
+          className="mx-auto flex max-w-6xl items-center gap-0.5 overflow-x-auto px-4 py-2 sm:px-6"
+          aria-label="Dossier sections"
+        >
+          {sections.map((section) => (
+            <a
+              key={section.id}
+              href={`#${section.id}`}
+              className={cn(
+                'shrink-0 rounded-full px-2.5 py-1 text-xs transition-colors',
+                activeId === section.id
+                  ? 'text-[var(--ui-accent)]'
+                  : 'text-muted-foreground hover:text-foreground'
               )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={onRescan}
-              aria-label="Re-scan site"
-              title="Re-scan site"
             >
-              <ArrowsClockwiseIcon className="size-4" />
-            </Button>
-            <Button
-              size="sm"
-              className="gap-2"
-              onClick={() => {
-                window.location.href = `/api/contracts/download?domain=${encodeURIComponent(domain)}`
-              }}
-            >
-              <DownloadSimpleIcon className="size-3.5" />
-              <span className="hidden sm:inline">Contract</span>
-            </Button>
-          </div>
-        </div>
+              {section.label}
+            </a>
+          ))}
+        </nav>
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
+      <div className="mx-auto max-w-7xl xl:grid xl:grid-cols-[168px_minmax(0,1fr)] xl:gap-4">
+        {/* Floating scrollspy rail — no background, no border */}
+        <nav
+          className="sticky top-16 hidden h-fit self-start pb-16 pl-6 pt-14 xl:block"
+          aria-label="Dossier sections"
+        >
+          <p className="mb-4 truncate pr-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
+            {domain}
+          </p>
+          <ul className="space-y-0.5">
+            {sections.map((section) => {
+              const isActive = activeId === section.id
+              return (
+                <li key={section.id}>
+                  <a
+                    href={`#${section.id}`}
+                    aria-current={isActive ? 'true' : undefined}
+                    className={cn(
+                      'group flex items-center gap-2.5 py-1.5 text-[13px] transition-colors',
+                      isActive
+                        ? 'text-foreground'
+                        : 'text-muted-foreground/75 hover:text-foreground'
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'h-px transition-all duration-200',
+                        isActive
+                          ? 'w-5 bg-[var(--ui-accent)]'
+                          : 'w-2.5 bg-border group-hover:w-4 group-hover:bg-foreground/40'
+                      )}
+                      aria-hidden
+                    />
+                    {section.label}
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
+        </nav>
+
+        <div className="min-w-0 px-4 pb-24 sm:px-6 xl:pr-10">
+        <div className="flex items-center justify-end pt-4">{actions}</div>
         <Hero result={result} philosophy={philosophy} domain={domain} />
         <div className="mt-14">
           <PhilosophySection philosophy={philosophy} />
@@ -446,16 +536,21 @@ export function DesignDossier({
             shadows={result.curatedTokens?.shadows ?? []}
             motionTokens={result.curatedTokens?.motion ?? []}
           />
+          <ContrastSection system={philosophy.systems.color} />
           <ComponentLab
             color={philosophy.systems.color}
             shape={philosophy.systems.shape}
             type={philosophy.systems.type}
             detectedComponents={detectedComponents}
           />
+          {(result.screenshots?.length ?? 0) > 0 ? (
+            <ScreensSection screenshots={result.screenshots ?? []} domain={domain} />
+          ) : null}
           {result.semanticGraph ? (
             <GraphSection graph={result.semanticGraph} domain={domain} />
           ) : null}
           <LayoutSection layoutDNA={result.layoutDNA ?? null} />
+          <ProvenanceSection result={result} />
           <ArtifactsSection
             domain={domain}
             designMd={result.designMd ?? null}
@@ -465,6 +560,7 @@ export function DesignDossier({
             onExportTokens={(format) => onExport(format)}
             graph={result.semanticGraph ?? null}
           />
+        </div>
         </div>
       </div>
     </div>

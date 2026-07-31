@@ -46,9 +46,30 @@ import { cn } from '@/lib/utils'
 const EXAMPLES = [
   { label: 'stripe.com', prompt: 'Scan stripe.com and install the Design Contract' },
   { label: 'linear.app', prompt: 'Pull the design system from linear.app' },
-  { label: 'vercel.com', prompt: 'Compare type + color on vercel.com' },
+  { label: 'vercel.com', prompt: 'Scan vercel.com and summarize the Design Contract' },
   { label: 'cursor.com', prompt: 'Scan cursor.com and summarize the Design Contract' },
 ] as const
+
+const CAPABILITIES = [
+  { label: 'Critique a system', prompt: "Critique stripe.com's design system — how consistent is it?" },
+  { label: 'Compare two sites', prompt: 'Compare the design systems of linear.app and vercel.com' },
+  { label: 'Theme CSS', prompt: 'Generate a Tailwind theme from cursor.com' },
+  { label: 'Check contrast', prompt: 'Check the contrast of #ffffff text on #c08a5f' },
+  { label: 'Find similar', prompt: 'Find sites in the library with a design system similar to stripe.com' },
+] as const
+
+const TOOL_LABELS: Record<string, string> = {
+  scan_site: 'Scanning site',
+  get_tokens: 'Reading cached contract',
+  get_design_md: 'Reading DESIGN.md',
+  resolve_graph: 'Walking the semantic graph',
+  get_contract_download: 'Fetching contract pack',
+  critique_design: 'Design critique',
+  compare_systems: 'Comparing systems',
+  generate_theme_css: 'Generating theme CSS',
+  find_similar_systems: 'Searching the Library',
+  check_contrast: 'Checking contrast',
+}
 
 function partText(part: UIMessage['parts'][number]): string {
   if (part.type === 'text' && 'text' in part) return String(part.text || '')
@@ -85,7 +106,7 @@ function ToolPart({ part }: { part: UIMessage['parts'][number] }) {
   return (
     <Tool defaultOpen={state === 'output-error'} className="mt-1">
       <ToolHeader
-        title={name}
+        title={TOOL_LABELS[name] ?? name}
         type={part.type as `tool-${string}`}
         state={state}
       />
@@ -141,6 +162,25 @@ function EmptyState({
             {example.label}
           </button>
         ))}
+      </div>
+
+      <div className="mt-8 w-full max-w-md animate-fade-in border-t border-[var(--ui-border-soft)] pt-5">
+        <p className="text-center font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--ui-ink-muted)]">
+          Scan can also
+        </p>
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
+          {CAPABILITIES.map((capability) => (
+            <button
+              key={capability.label}
+              type="button"
+              disabled={disabled}
+              onClick={() => onPick(capability.prompt)}
+              className="text-[12.5px] text-[var(--ui-ink-secondary)] underline-offset-4 transition-colors hover:text-[var(--ui-accent)] hover:underline disabled:opacity-50"
+            >
+              {capability.label}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )
