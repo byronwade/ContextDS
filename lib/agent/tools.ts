@@ -13,6 +13,14 @@ import {
   type CuratedLike,
   type TokenLike,
 } from '@/lib/analyzers/design-philosophy'
+import {
+  applyPatch,
+  createWorkingSystem,
+  isRenderableColor,
+  workingSystemFromScan,
+  type SystemPatch,
+  type WorkingSystem,
+} from '@/lib/design-system/working-system'
 import { contractDownloadPath, ensureAbsoluteUrl, normalizeDomain } from '@/lib/domain'
 import { isBrowserServiceConfigured } from '@/lib/scanner/browser-service'
 import { getScan, getSite, listSites } from '@/lib/storage/serverless-store'
@@ -55,6 +63,35 @@ function slimTokens(tokens: unknown) {
     motion: (curated.motion || []).slice(0, 6),
   }
 }
+
+/** One-line description of a working system for the canvas header. */
+function canvasSummary(system: WorkingSystem): string {
+  const type =
+    system.fontDisplay === system.fontBody
+      ? system.fontDisplay
+      : `${system.fontDisplay} / ${system.fontBody}`
+  return `${system.name} — ${system.colors.length} color roles, ${type} at ${system.baseSize}px × ${system.scaleRatio}, ${system.spacingBase}px grid, ${system.radius}px corners, ${system.depth} depth.`
+}
+
+/** Mirrors SystemPatch — every field optional, ranges enforced by applyPatch. */
+const systemPatchSchema = z.object({
+  name: z.string().optional(),
+  philosophyNote: z.string().optional().describe('Short prose note on the design intent'),
+  fontDisplay: z.string().optional(),
+  fontBody: z.string().optional(),
+  fontMono: z.string().optional(),
+  baseSize: z.number().optional().describe('Body size in px (10–24)'),
+  scaleRatio: z.number().optional().describe('Type scale ratio (1.05–1.8)'),
+  scaleSteps: z.number().optional().describe('Type scale steps (3–10)'),
+  spacingBase: z.union([z.literal(4), z.literal(8)]).optional(),
+  spacingSteps: z.number().optional().describe('Spacing scale steps (4–12)'),
+  radius: z.number().optional().describe('Corner radius in px (0–48)'),
+  depth: z.enum(['flat', 'soft', 'layered']).optional(),
+  colors: z
+    .record(z.string(), z.string())
+    .optional()
+    .describe('Merge by role, e.g. { primary: "#c08a5f" }. Unknown roles are appended.'),
+})
 
 export const designContractTools = {
   scan_site: tool({
@@ -842,6 +879,229 @@ export const designContractTools = {
           aaaNormal: ratio >= 7,
           aaaLarge: ratio >= 4.5,
         },
+      }
+    },
+  }),
+
+  open_canvas: tool({
+    description:
+      'Open the live design canvas with a system the user can then edit visually — seeded from ONE scanned domain, a deterministic blend of 2–10 scanned domains, or a blank system. Use this the moment someone wants to start designing ("open this in the editor", "make my own from these"), not just read a report. Pass exactly one of domain / blendOf / fromScratch. The canvas is the artifact — do not restate its tokens in chat.',
+    inputSchema: z.object({
+      domain: z.string().optional().describe('Seed from one scanned domain, e.g. stripe.com'),
+      blendOf: z
+        .array(z.string())
+        .min(2)
+        .max(10)
+        .optional()
+        .describe('Seed from a blend of 2–10 scanned domains'),
+      fromScratch: z.boolean().optional().describe('Seed a blank system to author by hand'),
+      name: z.string().max(80).optional().describe('Name for the system on the canvas'),
+    }),
+    execute: async ({ domain, blendOf, fromScratch, name }) => {
+      const modes = [
+        domain ? 'domain' : null,
+        blendOf?.length ? 'blendOf' : null,
+        fromScratch ? 'fromScratch' : null,
+      ].filter((mode): mode is string => mode !== null)
+      if (modes.length !== 1) {
+        return {
+          ok: false,
+          modes,
+          error:
+            modes.length === 0
+              ? 'Pass exactly one seed: domain, blendOf (2–10 scanned domains), or fromScratch:true.'
+              : `Ambiguous seed (${modes.join(' + ')}). Pass exactly one of domain, blendOf, or fromScratch.`,
+        }
+      }
+
+      const named = (system: WorkingSystem) => (name ? applyPatch(system, { name }) : system)
+
+      if (domain) {
+        const key = normalizeDomain(domain)
+        const scan = await getScan(key)
+        if (!scan?.curatedTokens) {
+          return {
+            found: false,
+            domain: key,
+            suggestion: `No cached scan for ${key}. Call scan_site with url="${key}" first.`,
+          }
+        }
+        const brand = scan.brandAnalysis as { personality?: string } | undefined
+        const system = named(
+          workingSystemFromScan({
+            domain: key,
+            scanId: scan.metadata?.scanId ?? scan.id,
+            curatedTokens: scan.curatedTokens as CuratedLike,
+            personality: brand?.personality ?? null,
+          })
+        )
+        return {
+          kind: 'canvas-open' as const,
+          system,
+          sources: [key],
+          scannedAt: scan.scannedAt,
+          tokensExtracted: scan.summary?.tokensExtracted ?? null,
+          summary: canvasSummary(system),
+        }
+      }
+
+      if (blendOf?.length) {
+        const keys = Array.from(new Set(blendOf.map((entry) => normalizeDomain(entry))))
+        const scans = await Promise.all(keys.map((key) => getScan(key)))
+        const sources = keys
+          .map((key, index) => ({
+            domain: key,
+            curated: scans[index]?.curatedTokens as CuratedLike | undefined,
+          }))
+          .filter((source): source is { domain: string; curated: CuratedLike } =>
+            Boolean(source.curated)
+          )
+        const missing = keys.filter((key) => !sources.some((source) => source.domain === key))
+        if (sources.length < 2) {
+          return {
+            found: false,
+            missing,
+            suggestion: `Scan ${missing.join(', ')} with scan_site first, then open the canvas again.`,
+          }
+        }
+
+        const { blendSystems } = await import('@/lib/analyzers/system-blend')
+        const blend = blendSystems(sources, name)
+        // The blend already resolved every field deterministically; the scan
+        // seeder only supplies role colors if the blend could not.
+        const seeded = workingSystemFromScan({
+          domain: blend.name,
+          curatedTokens: {
+            colors: [...blend.palette.neutrals, ...blend.palette.chromatic].map((value) => ({
+              value,
+            })),
+          },
+          personality: blend.philosophy.statement,
+        })
+        const system: WorkingSystem = {
+          ...seeded,
+          ...blend.system,
+          colors: blend.system.colors.length >= 2 ? blend.system.colors : seeded.colors,
+          philosophyNote: blend.philosophy.statement.slice(0, 600),
+          origin: { kind: 'blend', sources: blend.sources },
+        }
+        return {
+          kind: 'canvas-open' as const,
+          system,
+          sources: blend.sources,
+          skipped: missing,
+          philosophy: { title: blend.philosophy.title, traits: blend.philosophy.traits },
+          attribution: blend.attribution,
+          summary: canvasSummary(system),
+        }
+      }
+
+      const system = named(createWorkingSystem())
+      return {
+        kind: 'canvas-open' as const,
+        system,
+        sources: [] as string[],
+        summary: canvasSummary(system),
+        note: 'Blank system — shape it with update_canvas as the user describes what they want.',
+      }
+    },
+  }),
+
+  update_canvas: tool({
+    description:
+      'Turn a design request in words ("make it warmer and rounder", "tighten the type scale") into a concrete patch on the live canvas system. Stateless: it validates and normalizes the patch, the canvas applies it. Use this instead of describing a change in prose — the canvas shows it.',
+    inputSchema: z.object({
+      patch: systemPatchSchema.describe('Only the fields that change'),
+      reason: z
+        .string()
+        .max(240)
+        .describe('One short sentence shown beside the canvas, e.g. "Warmer accent, softer corners."'),
+    }),
+    execute: async ({ patch, reason }) => {
+      const warnings: string[] = []
+      const rejectedColors: string[] = []
+      const normalized: SystemPatch = {}
+
+      // Predict clamping honestly: run the patch through applyPatch on a default
+      // system and diff the result, rather than restating the ranges here.
+      const applied = applyPatch(createWorkingSystem(), patch)
+      const note = (field: string, requested: unknown, resolved: unknown) => {
+        if (requested !== resolved) {
+          warnings.push(
+            `${field}: ${JSON.stringify(requested)} → ${JSON.stringify(resolved)} (normalized to the canvas range).`
+          )
+        }
+      }
+
+      if (patch.name !== undefined) {
+        normalized.name = applied.name
+        note('name', patch.name, applied.name)
+      }
+      if (patch.philosophyNote !== undefined) {
+        normalized.philosophyNote = applied.philosophyNote
+        note('philosophyNote', patch.philosophyNote, applied.philosophyNote)
+      }
+      if (patch.fontDisplay !== undefined) {
+        normalized.fontDisplay = applied.fontDisplay
+        note('fontDisplay', patch.fontDisplay, applied.fontDisplay)
+      }
+      if (patch.fontBody !== undefined) {
+        normalized.fontBody = applied.fontBody
+        note('fontBody', patch.fontBody, applied.fontBody)
+      }
+      if (patch.fontMono !== undefined) {
+        normalized.fontMono = applied.fontMono
+        note('fontMono', patch.fontMono, applied.fontMono)
+      }
+      if (patch.baseSize !== undefined) {
+        normalized.baseSize = applied.baseSize
+        note('baseSize', patch.baseSize, applied.baseSize)
+      }
+      if (patch.scaleRatio !== undefined) {
+        normalized.scaleRatio = applied.scaleRatio
+        note('scaleRatio', patch.scaleRatio, applied.scaleRatio)
+      }
+      if (patch.scaleSteps !== undefined) {
+        normalized.scaleSteps = applied.scaleSteps
+        note('scaleSteps', patch.scaleSteps, applied.scaleSteps)
+      }
+      if (patch.spacingBase !== undefined) {
+        normalized.spacingBase = applied.spacingBase
+        note('spacingBase', patch.spacingBase, applied.spacingBase)
+      }
+      if (patch.spacingSteps !== undefined) {
+        normalized.spacingSteps = applied.spacingSteps
+        note('spacingSteps', patch.spacingSteps, applied.spacingSteps)
+      }
+      if (patch.radius !== undefined) {
+        normalized.radius = applied.radius
+        note('radius', patch.radius, applied.radius)
+      }
+      if (patch.depth !== undefined) normalized.depth = applied.depth
+
+      for (const [role, value] of Object.entries(patch.colors ?? {})) {
+        if (isRenderableColor(value)) {
+          normalized.colors = { ...normalized.colors, [role]: value.trim() }
+        } else {
+          rejectedColors.push(role)
+          warnings.push(
+            `colors.${role}: ${JSON.stringify(value)} is not a renderable color — use hex, rgb(), hsl(), oklch() or color(). Dropped.`
+          )
+        }
+      }
+
+      const changed = Object.keys(normalized)
+      if (changed.length === 0) {
+        warnings.push('Patch is empty — the canvas will not change.')
+      }
+
+      return {
+        kind: 'canvas-patch' as const,
+        patch: normalized,
+        reason,
+        warnings,
+        changed,
+        rejectedColors,
       }
     },
   }),

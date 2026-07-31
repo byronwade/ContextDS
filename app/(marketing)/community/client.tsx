@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
+import type { Route } from 'next'
 import {
   ArrowUpIcon,
   ArrowUpRightIcon,
@@ -13,6 +14,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AppShell } from '@/components/organisms/app-shell'
 import { ensureGoogleFont } from '@/components/dossier/shared'
+import { PencilSimpleIcon } from '@/lib/phosphor'
+import { originLabel, type SystemOrigin } from '@/lib/design-system/working-system'
 import { trackClientEvent } from '@/lib/analytics/track-client'
 import { useVotingStore } from '@/stores/voting-store'
 import { cn } from '@/lib/utils'
@@ -45,7 +48,27 @@ type Site = {
   } | null
 }
 
+/** A user-authored system stored by /api/systems — blank, blended or forked. */
+type LibrarySystem = {
+  id: string
+  slug: string
+  name: string
+  origin: SystemOrigin
+  visibility: 'public' | 'private'
+  createdAt: string
+  updatedAt: string
+  revisionCount: number
+  preview: {
+    colors: string[]
+    fonts: string[]
+    radius: string | null
+    personality: string | null
+  }
+}
+
 type SortOption = 'votes' | 'recent' | 'tokens'
+
+type KindFilter = 'all' | 'sites' | 'systems'
 
 function formatTimeAgo(dateString: string | null): string {
   if (!dateString) return 'Never'
@@ -206,9 +229,120 @@ function SiteCard({
   )
 }
 
+function SystemCard({ system, loadFont }: { system: LibrarySystem; loadFont: boolean }) {
+  const colors = system.preview?.colors ?? []
+  const primaryFont = system.preview?.fonts?.[0] ?? null
+  // Typed routes: the query string is opaque to the route type, hence the cast.
+  const href = `/scan?system=${encodeURIComponent(system.id)}` as Route
+
+  useEffect(() => {
+    if (loadFont && primaryFont) ensureGoogleFont(primaryFont)
+  }, [loadFont, primaryFont])
+
+  const radiusPx = (() => {
+    const raw = system.preview?.radius
+    if (!raw) return null
+    const n = parseFloat(raw)
+    if (Number.isNaN(n)) return null
+    return raw.includes('rem') || raw.includes('em') ? n * 16 : n
+  })()
+
+  return (
+    <li className="group relative flex flex-col overflow-hidden rounded-2xl border border-[color:var(--soft-border)] bg-card/40 transition-all duration-200 hover:border-border hover:bg-card/70">
+      {/* Palette band — the authored system at a glance */}
+      <Link
+        href={href}
+        className="block h-14 w-full"
+        aria-label={`Continue editing ${system.name}`}
+        tabIndex={-1}
+      >
+        {colors.length > 0 ? (
+          <span className="flex h-full w-full">
+            {colors.map((color, index) => (
+              <span
+                key={`${color}-${index}`}
+                className="h-full min-w-0 flex-1 transition-[flex-grow] duration-300"
+                style={{ background: color, flexGrow: index === 0 ? 2.5 : 1 }}
+              />
+            ))}
+          </span>
+        ) : (
+          <span className="block h-full w-full" style={{ background: fallbackBand(system.slug) }} />
+        )}
+      </Link>
+
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        <div className="flex items-start gap-3">
+          <div
+            className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border border-[color:var(--soft-border)] bg-muted/40 text-muted-foreground"
+            aria-hidden
+          >
+            <SparkleIcon className="size-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <Link
+              href={href}
+              className="block truncate text-lg font-medium tracking-tight text-foreground transition-colors after:absolute after:inset-0 hover:text-[var(--ui-accent)]"
+              style={primaryFont ? { fontFamily: `'${primaryFont}', sans-serif` } : undefined}
+            >
+              {system.name}
+            </Link>
+            <p className="truncate font-mono text-[11px] text-muted-foreground">
+              {originLabel(system.origin)}
+            </p>
+          </div>
+        </div>
+
+        {system.preview?.personality ? (
+          <p className="line-clamp-1 text-xs italic text-muted-foreground">
+            “{system.preview.personality}”
+          </p>
+        ) : null}
+
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-border/40 pt-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <SparkleIcon className="size-3" aria-hidden />
+              {system.preview?.colors?.length ?? 0}
+            </span>
+            {primaryFont ? <span className="truncate">{primaryFont}</span> : null}
+            {radiusPx !== null ? (
+              <span className="inline-flex items-center gap-1">
+                <span
+                  className="inline-block size-2.5 border-l border-t border-current"
+                  style={{ borderTopLeftRadius: Math.min(radiusPx, 8) }}
+                  aria-hidden
+                />
+                {system.preview?.radius}
+              </span>
+            ) : null}
+            <span className="inline-flex items-center gap-1">
+              <ClockIcon className="size-3" aria-hidden />
+              {formatTimeAgo(system.updatedAt)}
+            </span>
+          </div>
+
+          <div className="relative z-10 flex shrink-0 items-center gap-1.5">
+            <Link
+              href={href}
+              className="inline-flex h-7 items-center gap-1 rounded-full border border-[color:var(--soft-border)] px-2.5 font-mono text-[11px] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+              aria-label={`Continue editing ${system.name}`}
+            >
+              <PencilSimpleIcon className="size-3" aria-hidden />
+              Continue editing
+            </Link>
+          </div>
+        </div>
+      </div>
+    </li>
+  )
+}
+
 export default function CommunityClient() {
   const [sites, setSites] = useState<Site[]>([])
+  const [systems, setSystems] = useState<LibrarySystem[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [kind, setKind] = useState<KindFilter>('all')
   const [sortBy, setSortBy] = useState<SortOption>('votes')
   const [votingId, setVotingId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -245,7 +379,27 @@ export default function CommunityClient() {
     }
   }, [sortBy, hasVoted])
 
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const response = await fetch('/api/systems?limit=100&visibility=public')
+        if (!response.ok) throw new Error('Failed to load systems')
+        const data = await response.json()
+        if (cancelled) return
+        setSystems(Array.isArray(data.systems) ? data.systems : [])
+      } catch (error) {
+        console.error('Error loading systems:', error)
+        if (!cancelled) setSystems([])
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const filteredSites = useMemo(() => {
+    if (kind === 'systems') return []
     if (!searchQuery.trim()) return sites
     const q = searchQuery.toLowerCase()
     return sites.filter(
@@ -254,7 +408,19 @@ export default function CommunityClient() {
         site.title?.toLowerCase().includes(q) ||
         site.description?.toLowerCase().includes(q)
     )
-  }, [searchQuery, sites])
+  }, [kind, searchQuery, sites])
+
+  const filteredSystems = useMemo(() => {
+    if (kind === 'sites') return []
+    if (!searchQuery.trim()) return systems
+    const q = searchQuery.toLowerCase()
+    return systems.filter(
+      (system) =>
+        system.name.toLowerCase().includes(q) ||
+        system.slug.toLowerCase().includes(q) ||
+        originLabel(system.origin).toLowerCase().includes(q)
+    )
+  }, [kind, searchQuery, systems])
 
   const handleVote = async (siteId: string) => {
     if (hasVoted(siteId)) return
@@ -287,6 +453,7 @@ export default function CommunityClient() {
   }
 
   const loading = !loaded || isPending
+  const totalShown = filteredSites.length + filteredSystems.length
 
   return (
     <AppShell currentPage="library">
@@ -307,49 +474,82 @@ export default function CommunityClient() {
               <Input
                 id="community-search"
                 type="search"
-                placeholder="Search domains…"
+                placeholder="Search domains and systems…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="h-11 rounded-xl border-[color:var(--soft-border)] bg-card/60 pl-10"
-                aria-label="Search scanned sites"
+                aria-label="Search scanned sites and user systems"
               />
             </div>
           </div>
         </section>
 
         <section className="sticky top-0 z-20 border-b border-[color:var(--soft-border)] bg-background/90 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
             <p className="font-mono text-[11px] text-muted-foreground">
-              {filteredSites.length} {filteredSites.length === 1 ? 'system' : 'systems'}
+              {totalShown} {totalShown === 1 ? 'system' : 'systems'}
             </p>
-            <div
-              className="flex gap-0.5 rounded-full border border-[color:var(--soft-border)] bg-secondary/40 p-0.5"
-              role="tablist"
-              aria-label="Sort options"
-            >
-              {(
-                [
-                  ['votes', 'Popular'],
-                  ['recent', 'Recent'],
-                  ['tokens', 'Tokens'],
-                ] as const
-              ).map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  role="tab"
-                  aria-selected={sortBy === value}
-                  onClick={() => setSortBy(value)}
-                  className={cn(
-                    'rounded-full px-3 py-1.5 text-xs transition-colors sm:text-[13px]',
-                    sortBy === value
-                      ? 'bg-background text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.2)]'
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
+            <div className="flex flex-wrap items-center gap-2">
+              <div
+                className="flex gap-0.5 rounded-full border border-[color:var(--soft-border)] bg-secondary/40 p-0.5"
+                role="tablist"
+                aria-label="Library filter"
+              >
+                {(
+                  [
+                    ['all', 'All'],
+                    ['sites', 'Scanned sites'],
+                    ['systems', 'User systems'],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="tab"
+                    aria-selected={kind === value}
+                    onClick={() => setKind(value)}
+                    className={cn(
+                      'rounded-full px-3 py-1.5 text-xs transition-colors sm:text-[13px]',
+                      kind === value
+                        ? 'bg-background text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.2)]'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {kind === 'systems' ? null : (
+                <div
+                  className="flex gap-0.5 rounded-full border border-[color:var(--soft-border)] bg-secondary/40 p-0.5"
+                  role="tablist"
+                  aria-label="Sort options"
                 >
-                  {label}
-                </button>
-              ))}
+                  {(
+                    [
+                      ['votes', 'Popular'],
+                      ['recent', 'Recent'],
+                      ['tokens', 'Tokens'],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      role="tab"
+                      aria-selected={sortBy === value}
+                      onClick={() => setSortBy(value)}
+                      className={cn(
+                        'rounded-full px-3 py-1.5 text-xs transition-colors sm:text-[13px]',
+                        sortBy === value
+                          ? 'bg-background text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.2)]'
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -369,13 +569,17 @@ export default function CommunityClient() {
                   />
                 ))}
               </div>
-            ) : filteredSites.length === 0 ? (
+            ) : totalShown === 0 ? (
               <div className="rounded-2xl border border-[color:var(--soft-border)] bg-card/40 px-6 py-16 text-center">
-                <h2 className="font-serif text-2xl text-foreground">No sites yet</h2>
+                <h2 className="font-serif text-2xl text-foreground">
+                  {kind === 'systems' ? 'No systems yet' : 'No sites yet'}
+                </h2>
                 <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
                   {searchQuery
                     ? 'Nothing matched that search.'
-                    : 'Scan a public site and it will show up here.'}
+                    : kind === 'systems'
+                      ? 'Author a system on the canvas and it will show up here.'
+                      : 'Scan a public site and it will show up here.'}
                 </p>
                 <div className="mt-6 flex justify-center gap-2">
                   {searchQuery ? (
@@ -390,6 +594,9 @@ export default function CommunityClient() {
               </div>
             ) : (
               <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredSystems.map((system, index) => (
+                  <SystemCard key={system.id} system={system} loadFont={index < 12} />
+                ))}
                 {filteredSites.map((site, index) => (
                   <SiteCard
                     key={site.id}
