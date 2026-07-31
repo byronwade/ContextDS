@@ -33,11 +33,17 @@ When adding pages:
 - Soft borders only (`--ui-border-soft` / `--ui-border`) — avoid hard outlines.
 - App shell: 240px sidebar on canvas → inset 12px-radius paper workspace (stats strip + body).
 - Controls: 28/32px with Shopify-style bevel shadows; theme toggle is a full-width segment in the sidebar.
-- Inter + JetBrains Mono. Paper lift only on meaningful surfaces.
+- Geist Sans + Geist Mono (`--font-geist-sans` / `--font-geist-mono`); Phosphor duotone icons — import from `@/lib/phosphor` outside the AppShell IconContext. Paper lift only on meaningful surfaces.
 - Archetypes: chat = centered action (712px); library = dense operational list; docs = document (~760px).
 - No marketing footer / competing headers on AppShell routes. No nested card-shadow stacks.
 - Inline scan widgets stay compact; Open uses cache/handoff (no auto-rescan).
 - Details: [`DESIGN.md`](./DESIGN.md).
+
+### Engine alignment
+- Generated packs must validate against the [`byronwade/Design`](https://github.com/byronwade/Design) schemas (`reference-manifest`, `config`, `system-gap`) — they are strict (`additionalProperties: false`), so never emit extra fields.
+- Config `adapters` accepts only `codex`, `claude`, `copilot` (`cursor` is invalid).
+- Install commands always carry `--profile` and `--app-type`, e.g. `npx --yes github:byronwade/Design init --profile web-marketing --app-type marketing-site`.
+- Drift evidence (`.design/receipts/contextds-drift.json`) is observation-only — it never edits or replaces `DESIGN.md`.
 
 ## Build, Test, and Development Commands
 - `bun install` syncs dependencies after cloning or pulling.

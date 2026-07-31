@@ -64,9 +64,35 @@ export default function DocsPage() {
               <li>Download the pack and install it with the Design CLI.</li>
             </ol>
             <pre className="overflow-x-auto rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] p-3.5 font-mono text-[12px] leading-relaxed shadow-[var(--shadow-paper)]">
-              {`npx --yes github:byronwade/Design init
+              {`npx --yes github:byronwade/Design init --profile web-marketing --app-type marketing-site
 npx --yes github:byronwade/Design resolve --request "rebuild the hero"`}
             </pre>
+          </section>
+
+          <section className="mt-12 space-y-3">
+            <h2 className="text-[13px] font-semibold tracking-tight text-[var(--ui-ink)]">
+              Enforce with the engine
+            </h2>
+            <p className="text-[13px] leading-relaxed text-[var(--ui-ink-secondary)]">
+              Installed packs are upheld by the Design engine. Init with a profile plus one of four
+              app types — <code className="text-[var(--ui-ink)]">saas-workbench</code>,{' '}
+              <code className="text-[var(--ui-ink)]">admin-console</code>,{' '}
+              <code className="text-[var(--ui-ink)]">content-studio</code>, or{' '}
+              <code className="text-[var(--ui-ink)]">marketing-site</code> — then run the loop:
+            </p>
+            <pre className="overflow-x-auto rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] p-3.5 font-mono text-[12px] leading-relaxed shadow-[var(--shadow-paper)]">
+              {`npx --yes github:byronwade/Design init --profile web-app --app-type saas-workbench
+npx --yes github:byronwade/Design resolve --request "rebuild the hero"
+# build the change with the resolved semantic tokens
+npx --yes github:byronwade/Design check
+npx --yes github:byronwade/Design verify --mode release`}
+            </pre>
+            <p className="text-[13px] leading-relaxed text-[var(--ui-ink-secondary)]">
+              <code className="text-[var(--ui-ink)]">verify --mode release</code> emits receipts.
+              Scans also seed{' '}
+              <code className="text-[var(--ui-ink)]">.design/receipts/contextds-drift.json</code> —
+              observation-only drift evidence that never rewrites DESIGN.md.
+            </p>
           </section>
 
           <section className="mt-12 space-y-3">

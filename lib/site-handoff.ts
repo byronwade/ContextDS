@@ -95,8 +95,10 @@ export function handoffToScanResult(payload: ScanWidgetPayload): ScanResult | nu
       ? {
           slug: domain,
           title: payload.designContract.title ?? `${domain} Design Contract`,
-          profile: 'handoff',
-          installCommand: payload.designContract.installCommand ?? `npx designcontracts add ${domain}`,
+          profile: 'web-marketing',
+          installCommand:
+            payload.designContract.installCommand ??
+            'npx --yes github:byronwade/Design init --profile web-marketing',
           summary: {
             colorCount: payload.designContract.summary?.colorCount ?? colors.length,
             typographyCount: payload.designContract.summary?.typographyCount ?? families.length,

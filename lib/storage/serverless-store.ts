@@ -133,6 +133,10 @@ export interface StoredScanResult {
     browserEngine?: string
     wallace?: boolean
     pageTitle?: string
+    /** Detected engine app type (COMPOSITION template) for the contract pack */
+    appType?: string
+    /** Detection confidence 0-1 for the app type classification */
+    appTypeConfidence?: number
     /** Render-audit coverage — how well extraction matches the painted page */
     renderCoverage?: {
       overall: number

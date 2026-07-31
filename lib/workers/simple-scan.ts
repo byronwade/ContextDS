@@ -6,6 +6,7 @@
  * No Postgres required.
  */
 
+import { detectAppType } from '@/lib/analyzers/app-type'
 import { generateTokenSet as generateTokenSetLegacy } from '@/lib/analyzers/basic-tokenizer'
 import { generateDesignMd } from '@/lib/analyzers/design-md-generator'
 import { generateDesignSkill } from '@/lib/analyzers/design-skill-generator'
@@ -18,6 +19,7 @@ import {
 } from '@/lib/analyzers/semantic-graph'
 import { type CuratedTokenSet, curateTokens } from '@/lib/analyzers/token-curator'
 import { extractW3CTokens } from '@/lib/analyzers/w3c-tokenizer'
+import type { DriftObservation } from '@/lib/contracts/contextds-drift'
 import { buildDesignContractPackage } from '@/lib/contracts/design-contract-package'
 import { contractDownloadPath, normalizeDomain } from '@/lib/domain'
 import { collectComputedCss } from '@/lib/extractors/computed-css'
@@ -608,11 +610,96 @@ export async function runSimpleScan({
         },
       ]
 
+  // Classify the site into an engine profile + app type from real scan evidence
+  const appTypeDetection = detectAppType({
+    archetypes: layoutDNA.archetypes,
+    shell: browserAudit?.shell,
+    density: browserAudit?.density,
+    flow: browserFlow,
+    domain,
+  })
+
+  const scannedAt = new Date().toISOString()
+
+  // Drift observations: measured evidence the engine can hold the contract against.
+  // Observation-only — the engine never lets these edit DESIGN.md.
+  const driftObservations: DriftObservation[] = []
+  if (renderCoverage) {
+    driftObservations.push({
+      surface: 'site',
+      kind: 'render-coverage',
+      summary: `Render audit explains ${renderCoverage.overall}% of the painted page (colors ${renderCoverage.colors}%, fonts ${renderCoverage.fonts}%, sizes ${renderCoverage.sizes}%) across ${renderCoverage.pagesAudited} page(s).`,
+      observedAt: scannedAt,
+      evidence: {
+        overall: renderCoverage.overall,
+        colors: renderCoverage.colors,
+        fonts: renderCoverage.fonts,
+        sizes: renderCoverage.sizes,
+        elementCount: renderCoverage.elementCount,
+        pagesAudited: renderCoverage.pagesAudited,
+      },
+      suggestedAction:
+        'Re-scan after visual changes; falling coverage means the contract no longer explains what the site paints.',
+    })
+  }
+  if (renderCoverage && renderCoverage.dormantColors > 0) {
+    const dormantColors = curated.colors
+      .filter((token) => token.semantic === 'dormant')
+      .slice(0, 8)
+      .map((token) => String(token.value))
+    driftObservations.push({
+      surface: 'site',
+      kind: 'dormant-tokens',
+      summary: `${renderCoverage.dormantColors} color token(s) found in CSS were never observed on rendered pages (${renderCoverage.verifiedColors} verified).`,
+      observedAt: scannedAt,
+      evidence: { dormantColors: renderCoverage.dormantColors, verifiedColors: renderCoverage.verifiedColors, samples: dormantColors },
+      suggestedAction:
+        'Treat dormant tokens as low-authority; verify against more pages or prune them from the palette.',
+    })
+  }
+  const measuredHeadings = browserAudit?.headings
+  if (measuredHeadings && (measuredHeadings.h1 || measuredHeadings.h2 || measuredHeadings.h3)) {
+    const headingSummary = (['h1', 'h2', 'h3'] as const)
+      .map((level) => {
+        const heading = measuredHeadings[level]
+        return heading ? `${level} ${Math.round(heading.size)}px/${heading.weight} ${heading.family}` : null
+      })
+      .filter(Boolean)
+      .join('; ')
+    driftObservations.push({
+      surface: 'site',
+      kind: 'measured-typography',
+      summary: `Measured heading styles on rendered pages: ${headingSummary}.`,
+      observedAt: scannedAt,
+      evidence: measuredHeadings,
+      suggestedAction: 'Compare against the DESIGN.md type scale; measured values are ground truth.',
+    })
+  }
+  if (crawledPages && crawledPages.length > 0) {
+    driftObservations.push({
+      surface: 'site',
+      kind: 'crawl-coverage',
+      summary: `Scan crawled ${crawledPages.length} page(s): ${crawledPages
+        .slice(0, 6)
+        .map((entry) => entry.path)
+        .join(', ')}.`,
+      observedAt: scannedAt,
+      evidence: {
+        pages: crawledPages.length,
+        audited: crawledPages.filter((entry) => entry.audited).length,
+        paths: crawledPages.slice(0, 12).map((entry) => entry.path),
+      },
+      suggestedAction: 'Surfaces outside the crawl are unverified — scan them before extending the contract there.',
+    })
+  }
+
   const contractPack = buildDesignContractPackage({
     ...designMdInput,
     scanId,
-    profile: 'web-marketing',
-    appType: 'marketing-site',
+    profile: appTypeDetection.profile,
+    appType: appTypeDetection.appType,
+    appTypeDetection,
+    driftObservations,
     semanticGraph,
     screenshots: contractScreenshots,
   })
@@ -642,7 +729,7 @@ export async function runSimpleScan({
     id: scanId,
     domain,
     url: target.toString(),
-    scannedAt: new Date().toISOString(),
+    scannedAt,
     status: 'completed',
     summary: {
       tokensExtracted,
@@ -693,6 +780,8 @@ export async function runSimpleScan({
       browserEngine,
       wallace: usedWallace,
       pageTitle,
+      appType: appTypeDetection.appType,
+      appTypeConfidence: appTypeDetection.confidence,
       renderCoverage: renderCoverage ?? undefined,
       crawl: crawledPages
         ? { pages: crawledPages.length, paths: crawledPages.map((entry) => entry.path) }
