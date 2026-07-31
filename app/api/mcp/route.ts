@@ -12,7 +12,9 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { handleMessage, PROTOCOL_VERSION, SERVER_INFO, listTools } from '@/lib/mcp/protocol'
 import { trackStatEvent } from '@/lib/storage/platform-stats'
 
-export const maxDuration = 300
+// tools/call can run a full scan, so match /api/scan's budget rather than
+// asking for a window the plan may not allow.
+export const maxDuration = 60
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
