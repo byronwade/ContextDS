@@ -12,6 +12,12 @@ import { useSearchParams } from 'next/navigation'
 import { DesignCanvas } from '@/components/canvas/design-canvas'
 import { useCanvasStore } from '@/stores/canvas-store'
 import { extractCanvasDirectives } from '@/lib/design-system/canvas-sync'
+import {
+  expandForSend,
+  matchSlashCommands,
+  parseSlashCommand,
+  type SlashCommand,
+} from '@/lib/chat/slash-commands'
 import type { WorkingSystem } from '@/lib/design-system/working-system'
 import {
   Conversation,
@@ -498,20 +504,57 @@ export function ScanChat() {
     })
   }, [searchParams, messages.length, busy, sendMessage])
 
-  const onSubmit = (message: PromptInputMessage) => {
-    const next = message.text?.trim()
+  // Slash commands are pure shorthand: they expand to a sentence the agent
+  // already understands, so there is only ever one execution path.
+  const slashMatches = useMemo(() => matchSlashCommands(text), [text])
+  const [slashIndex, setSlashIndex] = useState(0)
+  const activeSlash = slashMatches[Math.min(slashIndex, slashMatches.length - 1)] ?? null
+
+  const send = (raw: string) => {
+    const next = raw.trim()
     if (!next || busy) return
     setText('')
+    setSlashIndex(0)
     trackClientEvent('chat_message')
+    const outgoing = expandForSend(next)
     // Best-effort: if the message looks like a bare domain, stash it in Recents.
-    const maybeDomain = next
+    const maybeDomain = (parseSlashCommand(next)?.args ?? next)
+      .trim()
       .replace(/^https?:\/\//, '')
       .replace(/^www\./, '')
       .split(/[\s/?#]/)[0]
     if (maybeDomain && /\./.test(maybeDomain) && !maybeDomain.includes(' ')) {
       pushRecent(maybeDomain)
     }
-    void sendMessage({ text: next })
+    void sendMessage({ text: outgoing })
+  }
+
+  const onSubmit = (message: PromptInputMessage) => {
+    send(message.text ?? '')
+  }
+
+  /** Complete the highlighted command instead of sending a bare "/sc". */
+  const completeSlash = (command: SlashCommand) => {
+    setText(command.args ? `/${command.name} ` : `/${command.name}`)
+    setSlashIndex(0)
+  }
+
+  const onComposerKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (slashMatches.length === 0) return
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      setSlashIndex((index) => (index + 1) % slashMatches.length)
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      setSlashIndex((index) => (index - 1 + slashMatches.length) % slashMatches.length)
+    } else if (event.key === 'Tab' || (event.key === 'Enter' && activeSlash)) {
+      // A command still being typed completes; it does not send half a command.
+      event.preventDefault()
+      if (activeSlash) completeSlash(activeSlash)
+    } else if (event.key === 'Escape') {
+      setSlashIndex(0)
+      setText('')
+    }
   }
 
   return (
@@ -627,6 +670,44 @@ export function ScanChat() {
         {/* Composer — integrated paper footer feel */}
         <div className="relative shrink-0 border-t border-[var(--ui-border-soft)] bg-[color-mix(in_srgb,var(--ui-paper)_76%,var(--ui-paper-subtle))]">
           <div className="mx-auto w-full max-w-[712px] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 sm:px-6">
+            {slashMatches.length > 0 ? (
+              <div
+                role="listbox"
+                aria-label="Slash commands"
+                className="mb-2 overflow-hidden rounded-[10px] border border-[var(--ui-border-soft)] bg-[var(--ui-paper)] shadow-[var(--shadow-control)]"
+              >
+                {slashMatches.map((command) => {
+                  const active = command.name === activeSlash?.name
+                  return (
+                    <button
+                      key={command.name}
+                      type="button"
+                      role="option"
+                      aria-selected={active}
+                      onClick={() => completeSlash(command)}
+                      className={cn(
+                        'flex w-full items-baseline gap-2 px-3 py-1.5 text-left transition-colors',
+                        active
+                          ? 'bg-[color-mix(in_srgb,var(--ui-accent)_12%,transparent)]'
+                          : 'hover:bg-[var(--ui-paper-subtle)]'
+                      )}
+                    >
+                      <span className="font-mono text-[12px] text-[var(--ui-ink)]">
+                        /{command.name}
+                      </span>
+                      {command.args ? (
+                        <span className="font-mono text-[11px] text-[var(--ui-ink-muted)]">
+                          {command.args}
+                        </span>
+                      ) : null}
+                      <span className="ml-auto truncate text-[11px] text-[var(--ui-ink-muted)]">
+                        {command.description}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            ) : null}
             <PromptInput
               onSubmit={onSubmit}
               className="overflow-hidden rounded-[10px] border border-[var(--ui-border-soft)] bg-[var(--ui-paper)] shadow-[var(--shadow-control)]"
@@ -635,7 +716,8 @@ export function ScanChat() {
                 <PromptInputTextarea
                   value={text}
                   onChange={(event) => setText(event.target.value)}
-                  placeholder="Ask about a site — stripe.com, linear.app…"
+                  onKeyDown={onComposerKeyDown}
+                  placeholder="Ask about a site, or / for commands"
                   disabled={busy && status === 'submitted'}
                   className="min-h-[48px] text-[14px] leading-relaxed placeholder:text-[var(--ui-ink-muted)]"
                   aria-label="Message"

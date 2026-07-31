@@ -16,50 +16,31 @@ import { Overline, useCopy } from '@/components/dossier/shared'
 import { useEntitlements } from '@/lib/premium'
 import { cn } from '@/lib/utils'
 
-const TOOLS = [
-  {
-    name: 'scan_tokens',
-    description: 'Scan a public site and extract its full token set on demand.',
-    auth: 'API key',
-  },
-  {
-    name: 'get_tokens',
-    description: 'Fetch the cached Design Contract tokens for a domain, instantly.',
-    auth: 'public',
-  },
-  {
-    name: 'layout_profile',
-    description: 'Layout DNA — containers, breakpoints, grid system, archetypes.',
-    auth: 'public',
-  },
-  {
-    name: 'research_artifacts',
-    description: 'Find official design-system repos, Figma files and docs for a brand.',
-    auth: 'API key',
-  },
-  {
-    name: 'compose_pack',
-    description: 'Compose a full installable Design Contract pack from a scan.',
-    auth: 'API key',
-  },
-]
+export type McpToolSummary = { name: string; description: string }
+
+
+const ENDPOINT = 'https://designcontracts.sh/api/mcp'
 
 function configSnippet(apiKey: string | null): string {
+  const auth = apiKey
+    ? `,\n      "headers": { "Authorization": "Bearer ${apiKey}" }`
+    : ''
   return `{
   "mcpServers": {
     "designcontracts": {
-      "command": "npx",
-      "args": ["-y", "github:byronwade/designcontracts.sh#mcp-server-wrapper.js"],
-      "env": {
-        "DESIGNCONTRACTS_API_KEY": "${apiKey ?? '<your-pro-api-key>'}",
-        "DESIGNCONTRACTS_API_URL": "https://designcontracts.sh/api/mcp"
-      }
+      "type": "http",
+      "url": "${ENDPOINT}"${auth}
     }
   }
 }`
 }
 
-export default function McpClient() {
+function cliSnippet(): string {
+  return `claude mcp add --transport http designcontracts ${ENDPOINT}`
+}
+
+
+export default function McpClient({ tools }: { tools: McpToolSummary[] }) {
   const { isPro } = useEntitlements()
   const { copiedKey, copy } = useCopy()
   const [apiKey, setApiKey] = useState<string | null>(null)
@@ -92,11 +73,20 @@ export default function McpClient() {
           <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_360px]">
             <div className="min-w-0 space-y-8">
               <div>
-                <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Tools
-                </p>
+                <div className="mb-3 flex items-baseline justify-between gap-3">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    Tools · {tools.length} live
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => copy('mcp-cli', cliSnippet())}
+                    className="truncate font-mono text-[11px] text-[var(--ui-accent)] transition-opacity hover:opacity-70"
+                  >
+                    {copiedKey === 'mcp-cli' ? 'copied' : cliSnippet()}
+                  </button>
+                </div>
                 <div className="overflow-hidden rounded-2xl border border-[color:var(--soft-border)]">
-                  {TOOLS.map((tool, index) => (
+                  {tools.map((tool, index) => (
                     <div
                       key={tool.name}
                       className={cn(
@@ -108,16 +98,6 @@ export default function McpClient() {
                         {tool.name}
                       </code>
                       <p className="flex-1 text-sm text-muted-foreground">{tool.description}</p>
-                      <span
-                        className={cn(
-                          'shrink-0 rounded-full border px-2 py-px font-mono text-[10px]',
-                          tool.auth === 'public'
-                            ? 'border-border/60 text-muted-foreground'
-                            : 'border-[color-mix(in_oklab,var(--ui-accent)_40%,transparent)] text-[var(--ui-accent)]'
-                        )}
-                      >
-                        {tool.auth}
-                      </span>
                     </div>
                   ))}
                 </div>

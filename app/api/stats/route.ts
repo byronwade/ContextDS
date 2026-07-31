@@ -47,6 +47,7 @@ export async function GET() {
       chatMessages: redisSnapshot.chatMessages || directory.chatMessages,
       agentScans: redisSnapshot.agentScans || directory.agentScans,
       systemsSaved: redisSnapshot.systemsSaved,
+      mcpCalls: redisSnapshot.mcpCalls,
       lastUpdated: redisSnapshot.updatedAt || new Date().toISOString(),
       storage: {
         redis,
@@ -70,6 +71,7 @@ export async function GET() {
         chatMessages: 0,
         agentScans: 0,
         systemsSaved: 0,
+        mcpCalls: 0,
         lastUpdated: new Date().toISOString(),
         storage: { redis: false, blob: false, mode: 'memory' },
         error: 'Failed to fetch stats',
