@@ -44,3 +44,6 @@ next-env.d.ts
 # Scanner service local install
 scanner/node_modules/
 scanner/bun.lock
+
+# Playwright output (see playwright.config.ts: outputDir + reporters)
+tests/reports/
