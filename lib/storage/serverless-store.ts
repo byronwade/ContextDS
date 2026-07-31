@@ -133,7 +133,12 @@ export interface StoredScanResult {
     computedCssSources: number
     scanId: string
     tokenSetId: string
+    /** The mode that actually ran — 'fast' when an accurate scan degraded. */
     mode: 'fast' | 'accurate'
+    /** What the caller asked for, when it differs from what ran. */
+    requestedMode?: 'fast' | 'accurate'
+    /** Why an accurate scan degraded — absent on a clean run. */
+    degradedReason?: string
     engine?: string
     browserEngine?: string
     wallace?: boolean

@@ -395,7 +395,21 @@ export async function runSimpleScan({
     }
   }
 
-  const cssArtifacts = prioritizeCss(dedupeBySha([...staticCss, ...computedCss]), mode)
+  // An accurate scan that never reached a browser is a fast scan wearing the
+  // wrong label. Report the mode that actually ran, so a missing
+  // SCANNER_SERVICE_URL surfaces in the result instead of silently producing
+  // static-CSS output stamped "accurate".
+  let degradedReason: string | null = null
+  if (mode === 'accurate' && computedCss.length === 0) {
+    degradedReason = isBrowserServiceConfigured()
+      ? 'Scanner service configured but returned no computed CSS; fell back to static parsing.'
+      : 'SCANNER_SERVICE_URL is not set — no browser available, so only static CSS was parsed.'
+    browserEngine = undefined
+    console.warn(`[simple-scan] accurate scan degraded to fast: ${degradedReason}`)
+  }
+  const effectiveMode: 'fast' | 'accurate' = degradedReason ? 'fast' : mode
+
+  const cssArtifacts = prioritizeCss(dedupeBySha([...staticCss, ...computedCss]), effectiveMode)
   if (cssArtifacts.length === 0) {
     progress.error('No CSS sources discovered for the requested URL')
     throw new Error('No CSS sources discovered for the requested URL')
@@ -782,7 +796,9 @@ export async function runSimpleScan({
       computedCssSources: computedCss.length,
       scanId,
       tokenSetId,
-      mode,
+      mode: effectiveMode,
+      requestedMode: mode,
+      degradedReason: degradedReason ?? undefined,
       engine: 'design-contracts',
       browserEngine,
       wallace: usedWallace,
