@@ -31,6 +31,9 @@ export async function GET(request: NextRequest) {
         consensusScore: 0,
         hasVoted: false,
         status: site.status,
+        confidence: site.confidence ?? null,
+        curatedCount: site.curatedCount ?? null,
+        preview: site.preview ?? null,
       })),
       total: sites.length,
     })

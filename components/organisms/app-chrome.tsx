@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { Menu, X } from 'lucide-react'
+import { ListIcon as Menu, XIcon as X } from '@/lib/phosphor'
 import { ThemeToggle } from '@/components/atoms/theme-toggle'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'

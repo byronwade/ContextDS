@@ -1,7 +1,7 @@
 "use client"
 
 import { Input } from "@/components/ui/input"
-import { Search } from "lucide-react"
+import { MagnifyingGlassIcon as Search } from '@/lib/phosphor'
 import { cn } from "@/lib/utils"
 import { forwardRef } from "react"
 

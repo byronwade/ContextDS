@@ -2,10 +2,17 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
-import { ArrowUp, Clock, ExternalLink, Search, Sparkles } from 'lucide-react'
+import {
+  ArrowUpIcon,
+  ArrowUpRightIcon,
+  ClockIcon,
+  MagnifyingGlassIcon,
+  SparkleIcon,
+} from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AppShell } from '@/components/organisms/app-shell'
+import { ensureGoogleFont } from '@/components/dossier/shared'
 import { trackClientEvent } from '@/lib/analytics/track-client'
 import { useVotingStore } from '@/stores/voting-store'
 import { cn } from '@/lib/utils'
@@ -21,6 +28,21 @@ type Site = {
   votes: number
   lastScanned: string | null
   hasVoted: boolean
+  confidence?: number | null
+  curatedCount?: {
+    colors: number
+    fonts: number
+    sizes: number
+    spacing: number
+    radius: number
+    shadows: number
+  } | null
+  preview?: {
+    colors: string[]
+    fonts: string[]
+    radius: string | null
+    personality: string | null
+  } | null
 }
 
 type SortOption = 'votes' | 'recent' | 'tokens'
@@ -36,6 +58,154 @@ function formatTimeAgo(dateString: string | null): string {
   return `${Math.floor(seconds / 2592000)}mo ago`
 }
 
+/** Deterministic fallback band when a scan predates stored previews. */
+function fallbackBand(domain: string): string {
+  let hash = 0
+  for (const char of domain) hash = (hash * 31 + char.charCodeAt(0)) % 360
+  return `linear-gradient(120deg, oklch(0.35 0.04 ${hash}) 0%, oklch(0.22 0.02 ${(hash + 40) % 360}) 100%)`
+}
+
+function SiteCard({
+  site,
+  loadFont,
+  votingId,
+  onVote,
+}: {
+  site: Site
+  loadFont: boolean
+  votingId: string | null
+  onVote: (siteId: string) => void
+}) {
+  const colors = site.preview?.colors ?? []
+  const primaryFont = site.preview?.fonts?.[0] ?? null
+
+  useEffect(() => {
+    if (loadFont && primaryFont) ensureGoogleFont(primaryFont)
+  }, [loadFont, primaryFont])
+
+  const radiusPx = (() => {
+    const raw = site.preview?.radius
+    if (!raw) return null
+    const n = parseFloat(raw)
+    if (Number.isNaN(n)) return null
+    return raw.includes('rem') || raw.includes('em') ? n * 16 : n
+  })()
+
+  return (
+    <li className="group relative flex flex-col overflow-hidden rounded-2xl border border-[color:var(--soft-border)] bg-card/40 transition-all duration-200 hover:border-border hover:bg-card/70">
+      {/* Palette band — the site's system at a glance */}
+      <Link
+        href={`/site/${site.domain}`}
+        className="block h-14 w-full"
+        aria-label={`Open ${site.domain} design contract`}
+        tabIndex={-1}
+      >
+        {colors.length > 0 ? (
+          <span className="flex h-full w-full">
+            {colors.map((color, index) => (
+              <span
+                key={`${color}-${index}`}
+                className="h-full min-w-0 flex-1 transition-[flex-grow] duration-300"
+                style={{ background: color, flexGrow: index === 0 ? 2.5 : 1 }}
+              />
+            ))}
+          </span>
+        ) : (
+          <span className="block h-full w-full" style={{ background: fallbackBand(site.domain) }} />
+        )}
+      </Link>
+
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        <div className="flex items-start gap-3">
+          {site.favicon ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={site.favicon}
+              alt=""
+              className="mt-0.5 size-8 shrink-0 rounded-lg border border-[color:var(--soft-border)] bg-background object-cover"
+            />
+          ) : (
+            <div
+              className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border border-[color:var(--soft-border)] bg-muted/40 font-mono text-[10px] text-muted-foreground"
+              aria-hidden
+            >
+              {site.domain.slice(0, 2).toUpperCase()}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <Link
+              href={`/site/${site.domain}`}
+              className="block truncate text-lg font-medium tracking-tight text-foreground transition-colors after:absolute after:inset-0 hover:text-[var(--ui-accent)]"
+              style={primaryFont ? { fontFamily: `'${primaryFont}', sans-serif` } : undefined}
+            >
+              {site.title?.replace(/ design tokens$/i, '') || site.domain}
+            </Link>
+            <p className="truncate font-mono text-[11px] text-muted-foreground">{site.domain}</p>
+          </div>
+        </div>
+
+        {site.preview?.personality ? (
+          <p className="line-clamp-1 text-xs italic text-muted-foreground">
+            “{site.preview.personality}”
+          </p>
+        ) : null}
+
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-border/40 pt-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <SparkleIcon className="size-3" aria-hidden />
+              {site.tokensCount}
+            </span>
+            {primaryFont ? <span className="truncate">{primaryFont}</span> : null}
+            {radiusPx !== null ? (
+              <span className="inline-flex items-center gap-1">
+                <span
+                  className="inline-block size-2.5 border-l border-t border-current"
+                  style={{ borderTopLeftRadius: Math.min(radiusPx, 8) }}
+                  aria-hidden
+                />
+                {site.preview?.radius}
+              </span>
+            ) : null}
+            <span className="inline-flex items-center gap-1">
+              <ClockIcon className="size-3" aria-hidden />
+              {formatTimeAgo(site.lastScanned)}
+            </span>
+          </div>
+
+          <div className="relative z-10 flex shrink-0 items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => onVote(site.id)}
+              disabled={site.hasVoted || votingId === site.id}
+              className={cn(
+                'inline-flex h-7 items-center gap-1 rounded-full border px-2.5 font-mono text-[11px] transition-colors',
+                site.hasVoted
+                  ? 'border-[color-mix(in_oklab,var(--ui-accent)_45%,transparent)] bg-[color-mix(in_oklab,var(--ui-accent)_8%,transparent)] text-[var(--ui-accent)]'
+                  : 'border-[color:var(--soft-border)] text-muted-foreground hover:border-foreground/30 hover:text-foreground'
+              )}
+              aria-label={`Vote for ${site.domain}`}
+              aria-pressed={site.hasVoted}
+            >
+              <ArrowUpIcon className={cn('size-3', site.hasVoted && 'fill-current')} />
+              {site.votes}
+            </button>
+            <a
+              href={`https://${site.domain}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Visit ${site.domain}`}
+              className="inline-flex size-7 items-center justify-center rounded-full border border-[color:var(--soft-border)] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+            >
+              <ArrowUpRightIcon className="size-3.5" />
+            </a>
+          </div>
+        </div>
+      </div>
+    </li>
+  )
+}
+
 export default function CommunityClient() {
   const [sites, setSites] = useState<Site[]>([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -47,11 +217,8 @@ export default function CommunityClient() {
 
   useEffect(() => {
     loadVotes()
-  }, [loadVotes])
-
-  useEffect(() => {
     trackClientEvent('library_view')
-  }, [])
+  }, [loadVotes])
 
   useEffect(() => {
     let cancelled = false
@@ -123,186 +290,119 @@ export default function CommunityClient() {
 
   return (
     <AppShell currentPage="library">
-      <div
-        className="flex min-h-0 flex-1 flex-col overflow-hidden"
-        role="region"
-        aria-label="Design Contracts library"
-      >
-        {/* Location bar */}
-        <div className="paper__toolbar !min-h-11 shrink-0 justify-between !px-3 sm:!px-4">
-          <div className="min-w-0">
-            <h1 className="text-[15px] font-semibold tracking-tight text-[var(--ui-ink)]">
-              Library
-            </h1>
-            <p className="truncate text-[12px] text-[var(--ui-ink-muted)]">
-              Design Contracts from public sites
+      <div className="min-h-0 flex-1 overflow-y-auto" role="region" aria-label="Design Contracts library">
+        <section className="border-b border-[color:var(--soft-border)] px-4 pb-6 pt-8 sm:px-6">
+          <div className="mx-auto max-w-5xl">
+            <h1 className="font-serif text-3xl tracking-tight text-foreground">Library</h1>
+            <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+              Every card previews a real system — palette, primary face, corner language.
+              Open one, or ask Chat to gather a new site.
             </p>
-          </div>
-          <Button asChild size="sm">
-            <Link href="/">New scan</Link>
-          </Button>
-        </div>
 
-        {/* View bar — search + sort */}
-        <div className="paper__toolbar !min-h-11 shrink-0 flex-wrap !gap-2 !px-3 sm:!px-4">
-          <div className="relative min-w-[200px] max-w-sm flex-1">
-            <Search
-              className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--ui-ink-muted)]"
-              aria-hidden
-            />
-            <Input
-              id="community-search"
-              type="search"
-              placeholder="Search domains…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-8 pl-8"
-              aria-label="Search scanned sites"
-            />
+            <div className="relative mt-6 max-w-xl">
+              <MagnifyingGlassIcon
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
+              <Input
+                id="community-search"
+                type="search"
+                placeholder="Search domains…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-11 rounded-xl border-[color:var(--soft-border)] bg-card/60 pl-10"
+                aria-label="Search scanned sites"
+              />
+            </div>
           </div>
-          <p className="font-mono text-[11px] tabular-nums text-[var(--ui-ink-muted)]">
-            {filteredSites.length} {filteredSites.length === 1 ? 'site' : 'sites'}
-          </p>
-          <div
-            className="ml-auto flex rounded-[7px] bg-[var(--ui-paper)] p-0.5 shadow-[var(--shadow-control)]"
-            role="tablist"
-            aria-label="Sort options"
-          >
-            {(
-              [
-                ['votes', 'Popular'],
-                ['recent', 'Recent'],
-                ['tokens', 'Tokens'],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                role="tab"
-                aria-selected={sortBy === value}
-                onClick={() => setSortBy(value)}
-                className={cn(
-                  'h-7 rounded-[6px] px-2.5 text-[12px] transition-colors',
-                  sortBy === value
-                    ? 'bg-[var(--ui-paper-selected)] font-medium text-[var(--ui-ink)]'
-                    : 'text-[var(--ui-ink-secondary)] hover:text-[var(--ui-ink)]'
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
+        </section>
 
-        {/* Operational list */}
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          {loading ? (
-            <div className="flex flex-col" role="status" aria-label="Loading sites">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-11 animate-pulse border-b border-[var(--ui-border-soft)] bg-[var(--ui-paper-subtle)]/60"
-                />
-              ))}
-            </div>
-          ) : filteredSites.length === 0 ? (
-            <div className="mx-auto max-w-[712px] px-4 py-16 text-center">
-              <h2 className="text-lg font-semibold text-[var(--ui-ink)]">No sites yet</h2>
-              <p className="mx-auto mt-2 max-w-md text-[13px] text-[var(--ui-ink-secondary)]">
-                {searchQuery
-                  ? 'Nothing matched that search.'
-                  : 'Scan a public site and it will show up here.'}
-              </p>
-              <div className="mt-5 flex justify-center gap-2">
-                {searchQuery ? (
-                  <Button variant="outline" size="sm" onClick={() => setSearchQuery('')}>
-                    Clear search
-                  </Button>
-                ) : null}
-                <Button asChild size="sm">
-                  <Link href="/">Open chat</Link>
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <ul className="flex flex-col">
-              {filteredSites.map((site) => (
-                <li
-                  key={site.id}
-                  className="group flex min-h-11 items-center gap-3 border-b border-[var(--ui-border-soft)] px-3 transition-colors hover:bg-[var(--ui-paper-hover)] sm:px-4"
-                >
-                  {site.favicon ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={site.favicon}
-                      alt=""
-                      className="size-6 shrink-0 rounded-[4px] border border-[var(--ui-border-soft)] bg-[var(--ui-paper)] object-cover"
-                    />
-                  ) : (
-                    <div
-                      className="flex size-6 shrink-0 items-center justify-center rounded-[4px] border border-[var(--ui-border-soft)] bg-[var(--ui-paper-subtle)] font-mono text-[9px] text-[var(--ui-ink-muted)]"
-                      aria-hidden
-                    >
-                      {site.domain.slice(0, 2).toUpperCase()}
-                    </div>
+        <section className="sticky top-0 z-20 border-b border-[color:var(--soft-border)] bg-background/90 backdrop-blur-xl">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+            <p className="font-mono text-[11px] text-muted-foreground">
+              {filteredSites.length} {filteredSites.length === 1 ? 'system' : 'systems'}
+            </p>
+            <div
+              className="flex gap-0.5 rounded-full border border-[color:var(--soft-border)] bg-secondary/40 p-0.5"
+              role="tablist"
+              aria-label="Sort options"
+            >
+              {(
+                [
+                  ['votes', 'Popular'],
+                  ['recent', 'Recent'],
+                  ['tokens', 'Tokens'],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="tab"
+                  aria-selected={sortBy === value}
+                  onClick={() => setSortBy(value)}
+                  className={cn(
+                    'rounded-full px-3 py-1.5 text-xs transition-colors sm:text-[13px]',
+                    sortBy === value
+                      ? 'bg-background text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.2)]'
+                      : 'text-muted-foreground hover:text-foreground'
                   )}
-
-                  <div className="flex min-w-0 flex-1 items-baseline gap-2">
-                    <Link
-                      href={`/site/${site.domain}`}
-                      className="truncate text-[13px] font-medium text-[var(--ui-ink)] hover:text-[var(--ui-accent)]"
-                    >
-                      {site.title || site.domain}
-                    </Link>
-                    <span className="hidden shrink-0 font-mono text-[11px] text-[var(--ui-ink-muted)] sm:inline">
-                      {site.domain}
-                    </span>
-                  </div>
-
-                  <span className="hidden items-center gap-1 font-mono text-[11px] tabular-nums text-[var(--ui-ink-muted)] md:inline-flex">
-                    <Sparkles className="size-3" aria-hidden />
-                    {site.tokensCount}
-                  </span>
-                  <span className="hidden items-center gap-1 font-mono text-[11px] text-[var(--ui-ink-muted)] lg:inline-flex">
-                    <Clock className="size-3" aria-hidden />
-                    {formatTimeAgo(site.lastScanned)}
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() => void handleVote(site.id)}
-                    disabled={site.hasVoted || votingId === site.id}
-                    className={cn(
-                      'inline-flex h-7 items-center gap-1 rounded-[7px] px-2 font-mono text-[11px] tabular-nums shadow-[var(--shadow-control)] transition',
-                      site.hasVoted
-                        ? 'bg-[var(--ui-accent-soft)] text-[var(--ui-accent)]'
-                        : 'bg-[var(--ui-paper)] text-[var(--ui-ink-secondary)] hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]'
-                    )}
-                    aria-label={`Vote for ${site.domain}`}
-                    aria-pressed={site.hasVoted}
-                  >
-                    <ArrowUp className={cn('size-3', site.hasVoted && 'fill-current')} />
-                    {site.votes}
-                  </button>
-
-                  <Button asChild size="sm" variant="outline">
-                    <Link href={`/site/${site.domain}`}>Open</Link>
-                  </Button>
-                  <Button asChild size="icon-sm" variant="ghost">
-                    <a
-                      href={`https://${site.domain}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`Visit ${site.domain}`}
-                    >
-                      <ExternalLink className="size-3.5" />
-                    </a>
-                  </Button>
-                </li>
+                >
+                  {label}
+                </button>
               ))}
-            </ul>
-          )}
-        </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="px-4 py-6 sm:px-6 sm:py-8">
+          <div className="mx-auto max-w-5xl">
+            {loading ? (
+              <div
+                className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                role="status"
+                aria-label="Loading sites"
+              >
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-48 animate-pulse rounded-2xl border border-[color:var(--soft-border)] bg-muted/20"
+                  />
+                ))}
+              </div>
+            ) : filteredSites.length === 0 ? (
+              <div className="rounded-2xl border border-[color:var(--soft-border)] bg-card/40 px-6 py-16 text-center">
+                <h2 className="font-serif text-2xl text-foreground">No sites yet</h2>
+                <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                  {searchQuery
+                    ? 'Nothing matched that search.'
+                    : 'Scan a public site and it will show up here.'}
+                </p>
+                <div className="mt-6 flex justify-center gap-2">
+                  {searchQuery ? (
+                    <Button variant="outline" onClick={() => setSearchQuery('')}>
+                      Clear search
+                    </Button>
+                  ) : null}
+                  <Button asChild>
+                    <Link href="/">Open chat</Link>
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredSites.map((site, index) => (
+                  <SiteCard
+                    key={site.id}
+                    site={site}
+                    loadFont={index < 12}
+                    votingId={votingId}
+                    onVote={(siteId) => void handleVote(siteId)}
+                  />
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
       </div>
     </AppShell>
   )

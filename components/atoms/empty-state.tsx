@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LucideIcon } from "lucide-react"
+import type { Icon as LucideIcon } from '@phosphor-icons/react'
 
 interface EmptyStateProps {
   icon?: LucideIcon

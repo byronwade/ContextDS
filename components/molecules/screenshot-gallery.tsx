@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
-import { Download, Eye, Monitor, Smartphone, Tablet } from 'lucide-react'
+import { DownloadSimpleIcon as Download, EyeIcon as Eye, DesktopIcon as Monitor, DeviceMobileIcon as Smartphone, DeviceTabletIcon as Tablet } from '@/lib/phosphor'
 import { Badge } from '@/components/ui/badge'
 
 interface Screenshot {

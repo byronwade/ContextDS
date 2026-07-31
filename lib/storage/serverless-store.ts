@@ -39,6 +39,13 @@ export interface SiteIndexEntry {
   }
   lastScanned: string | null
   status: 'completed' | 'failed' | 'scanning'
+  /** Compact design-system preview for library cards */
+  preview?: {
+    colors: string[]
+    fonts: string[]
+    radius: string | null
+    personality: string | null
+  }
 }
 
 export interface StoredScanResult {
@@ -386,6 +393,43 @@ export async function getScan(domain: string): Promise<StoredScanResult | null> 
   return null
 }
 
+/** Compact preview of the scanned system for library cards. */
+function buildPreview(result: StoredScanResult): SiteIndexEntry['preview'] {
+  const curated = (result.curatedTokens ?? {}) as {
+    colors?: Array<{ value?: unknown; usage?: number }>
+    typography?: { families?: Array<{ value?: unknown }> }
+    radius?: Array<{ value?: unknown }>
+  }
+  const brand = (result.brandAnalysis ?? {}) as {
+    primaryColors?: unknown[]
+    personality?: unknown
+  }
+
+  const brandColors = Array.isArray(brand.primaryColors)
+    ? brand.primaryColors.map(String).filter(Boolean)
+    : []
+  const curatedColors = (curated.colors ?? [])
+    .slice()
+    .sort((a, b) => (b.usage ?? 0) - (a.usage ?? 0))
+    .map((token) => String(token.value ?? ''))
+    .filter(Boolean)
+  const colors = Array.from(new Set([...brandColors, ...curatedColors])).slice(0, 8)
+
+  const fonts = (curated.typography?.families ?? [])
+    .map((token) => String(token.value ?? '').split(',')[0].replace(/['"]/g, '').trim())
+    .filter(Boolean)
+    .slice(0, 2)
+
+  const radius = curated.radius?.[0]?.value != null ? String(curated.radius[0].value) : null
+  const personality =
+    typeof brand.personality === 'string' && brand.personality.trim()
+      ? brand.personality.trim()
+      : null
+
+  if (colors.length === 0 && fonts.length === 0) return undefined
+  return { colors, fonts, radius, personality }
+}
+
 export async function saveScan(result: StoredScanResult): Promise<SiteIndexEntry> {
   const domain = normalizeDomain(result.domain)
   const existing = await getSite(domain)
@@ -407,6 +451,7 @@ export async function saveScan(result: StoredScanResult): Promise<SiteIndexEntry
     curatedCount: result.summary.curatedCount,
     lastScanned: result.scannedAt,
     status: result.status === 'completed' ? 'completed' : 'failed',
+    preview: buildPreview(result) ?? existing?.preview,
   }
 
   const persisted: StoredScanResult = {

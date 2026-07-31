@@ -1,7 +1,7 @@
 "use client"
 
 import { Component, ErrorInfo, ReactNode } from 'react'
-import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { WarningIcon as AlertTriangle, ArrowsClockwiseIcon as RefreshCw } from '@/lib/phosphor'
 import { Button } from '@/components/ui/button'
 
 interface Props {

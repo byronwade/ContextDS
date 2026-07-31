@@ -1,6 +1,6 @@
 "use client"
 
-import { Loader2 } from "lucide-react"
+import { CircleNotchIcon as Loader2 } from '@/lib/phosphor'
 import { cn } from "@/lib/utils"
 
 interface LoadingSpinnerProps {

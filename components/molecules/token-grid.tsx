@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Copy, Check } from "lucide-react"
+import { CopyIcon as Copy, CheckIcon as Check } from '@/lib/phosphor'
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 

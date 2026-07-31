@@ -1,7 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowUpRight, Loader2 } from 'lucide-react'
+import {
+  ArrowUpRightIcon as ArrowUpRight,
+  CircleNotchIcon as Loader2,
+} from '@/lib/phosphor'
 import { stashSiteHandoff } from '@/lib/site-handoff'
 import { cn } from '@/lib/utils'
 

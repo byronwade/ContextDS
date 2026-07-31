@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { SkipLinks } from "@/components/atoms/skip-links";
 import { ErrorBoundary } from "@/components/atoms/error-boundary";
 import { WebVitalsReporter } from "@/components/atoms/web-vitals-reporter";
@@ -11,21 +11,20 @@ import { generateOrganizationSchema, generateWebsiteSchema, generateSoftwareAppl
 import { RESOURCE_HINTS } from "@/lib/seo/performance";
 import "./globals.css";
 
-/** CursorGothic substitute — Inter @ 400 with tight tracking for display */
-const inter = Inter({
-  variable: "--font-inter",
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
   display: "swap",
   preload: true,
   fallback: ["system-ui", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
   subsets: ["latin"],
   display: "swap",
   preload: false,
-  fallback: ["Fira Code", "ui-monospace", "Menlo", "Monaco", "Consolas", "monospace"],
+  fallback: ["ui-monospace", "Menlo", "Monaco", "Consolas", "monospace"],
 });
 
 export const metadata: Metadata = {
@@ -169,7 +168,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <SkipLinks />

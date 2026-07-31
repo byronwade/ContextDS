@@ -1,7 +1,7 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react"
+import { CheckCircleIcon as CheckCircle, ClockIcon as Clock, XCircleIcon as XCircle, WarningCircleIcon as AlertCircle } from '@/lib/phosphor'
 import { cn } from "@/lib/utils"
 
 type StatusType = "completed" | "pending" | "failed" | "scanning" | "queued"
