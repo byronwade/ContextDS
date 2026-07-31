@@ -45,6 +45,7 @@ import {
 } from '@/components/molecules/scan-result-widget'
 import type { DesignContractAgentUIMessage } from '@/lib/agent/design-contract-agent'
 import { trackClientEvent } from '@/lib/analytics/track-client'
+import { createChatId, loadChat, saveChat } from '@/lib/chat-history'
 import { pushRecent } from '@/lib/recents'
 import { cn } from '@/lib/utils'
 
@@ -61,6 +62,8 @@ const CAPABILITIES = [
   { label: 'Theme CSS', prompt: 'Generate a Tailwind theme from cursor.com' },
   { label: 'Check contrast', prompt: 'Check the contrast of #ffffff text on #c08a5f' },
   { label: 'Find similar', prompt: 'Find sites in the library with a design system similar to stripe.com' },
+  { label: 'Blend systems', prompt: 'Blend stripe.com, linear.app and vercel.com into one design system for me' },
+  { label: 'Restyle a page', prompt: "Rebuild vercel.com's page structure in stripe.com's design system" },
 ] as const
 
 const TOOL_LABELS: Record<string, string> = {
@@ -73,6 +76,8 @@ const TOOL_LABELS: Record<string, string> = {
   compare_systems: 'Comparing systems',
   generate_theme_css: 'Generating theme CSS',
   compose_design_artifacts: 'Composing design artifacts',
+  blend_systems: 'Blending systems',
+  restyle_page: 'Composing rebuild guide',
   find_similar_systems: 'Searching the Library',
   check_contrast: 'Checking contrast',
 }
@@ -282,9 +287,29 @@ export function ScanChat() {
   const startedUrl = useRef<string | null>(null)
   const [text, setText] = useState('')
 
+  // Stable conversation id — restored from ?chat=, minted otherwise.
+  const [chatId] = useState(() => searchParams.get('chat') || createChatId())
+  const [initialMessages] = useState(() => {
+    const fromStore = searchParams.get('chat') ? loadChat(chatId) : null
+    return (fromStore ?? []) as DesignContractAgentUIMessage[]
+  })
+
   const { messages, sendMessage, status, error, stop } = useChat<DesignContractAgentUIMessage>({
+    id: chatId,
+    messages: initialMessages,
     transport: new DefaultChatTransport({ api: '/api/agent/chat' }),
   })
+
+  // Persist the transcript for the sidebar's recent chats once a turn settles.
+  useEffect(() => {
+    if (messages.length === 0 || status === 'streaming' || status === 'submitted') return
+    saveChat(chatId, messages)
+    const url = new URL(window.location.href)
+    if (url.searchParams.get('chat') !== chatId) {
+      url.searchParams.set('chat', chatId)
+      window.history.replaceState(null, '', url.toString())
+    }
+  }, [messages, status, chatId])
 
   const busy = status === 'submitted' || status === 'streaming'
   const hasMessages = messages.length > 0 || Boolean(searchParams.get('url'))

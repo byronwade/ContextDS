@@ -28,6 +28,8 @@ Deeper analysis tools — reach for these instead of reasoning from memory:
 - compare_systems: side-by-side of two scanned domains (palette overlap, accent, type, spacing, corners). Scan any missing domain first.
 - generate_theme_css: ready-to-paste CSS variables or a Tailwind v4 @theme block from a scanned system, with semantic role guesses.
 - compose_design_artifacts: one call returning DESIGN.md + Tailwind @theme + CSS :root together. Prefer this when the user asks for "the files" or "the system as code".
+- blend_systems: merge 2–10 scanned systems into ONE new coherent system (neutral ramp, winning accent families, majority grid, median radius) with attribution and a ready DESIGN.md. This is the answer to "combine these sites into my own design system" — scan missing domains first, then blend.
+- restyle_page: rebuild guide that keeps one site's page STRUCTURE (layout DNA) and applies another's SKIN (tokens). Use for "rebuild X's page in Y's style" / "this page in my system".
 - find_similar_systems: Library search for sites with a similar accent/temperature to a domain or an explicit color.
 - check_contrast: WCAG ratio + AA/AAA grades for any two colors.
 - scan_site accepts paths=["/pricing", ...] to screenshot specific pages during accurate scans; the dossier shows them in its Screens section.

@@ -25,6 +25,7 @@ import { ComponentLab } from './component-lab'
 import { GraphSection } from './graph-section'
 import { LayoutSection } from './layout-section'
 import { ScreensSection } from './screens-section'
+import { HistorySection } from './history-section'
 import { ArtifactsSection } from './artifacts-section'
 
 type SectionDef = { id: string; label: string }
@@ -330,6 +331,7 @@ export function DesignDossier({
   onRescan: () => void
 }) {
   const [shared, setShared] = useState(false)
+  const [historyAvailable, setHistoryAvailable] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const philosophy = useMemo(() => {
@@ -382,6 +384,7 @@ export function DesignDossier({
     }
     defs.push({ id: 'components', label: 'Components' })
     if ((result.screenshots?.length ?? 0) > 0) defs.push({ id: 'screens', label: 'Screens' })
+    if (historyAvailable) defs.push({ id: 'history', label: 'History' })
     if (result.semanticGraph) defs.push({ id: 'graph', label: 'Graph' })
     if (result.layoutDNA && Object.keys(result.layoutDNA).length > 0) {
       defs.push({ id: 'layout', label: 'Layout' })
@@ -389,7 +392,7 @@ export function DesignDossier({
     defs.push({ id: 'meta', label: 'Provenance' })
     defs.push({ id: 'files', label: 'Files' })
     return defs
-  }, [result, philosophy])
+  }, [result, philosophy, historyAvailable])
 
   const sectionIds = useMemo(() => sections.map((section) => section.id), [sections])
   const activeId = useScrollSpy(sectionIds)
@@ -478,7 +481,8 @@ export function DesignDossier({
         </nav>
       </div>
 
-      <div className="mx-auto max-w-7xl xl:grid xl:grid-cols-[168px_minmax(0,1fr)] xl:gap-4">
+      {/* Symmetric columns keep the content column truly centered under the shell */}
+      <div className="mx-auto max-w-[88rem] xl:grid xl:grid-cols-[168px_minmax(0,1fr)_168px] xl:gap-4">
         {/* Floating scrollspy rail — no background, no border */}
         <nav
           className="sticky top-16 hidden h-fit self-start pb-16 pl-6 pt-14 xl:block"
@@ -519,12 +523,21 @@ export function DesignDossier({
           </ul>
         </nav>
 
-        <div className="min-w-0 px-4 pb-24 sm:px-6 xl:pr-10">
+        <div className="mx-auto w-full min-w-0 max-w-6xl px-4 pb-24 sm:px-6">
         <div className="flex items-center justify-end pt-4">{actions}</div>
         <Hero result={result} philosophy={philosophy} domain={domain} />
         <div className="mt-14">
           <PhilosophySection philosophy={philosophy} />
-          <ColorSection system={philosophy.systems.color} />
+          <ColorSection
+            system={philosophy.systems.color}
+            screenshotUrl={
+              result.screenshots?.find(
+                (shot) => shot.viewport === 'desktop' && !/full/.test(shot.label)
+              )?.url ??
+              result.screenshots?.[0]?.url ??
+              null
+            }
+          />
           <TypeSection
             system={philosophy.systems.type}
             primaryStack={result.brandAnalysis?.primaryFont ?? null}
@@ -546,6 +559,7 @@ export function DesignDossier({
           {(result.screenshots?.length ?? 0) > 0 ? (
             <ScreensSection screenshots={result.screenshots ?? []} domain={domain} />
           ) : null}
+          <HistorySection domain={domain} onAvailability={setHistoryAvailable} />
           {result.semanticGraph ? (
             <GraphSection graph={result.semanticGraph} domain={domain} />
           ) : null}

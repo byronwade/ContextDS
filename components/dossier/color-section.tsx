@@ -12,6 +12,7 @@ import {
   type ParsedColor,
 } from '@/lib/analyzers/design-philosophy'
 import { SectionShell, useCopy } from './shared'
+import { VerifySwatches } from './verify-swatches'
 
 const FAMILY_TITLES: Record<string, string> = {
   red: 'Reds',
@@ -179,7 +180,13 @@ function SelectedColorPanel({
   )
 }
 
-export function ColorSection({ system }: { system: ColorSystem }) {
+export function ColorSection({
+  system,
+  screenshotUrl = null,
+}: {
+  system: ColorSystem
+  screenshotUrl?: string | null
+}) {
   const { copiedKey, copy } = useCopy()
   const [selected, setSelected] = useState<ParsedColor | null>(null)
 
@@ -201,6 +208,7 @@ export function ColorSection({ system }: { system: ColorSystem }) {
     >
       <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-8">
+          <VerifySwatches system={system} screenshotUrl={screenshotUrl} />
           {system.neutrals.length > 0 && (
             <div>
               <div className="mb-2 flex items-baseline justify-between">

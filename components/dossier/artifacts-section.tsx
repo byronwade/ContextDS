@@ -156,7 +156,8 @@ export function ArtifactsSection({
         </div>
 
         {doc ? (
-          <div className="min-w-0 overflow-hidden rounded-2xl border border-[color:var(--soft-border)] bg-card/40">
+          <div className="min-w-0 space-y-5">
+          <div className="overflow-hidden rounded-2xl border border-[color:var(--soft-border)] bg-card/40">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 px-4 py-2.5">
               <div className="flex items-center gap-1">
                 {docs.map((docEntry, index) => (
@@ -211,6 +212,51 @@ export function ArtifactsSection({
             <pre className="max-h-[560px] overflow-auto p-5 font-mono text-[11.5px] leading-relaxed text-foreground/90">
               {doc.markdown}
             </pre>
+          </div>
+
+          {/* Embeddable card — README-ready */}
+          <div className="rounded-2xl border border-[color:var(--soft-border)] bg-card/40 p-5">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-foreground">Embed this contract</p>
+                <p className="mt-1 max-w-sm text-xs leading-relaxed text-muted-foreground">
+                  A live SVG card for READMEs and docs — palette, token count and a link
+                  back to this dossier. Updates automatically on each scan.
+                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    copy(
+                      'embed-md',
+                      `[![${domain} design system](https://designcontracts.sh/api/badge/${domain})](https://designcontracts.sh/site/${domain})`
+                    )
+                  }
+                  className="mt-3 flex w-full max-w-md items-center gap-2 rounded-lg border border-[color:var(--soft-border)] bg-background/60 px-3 py-2 text-left font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+                  title="Copy Markdown embed"
+                >
+                  <span className="truncate">
+                    {copiedKey === 'embed-md'
+                      ? 'copied to clipboard'
+                      : `[![${domain}](…/api/badge/${domain})](…/site/${domain})`}
+                  </span>
+                  {copiedKey === 'embed-md' ? (
+                    <CheckIcon className="ml-auto size-3 shrink-0 text-[var(--ui-accent)]" />
+                  ) : (
+                    <CopyIcon className="ml-auto size-3 shrink-0 opacity-60" />
+                  )}
+                </button>
+              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/api/badge/${encodeURIComponent(domain)}`}
+                alt={`${domain} design system card`}
+                width={360}
+                height={120}
+                className="rounded-xl"
+                loading="lazy"
+              />
+            </div>
+          </div>
           </div>
         ) : (
           <div className="flex items-center justify-center rounded-2xl border border-dashed border-border/60 p-12 text-sm text-muted-foreground">

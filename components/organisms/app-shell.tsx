@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import {
   BookOpenIcon,
   BooksIcon,
@@ -18,6 +18,12 @@ import {
 import { ThemeToggle } from '@/components/atoms/theme-toggle'
 import { AppStatsHeader } from '@/components/molecules/app-stats-header'
 import { Button } from '@/components/ui/button'
+import {
+  getChatsServerSnapshot,
+  getChatsSnapshot,
+  subscribeChats,
+  type ChatSummary,
+} from '@/lib/chat-history'
 import { pushRecent, readRecents, type RecentDomain } from '@/lib/recents'
 import { cn } from '@/lib/utils'
 
@@ -55,10 +61,12 @@ const PRIMARY_NAV = [
 function SidebarBody({
   currentPage,
   recents,
+  chats,
   onNavigate,
 }: {
   currentPage: AppShellPage
   recents: RecentDomain[]
+  chats: ChatSummary[]
   onNavigate?: () => void
 }) {
   return (
@@ -113,29 +121,53 @@ function SidebarBody({
         })}
       </nav>
 
-      <div className="mt-4 flex min-h-0 flex-1 flex-col">
-        <p className="px-2.5 pb-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-          Recents
-        </p>
-        <ul className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
-          {recents.length === 0 ? (
-            <li className="px-2.5 py-1.5 text-xs text-muted-foreground/80">
-              Scanned sites show up here
-            </li>
-          ) : (
-            recents.map((item) => (
-              <li key={item.domain}>
-                <Link
-                  href={`/site/${item.domain}` as `/site/${string}`}
-                  onClick={onNavigate}
-                  className="block truncate rounded-lg px-2.5 py-1.5 font-mono text-xs text-muted-foreground transition hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                >
-                  {item.domain}
-                </Link>
+      <div className="mt-4 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
+        <div className="flex min-h-0 flex-col">
+          <p className="px-2.5 pb-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            Recent chats
+          </p>
+          <ul className="flex flex-col gap-0.5">
+            {chats.length === 0 ? (
+              <li className="px-2.5 py-1.5 text-xs text-muted-foreground/80">
+                Conversations show up here
               </li>
-            ))
-          )}
-        </ul>
+            ) : (
+              chats.slice(0, 8).map((chat) => (
+                <li key={chat.id}>
+                  <Link
+                    href={`/?chat=${chat.id}` as '/'}
+                    onClick={onNavigate}
+                    className="block truncate rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground transition hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    title={chat.title}
+                  >
+                    {chat.title}
+                  </Link>
+                </li>
+              ))
+            )}
+          </ul>
+        </div>
+
+        {recents.length > 0 ? (
+          <div className="flex min-h-0 flex-col">
+            <p className="px-2.5 pb-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              Sites
+            </p>
+            <ul className="flex flex-col gap-0.5">
+              {recents.slice(0, 6).map((item) => (
+                <li key={item.domain}>
+                  <Link
+                    href={`/site/${item.domain}` as `/site/${string}`}
+                    onClick={onNavigate}
+                    className="block truncate rounded-lg px-2.5 py-1.5 font-mono text-xs text-muted-foreground transition hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                  >
+                    {item.domain}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-auto flex items-center justify-between border-t border-sidebar-border px-1 pt-2">
@@ -161,6 +193,11 @@ export function AppShell({
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const [recents, setRecents] = useState<RecentDomain[]>([])
+  const chats = useSyncExternalStore(
+    subscribeChats,
+    getChatsSnapshot,
+    getChatsServerSnapshot
+  )
 
   useEffect(() => {
     setRecents(readRecents())
@@ -227,7 +264,7 @@ export function AppShell({
           </div>
         ) : (
           <div className="relative flex h-full flex-col">
-            <SidebarBody currentPage={currentPage} recents={recents} />
+            <SidebarBody currentPage={currentPage} recents={recents} chats={chats} />
             <Button
               variant="ghost"
               size="icon-sm"
@@ -254,6 +291,7 @@ export function AppShell({
             <SidebarBody
               currentPage={currentPage}
               recents={recents}
+              chats={chats}
               onNavigate={() => setMobileOpen(false)}
             />
           </aside>

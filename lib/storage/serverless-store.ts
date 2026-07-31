@@ -129,8 +129,24 @@ export interface StoredScanResult {
   error?: string
 }
 
+/** Slim historical snapshot of one scan — enough to diff without the full payload. */
+export interface ScanVersion {
+  ts: string
+  scanId: string
+  tokensExtracted: number
+  confidence: number
+  colors: string[]
+  fonts: string[]
+  spacing: string[]
+  radius: string[]
+  screenshot: string | null
+  personality: string | null
+}
+
 const MEMORY_SITES = new Map<string, SiteIndexEntry>()
 const MEMORY_SCANS = new Map<string, StoredScanResult>()
+const MEMORY_VERSIONS = new Map<string, ScanVersion[]>()
+const MAX_VERSIONS = 20
 
 const INDEX_BLOB_PATH = 'index/sites.json'
 const SITE_KEY = (domain: string) => `contextds:site:${normalizeDomain(domain)}`
@@ -165,6 +181,10 @@ function getRedis(): Redis | null {
 
 function scanBlobPath(domain: string): string {
   return `scans/${normalizeDomain(domain)}/latest.json`
+}
+
+function versionsBlobPath(domain: string): string {
+  return `scans/${normalizeDomain(domain)}/versions.json`
 }
 
 function createId(prefix: string): string {
@@ -425,6 +445,76 @@ export async function getScan(domain: string): Promise<StoredScanResult | null> 
   return null
 }
 
+function buildVersionSnapshot(result: StoredScanResult): ScanVersion {
+  const curated = (result.curatedTokens ?? {}) as {
+    colors?: Array<{ value?: unknown; usage?: number }>
+    typography?: { families?: Array<{ value?: unknown }> }
+    spacing?: Array<{ value?: unknown }>
+    radius?: Array<{ value?: unknown }>
+  }
+  const brand = (result.brandAnalysis ?? {}) as { personality?: unknown }
+  return {
+    ts: result.scannedAt || new Date().toISOString(),
+    scanId: result.metadata?.scanId || result.id,
+    tokensExtracted: result.summary.tokensExtracted,
+    confidence: Math.round(result.summary.confidence),
+    colors: (curated.colors ?? [])
+      .slice()
+      .sort((a, b) => (b.usage ?? 0) - (a.usage ?? 0))
+      .map((token) => String(token.value ?? ''))
+      .filter(Boolean)
+      .slice(0, 24),
+    fonts: (curated.typography?.families ?? [])
+      .map((token) => String(token.value ?? '').split(',')[0].replace(/['"]/g, '').trim())
+      .filter(Boolean)
+      .slice(0, 4),
+    spacing: (curated.spacing ?? []).map((token) => String(token.value ?? '')).slice(0, 16),
+    radius: (curated.radius ?? []).map((token) => String(token.value ?? '')).slice(0, 8),
+    screenshot:
+      result.screenshots?.find(
+        (shot) => shot.viewport === 'desktop' && !/full/.test(shot.label)
+      )?.url ??
+      result.screenshots?.[0]?.url ??
+      null,
+    personality:
+      typeof brand.personality === 'string' && brand.personality ? brand.personality : null,
+  }
+}
+
+/** Append a version snapshot for the domain (Blob + memory, capped). */
+async function appendScanVersion(result: StoredScanResult): Promise<void> {
+  const domain = normalizeDomain(result.domain)
+  try {
+    const snapshot = buildVersionSnapshot(result)
+    const existing = await listScanVersions(domain)
+    // Skip near-duplicates: same scanId, or identical palette within an hour.
+    const last = existing[0]
+    if (last) {
+      const sameScan = last.scanId === snapshot.scanId
+      const samePalette =
+        JSON.stringify(last.colors) === JSON.stringify(snapshot.colors) &&
+        Math.abs(new Date(last.ts).getTime() - new Date(snapshot.ts).getTime()) <
+          60 * 60 * 1000
+      if (sameScan || samePalette) return
+    }
+    const next = [snapshot, ...existing].slice(0, MAX_VERSIONS)
+    MEMORY_VERSIONS.set(domain, next)
+    await writeBlobJson(versionsBlobPath(domain), { domain, versions: next })
+  } catch (error) {
+    console.warn('[serverless-store] version snapshot failed:', error)
+  }
+}
+
+/** Version history for a domain, newest first. */
+export async function listScanVersions(domain: string): Promise<ScanVersion[]> {
+  const key = normalizeDomain(domain)
+  if (MEMORY_VERSIONS.has(key)) return MEMORY_VERSIONS.get(key) ?? []
+  const data = await readBlobJson<{ versions?: ScanVersion[] }>(versionsBlobPath(key))
+  const versions = Array.isArray(data?.versions) ? data.versions : []
+  MEMORY_VERSIONS.set(key, versions)
+  return versions
+}
+
 /** Compact preview of the scanned system for library cards. */
 function buildPreview(result: StoredScanResult): SiteIndexEntry['preview'] {
   const curated = (result.curatedTokens ?? {}) as {
@@ -515,6 +605,11 @@ export async function saveScan(result: StoredScanResult): Promise<SiteIndexEntry
   // Always mirror the directory to Blob — the library must survive Redis
   // flushes, env swaps and cold regions, not just serve from the index.
   await upsertDirectoryBlob(site)
+
+  // Record a slim version snapshot so the dossier can diff scans over time.
+  if (result.status === 'completed') {
+    await appendScanVersion(persisted)
+  }
 
   if (redis) {
     // Keep header counters fresh in Redis

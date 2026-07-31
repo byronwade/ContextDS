@@ -667,6 +667,151 @@ export const designContractTools = {
     },
   }),
 
+  blend_systems: tool({
+    description:
+      'Merge 2–10 scanned design systems into ONE coherent new system — deterministic blending of neutrals, accent families, type, spacing grid, radius and depth, with per-choice attribution and a ready DESIGN.md. The way to "combine these sites into my own design system". Scan any missing domain first.',
+    inputSchema: z.object({
+      domains: z.array(z.string()).min(2).max(10),
+      name: z.string().max(80).optional().describe('Name for the blended system'),
+    }),
+    execute: async ({ domains, name }) => {
+      const keys = Array.from(new Set(domains.map((domain) => normalizeDomain(domain))))
+      const scans = await Promise.all(keys.map((key) => getScan(key)))
+      const sources = keys
+        .map((domain, index) => ({
+          domain,
+          curated: scans[index]?.curatedTokens as CuratedLike | undefined,
+        }))
+        .filter((source): source is { domain: string; curated: CuratedLike } =>
+          Boolean(source.curated)
+        )
+      const missing = keys.filter(
+        (domain) => !sources.some((source) => source.domain === domain)
+      )
+      if (sources.length < 2) {
+        return {
+          found: false,
+          missing,
+          suggestion: `Scan ${missing.join(', ')} with scan_site first, then blend again.`,
+        }
+      }
+
+      const { blendSystems } = await import('@/lib/analyzers/system-blend')
+      const blend = blendSystems(sources, name)
+
+      return {
+        found: true,
+        name: blend.name,
+        sources: blend.sources,
+        skipped: missing,
+        philosophy: {
+          title: blend.philosophy.title,
+          statement: blend.philosophy.statement,
+          traits: blend.philosophy.traits,
+        },
+        palette: blend.palette,
+        system: {
+          colors: blend.system.colors,
+          fonts: {
+            display: blend.system.fontDisplay,
+            body: blend.system.fontBody,
+            mono: blend.system.fontMono,
+          },
+          typeScale: `${blend.system.baseSize}px × ${blend.system.scaleRatio}`,
+          spacing: `${blend.system.spacingBase}px grid`,
+          radius: `${blend.system.radius}px`,
+          depth: blend.system.depth,
+        },
+        attribution: blend.attribution,
+        designMd: blend.designMd,
+        note: 'Deterministic merge — same inputs always blend to the same system. The DESIGN.md is drop-in ready; open /studio to tweak it by hand.',
+      }
+    },
+  }),
+
+  restyle_page: tool({
+    description:
+      'Rebuild guide combining two scanned sites: the page STRUCTURE (layout DNA, containers, breakpoints, archetypes) of one domain re-skinned with the design SYSTEM (colors, type, spacing, shape) of another. Returns a concrete markdown brief an agent or developer can build from.',
+    inputSchema: z.object({
+      structureDomain: z.string().describe('Domain whose page layout/structure to keep'),
+      skinDomain: z.string().describe('Domain whose design system to apply'),
+    }),
+    execute: async ({ structureDomain, skinDomain }) => {
+      const [structureKey, skinKey] = [
+        normalizeDomain(structureDomain),
+        normalizeDomain(skinDomain),
+      ]
+      const [structureScan, skinScan] = await Promise.all([
+        getScan(structureKey),
+        getScan(skinKey),
+      ])
+      const layout = structureScan?.layoutDNA as
+        | {
+            containers?: { maxWidth?: string | null; strategy?: string }
+            gridSystem?: string
+            spacingBase?: number | null
+            breakpoints?: number[]
+            archetypes?: Array<{ type: string; confidence: number }>
+          }
+        | undefined
+      const skin = skinScan?.curatedTokens as CuratedLike | undefined
+      if (!layout || !skin) {
+        return {
+          found: false,
+          missing: [!layout ? structureKey : null, !skin ? skinKey : null].filter(Boolean),
+          suggestion: 'Scan the missing domain(s) with scan_site first.',
+        }
+      }
+
+      const philosophy = generatePhilosophy({ domain: skinKey, curated: skin })
+      const { color, type, space, shape } = philosophy.systems
+      const background =
+        color.polarity === 'dark-leaning' ? color.darkest : color.lightest
+      const foreground =
+        color.polarity === 'dark-leaning' ? color.lightest : color.darkest
+
+      const brief = [
+        `# Rebuild: ${structureKey} structure × ${skinKey} skin`,
+        '',
+        '## Keep from ' + structureKey + ' (structure)',
+        `- Container: ${layout.containers?.strategy ?? 'centered'}${layout.containers?.maxWidth ? ` @ ${layout.containers.maxWidth}` : ''}`,
+        `- Layout engine: ${layout.gridSystem ?? 'flexbox'}`,
+        `- Breakpoints: ${(layout.breakpoints ?? []).join('px, ')}px`,
+        `- Page archetypes: ${(layout.archetypes ?? [])
+          .slice(0, 5)
+          .map((archetype) => archetype.type)
+          .join(', ')}`,
+        '',
+        '## Apply from ' + skinKey + ' (system)',
+        `- Background ${background?.hex ?? '—'} · Foreground ${foreground?.hex ?? '—'} · Accent ${color.accent?.hex ?? '—'}`,
+        `- Palette: ${color.chromatic.slice(0, 6).map((c) => c.hex).join(', ')}`,
+        `- Type: ${type.families.map((f) => f.primary).join(' + ')}${type.scaleLabel ? ` on a ${type.scaleLabel} scale` : ''}`,
+        `- Spacing: ${space.base ? `${space.base}px grid` : 'optical'}; Corners: ${shape.character} (${shape.radiiPx.slice(0, 4).join(', ')}px); Depth: ${shape.depth}`,
+        '',
+        '## Rules',
+        `- Rebuild each ${structureKey} section with the archetype it already has, restyled with the tokens above — never invent new colors or sizes.`,
+        `- ${philosophy.principles[0]?.body ?? ''}`,
+        `- Verify text/surface pairings with check_contrast before shipping.`,
+      ].join('\n')
+
+      return {
+        found: true,
+        structure: { domain: structureKey, layout },
+        skin: {
+          domain: skinKey,
+          background: background?.hex ?? null,
+          foreground: foreground?.hex ?? null,
+          accent: color.accent?.hex ?? null,
+          fonts: type.families.map((font) => font.primary),
+          spacingBase: space.base,
+          radii: shape.radiiPx,
+          depth: shape.depth,
+        },
+        brief,
+      }
+    },
+  }),
+
   check_contrast: tool({
     description:
       'WCAG contrast check between any two colors (hex/rgb/hsl/oklch). Returns ratio and AA/AAA grades for normal and large text.',
