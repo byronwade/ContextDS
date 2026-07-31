@@ -124,15 +124,12 @@ export default function SitePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- load once per domain
   }, [domain])
 
-  useEffect(() => {
-    if (scanLoading) {
-      setPhase('scanning')
-      return
-    }
-    if (scanResult?.domain === domain) {
-      setPhase('ready')
-    }
-  }, [scanLoading, scanResult, domain])
+  // Derived at render — no state-sync effect needed.
+  const effectivePhase: LoadPhase = scanLoading
+    ? 'scanning'
+    : scanResult?.domain === domain
+      ? 'ready'
+      : phase
 
   const handleExport = (format: string) => {
     const curated = scanResult?.curatedTokens
@@ -169,7 +166,7 @@ export default function SitePage() {
     })
   }
 
-  if (phase === 'missing' && !scanResult) {
+  if (effectivePhase === 'missing' && !scanResult) {
     return (
       <AppShell currentPage="site" recentDomain={domain}>
         <div className="mx-auto flex w-full max-w-2xl flex-col items-start gap-4 px-6 py-24">
@@ -195,7 +192,7 @@ export default function SitePage() {
     <AppShell currentPage="site" recentDomain={domain}>
       <DesignDossier
         result={scanResult}
-        isLoading={scanLoading || phase === 'hydrating' || phase === 'scanning'}
+        isLoading={scanLoading || effectivePhase === 'hydrating' || effectivePhase === 'scanning'}
         progress={scanProgress}
         error={scanError || loadError}
         domain={domain}

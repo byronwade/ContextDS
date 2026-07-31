@@ -95,12 +95,16 @@ Do **not** stack paper shadows through nested cards. Rows and nav items: no exte
 
 | Role | Spec |
 |------|------|
-| UI / body | Inter (`--font-ui`), 13–15px |
+| UI / body | Geist Sans (`--font-ui`), 13–15px |
 | Dense labels / meta | 12–13px, muted ink |
 | Section titles | 18–22px semibold |
-| Page titles | 22–28px semibold, restrained tracking |
-| Code / domains | JetBrains Mono |
+| Page titles | 22–28px semibold, restrained tracking (`font-serif` slots render as Geist 600 / −0.03em) |
+| Code / domains | Geist Mono |
 | Counts / dates | Tabular numerals |
+
+Icons are **Phosphor duotone** (`@phosphor-icons/react`): product surfaces inherit
+`weight="duotone"` from the AppShell `IconContext`; surfaces outside the shell import
+from `lib/phosphor.tsx`. No lucide in new UI.
 
 ---
 

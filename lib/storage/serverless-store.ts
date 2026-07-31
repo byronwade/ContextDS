@@ -314,6 +314,42 @@ export async function getSite(domain: string): Promise<SiteIndexEntry | null> {
   return directory.find((site) => site.domain === key) ?? null
 }
 
+/** Upsert one entry into the durable Blob directory (best-effort mirror). */
+async function upsertDirectoryBlob(site: SiteIndexEntry): Promise<void> {
+  try {
+    const directory = await loadDirectoryFromBlob()
+    const next = directory.filter((entry) => entry.domain !== site.domain)
+    next.push(site)
+    next.sort(
+      (a, b) => new Date(b.lastScanned ?? 0).getTime() - new Date(a.lastScanned ?? 0).getTime()
+    )
+    await saveDirectoryToBlob(next.slice(0, 500))
+  } catch (error) {
+    console.warn('[serverless-store] directory mirror failed:', error)
+  }
+}
+
+/** Best-effort: refill Redis index keys from a Blob directory snapshot. */
+async function rehydrateRedisFromDirectory(
+  redis: Redis,
+  sites: SiteIndexEntry[]
+): Promise<void> {
+  try {
+    await Promise.all(
+      sites.slice(0, 200).flatMap((site) => [
+        redis.set(SITE_KEY(site.domain), site),
+        redis.zadd(RECENT_KEY, {
+          score: new Date(site.lastScanned ?? 0).getTime() || Date.now(),
+          member: site.domain,
+        }),
+        redis.zadd(POPULAR_KEY, { score: site.popularity, member: site.domain }),
+      ])
+    )
+  } catch (error) {
+    console.warn('[serverless-store] redis rehydrate failed:', error)
+  }
+}
+
 async function persistSiteIndex(site: SiteIndexEntry): Promise<void> {
   MEMORY_SITES.set(site.domain, site)
   const redis = getRedis()
@@ -322,14 +358,10 @@ async function persistSiteIndex(site: SiteIndexEntry): Promise<void> {
       redis.set(SITE_KEY(site.domain), site),
       redis.zadd(POPULAR_KEY, { score: site.popularity, member: site.domain }),
     ])
-    return
   }
 
-  const directory = await loadDirectoryFromBlob()
-  const next = directory.filter((entry) => entry.domain !== site.domain)
-  next.push(site)
-  next.sort((a, b) => b.popularity - a.popularity)
-  await saveDirectoryToBlob(next.slice(0, 500))
+  // Always mirror to Blob so the library survives Redis flushes / env changes.
+  await upsertDirectoryBlob(site)
 }
 
 /** Increment popularity for library voting (id or domain). */
@@ -478,6 +510,13 @@ export async function saveScan(result: StoredScanResult): Promise<SiteIndexEntry
       redis.zadd(RECENT_KEY, { score: scannedAt, member: domain }),
       redis.zadd(POPULAR_KEY, { score: site.popularity, member: domain }),
     ])
+  }
+
+  // Always mirror the directory to Blob — the library must survive Redis
+  // flushes, env swaps and cold regions, not just serve from the index.
+  await upsertDirectoryBlob(site)
+
+  if (redis) {
     // Keep header counters fresh in Redis
     await trackStatEvent('scan', 1)
     const allForSnap = await listSites({ sort: 'recent', limit: 500 })
@@ -488,14 +527,6 @@ export async function saveScan(result: StoredScanResult): Promise<SiteIndexEntry
       tokens: tokensTotal,
       scans: scansTotal,
     })
-  } else {
-    const directory = await loadDirectoryFromBlob()
-    const next = directory.filter((entry) => entry.domain !== domain)
-    next.push(site)
-    next.sort(
-      (a, b) => new Date(b.lastScanned ?? 0).getTime() - new Date(a.lastScanned ?? 0).getTime()
-    )
-    await saveDirectoryToBlob(next.slice(0, 500))
   }
 
   return site
@@ -518,6 +549,15 @@ export async function listSites(options?: {
       domains.map((domain) => redis.get<SiteIndexEntry>(SITE_KEY(domain)))
     )
     sites = entries.filter((entry): entry is SiteIndexEntry => Boolean(entry))
+
+    if (sites.length === 0) {
+      // Fresh or flushed Redis — heal from the durable Blob directory and
+      // refill the index so the library never renders empty while data exists.
+      sites = await loadDirectoryFromBlob()
+      if (sites.length > 0) {
+        void rehydrateRedisFromDirectory(redis, sites)
+      }
+    }
   } else if (MEMORY_SITES.size > 0) {
     sites = Array.from(MEMORY_SITES.values())
   } else {
