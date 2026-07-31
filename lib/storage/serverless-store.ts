@@ -114,6 +114,11 @@ export interface StoredScanResult {
     flow?: Array<{ from: string; to: string }>
     keyframes?: Array<{ name: string; css: string }>
     transitions?: Array<{ value: string; weight: number }>
+    interaction?: {
+      rules: number
+      effects: Array<{ value: string; weight: number }>
+      samples: Array<{ selector: string; state: string; changes: string[] }>
+    }
   }
   /** Captured page screenshots (Blob URLs when available) */
   screenshots?: Array<{

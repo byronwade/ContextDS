@@ -386,6 +386,57 @@ function auditInPage() {
     textChars,
   }
 
+  // Interaction feedback — what :hover / :focus / :active rules actually change.
+  // This is the tactile "feel" of the site: does it darken, lift, glow, scale?
+  const FEEDBACK_PROPS = [
+    'background-color', 'background', 'color', 'box-shadow', 'transform',
+    'opacity', 'border-color', 'outline', 'outline-color', 'text-decoration',
+    'filter', 'scale', 'translate',
+  ]
+  const effectMap = new Map()
+  const interactionSamples = []
+  let interactionRules = 0
+  const visitInteractionRules = (rules) => {
+    for (const rule of Array.from(rules || [])) {
+      if (rule.cssRules && (rule.type === 4 /* media */ || rule.type === 12 /* supports */)) {
+        visitInteractionRules(rule.cssRules)
+        continue
+      }
+      if (rule.type !== 1 /* CSSStyleRule */ || !rule.selectorText) continue
+      const sel = rule.selectorText
+      let state = null
+      if (/:hover\b/.test(sel)) state = 'hover'
+      else if (/:focus/.test(sel)) state = 'focus'
+      else if (/:active\b/.test(sel)) state = 'active'
+      if (!state) continue
+      const changes = []
+      for (const prop of FEEDBACK_PROPS) {
+        if (rule.style.getPropertyValue(prop)) changes.push(prop)
+      }
+      if (!changes.length && rule.style.length > 0) {
+        // hover state driven by custom-property swap (--btn-bg etc.)
+        if (String(rule.style[0] || '').startsWith('--')) changes.push('custom-property')
+      }
+      if (!changes.length) continue
+      interactionRules += 1
+      for (const prop of changes) bump(effectMap, state + ' ' + prop, 1)
+      if (interactionSamples.length < 16) {
+        interactionSamples.push({
+          selector: sel.slice(0, 120),
+          state,
+          changes: changes.slice(0, 6),
+        })
+      }
+    }
+  }
+  for (const sheet of Array.from(document.styleSheets)) {
+    try {
+      visitInteractionRules(sheet.cssRules)
+    } catch {
+      // cross-origin sheet
+    }
+  }
+
   const top = (map, n) =>
     Array.from(map.entries())
       .sort((a, b) => b[1] - a[1])
@@ -434,6 +485,11 @@ function auditInPage() {
     shell,
     density,
     transitions: top(motionMap, 12),
+    interaction: {
+      rules: interactionRules,
+      effects: top(effectMap, 14),
+      samples: interactionSamples,
+    },
     colors: top(colorMap, 64).map((entry) => {
       const split = entry.value.indexOf('|')
       return { kind: entry.value.slice(0, split), value: entry.value.slice(split + 1), weight: entry.weight }
@@ -460,6 +516,13 @@ function mergeAudit(target, audit) {
       shell: audit.shell || null,
       density: audit.density || null,
       transitions: [...(audit.transitions || [])],
+      interaction: audit.interaction
+        ? {
+            rules: audit.interaction.rules,
+            effects: [...audit.interaction.effects],
+            samples: [...audit.interaction.samples],
+          }
+        : null,
       colors: [...audit.colors],
       fonts: [...audit.fonts],
       fontSizes: [...audit.fontSizes],
@@ -493,6 +556,28 @@ function mergeAudit(target, audit) {
   if (audit.transitions) {
     target.transitions = target.transitions || []
     mergeList(target.transitions, audit.transitions, (entry) => entry.value)
+  }
+  if (audit.interaction) {
+    if (!target.interaction) {
+      target.interaction = {
+        rules: audit.interaction.rules,
+        effects: [...audit.interaction.effects],
+        samples: [...audit.interaction.samples],
+      }
+    } else {
+      target.interaction.rules += audit.interaction.rules
+      mergeList(target.interaction.effects, audit.interaction.effects, (entry) => entry.value)
+      const seen = new Set(
+        target.interaction.samples.map((sample) => sample.state + '|' + sample.selector)
+      )
+      for (const sample of audit.interaction.samples) {
+        if (target.interaction.samples.length >= 16) break
+        const key = sample.state + '|' + sample.selector
+        if (seen.has(key)) continue
+        seen.add(key)
+        target.interaction.samples.push(sample)
+      }
+    }
   }
   if (!target.shell && audit.shell) target.shell = audit.shell
   if (audit.shell && target.shell) {

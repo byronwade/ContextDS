@@ -44,6 +44,12 @@ export type BrowserRenderAudit = {
   } | null
   /** Rendered transitions/animations attached to visible elements */
   transitions?: Array<{ value: string; weight: number }>
+  /** Interaction feedback vocabulary parsed from :hover/:focus/:active rules */
+  interaction?: {
+    rules: number
+    effects: Array<{ value: string; weight: number }>
+    samples: Array<{ selector: string; state: string; changes: string[] }>
+  } | null
   colors: Array<{ kind: string; value: string; weight: number }>
   fonts: Array<{ value: string; weight: number }>
   fontSizes: Array<{ value: string; weight: number }>

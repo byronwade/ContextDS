@@ -29,7 +29,26 @@ type UxDnaLike = {
   } | null
   flow?: Array<{ from: string; to: string }>
   keyframes?: Array<{ name: string; css: string }>
+  interaction?: {
+    rules: number
+    effects: Array<{ value: string; weight: number }>
+    samples: Array<{ selector: string; state: string; changes: string[] }>
+  } | null
 } | null
+
+function interactionFeel(effects: Array<{ value: string; weight: number }>): string {
+  const props = new Set(effects.map((effect) => effect.value.split(' ').slice(1).join(' ')))
+  const notes: string[] = []
+  if (props.has('transform') || props.has('scale') || props.has('translate'))
+    notes.push('moves and lifts')
+  if (props.has('box-shadow')) notes.push('elevates')
+  if (props.has('background-color') || props.has('background') || props.has('color'))
+    notes.push('tints')
+  if (props.has('opacity') || props.has('filter')) notes.push('fades')
+  if (props.has('text-decoration')) notes.push('underlines')
+  if (notes.length === 0) return 'subtle feedback'
+  return notes.join(' · ')
+}
 
 export function LayoutSection({
   layoutDNA,
@@ -43,6 +62,7 @@ export function LayoutSection({
   const density = uxDna?.density ?? null
   const flow = uxDna?.flow ?? []
   const keyframes = uxDna?.keyframes ?? []
+  const interaction = uxDna?.interaction ?? null
   const flowTargets = new Map<string, number>()
   for (const edge of flow) {
     flowTargets.set(edge.to, (flowTargets.get(edge.to) ?? 0) + 1)
@@ -207,6 +227,36 @@ export function LayoutSection({
                     </span>
                   </div>
                 ))}
+              </div>
+            </div>
+          ) : null}
+
+          {interaction && interaction.rules > 0 ? (
+            <div className="mt-8">
+              <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                Interaction feedback · {interaction.rules} state rules —{' '}
+                {interactionFeel(interaction.effects)}
+              </p>
+              <div className="space-y-1">
+                {interaction.effects.slice(0, 6).map((effect) => {
+                  const max = interaction.effects[0]?.weight || 1
+                  return (
+                    <div key={effect.value} className="flex items-center gap-3">
+                      <span className="w-40 shrink-0 truncate font-mono text-[11px] text-foreground">
+                        {effect.value}
+                      </span>
+                      <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-secondary/50">
+                        <span
+                          className="block h-full rounded-full bg-[color-mix(in_oklab,var(--ui-accent)_45%,transparent)]"
+                          style={{ width: `${(effect.weight / max) * 100}%` }}
+                        />
+                      </span>
+                      <span className="w-12 shrink-0 text-right font-mono text-[10px] text-muted-foreground">
+                        {effect.weight}
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           ) : null}

@@ -722,6 +722,13 @@ export async function runSimpleScan({
           flow: browserFlow ?? undefined,
           keyframes: browserKeyframes?.slice(0, 16) ?? undefined,
           transitions: browserAudit?.transitions?.slice(0, 12) ?? undefined,
+          interaction: browserAudit?.interaction
+            ? {
+                rules: browserAudit.interaction.rules,
+                effects: browserAudit.interaction.effects.slice(0, 12),
+                samples: browserAudit.interaction.samples.slice(0, 10),
+              }
+            : undefined,
         }
       : undefined
 
