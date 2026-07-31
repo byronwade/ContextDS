@@ -273,6 +273,15 @@ function ProvenanceSection({ result }: { result: ScanResult }) {
   const summary = result.summary
   const num = (value: unknown) => (typeof value === 'number' ? value : null)
   const str = (value: unknown) => (typeof value === 'string' && value ? value : null)
+  const coverage = (meta.renderCoverage ?? null) as {
+    overall: number
+    colors: number
+    fonts: number
+    verifiedColors: number
+    dormantColors: number
+    addedFromRender: number
+    elementCount: number
+  } | null
 
   return (
     <SectionShell
@@ -294,6 +303,20 @@ function ProvenanceSection({ result }: { result: ScanResult }) {
             }
           />
           <FactRow label="Wallace analysis" value={meta.wallace ? 'yes' : 'no'} />
+          <FactRow
+            label="Render audit"
+            value={
+              coverage
+                ? `${coverage.overall}% of painted page explained · ${coverage.elementCount} elements measured`
+                : 'not run (fast scan)'
+            }
+          />
+          {coverage ? (
+            <FactRow
+              label="Token verification"
+              value={`${coverage.verifiedColors} verified · ${coverage.dormantColors} dormant · ${coverage.addedFromRender} recovered`}
+            />
+          ) : null}
           <FactRow label="Page title" value={str(meta.pageTitle) ?? '—'} />
         </div>
         <div>

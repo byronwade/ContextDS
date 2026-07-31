@@ -125,6 +125,17 @@ export interface StoredScanResult {
     browserEngine?: string
     wallace?: boolean
     pageTitle?: string
+    /** Render-audit coverage — how well extraction matches the painted page */
+    renderCoverage?: {
+      overall: number
+      colors: number
+      fonts: number
+      sizes: number
+      verifiedColors: number
+      dormantColors: number
+      addedFromRender: number
+      elementCount: number
+    }
   }
   error?: string
 }

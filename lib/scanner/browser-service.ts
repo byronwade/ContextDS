@@ -19,12 +19,27 @@ export type BrowserCaptureAuth = {
   headers?: Record<string, string>
 }
 
+export type BrowserRenderAudit = {
+  viewport: { width: number; height: number }
+  elementCount: number
+  colors: Array<{ kind: string; value: string; weight: number }>
+  fonts: Array<{ value: string; weight: number }>
+  fontSizes: Array<{ value: string; weight: number }>
+  fontWeights: Array<{ value: string; weight: number }>
+  spacing: Array<{ value: string; weight: number }>
+  radius: Array<{ value: string; weight: number }>
+  shadows: Array<{ value: string; weight: number }>
+  loadedFonts: string[]
+}
+
 export type BrowserServiceResult = {
   url: string
   title?: string
   sources: CssSource[]
   screenshot?: { mime: string; base64: string } | null
   screenshots?: BrowserScreenshot[]
+  /** Visible-DOM measurement of what the page actually paints */
+  audit?: BrowserRenderAudit | null
   bytes: number
   sourceCount: number
 }
@@ -107,6 +122,7 @@ export async function scanWithBrowserService(
       }>
       screenshot?: { mime: string; base64: string } | null
       screenshots?: BrowserScreenshot[]
+      audit?: BrowserRenderAudit | null
       bytes?: number
       sourceCount?: number
     }
@@ -121,6 +137,7 @@ export async function scanWithBrowserService(
       sources,
       screenshot: data.screenshot ?? null,
       screenshots: Array.isArray(data.screenshots) ? data.screenshots : undefined,
+      audit: data.audit ?? null,
       bytes: data.bytes || sources.reduce((sum, s) => sum + s.bytes, 0),
       sourceCount: data.sourceCount || sources.length,
     }

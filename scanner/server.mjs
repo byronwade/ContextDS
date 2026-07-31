@@ -315,6 +315,129 @@ async function collectPage(url, { screenshot = true, pages = 3, paths = null, au
       }
     })
 
+    // Render audit — walk the visible DOM and measure what is actually painted,
+    // weighted by on-screen area / text mass. This is ground truth the CSS-text
+    // pipeline can never see (dormant rules, unused variables, dead themes).
+    let audit = null
+    try {
+      audit = await page.evaluate(() => {
+        const vw = innerWidth
+        const vh = innerHeight
+        const MAX_ELEMENTS = 3000
+        const colorMap = new Map()
+        const fontMap = new Map()
+        const sizeMap = new Map()
+        const weightMap = new Map()
+        const spaceMap = new Map()
+        const radiusMap = new Map()
+        const shadowMap = new Map()
+        const bump = (map, key, weight) => {
+          if (!key) return
+          map.set(key, (map.get(key) || 0) + weight)
+        }
+
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT)
+        let count = 0
+        let el = document.body
+        while (el && count < MAX_ELEMENTS) {
+          const current = el
+          el = walker.nextNode()
+          if (!(current instanceof Element)) continue
+          const rect = current.getBoundingClientRect()
+          if (rect.width < 2 || rect.height < 2) continue
+          // Sample the first ~3 viewports of the page
+          if (rect.bottom < 0 || rect.top > vh * 3) continue
+          const cs = getComputedStyle(current)
+          if (cs.visibility === 'hidden' || cs.display === 'none') continue
+          if (Number(cs.opacity) === 0) continue
+          count += 1
+
+          const area = Math.min(rect.width, vw) * Math.min(rect.height, vh)
+          const bg = cs.backgroundColor
+          if (bg && bg !== 'transparent' && !/rgba\(\s*\d+,\s*\d+,\s*\d+,\s*0\s*\)/.test(bg)) {
+            bump(colorMap, 'bg|' + bg, area)
+          }
+
+          let chars = 0
+          for (const child of current.childNodes) {
+            if (child.nodeType === 3) chars += (child.textContent || '').trim().length
+          }
+          if (chars > 0) {
+            const fontSize = parseFloat(cs.fontSize) || 16
+            const textMass = chars * fontSize * fontSize
+            bump(colorMap, 'text|' + cs.color, textMass)
+            const family = (cs.fontFamily || '').split(',')[0].replace(/['"]/g, '').trim()
+            bump(fontMap, family, textMass)
+            bump(sizeMap, Math.round(fontSize) + 'px', chars)
+            bump(weightMap, String(cs.fontWeight), chars)
+          }
+
+          if (parseFloat(cs.borderTopWidth) > 0) {
+            bump(colorMap, 'border|' + cs.borderTopColor, (rect.width + rect.height) * 2)
+          }
+          for (const raw of [
+            cs.marginTop,
+            cs.marginBottom,
+            cs.paddingTop,
+            cs.paddingBottom,
+            cs.rowGap,
+            cs.columnGap,
+          ]) {
+            const n = parseFloat(raw)
+            if (Number.isFinite(n) && n > 1 && n < 300) bump(spaceMap, Math.round(n) + 'px', 1)
+          }
+          const radius = parseFloat(cs.borderTopLeftRadius)
+          if (Number.isFinite(radius) && radius > 0 && radius < 200) {
+            bump(radiusMap, Math.round(radius) + 'px', 1)
+          }
+          if (cs.boxShadow && cs.boxShadow !== 'none') {
+            bump(shadowMap, cs.boxShadow.slice(0, 160), 1)
+          }
+        }
+
+        const top = (map, n) =>
+          Array.from(map.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, n)
+            .map(([value, weight]) => ({ value, weight: Math.round(weight) }))
+
+        let loadedFonts = []
+        try {
+          loadedFonts = Array.from(
+            new Set(
+              Array.from(document.fonts)
+                .filter((face) => face.status === 'loaded')
+                .map((face) => face.family.replace(/['"]/g, ''))
+            )
+          ).slice(0, 20)
+        } catch {
+          loadedFonts = []
+        }
+
+        return {
+          viewport: { width: vw, height: vh },
+          elementCount: count,
+          colors: top(colorMap, 48).map((entry) => {
+            const split = entry.value.indexOf('|')
+            return {
+              kind: entry.value.slice(0, split),
+              value: entry.value.slice(split + 1),
+              weight: entry.weight,
+            }
+          }),
+          fonts: top(fontMap, 10),
+          fontSizes: top(sizeMap, 14),
+          fontWeights: top(weightMap, 8),
+          spacing: top(spaceMap, 20),
+          radius: top(radiusMap, 12),
+          shadows: top(shadowMap, 8),
+          loadedFonts,
+        }
+      })
+    } catch {
+      audit = null
+    }
+
     const screenshots = []
     if (screenshot) {
       screenshots.push(...(await captureViewportSet(page, 'homepage', { includeFullPage: true })))
@@ -389,6 +512,7 @@ async function collectPage(url, { screenshot = true, pages = 3, paths = null, au
       // Legacy single-shot field for older clients
       screenshot: primary ? { mime: primary.mime, base64: primary.base64 } : null,
       screenshots,
+      audit,
       bytes: total,
       sourceCount: sources.length,
     }

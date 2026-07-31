@@ -24,9 +24,11 @@ import { collectComputedCss } from '@/lib/extractors/computed-css'
 import { type CssSource, collectStaticCss } from '@/lib/extractors/static-css'
 import {
   type BrowserCaptureAuth,
+  type BrowserRenderAudit,
   isBrowserServiceConfigured,
   scanWithBrowserService,
 } from '@/lib/scanner/browser-service'
+import { reconcileWithAudit, type RenderCoverage } from '@/lib/analyzers/render-audit'
 import { analyzeWithWallace, mergeCuratedSets } from '@/lib/scanner/wallace-bridge'
 import { uploadScreenshot } from '@/lib/storage/blob-storage'
 import { trackStatEvent } from '@/lib/storage/platform-stats'
@@ -341,6 +343,8 @@ export async function runSimpleScan({
   let usedWallace = false
   let browserScreenshot: { mime?: string; base64: string } | null = null
   let browserScreenshotSet: CapturedScreenshot[] | null = null
+  let browserAudit: BrowserRenderAudit | null = null
+  let renderCoverage: RenderCoverage | null = null
 
   if (mode === 'accurate') {
     if (isBrowserServiceConfigured()) {
@@ -359,6 +363,7 @@ export async function runSimpleScan({
           pageTitle = browser.title
           browserScreenshot = browser.screenshot ?? null
           browserScreenshotSet = browser.screenshots ?? null
+          browserAudit = browser.audit ?? null
         }
       } catch (error) {
         console.warn('[simple-scan] Browser scanner service failed, falling back:', error)
@@ -469,6 +474,29 @@ export async function runSimpleScan({
     }
   } catch (error) {
     console.warn('[simple-scan] Wallace merge skipped:', error)
+  }
+
+  // 2b) Render-audit reconciliation — fold measured page reality into the
+  // CSS-derived tokens: verified usage weights, dormant demotion, missed
+  // rendered values, and a coverage score that feeds confidence.
+  if (browserAudit && browserAudit.elementCount > 20) {
+    try {
+      const reconciled = reconcileWithAudit(curated, browserAudit)
+      curated = reconciled.curated
+      renderCoverage = reconciled.coverage
+      tokenGroups = toLegacyGroups(curated)
+      tokensExtracted = Math.max(tokensExtracted, countCurated(curated))
+      // Confidence becomes evidence-based: blend CSS-derived score with how
+      // much of the painted page the extraction actually explains.
+      confidence = Math.min(
+        99,
+        Math.round(confidence * 0.55 + reconciled.coverage.overall * 0.45)
+      )
+      completeness = Math.min(100, completeness + 4)
+      reliability = Math.round((confidence + completeness) / 2)
+    } catch (error) {
+      console.warn('[simple-scan] render-audit reconciliation skipped:', error)
+    }
   }
 
   progress.phase('layout', 'Profiling layout DNA')
@@ -625,6 +653,7 @@ export async function runSimpleScan({
       browserEngine,
       wallace: usedWallace,
       pageTitle,
+      renderCoverage: renderCoverage ?? undefined,
     },
   }
 
