@@ -591,6 +591,82 @@ export const designContractTools = {
     },
   }),
 
+  compose_design_artifacts: tool({
+    description:
+      'One call, three artifacts for a scanned domain: the full DESIGN.md, a Tailwind v4 @theme block, and CSS :root tokens — all derived deterministically from the scan. Use when the user wants "the design system as code/files" in chat.',
+    inputSchema: z.object({
+      domain: z.string(),
+    }),
+    execute: async ({ domain }) => {
+      const key = normalizeDomain(domain)
+      const scan = await getScan(key)
+      const curated = scan?.curatedTokens as CuratedLike | undefined
+      if (!curated) {
+        return { found: false, domain: key, suggestion: `Scan ${key} first with scan_site.` }
+      }
+
+      const color = analyzeColors((curated.colors ?? []) as TokenLike[])
+      const background =
+        color.polarity === 'dark-leaning' ? color.darkest : color.lightest
+      const foreground =
+        color.polarity === 'dark-leaning' ? color.lightest : color.darkest
+      const midNeutral = color.neutrals[Math.floor(color.neutrals.length / 2)]
+      const roles: Array<[string, string | undefined]> = [
+        ['background', background?.hex],
+        ['foreground', foreground?.hex],
+        ['primary', color.accent?.hex],
+        ['muted-foreground', midNeutral?.hex],
+      ]
+      const definedRoles = roles.filter(
+        (entry): entry is [string, string] => Boolean(entry[1])
+      )
+
+      const cssLines: string[] = [':root {']
+      for (const [role, value] of definedRoles) cssLines.push(`  --${role}: ${value};`)
+      color.chromatic.slice(0, 8).forEach((c, i) => {
+        cssLines.push(`  --palette-${i + 1}: ${c.hex};`)
+      })
+      ;(curated.typography?.families ?? []).slice(0, 3).forEach((token, i) => {
+        cssLines.push(`  --font-${i === 0 ? 'primary' : `alt-${i}`}: ${token.value};`)
+      })
+      ;(curated.spacing ?? []).slice(0, 10).forEach((token, i) => {
+        cssLines.push(`  --space-${i + 1}: ${token.value};`)
+      })
+      ;(curated.radius ?? []).slice(0, 6).forEach((token, i) => {
+        cssLines.push(`  --radius-${i + 1}: ${token.value};`)
+      })
+      ;(curated.shadows ?? []).slice(0, 4).forEach((token, i) => {
+        cssLines.push(`  --shadow-${i + 1}: ${token.value};`)
+      })
+      cssLines.push('}')
+
+      const tailwindLines: string[] = [
+        '@theme {',
+        ...definedRoles.map(([role, value]) => `  --color-${role}: ${value};`),
+        ...color.chromatic.slice(0, 8).map((c, i) => `  --color-palette-${i + 1}: ${c.hex};`),
+        ...(curated.typography?.families ?? [])
+          .slice(0, 2)
+          .map((token, i) => `  --font-${i === 0 ? 'sans' : 'display'}: ${token.value};`),
+        ...(curated.radius ?? [])
+          .slice(0, 3)
+          .map((token, i) => `  --radius-${['sm', 'md', 'lg'][i]}: ${token.value};`),
+        '}',
+      ]
+
+      return {
+        found: true,
+        domain: key,
+        designMd: scan?.designMd
+          ? { fileName: scan.designMd.fileName, markdown: scan.designMd.markdown }
+          : null,
+        tailwindTheme: tailwindLines.join('\n'),
+        cssTokens: cssLines.join('\n'),
+        installCommand: scan?.designContract?.installCommand ?? null,
+        note: 'All three artifacts are derived deterministically from the stored scan — role guesses (background/foreground/primary) are heuristic.',
+      }
+    },
+  }),
+
   check_contrast: tool({
     description:
       'WCAG contrast check between any two colors (hex/rgb/hsl/oklch). Returns ratio and AA/AAA grades for normal and large text.',

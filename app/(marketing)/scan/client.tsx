@@ -16,7 +16,6 @@ import {
 } from '@/components/ai-elements/conversation'
 import {
   Message,
-  MessageContent,
   MessageResponse,
 } from '@/components/ai-elements/message'
 import {
@@ -28,11 +27,17 @@ import {
   type PromptInputMessage,
 } from '@/components/ai-elements/prompt-input'
 import {
-  Tool,
-  ToolContent,
-  ToolHeader,
-  ToolInput,
-} from '@/components/ai-elements/tool'
+  Bubble,
+  BubbleContent,
+  BubbleGroup,
+} from '@/components/ui/bubble'
+import { Marker, MarkerContent, MarkerIcon } from '@/components/ui/marker'
+import {
+  CheckIcon,
+  CircleNotchIcon,
+  CopyIcon,
+  WarningCircleIcon,
+} from '@/lib/phosphor'
 import {
   ScanResultWidget,
   asScanWidgetPayload,
@@ -67,6 +72,7 @@ const TOOL_LABELS: Record<string, string> = {
   critique_design: 'Design critique',
   compare_systems: 'Comparing systems',
   generate_theme_css: 'Generating theme CSS',
+  compose_design_artifacts: 'Composing design artifacts',
   find_similar_systems: 'Searching the Library',
   check_contrast: 'Checking contrast',
 }
@@ -103,24 +109,109 @@ function ToolPart({ part }: { part: UIMessage['parts'][number] }) {
     return <ScanResultWidget data={payload} state={state} className="mt-1" />
   }
 
+  // Non-scan tools render as quiet conversation markers — click to inspect.
   return (
-    <Tool defaultOpen={state === 'output-error'} className="mt-1">
-      <ToolHeader
-        title={TOOL_LABELS[name] ?? name}
-        type={part.type as `tool-${string}`}
-        state={state}
-      />
-      <ToolContent>
-        {input !== undefined ? <ToolInput input={input} /> : null}
-        {errorText ? (
-          <p className="text-sm text-destructive">{errorText}</p>
-        ) : output !== undefined ? (
-          <pre className="overflow-x-auto rounded-md bg-muted/40 p-3 font-mono text-[11px] text-muted-foreground">
-            {typeof output === 'string' ? output : JSON.stringify(output, null, 2).slice(0, 1200)}
-          </pre>
+    <ToolMarker
+      label={TOOL_LABELS[name] ?? name}
+      detail={inputDomain || undefined}
+      state={state}
+      input={input}
+      output={output}
+      errorText={errorText}
+    />
+  )
+}
+
+function ToolMarker({
+  label,
+  detail,
+  state,
+  input,
+  output,
+  errorText,
+}: {
+  label: string
+  detail?: string
+  state: string
+  input?: unknown
+  output?: unknown
+  errorText?: string
+}) {
+  const [open, setOpen] = useState(false)
+  const running = state === 'input-streaming' || state === 'input-available'
+  const failed = state === 'output-error'
+
+  return (
+    <div className="mt-0.5 flex flex-col">
+      <Marker
+        role={running ? 'status' : undefined}
+        render={<button type="button" onClick={() => setOpen((value) => !value)} />}
+        aria-expanded={open}
+      >
+        <MarkerIcon>
+          {running ? (
+            <CircleNotchIcon className="animate-spin" />
+          ) : failed ? (
+            <WarningCircleIcon className="text-[var(--ui-danger)]" />
+          ) : (
+            <CheckIcon className="text-[var(--ui-success)]" />
+          )}
+        </MarkerIcon>
+        <MarkerContent className={cn(running && 'shimmer')}>
+          {running ? `${label}…` : label}
+        </MarkerContent>
+        {detail ? (
+          <span className="truncate font-mono text-[11px] text-[var(--ui-ink-muted)]">
+            {detail.replace(/^https?:\/\//, '')}
+          </span>
         ) : null}
-      </ToolContent>
-    </Tool>
+      </Marker>
+
+      {open ? (
+        <div className="mb-1 ml-6 mt-1 overflow-hidden rounded-[10px] border border-[var(--ui-border-soft)] bg-[var(--ui-paper-subtle)]">
+          {errorText ? (
+            <p className="px-3 py-2 text-[13px] text-[var(--ui-danger)]">{errorText}</p>
+          ) : (
+            <pre className="max-h-64 overflow-auto px-3 py-2 font-mono text-[11px] leading-relaxed text-[var(--ui-ink-secondary)]">
+              {output !== undefined
+                ? typeof output === 'string'
+                  ? output
+                  : JSON.stringify(output, null, 2).slice(0, 2000)
+                : input !== undefined
+                  ? JSON.stringify(input, null, 2).slice(0, 800)
+                  : 'No output yet.'}
+            </pre>
+          )}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+/** Quiet footer actions for the latest assistant turn. */
+function MessageActions({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+  if (!text) return null
+  return (
+    <div className="-ml-1 flex items-center gap-1 opacity-60 transition-opacity hover:opacity-100">
+      <button
+        type="button"
+        onClick={() => {
+          void navigator.clipboard?.writeText(text).catch(() => {})
+          setCopied(true)
+          window.setTimeout(() => setCopied(false), 1400)
+        }}
+        aria-label="Copy response"
+        title="Copy response"
+        className="inline-flex size-7 items-center justify-center rounded-[7px] text-[var(--ui-ink-muted)] transition-colors hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]"
+      >
+        {copied ? (
+          <CheckIcon className="size-3.5 text-[var(--ui-success)]" />
+        ) : (
+          <CopyIcon className="size-3.5" />
+        )}
+      </button>
+    </div>
   )
 }
 
@@ -246,72 +337,87 @@ export function ScanChat() {
               />
             ) : null}
 
-            {messages.map((message) => (
-              <Message
-                from={message.role}
-                key={message.id}
-                className={cn(
-                  'max-w-full animate-slide-in',
-                  message.role === 'user' ? 'max-w-[85%]' : 'max-w-full'
-                )}
-              >
-                <MessageContent
-                  className={cn(
-                    message.role === 'user' &&
-                      'rounded-[10px] bg-[var(--ui-paper-subtle)] px-3.5 py-2 text-[14px] leading-relaxed text-[var(--ui-ink)] shadow-[var(--shadow-control)]',
-                    message.role === 'assistant' &&
-                      'w-full max-w-none gap-3 text-[14px] leading-relaxed text-[var(--ui-ink)]'
-                  )}
+            {messages.map((message, messageIndex) => {
+              const isLastAssistant =
+                message.role === 'assistant' && messageIndex === messages.length - 1
+
+              if (message.role === 'user') {
+                return (
+                  <Message from="user" key={message.id} className="animate-slide-in">
+                    <BubbleGroup className="items-end">
+                      {message.parts.map((part, index) => {
+                        const content = partText(part)
+                        if (!content) return null
+                        return (
+                          <Bubble
+                            key={`${message.id}-t-${index}`}
+                            variant="default"
+                            align="end"
+                          >
+                            <BubbleContent>{content}</BubbleContent>
+                          </Bubble>
+                        )
+                      })}
+                    </BubbleGroup>
+                  </Message>
+                )
+              }
+
+              return (
+                <Message
+                  from={message.role}
+                  key={message.id}
+                  className="max-w-full animate-slide-in"
                 >
-                  {message.parts.map((part, index) => {
-                    if (part.type === 'text') {
-                      const content = partText(part)
-                      if (!content) return null
-                      return message.role === 'assistant' ? (
-                        <MessageResponse key={`${message.id}-t-${index}`}>
-                          {content}
-                        </MessageResponse>
-                      ) : (
-                        <p
-                          key={`${message.id}-t-${index}`}
-                          className="whitespace-pre-wrap"
-                        >
-                          {content}
-                        </p>
-                      )
-                    }
-                    if (isToolUIPart(part)) {
-                      return (
-                        <ToolPart key={`${message.id}-tool-${index}`} part={part} />
-                      )
-                    }
-                    return null
-                  })}
-                </MessageContent>
-              </Message>
-            ))}
+                  <div className="flex w-full flex-col gap-2 text-[14px] leading-relaxed text-[var(--ui-ink)]">
+                    {message.parts.map((part, index) => {
+                      if (part.type === 'text') {
+                        const content = partText(part)
+                        if (!content) return null
+                        return (
+                          <Bubble
+                            key={`${message.id}-t-${index}`}
+                            variant="ghost"
+                            className="w-full"
+                          >
+                            <BubbleContent className="w-full">
+                              <MessageResponse>{content}</MessageResponse>
+                            </BubbleContent>
+                          </Bubble>
+                        )
+                      }
+                      if (isToolUIPart(part)) {
+                        return (
+                          <ToolPart key={`${message.id}-tool-${index}`} part={part} />
+                        )
+                      }
+                      return null
+                    })}
+                    {isLastAssistant && !busy ? (
+                      <MessageActions
+                        text={message.parts.map(partText).filter(Boolean).join('\n\n')}
+                      />
+                    ) : null}
+                  </div>
+                </Message>
+              )
+            })}
 
             {busy && messages.at(-1)?.role === 'user' ? (
-              <div className="flex items-center gap-2 px-1 text-[13px] text-[var(--ui-ink-secondary)] animate-fade-in">
-                <span className="inline-flex gap-1">
-                  <span className="size-1.5 animate-pulse rounded-full bg-[var(--ui-accent)]" />
-                  <span
-                    className="size-1.5 animate-pulse rounded-full bg-[var(--ui-accent)]"
-                    style={{ animationDelay: '120ms' }}
-                  />
-                  <span
-                    className="size-1.5 animate-pulse rounded-full bg-[var(--ui-accent)]"
-                    style={{ animationDelay: '240ms' }}
-                  />
-                </span>
-                Working…
-              </div>
+              <Marker role="status" className="animate-fade-in px-1">
+                <MarkerIcon>
+                  <CircleNotchIcon className="animate-spin text-[var(--ui-accent)]" />
+                </MarkerIcon>
+                <MarkerContent className="shimmer">Working…</MarkerContent>
+              </Marker>
             ) : null}
 
             {error ? (
-              <div className="rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-danger-soft)] px-3.5 py-2.5 text-[13px] text-[var(--ui-danger)]">
-                {error.message || 'Something went wrong. Try again.'}
-              </div>
+              <Bubble variant="destructive" className="max-w-full">
+                <BubbleContent>
+                  {error.message || 'Something went wrong. Try again.'}
+                </BubbleContent>
+              </Bubble>
             ) : null}
           </ConversationContent>
           <ConversationScrollButton />
