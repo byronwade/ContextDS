@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { TokenColorSwatch } from "@/components/atoms/token-color-swatch"
 import { ConfidenceMeter } from "@/components/atoms/confidence-meter"
-import { Copy, ExternalLink } from "lucide-react"
+import { CopyIcon as Copy, ArrowSquareOutIcon as ExternalLink } from '@/lib/phosphor'
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 

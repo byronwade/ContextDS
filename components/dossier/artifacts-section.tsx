@@ -1,7 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, Copy, Download, FileText, Package, Sparkles, Terminal } from 'lucide-react'
+import {
+  CheckIcon,
+  CopyIcon,
+  DownloadSimpleIcon,
+  FileTextIcon,
+  PackageIcon,
+  SparkleIcon,
+  TerminalIcon,
+} from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { SectionShell, downloadText, useCopy } from './shared'
@@ -60,7 +68,7 @@ export function ArtifactsSection({
         <div className="space-y-5">
           <div className="rounded-2xl border border-[color:var(--soft-border)] bg-card/50 p-5">
             <div className="flex items-center gap-2">
-              <Package className="size-4 text-[oklch(0.78_0.08_185)]" />
+              <PackageIcon className="size-4 text-[oklch(0.78_0.08_185)]" />
               <p className="text-sm font-medium text-foreground">Design Contract pack</p>
             </div>
             <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
@@ -74,7 +82,7 @@ export function ArtifactsSection({
                 window.location.href = `/api/contracts/download?domain=${encodeURIComponent(domain)}`
               }}
             >
-              <Download className="size-3.5" />
+              <DownloadSimpleIcon className="size-3.5" />
               Download ZIP
             </Button>
             {installCommand ? (
@@ -84,14 +92,14 @@ export function ArtifactsSection({
                 className="mt-2 flex w-full items-center gap-2 rounded-lg border border-[color:var(--soft-border)] bg-background/60 px-3 py-2 text-left font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground"
                 title="Copy install command"
               >
-                <Terminal className="size-3.5 shrink-0" />
+                <TerminalIcon className="size-3.5 shrink-0" />
                 <span className="truncate">
                   {copiedKey === 'install' ? 'copied to clipboard' : installCommand}
                 </span>
                 {copiedKey === 'install' ? (
-                  <Check className="ml-auto size-3 shrink-0 text-[oklch(0.78_0.08_185)]" />
+                  <CheckIcon className="ml-auto size-3 shrink-0 text-[oklch(0.78_0.08_185)]" />
                 ) : (
-                  <Copy className="ml-auto size-3 shrink-0 opacity-60" />
+                  <CopyIcon className="ml-auto size-3 shrink-0 opacity-60" />
                 )}
               </button>
             ) : null}
@@ -136,7 +144,7 @@ export function ArtifactsSection({
                 className="flex w-full items-center justify-between gap-3 rounded-xl border border-transparent px-3 py-2 text-left transition-colors hover:border-[color:var(--soft-border)] hover:bg-card/50"
               >
                 <span className="flex items-center gap-2.5">
-                  <FileText className="size-3.5 text-muted-foreground" />
+                  <FileTextIcon className="size-3.5 text-muted-foreground" />
                   <span className="font-mono text-xs text-foreground">{file.label}</span>
                 </span>
                 <span className="font-mono text-[10px] text-muted-foreground">
@@ -164,9 +172,9 @@ export function ArtifactsSection({
                     )}
                   >
                     {docEntry.id === 'skill' ? (
-                      <Sparkles className="size-3" />
+                      <SparkleIcon className="size-3" />
                     ) : (
-                      <FileText className="size-3" />
+                      <FileTextIcon className="size-3" />
                     )}
                     {docEntry.label}
                   </button>
@@ -180,9 +188,9 @@ export function ArtifactsSection({
                   onClick={() => copy(`doc-${doc.id}`, doc.markdown)}
                 >
                   {copiedKey === `doc-${doc.id}` ? (
-                    <Check className="size-3" />
+                    <CheckIcon className="size-3" />
                   ) : (
-                    <Copy className="size-3" />
+                    <CopyIcon className="size-3" />
                   )}
                   copy
                 </Button>
@@ -192,7 +200,7 @@ export function ArtifactsSection({
                   className="gap-1 font-mono"
                   onClick={() => downloadText(doc.fileName, doc.markdown)}
                 >
-                  <Download className="size-3" />
+                  <DownloadSimpleIcon className="size-3" />
                   download
                 </Button>
               </div>

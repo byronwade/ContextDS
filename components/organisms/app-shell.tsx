@@ -3,17 +3,18 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import {
-  BookOpen,
-  Library,
-  Menu,
-  MessageSquare,
-  PanelLeftClose,
-  PanelLeft,
-  PenTool,
-  Plug,
-  Plus,
-  X,
-} from 'lucide-react'
+  BookOpenIcon,
+  BooksIcon,
+  ChatCircleIcon,
+  IconContext,
+  ListIcon,
+  PenNibIcon,
+  PlugsIcon,
+  PlusIcon,
+  SidebarIcon,
+  SidebarSimpleIcon,
+  XIcon,
+} from '@phosphor-icons/react'
 import { ThemeToggle } from '@/components/atoms/theme-toggle'
 import { Button } from '@/components/ui/button'
 import { pushRecent, readRecents, type RecentDomain } from '@/lib/recents'
@@ -30,11 +31,11 @@ type AppShellProps = {
 }
 
 const PRIMARY_NAV = [
-  { href: '/', label: 'Chat', page: 'chat' as const, icon: MessageSquare, pro: false },
-  { href: '/community', label: 'Library', page: 'library' as const, icon: Library, pro: false },
-  { href: '/studio', label: 'Studio', page: 'studio' as const, icon: PenTool, pro: true },
-  { href: '/mcp', label: 'MCP', page: 'mcp' as const, icon: Plug, pro: true },
-  { href: '/docs', label: 'Docs', page: 'docs' as const, icon: BookOpen, pro: false },
+  { href: '/', label: 'Chat', page: 'chat' as const, icon: ChatCircleIcon, pro: false },
+  { href: '/community', label: 'Library', page: 'library' as const, icon: BooksIcon, pro: false },
+  { href: '/studio', label: 'Studio', page: 'studio' as const, icon: PenNibIcon, pro: true },
+  { href: '/mcp', label: 'MCP', page: 'mcp' as const, icon: PlugsIcon, pro: true },
+  { href: '/docs', label: 'Docs', page: 'docs' as const, icon: BookOpenIcon, pro: false },
 ] as const
 
 function SidebarBody({
@@ -65,7 +66,7 @@ function SidebarBody({
         onClick={onNavigate}
         className="mb-2 inline-flex items-center gap-2 rounded-xl border border-sidebar-border bg-sidebar-accent/40 px-2.5 py-2 text-sm text-sidebar-foreground transition hover:bg-sidebar-accent"
       >
-        <Plus className="size-3.5 opacity-80" aria-hidden />
+        <PlusIcon className="size-3.5 opacity-80" aria-hidden />
         New chat
       </Link>
 
@@ -157,6 +158,7 @@ export function AppShell({
   }, [recentDomain])
 
   return (
+    <IconContext.Provider value={{ weight: 'duotone' }}>
     <div
       className={cn(
         'flex h-dvh max-h-dvh overflow-hidden bg-background text-foreground',
@@ -206,7 +208,7 @@ export function AppShell({
               onClick={() => setCollapsed(false)}
               aria-label="Expand sidebar"
             >
-              <PanelLeft className="size-4" />
+              <SidebarSimpleIcon className="size-4" />
             </Button>
           </div>
         ) : (
@@ -219,7 +221,7 @@ export function AppShell({
               onClick={() => setCollapsed(true)}
               aria-label="Collapse sidebar"
             >
-              <PanelLeftClose className="size-4" />
+              <SidebarIcon className="size-4" />
             </Button>
           </div>
         )}
@@ -252,7 +254,7 @@ export function AppShell({
             onClick={() => setMobileOpen(true)}
             aria-label="Open menu"
           >
-            {mobileOpen ? <X className="size-4" /> : <Menu className="size-4" />}
+            {mobileOpen ? <XIcon className="size-4" /> : <ListIcon className="size-4" />}
           </Button>
           <Link href="/" className="flex items-baseline gap-0.5">
             <span className="font-serif text-base tracking-tight">designcontracts</span>
@@ -265,6 +267,7 @@ export function AppShell({
         </main>
       </div>
     </div>
+    </IconContext.Provider>
   )
 }
 

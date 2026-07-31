@@ -3,7 +3,7 @@
 import Link from "next/link"
 import React, { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Search, Sparkles, Palette, ChevronDown, Loader2 } from "lucide-react"
+import { MagnifyingGlassIcon as Search, SparkleIcon as Sparkles, PaletteIcon as Palette, CaretDownIcon as ChevronDown, CircleNotchIcon as Loader2 } from '@/lib/phosphor'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/atoms/theme-toggle"

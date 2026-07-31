@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
+import type { Route } from "next"
 import Link from "next/link"
-import { Check, Minus } from "lucide-react"
+import { CheckIcon, MinusIcon } from "@phosphor-icons/react/dist/ssr"
 import { MarketingHeader } from "@/components/organisms/marketing-header"
 import { MarketingFooter } from "@/components/organisms/marketing-footer"
 import { Button } from "@/components/ui/button"
@@ -104,8 +105,8 @@ const faqs = [
 ]
 
 function CellValue({ value }: { value: string | boolean }) {
-  if (value === true) return <Check className="mx-auto size-4 text-[oklch(0.72_0.12_165)]" />
-  if (value === false) return <Minus className="mx-auto size-4 text-muted-foreground/40" />
+  if (value === true) return <CheckIcon weight="duotone" className="mx-auto size-4 text-[oklch(0.72_0.12_165)]" />
+  if (value === false) return <MinusIcon weight="duotone" className="mx-auto size-4 text-muted-foreground/40" />
   return <span className="font-mono text-xs text-foreground">{value}</span>
 }
 
@@ -164,7 +165,7 @@ export default function PricingPage() {
                 <ul className="mt-6 flex-1 space-y-2.5">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                      <Check className="mt-0.5 size-3.5 shrink-0 text-[oklch(0.72_0.12_165)]" />
+                      <CheckIcon weight="duotone" className="mt-0.5 size-3.5 shrink-0 text-[oklch(0.72_0.12_165)]" />
                       {feature}
                     </li>
                   ))}
@@ -174,7 +175,7 @@ export default function PricingPage() {
                   variant={plan.highlight ? "default" : "outline"}
                   className="mt-8 w-full"
                 >
-                  <Link href={plan.cta.href}>{plan.cta.label}</Link>
+                  <Link href={plan.cta.href as Route}>{plan.cta.label}</Link>
                 </Button>
               </div>
             ))}

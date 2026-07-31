@@ -2,7 +2,14 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Check, Copy, KeyRound, Lock, Plug, Sparkles } from 'lucide-react'
+import {
+  CheckIcon,
+  CopyIcon,
+  KeyIcon,
+  LockIcon,
+  PlugsIcon,
+  SparkleIcon,
+} from '@phosphor-icons/react'
 import { AppShell } from '@/components/organisms/app-shell'
 import { Button } from '@/components/ui/button'
 import { Overline, useCopy } from '@/components/dossier/shared'
@@ -128,9 +135,9 @@ export default function McpClient() {
                     onClick={() => copy('mcp-config', snippet)}
                   >
                     {copiedKey === 'mcp-config' ? (
-                      <Check className="size-3" />
+                      <CheckIcon className="size-3" />
                     ) : (
-                      <Copy className="size-3" />
+                      <CopyIcon className="size-3" />
                     )}
                     copy
                   </Button>
@@ -165,7 +172,7 @@ export default function McpClient() {
             <aside className="space-y-4 lg:sticky lg:top-8 lg:self-start">
               <div className="rounded-2xl border border-[oklch(0.78_0.08_185/0.3)] bg-[oklch(0.78_0.08_185/0.05)] p-5">
                 <div className="flex items-center gap-2">
-                  <KeyRound className="size-4 text-[oklch(0.78_0.08_185)]" />
+                  <KeyIcon className="size-4 text-[oklch(0.78_0.08_185)]" />
                   <p className="text-sm font-medium text-foreground">API key</p>
                   <span className="ml-auto rounded-full border border-[oklch(0.78_0.08_185/0.4)] px-2 py-px font-mono text-[10px] text-[oklch(0.78_0.08_185)]">
                     Pro
@@ -182,9 +189,9 @@ export default function McpClient() {
                       >
                         <span className="truncate">{apiKey}</span>
                         {copiedKey === 'api-key' ? (
-                          <Check className="ml-auto size-3 shrink-0 text-[oklch(0.78_0.08_185)]" />
+                          <CheckIcon className="ml-auto size-3 shrink-0 text-[oklch(0.78_0.08_185)]" />
                         ) : (
-                          <Copy className="ml-auto size-3 shrink-0 opacity-60" />
+                          <CopyIcon className="ml-auto size-3 shrink-0 opacity-60" />
                         )}
                       </button>
                     ) : (
@@ -193,7 +200,7 @@ export default function McpClient() {
                       </p>
                     )}
                     <Button size="sm" className="w-full gap-2" onClick={generateKey}>
-                      <Plug className="size-3.5" />
+                      <PlugsIcon className="size-3.5" />
                       {apiKey ? 'Rotate key' : 'Generate API key'}
                     </Button>
                   </div>
@@ -205,7 +212,7 @@ export default function McpClient() {
                     </p>
                     <Button asChild size="sm" className="w-full gap-2">
                       <Link href="/pricing">
-                        <Sparkles className="size-3.5" />
+                        <SparkleIcon className="size-3.5" />
                         Upgrade to Pro
                       </Link>
                     </Button>
@@ -215,7 +222,7 @@ export default function McpClient() {
 
               <div className="rounded-2xl border border-[color:var(--soft-border)] bg-card/40 p-5">
                 <div className="flex items-center gap-2">
-                  <Lock className="size-3.5 text-muted-foreground" />
+                  <LockIcon className="size-3.5 text-muted-foreground" />
                   <p className="text-sm font-medium text-foreground">Rate limits</p>
                 </div>
                 <dl className="mt-3 space-y-1.5 font-mono text-[11px] text-muted-foreground">

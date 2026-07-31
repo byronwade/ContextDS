@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useState } from 'react'
-import { Check, Copy } from 'lucide-react'
+import { CheckIcon, CopyIcon } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 
 export function useCopy(timeout = 1400) {
@@ -159,9 +159,9 @@ export function CopyChip({
     >
       <span className="truncate">{label ?? value}</span>
       {copied ? (
-        <Check className="size-3 shrink-0 text-[oklch(0.78_0.08_185)]" />
+        <CheckIcon className="size-3 shrink-0 text-[oklch(0.78_0.08_185)]" />
       ) : (
-        <Copy className="size-3 shrink-0 opacity-50 group-hover:opacity-100" />
+        <CopyIcon className="size-3 shrink-0 opacity-50 group-hover:opacity-100" />
       )}
     </button>
   )

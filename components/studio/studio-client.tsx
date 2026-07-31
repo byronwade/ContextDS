@@ -3,16 +3,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import {
-  Check,
-  Copy,
-  Download,
-  Eye,
-  FileText,
-  Lock,
-  Plus,
-  Sparkles,
-  Trash2,
-} from 'lucide-react'
+  CheckIcon,
+  CopyIcon,
+  DownloadSimpleIcon,
+  EyeIcon,
+  FileTextIcon,
+  LockIcon,
+  PlusIcon,
+  SparkleIcon,
+  TrashIcon,
+} from '@phosphor-icons/react'
 import { AppShell } from '@/components/organisms/app-shell'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -253,7 +253,7 @@ export default function StudioClient() {
               {!isPro && ready ? (
                 <Button asChild variant="outline" size="sm" className="gap-2">
                   <Link href="/pricing">
-                    <Sparkles className="size-3.5 text-[oklch(0.78_0.08_185)]" />
+                    <SparkleIcon className="size-3.5 text-[oklch(0.78_0.08_185)]" />
                     Unlock export with Pro
                   </Link>
                 </Button>
@@ -265,7 +265,7 @@ export default function StudioClient() {
                 title={isPro ? 'Download DESIGN.md' : 'Exporting authored contracts is a Pro feature'}
                 onClick={() => downloadText(`${system.slug}-DESIGN.md`, markdown)}
               >
-                {isPro ? <Download className="size-3.5" /> : <Lock className="size-3.5" />}
+                {isPro ? <DownloadSimpleIcon className="size-3.5" /> : <LockIcon className="size-3.5" />}
                 Export DESIGN.md
               </Button>
             </div>
@@ -301,7 +301,7 @@ export default function StudioClient() {
                     }
                     className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground"
                   >
-                    <Plus className="size-3" /> add role
+                    <PlusIcon className="size-3" /> add role
                   </button>
                 </div>
                 <div className="space-y-1.5">
@@ -355,7 +355,7 @@ export default function StudioClient() {
                         className="text-muted-foreground/60 transition-colors hover:text-destructive disabled:opacity-30"
                         aria-label={`Remove ${color.role}`}
                       >
-                        <Trash2 className="size-3.5" />
+                        <TrashIcon className="size-3.5" />
                       </button>
                     </div>
                   ))}
@@ -368,7 +368,7 @@ export default function StudioClient() {
                     value={system.fontDisplay}
                     onChange={(event) => update('fontDisplay', event.target.value)}
                     className="rounded-xl border-[color:var(--soft-border)] bg-card/60"
-                    placeholder="e.g. Instrument Serif"
+                    placeholder="e.g. Geist"
                   />
                 </Field>
                 <div className="grid grid-cols-2 gap-3">
@@ -470,8 +470,8 @@ export default function StudioClient() {
                 <div className="flex gap-0.5 rounded-full border border-[color:var(--soft-border)] bg-secondary/40 p-0.5">
                   {(
                     [
-                      ['preview', 'Preview', Eye],
-                      ['contract', 'DESIGN.md', FileText],
+                      ['preview', 'Preview', EyeIcon],
+                      ['contract', 'DESIGN.md', FileTextIcon],
                     ] as const
                   ).map(([value, label, Icon]) => (
                     <button
@@ -500,11 +500,11 @@ export default function StudioClient() {
                     title={isPro ? 'Copy DESIGN.md' : 'Copying the contract is a Pro feature'}
                   >
                     {copiedKey === 'studio-md' ? (
-                      <Check className="size-3" />
+                      <CheckIcon className="size-3" />
                     ) : isPro ? (
-                      <Copy className="size-3" />
+                      <CopyIcon className="size-3" />
                     ) : (
-                      <Lock className="size-3" />
+                      <LockIcon className="size-3" />
                     )}
                     copy
                   </Button>
@@ -544,14 +544,14 @@ export default function StudioClient() {
                   </pre>
                   {!isPro && (
                     <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 bg-gradient-to-t from-background via-background/90 to-transparent px-6 pb-8 pt-20 text-center">
-                      <Lock className="size-4 text-muted-foreground" />
+                      <LockIcon className="size-4 text-muted-foreground" />
                       <p className="max-w-sm text-sm text-muted-foreground">
                         The full contract — front-matter tokens, agent rules and export —
                         ships with Pro.
                       </p>
                       <Button asChild size="sm" className="gap-2">
                         <Link href="/pricing">
-                          <Sparkles className="size-3.5" />
+                          <SparkleIcon className="size-3.5" />
                           Upgrade to Pro
                         </Link>
                       </Button>

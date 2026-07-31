@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Clock, ChevronDown, Trash2, ExternalLink } from 'lucide-react'
+import { ClockIcon as Clock, CaretDownIcon as ChevronDown, TrashIcon as Trash2, ArrowSquareOutIcon as ExternalLink } from '@/lib/phosphor'
 import { cn } from '@/lib/utils'
 
 export function RecentScansDropdown() {

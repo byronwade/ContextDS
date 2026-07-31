@@ -41,7 +41,7 @@ export const DEFAULT_STUDIO_SYSTEM: StudioSystem = {
     { id: 'primary', role: 'primary', value: '#5eead4' },
     { id: 'border', role: 'border', value: '#26282e' },
   ],
-  fontDisplay: 'Instrument Serif',
+  fontDisplay: 'Geist',
   fontBody: 'Geist',
   fontMono: 'Geist Mono',
   baseSize: 16,

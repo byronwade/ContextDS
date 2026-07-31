@@ -1,16 +1,16 @@
 "use client"
 
 import { useSyncExternalStore } from "react"
-import { Monitor, Moon, Sun } from "lucide-react"
+import { DesktopIcon, MoonIcon, SunIcon } from "@phosphor-icons/react"
 import { useTheme, type Theme } from "@/hooks/use-theme"
 import { cn } from "@/lib/utils"
 
 const noopSubscribe = () => () => {}
 
-const OPTIONS: Array<{ value: Theme; icon: typeof Sun; label: string }> = [
-  { value: "system", icon: Monitor, label: "System theme" },
-  { value: "light", icon: Sun, label: "Light theme" },
-  { value: "dark", icon: Moon, label: "Dark theme" },
+const OPTIONS: Array<{ value: Theme; icon: typeof SunIcon; label: string }> = [
+  { value: "system", icon: DesktopIcon, label: "System theme" },
+  { value: "light", icon: SunIcon, label: "Light theme" },
+  { value: "dark", icon: MoonIcon, label: "Dark theme" },
 ]
 
 /**
@@ -68,7 +68,7 @@ export function ThemeToggle({ className }: { className?: string }) {
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            <Icon className="size-3.5" strokeWidth={1.75} />
+            <Icon className="size-3.5" weight="duotone" />
           </button>
         )
       })}

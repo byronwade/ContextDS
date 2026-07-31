@@ -2,7 +2,13 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
-import { ArrowUp, ArrowUpRight, Clock, Search, Sparkles } from 'lucide-react'
+import {
+  ArrowUpIcon,
+  ArrowUpRightIcon,
+  ClockIcon,
+  MagnifyingGlassIcon,
+  SparkleIcon,
+} from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AppShell } from '@/components/organisms/app-shell'
@@ -146,7 +152,7 @@ function SiteCard({
         <div className="mt-auto flex items-center justify-between gap-2 border-t border-border/40 pt-3">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] text-muted-foreground">
             <span className="inline-flex items-center gap-1">
-              <Sparkles className="size-3" aria-hidden />
+              <SparkleIcon className="size-3" aria-hidden />
               {site.tokensCount}
             </span>
             {primaryFont ? <span className="truncate">{primaryFont}</span> : null}
@@ -161,7 +167,7 @@ function SiteCard({
               </span>
             ) : null}
             <span className="inline-flex items-center gap-1">
-              <Clock className="size-3" aria-hidden />
+              <ClockIcon className="size-3" aria-hidden />
               {formatTimeAgo(site.lastScanned)}
             </span>
           </div>
@@ -180,7 +186,7 @@ function SiteCard({
               aria-label={`Vote for ${site.domain}`}
               aria-pressed={site.hasVoted}
             >
-              <ArrowUp className={cn('size-3', site.hasVoted && 'fill-current')} />
+              <ArrowUpIcon className={cn('size-3', site.hasVoted && 'fill-current')} />
               {site.votes}
             </button>
             <a
@@ -190,7 +196,7 @@ function SiteCard({
               aria-label={`Visit ${site.domain}`}
               className="inline-flex size-7 items-center justify-center rounded-full border border-[color:var(--soft-border)] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
             >
-              <ArrowUpRight className="size-3.5" />
+              <ArrowUpRightIcon className="size-3.5" />
             </a>
           </div>
         </div>
@@ -292,7 +298,7 @@ export default function CommunityClient() {
             </p>
 
             <div className="relative mt-6 max-w-xl">
-              <Search
+              <MagnifyingGlassIcon
                 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                 aria-hidden
               />

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Download } from 'lucide-react'
+import { DownloadSimpleIcon } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { parseColor } from '@/lib/analyzers/design-philosophy'
 import { SectionShell, downloadText } from './shared'
@@ -198,7 +198,7 @@ export function GraphSection({
             )
           }
         >
-          <Download className="size-3.5" />
+          <DownloadSimpleIcon className="size-3.5" />
           graph.json
         </Button>
       }

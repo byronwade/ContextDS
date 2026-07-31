@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  Download,
-  ExternalLink,
-  RefreshCw,
-  Share2,
-  Check,
-} from 'lucide-react'
+  ArrowSquareOutIcon,
+  ArrowsClockwiseIcon,
+  CheckIcon,
+  DownloadSimpleIcon,
+  ShareNetworkIcon,
+} from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { ScanResult, ScanProgress } from '@/stores/scan-store'
@@ -84,7 +84,7 @@ function ScanningState({ progress, domain }: { progress?: ScanProgress | null; d
                         : 'border-border/60'
                   )}
                 >
-                  {done ? <Check className="size-2.5" /> : null}
+                  {done ? <CheckIcon className="size-2.5" /> : null}
                 </span>
                 <span className={done || current ? 'text-foreground' : 'text-muted-foreground'}>
                   {label}
@@ -188,7 +188,7 @@ function Hero({
                 aria-label={`Open ${domain}`}
                 className="text-muted-foreground transition-colors hover:text-foreground"
               >
-                <ExternalLink className="size-3.5" />
+                <ArrowSquareOutIcon className="size-3.5" />
               </a>
             </div>
             {screenshot?.url ? (
@@ -351,7 +351,7 @@ export function DesignDossier({
         <h1 className="font-serif text-4xl tracking-tight text-foreground">{domain}</h1>
         <p className="text-sm text-muted-foreground">{error}</p>
         <Button className="mt-2 gap-2" onClick={onRescan}>
-          <RefreshCw className="size-3.5" />
+          <ArrowsClockwiseIcon className="size-3.5" />
           Scan again
         </Button>
       </div>
@@ -402,9 +402,9 @@ export function DesignDossier({
               title={shared ? 'Link copied' : 'Copy share link'}
             >
               {shared ? (
-                <Check className="size-4 text-[oklch(0.78_0.08_185)]" />
+                <CheckIcon className="size-4 text-[oklch(0.78_0.08_185)]" />
               ) : (
-                <Share2 className="size-4" />
+                <ShareNetworkIcon className="size-4" />
               )}
             </Button>
             <Button
@@ -414,7 +414,7 @@ export function DesignDossier({
               aria-label="Re-scan site"
               title="Re-scan site"
             >
-              <RefreshCw className="size-4" />
+              <ArrowsClockwiseIcon className="size-4" />
             </Button>
             <Button
               size="sm"
@@ -423,7 +423,7 @@ export function DesignDossier({
                 window.location.href = `/api/contracts/download?domain=${encodeURIComponent(domain)}`
               }}
             >
-              <Download className="size-3.5" />
+              <DownloadSimpleIcon className="size-3.5" />
               <span className="hidden sm:inline">Contract</span>
             </Button>
           </div>

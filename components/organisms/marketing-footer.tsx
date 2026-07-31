@@ -1,4 +1,4 @@
-import { Github } from "lucide-react"
+import { GithubLogoIcon as Github } from '@/lib/phosphor'
 import Link from "next/link"
 
 const columns = [

@@ -41,14 +41,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { ChatStatus, FileUIPart, SourceDocumentUIPart } from "ai";
-import {
-  CornerDownLeftIcon,
-  ImageIcon,
-  Monitor,
-  PlusIcon,
-  SquareIcon,
-  XIcon,
-} from "lucide-react";
+import { ArrowElbowDownLeftIcon as CornerDownLeftIcon, ImageIcon, DesktopIcon as Monitor, PlusIcon, SquareIcon, XIcon } from '@/lib/phosphor'
 import { nanoid } from "nanoid";
 import type {
   ChangeEvent,

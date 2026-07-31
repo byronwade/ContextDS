@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { SkipLinks } from "@/components/atoms/skip-links";
 import { ErrorBoundary } from "@/components/atoms/error-boundary";
 import { WebVitalsReporter } from "@/components/atoms/web-vitals-reporter";
@@ -25,14 +25,6 @@ const geistMono = Geist_Mono({
   display: "swap",
   preload: false,  // Don't preload monospace (used less)
   fallback: ['ui-monospace', 'Menlo', 'Monaco', 'Consolas', 'monospace']
-});
-
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument-serif",
-  subsets: ["latin"],
-  weight: "400",
-  display: "swap",
-  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -176,7 +168,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
         <SkipLinks />

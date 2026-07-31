@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Play } from 'lucide-react'
+import { PlayIcon } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 import type {
   MotionSystem,
@@ -170,7 +170,7 @@ function MotionRow({
           onClick={() => setRunKey((key) => key + 1)}
           className="inline-flex items-center gap-1.5 rounded-md border border-[color:var(--soft-border)] px-2 py-1 font-mono text-[10px] text-muted-foreground transition-colors hover:text-foreground"
         >
-          <Play className="size-3" />
+          <PlayIcon className="size-3" />
           replay
         </button>
       </div>

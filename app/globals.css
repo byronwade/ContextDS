@@ -111,7 +111,8 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-serif: var(--font-instrument-serif), "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  /* All-Geist type system — former serif display slots render as Geist */
+  --font-serif: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 
   /* Enhanced semantic colors */
   --color-destructive: var(--destructive);
@@ -390,6 +391,13 @@
   h1, h2, h3, h4, h5, h6 {
     text-wrap: balance;
     font-feature-settings: 'ss01', 'ss02';
+  }
+
+  /* Display slots (formerly Instrument Serif) get a confident Geist voice.
+     Utility classes on the element still win over these defaults. */
+  .font-serif {
+    font-weight: 600;
+    letter-spacing: -0.03em;
   }
 
   p {
