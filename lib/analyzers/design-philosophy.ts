@@ -614,6 +614,63 @@ export type DesignPhilosophy = {
   }
 }
 
+/**
+ * Measured UX evidence from the crawl — the parts of "how it feels" that only
+ * a rendered page can tell you. Optional: philosophy still works from tokens
+ * alone for fast scans.
+ */
+export type UxEvidence = {
+  shell?: {
+    header?: { height: number; sticky: boolean } | null
+    sidebar?: { width: number; fixed: boolean } | null
+    footer?: { height: number } | null
+  } | null
+  density?: {
+    elementsInViewport: number
+    imageAreaRatio: number
+    textChars: number
+  } | null
+  interaction?: {
+    rules: number
+    effects: Array<{ value: string; weight: number }>
+  } | null
+  keyframeCount?: number
+  pagesAudited?: number
+}
+
+/** Turn the ranked feedback properties into one readable clause. */
+function describeFeedback(props: string[]): string {
+  const phrases: string[] = []
+  if (props.includes('background-color') || props.includes('background')) phrases.push('shifting fill')
+  if (props.includes('color')) phrases.push('changing text tone')
+  if (props.includes('transform') || props.includes('scale') || props.includes('translate')) {
+    phrases.push('moving the element')
+  }
+  if (props.includes('box-shadow')) phrases.push('raising elevation')
+  if (props.includes('opacity') || props.includes('filter')) phrases.push('fading')
+  if (props.includes('border-color') || props.includes('outline') || props.includes('outline-color')) {
+    phrases.push('drawing an edge')
+  }
+  if (props.includes('text-decoration')) phrases.push('underlining')
+  if (phrases.length === 0) return 'changing state subtly'
+  if (phrases.length === 1) return phrases[0]
+  return `${phrases.slice(0, -1).join(', ')} and ${phrases[phrases.length - 1]}`
+}
+
+/** Which properties the site changes on hover/focus, ranked. */
+function feedbackProps(interaction: UxEvidence['interaction']): string[] {
+  if (!interaction) return []
+  const seen = new Set<string>()
+  const props: string[] = []
+  for (const effect of interaction.effects) {
+    const prop = effect.value.split(' ').slice(1).join(' ')
+    if (!prop || seen.has(prop)) continue
+    seen.add(prop)
+    props.push(prop)
+  }
+  return props
+}
+
 const FAMILY_LABEL: Record<HueFamily, string> = {
   neutral: 'neutral',
   red: 'red',
@@ -633,6 +690,8 @@ export function generatePhilosophy(input: {
   curated: CuratedLike | null | undefined
   personality?: string | null
   primaryFont?: string | null
+  /** Measured render evidence — adds shell, density and feedback reasoning. */
+  ux?: UxEvidence | null
 }): DesignPhilosophy {
   const curated = input.curated ?? {}
   const color = analyzeColors(curated.colors ?? [])
@@ -672,6 +731,19 @@ export function generatePhilosophy(input: {
   if (type.scaleLabel) traits.push(`${type.scaleLabel} scale`)
   if (motion.tempo === 'instant') traits.push('snappy motion')
   if (motion.tempo === 'relaxed') traits.push('unhurried motion')
+
+  // Measured UX traits — how the built page actually behaves
+  const ux = input.ux ?? null
+  const feedback = feedbackProps(ux?.interaction)
+  if (ux?.shell?.sidebar) traits.push('sidebar shell')
+  else if (ux?.shell?.header?.sticky) traits.push('sticky chrome')
+  if (ux?.density) {
+    if (ux.density.elementsInViewport > 420) traits.push('dense surface')
+    else if (ux.density.elementsInViewport < 180) traits.push('spacious surface')
+    if (ux.density.imageAreaRatio >= 0.35) traits.push('image-led')
+  }
+  if (feedback.includes('transform') || feedback.includes('scale')) traits.push('tactile hover')
+  if (feedback.includes('box-shadow')) traits.push('lift on hover')
 
   const accentPhrase = color.accent
     ? `${FAMILY_LABEL[color.accent.family]} (${color.accent.hex})`
@@ -721,6 +793,41 @@ export function generatePhilosophy(input: {
     )
   }
 
+  // Measured behaviour — what the crawl saw the built pages actually do
+  if (ux?.shell || ux?.density || feedback.length > 0) {
+    const shellPhrase = ux?.shell?.sidebar
+      ? `a ${ux.shell.sidebar.width}px ${ux.shell.sidebar.fixed ? 'fixed' : 'static'} sidebar${
+          ux.shell.header ? ` under a ${ux.shell.header.height}px ${ux.shell.header.sticky ? 'sticky' : 'static'} header` : ''
+        }`
+      : ux?.shell?.header
+        ? `a ${ux.shell.header.height}px ${ux.shell.header.sticky ? 'sticky' : 'static'} header and no persistent sidebar`
+        : null
+    const densityPhrase = ux?.density
+      ? `${ux.density.elementsInViewport} elements in the first screen (${
+          ux.density.elementsInViewport > 420
+            ? 'dense'
+            : ux.density.elementsInViewport > 180
+              ? 'balanced'
+              : 'spacious'
+        })`
+      : null
+    const behaviourBits = [shellPhrase, densityPhrase].filter(Boolean)
+    if (behaviourBits.length > 0) {
+      statementParts.push(
+        `Structurally the product frames itself with ${behaviourBits.join(', carrying ')}${
+          ux?.pagesAudited && ux.pagesAudited > 1 ? ` — consistent across ${ux.pagesAudited} crawled pages` : ''
+        }.`
+      )
+    }
+    if (feedback.length > 0) {
+      statementParts.push(
+        `It answers the pointer by ${describeFeedback(feedback)}${
+          ux?.keyframeCount ? `, on top of ${ux.keyframeCount} named animations` : ''
+        }.`
+      )
+    }
+  }
+
   const principles: Array<{ title: string; body: string }> = []
   principles.push({
     title:
@@ -764,6 +871,26 @@ export function generatePhilosophy(input: {
       shape.radiiPx.length > 0 ? `${shape.radiiPx.join(', ')}px` : '0px'
     } and depth stays ${shape.depth}. Keep controls and surfaces on these radii — mixing corner languages is the fastest way to break this system.`,
   })
+
+  if (feedback.length > 0 || ux?.shell?.sidebar) {
+    principles.push(
+      feedback.length > 0
+        ? {
+            title: 'Every control answers back',
+            body: `Interactive states were measured across ${
+              ux?.interaction?.rules ?? 0
+            } hover/focus/active rules, and the site consistently responds by ${describeFeedback(feedback)}. Reuse that vocabulary — a control that changes nothing on hover, or invents a new feedback gesture, reads as broken here.${
+              feedback.some((prop) => prop.startsWith('outline') || prop === 'border-color')
+                ? ' Focus is drawn explicitly, so keep visible focus rings.'
+                : ' Focus states were thin in the source — add visible focus rings when you build.'
+            }`,
+          }
+        : {
+            title: 'The shell is the constant',
+            body: `A ${ux!.shell!.sidebar!.width}px ${ux!.shell!.sidebar!.fixed ? 'fixed' : 'static'} sidebar frames the product on every crawled page. New surfaces belong inside that frame — full-bleed pages that drop the shell break the product's spatial model.`,
+          }
+    )
+  }
 
   const titleBits: string[] = []
   titleBits.push(

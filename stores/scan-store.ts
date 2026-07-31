@@ -106,11 +106,24 @@ export interface ScanResult {
   screenshots?: Array<{ label: string; url: string; mime?: string; viewport?: string }>
   /** UX DNA: app shell, page flow, motion vocabulary, density */
   uxDna?: {
-    shell?: unknown
-    density?: unknown
+    shell?: {
+      header?: { height: number; sticky: boolean; background: string } | null
+      sidebar?: { width: number; fixed: boolean; background: string } | null
+      footer?: { height: number; background: string } | null
+    } | null
+    density?: {
+      elementsInViewport: number
+      imageAreaRatio: number
+      textChars: number
+    } | null
     flow?: Array<{ from: string; to: string }>
     keyframes?: Array<{ name: string; css: string }>
     transitions?: Array<{ value: string; weight: number }>
+    interaction?: {
+      rules: number
+      effects: Array<{ value: string; weight: number }>
+      samples: Array<{ selector: string; state: string; changes: string[] }>
+    } | null
   }
   cacheHit?: boolean
 }

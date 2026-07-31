@@ -15,6 +15,7 @@ import {
   generatePhilosophy,
   inkFor,
   type DesignPhilosophy,
+  type UxEvidence,
 } from '@/lib/analyzers/design-philosophy'
 import { FactRow, MonoStat, Overline, SectionShell } from './shared'
 import { ColorSection } from './color-section'
@@ -374,6 +375,15 @@ export function DesignDossier({
       curated: result.curatedTokens ?? null,
       personality: result.brandAnalysis?.personality ?? null,
       primaryFont: result.brandAnalysis?.primaryFont ?? null,
+      ux: result.uxDna
+        ? {
+            shell: result.uxDna.shell as UxEvidence['shell'],
+            density: result.uxDna.density as UxEvidence['density'],
+            interaction: result.uxDna.interaction ?? null,
+            keyframeCount: result.uxDna.keyframes?.length,
+            pagesAudited: result.metadata?.renderCoverage?.pagesAudited,
+          }
+        : null,
     })
   }, [result, domain])
 
