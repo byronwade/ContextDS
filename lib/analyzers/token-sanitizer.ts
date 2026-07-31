@@ -89,7 +89,12 @@ const isColor = (value: string) => parseColor(value) !== null
 const isLength = (value: string) =>
   /^-?\d*\.?\d+(px|rem|em|%|vh|vw|ch)?$/.test(value.trim()) ||
   /^calc\(/.test(value.trim())
-const isFontFamily = (value: string) =>
+/**
+ * A usable font family name — not empty, not numeric, and not an unresolved
+ * CSS variable. Exported because every path that can emit a family into a
+ * contract (scan, blend, authored studio system) must apply the same bar.
+ */
+export const isFontFamily = (value: string) =>
   value.trim().length > 0 && !/^\d/.test(value.trim()) && !value.includes('var(')
 const isAnything = null
 

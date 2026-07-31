@@ -1,0 +1,376 @@
+{"version":8,"type":"context-options","origin":"library","browserName":"","playwrightVersion":"1.62.1","options":{},"platform":"linux","wallTime":1785467924481,"monotonicTime":624573.141,"sdkLanguage":"javascript","contextId":"request-context@294f95726719db1e18f59470185e5708","title":"e2e/performance-baseline.spec.ts:186 › Bottleneck Detection › should identify slow response patterns"}
+{"type":"before","callId":"call@222","startTime":624576.147,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"standard\",\"mode\":\"fast\"}","timeout":180000},"stepId":"pw:api@23"}
+{"type":"log","callId":"call@222","time":624576.674,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@222","time":624576.689,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0"}
+{"type":"log","callId":"call@222","time":624576.693,"message":"  accept: */*"}
+{"type":"log","callId":"call@222","time":624576.695,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@222","time":624576.698,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@222","time":624576.701,"message":"  content-length: 64"}
+{"type":"log","callId":"call@222","time":624594.319,"message":"← 200 OK"}
+{"type":"log","callId":"call@222","time":624594.346,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@222","time":624594.35,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@222","time":624594.353,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@222","time":624594.356,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@222","time":624594.359,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@222","time":624594.362,"message":"  cache-control: no-store"}
+{"type":"log","callId":"call@222","time":624594.364,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@222","time":624594.368,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@222","time":624594.37,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@222","time":624594.378,"message":"  x-ratelimit-reset: 2026-07-31T03:19:44.490Z"}
+{"type":"log","callId":"call@222","time":624594.381,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@222","time":624594.383,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@222","time":624594.386,"message":"  date: Fri, 31 Jul 2026 03:18:44 GMT"}
+{"type":"log","callId":"call@222","time":624594.389,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@222","time":624594.392,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@222","time":624594.395,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@222","endTime":624595.277,"result":{"response":{"url":"http://localhost:3000/api/scan","status":200,"statusText":"OK","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"no-store"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2026-07-31T03:19:44.490Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Fri, 31 Jul 2026 03:18:44 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"serverAddr":{"ipAddress":"127.0.0.1","port":3000},"timing":{"startTime":1785467924485,"domainLookupStart":-1,"domainLookupEnd":-1,"connectStart":-1,"secureConnectionStart":-1,"connectEnd":-1,"requestStart":0.2929999999469146,"responseStart":17.645000000018626},"responseEndTiming":18.192000000039116,"fetchUid":"7573eac66d94cfef64aa373c1c6c0127"}}}
+{"type":"before","callId":"call@224","startTime":626598.93,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"standard\",\"mode\":\"fast\"}","timeout":180000},"stepId":"pw:api@24"}
+{"type":"log","callId":"call@224","time":626599.656,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@224","time":626599.673,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0"}
+{"type":"log","callId":"call@224","time":626599.676,"message":"  accept: */*"}
+{"type":"log","callId":"call@224","time":626599.679,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@224","time":626599.683,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@224","time":626599.685,"message":"  content-length: 64"}
+{"type":"log","callId":"call@224","time":626616.5,"message":"← 200 OK"}
+{"type":"log","callId":"call@224","time":626616.522,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@224","time":626616.526,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@224","time":626616.528,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@224","time":626616.531,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@224","time":626616.534,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@224","time":626616.536,"message":"  cache-control: no-store"}
+{"type":"log","callId":"call@224","time":626616.539,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@224","time":626616.542,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@224","time":626616.544,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@224","time":626616.547,"message":"  x-ratelimit-reset: 2026-07-31T03:19:46.514Z"}
+{"type":"log","callId":"call@224","time":626616.549,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@224","time":626616.551,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@224","time":626616.554,"message":"  date: Fri, 31 Jul 2026 03:18:46 GMT"}
+{"type":"log","callId":"call@224","time":626616.556,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@224","time":626616.559,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@224","time":626616.561,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@224","endTime":626617.255,"result":{"response":{"url":"http://localhost:3000/api/scan","status":200,"statusText":"OK","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"no-store"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2026-07-31T03:19:46.514Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Fri, 31 Jul 2026 03:18:46 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"serverAddr":{"ipAddress":"127.0.0.1","port":3000},"timing":{"startTime":1785467926508,"domainLookupStart":-1,"domainLookupEnd":-1,"connectStart":-1,"secureConnectionStart":-1,"connectEnd":-1,"requestStart":0.40000000002328306,"responseStart":16.96799999999348},"responseEndTiming":17.381999999983236,"fetchUid":"f727a68b9cabf595b2a261f3d809dfe6"}}}
+{"type":"before","callId":"call@226","startTime":628620.246,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"standard\",\"mode\":\"fast\"}","timeout":180000},"stepId":"pw:api@25"}
+{"type":"log","callId":"call@226","time":628621.08,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@226","time":628621.096,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0"}
+{"type":"log","callId":"call@226","time":628621.099,"message":"  accept: */*"}
+{"type":"log","callId":"call@226","time":628621.102,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@226","time":628621.104,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@226","time":628621.107,"message":"  content-length: 64"}
+{"type":"log","callId":"call@226","time":628644.209,"message":"← 200 OK"}
+{"type":"log","callId":"call@226","time":628644.24,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@226","time":628644.245,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@226","time":628644.247,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@226","time":628644.251,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@226","time":628644.253,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@226","time":628644.255,"message":"  cache-control: no-store"}
+{"type":"log","callId":"call@226","time":628644.258,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@226","time":628644.261,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@226","time":628644.263,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@226","time":628644.265,"message":"  x-ratelimit-reset: 2026-07-31T03:19:48.540Z"}
+{"type":"log","callId":"call@226","time":628644.268,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@226","time":628644.271,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@226","time":628644.273,"message":"  date: Fri, 31 Jul 2026 03:18:48 GMT"}
+{"type":"log","callId":"call@226","time":628644.275,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@226","time":628644.278,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@226","time":628644.28,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@226","endTime":628644.997,"result":{"response":{"url":"http://localhost:3000/api/scan","status":200,"statusText":"OK","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"no-store"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2026-07-31T03:19:48.540Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Fri, 31 Jul 2026 03:18:48 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"serverAddr":{"ipAddress":"127.0.0.1","port":3000},"timing":{"startTime":1785467928529,"domainLookupStart":-1,"domainLookupEnd":-1,"connectStart":-1,"secureConnectionStart":-1,"connectEnd":-1,"requestStart":0.3630000000121072,"responseStart":23.19900000002235},"responseEndTiming":23.677000000025146,"fetchUid":"424e6e0eba78b544c734b48dc43df22e"}}}
+{"type":"before","callId":"call@228","startTime":630649.113,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"standard\",\"mode\":\"fast\"}","timeout":180000},"stepId":"pw:api@26"}
+{"type":"log","callId":"call@228","time":630649.883,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@228","time":630649.898,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0"}
+{"type":"log","callId":"call@228","time":630649.902,"message":"  accept: */*"}
+{"type":"log","callId":"call@228","time":630649.904,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@228","time":630649.907,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@228","time":630649.909,"message":"  content-length: 64"}
+{"type":"log","callId":"call@228","time":630682.677,"message":"← 200 OK"}
+{"type":"log","callId":"call@228","time":630682.711,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@228","time":630682.716,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@228","time":630682.719,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@228","time":630682.722,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@228","time":630682.734,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@228","time":630682.739,"message":"  cache-control: no-store"}
+{"type":"log","callId":"call@228","time":630682.741,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@228","time":630682.744,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@228","time":630682.747,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@228","time":630682.749,"message":"  x-ratelimit-reset: 2026-07-31T03:19:50.564Z"}
+{"type":"log","callId":"call@228","time":630682.752,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@228","time":630682.754,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@228","time":630682.762,"message":"  date: Fri, 31 Jul 2026 03:18:50 GMT"}
+{"type":"log","callId":"call@228","time":630682.767,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@228","time":630682.77,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@228","time":630682.773,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@228","endTime":630689.522,"result":{"response":{"url":"http://localhost:3000/api/scan","status":200,"statusText":"OK","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"no-store"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2026-07-31T03:19:50.564Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Fri, 31 Jul 2026 03:18:50 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"serverAddr":{"ipAddress":"127.0.0.1","port":3000},"timing":{"startTime":1785467930558,"domainLookupStart":-1,"domainLookupEnd":-1,"connectStart":-1,"secureConnectionStart":-1,"connectEnd":-1,"requestStart":0.34299999999348074,"responseStart":32.83399999991525},"responseEndTiming":33.339999999967404,"fetchUid":"1437d8a2ce69c35ad2d66f998ba0deb8"}}}
+{"type":"before","callId":"call@230","startTime":632694.575,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://example.com\",\"quality\":\"standard\",\"mode\":\"fast\"}","timeout":180000},"stepId":"pw:api@27"}
+{"type":"log","callId":"call@230","time":632695.582,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@230","time":632695.604,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0"}
+{"type":"log","callId":"call@230","time":632695.61,"message":"  accept: */*"}
+{"type":"log","callId":"call@230","time":632695.614,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@230","time":632695.618,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@230","time":632695.622,"message":"  content-length: 64"}
+{"type":"log","callId":"call@230","time":632716.481,"message":"← 200 OK"}
+{"type":"log","callId":"call@230","time":632716.505,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@230","time":632716.508,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@230","time":632716.511,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@230","time":632716.513,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@230","time":632716.515,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@230","time":632716.518,"message":"  cache-control: no-store"}
+{"type":"log","callId":"call@230","time":632716.52,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@230","time":632716.522,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@230","time":632716.524,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@230","time":632716.527,"message":"  x-ratelimit-reset: 2026-07-31T03:19:52.611Z"}
+{"type":"log","callId":"call@230","time":632716.529,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@230","time":632716.531,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@230","time":632716.534,"message":"  date: Fri, 31 Jul 2026 03:18:52 GMT"}
+{"type":"log","callId":"call@230","time":632716.536,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@230","time":632716.538,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@230","time":632716.54,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@230","endTime":632719.877,"result":{"response":{"url":"http://localhost:3000/api/scan","status":200,"statusText":"OK","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"no-store"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2026-07-31T03:19:52.611Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Fri, 31 Jul 2026 03:18:52 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"serverAddr":{"ipAddress":"127.0.0.1","port":3000},"timing":{"startTime":1785467932603,"domainLookupStart":-1,"domainLookupEnd":-1,"connectStart":-1,"secureConnectionStart":-1,"connectEnd":-1,"requestStart":0.5659999999916181,"responseStart":21.136999999987893},"responseEndTiming":23.955000000074506,"fetchUid":"6e4e3b5f853570f10e74a279c0fbe31c"}}}
+{"type":"before","callId":"call@232","startTime":634725.166,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://stripe.com\",\"quality\":\"standard\",\"mode\":\"fast\"}","timeout":180000},"stepId":"pw:api@28"}
+{"type":"log","callId":"call@232","time":634725.83,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@232","time":634725.851,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0"}
+{"type":"log","callId":"call@232","time":634725.856,"message":"  accept: */*"}
+{"type":"log","callId":"call@232","time":634725.858,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@232","time":634725.861,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@232","time":634725.872,"message":"  content-length: 63"}
+{"type":"log","callId":"call@232","time":634783.72,"message":"← 200 OK"}
+{"type":"log","callId":"call@232","time":634783.753,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@232","time":634783.76,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@232","time":634783.765,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@232","time":634783.77,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@232","time":634783.777,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@232","time":634783.781,"message":"  cache-control: no-store"}
+{"type":"log","callId":"call@232","time":634783.786,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@232","time":634783.79,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@232","time":634783.793,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@232","time":634783.799,"message":"  x-ratelimit-reset: 2026-07-31T03:19:54.639Z"}
+{"type":"log","callId":"call@232","time":634783.805,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@232","time":634783.81,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@232","time":634783.814,"message":"  date: Fri, 31 Jul 2026 03:18:54 GMT"}
+{"type":"log","callId":"call@232","time":634783.818,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@232","time":634783.824,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@232","time":634783.828,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@232","endTime":634793.552,"result":{"response":{"url":"http://localhost:3000/api/scan","status":200,"statusText":"OK","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"no-store"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2026-07-31T03:19:54.639Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Fri, 31 Jul 2026 03:18:54 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"serverAddr":{"ipAddress":"127.0.0.1","port":3000},"timing":{"startTime":1785467934634,"domainLookupStart":-1,"domainLookupEnd":-1,"connectStart":-1,"secureConnectionStart":-1,"connectEnd":-1,"requestStart":0.30599999998230487,"responseStart":57.74499999999534},"responseEndTiming":64.92399999999907,"fetchUid":"57c18efe26f6c97ad440eb5ccb997ad7"}}}
+{"type":"before","callId":"call@234","startTime":636799.242,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://stripe.com\",\"quality\":\"standard\",\"mode\":\"fast\"}","timeout":180000},"stepId":"pw:api@29"}
+{"type":"log","callId":"call@234","time":636800.195,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@234","time":636800.215,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0"}
+{"type":"log","callId":"call@234","time":636800.221,"message":"  accept: */*"}
+{"type":"log","callId":"call@234","time":636800.225,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@234","time":636800.23,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@234","time":636800.234,"message":"  content-length: 63"}
+{"type":"log","callId":"call@234","time":636860.57,"message":"← 200 OK"}
+{"type":"log","callId":"call@234","time":636860.591,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@234","time":636860.594,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@234","time":636860.597,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@234","time":636860.6,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@234","time":636860.602,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@234","time":636860.604,"message":"  cache-control: no-store"}
+{"type":"log","callId":"call@234","time":636860.607,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@234","time":636860.609,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@234","time":636860.612,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@234","time":636860.614,"message":"  x-ratelimit-reset: 2026-07-31T03:19:56.713Z"}
+{"type":"log","callId":"call@234","time":636860.616,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@234","time":636860.619,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@234","time":636860.622,"message":"  date: Fri, 31 Jul 2026 03:18:56 GMT"}
+{"type":"log","callId":"call@234","time":636860.624,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@234","time":636860.626,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@234","time":636860.628,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@234","endTime":636864.404,"result":{"response":{"url":"http://localhost:3000/api/scan","status":200,"statusText":"OK","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"no-store"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2026-07-31T03:19:56.713Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Fri, 31 Jul 2026 03:18:56 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"serverAddr":{"ipAddress":"127.0.0.1","port":3000},"timing":{"startTime":1785467936708,"domainLookupStart":-1,"domainLookupEnd":-1,"connectStart":-1,"secureConnectionStart":-1,"connectEnd":-1,"requestStart":0.5730000000912696,"responseStart":60.66700000001583},"responseEndTiming":63.0230000000447,"fetchUid":"52f87dd5fd444fd26389c788f735c17d"}}}
+{"type":"before","callId":"call@236","startTime":638868.747,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://stripe.com\",\"quality\":\"standard\",\"mode\":\"fast\"}","timeout":180000},"stepId":"pw:api@30"}
+{"type":"log","callId":"call@236","time":638869.337,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@236","time":638869.357,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0"}
+{"type":"log","callId":"call@236","time":638869.363,"message":"  accept: */*"}
+{"type":"log","callId":"call@236","time":638869.368,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@236","time":638869.372,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@236","time":638869.377,"message":"  content-length: 63"}
+{"type":"log","callId":"call@236","time":638898.478,"message":"← 200 OK"}
+{"type":"log","callId":"call@236","time":638898.501,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@236","time":638898.504,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@236","time":638898.507,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@236","time":638898.509,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@236","time":638898.512,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@236","time":638898.514,"message":"  cache-control: no-store"}
+{"type":"log","callId":"call@236","time":638898.517,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@236","time":638898.519,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@236","time":638898.521,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@236","time":638898.524,"message":"  x-ratelimit-reset: 2026-07-31T03:19:58.783Z"}
+{"type":"log","callId":"call@236","time":638898.526,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@236","time":638898.529,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@236","time":638898.531,"message":"  date: Fri, 31 Jul 2026 03:18:58 GMT"}
+{"type":"log","callId":"call@236","time":638898.534,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@236","time":638898.536,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@236","time":638898.538,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@236","endTime":638902.621,"result":{"response":{"url":"http://localhost:3000/api/scan","status":200,"statusText":"OK","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"no-store"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2026-07-31T03:19:58.783Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Fri, 31 Jul 2026 03:18:58 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"serverAddr":{"ipAddress":"127.0.0.1","port":3000},"timing":{"startTime":1785467938777,"domainLookupStart":-1,"domainLookupEnd":-1,"connectStart":-1,"secureConnectionStart":-1,"connectEnd":-1,"requestStart":0.3090000000083819,"responseStart":29.171999999904074},"responseEndTiming":31.75599999993574,"fetchUid":"da4bd7e8fe2d7ec8433980ded2d1ae8f"}}}
+{"type":"before","callId":"call@238","startTime":640906.222,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://stripe.com\",\"quality\":\"standard\",\"mode\":\"fast\"}","timeout":180000},"stepId":"pw:api@31"}
+{"type":"log","callId":"call@238","time":640906.941,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@238","time":640907.001,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0"}
+{"type":"log","callId":"call@238","time":640907.005,"message":"  accept: */*"}
+{"type":"log","callId":"call@238","time":640907.007,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@238","time":640907.009,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@238","time":640907.012,"message":"  content-length: 63"}
+{"type":"log","callId":"call@238","time":640948.87,"message":"← 200 OK"}
+{"type":"log","callId":"call@238","time":640948.906,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@238","time":640948.911,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@238","time":640948.914,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@238","time":640948.916,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@238","time":640948.919,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@238","time":640948.921,"message":"  cache-control: no-store"}
+{"type":"log","callId":"call@238","time":640948.924,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@238","time":640948.926,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@238","time":640948.929,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@238","time":640948.931,"message":"  x-ratelimit-reset: 2026-07-31T03:20:00.820Z"}
+{"type":"log","callId":"call@238","time":640948.934,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@238","time":640948.937,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@238","time":640948.939,"message":"  date: Fri, 31 Jul 2026 03:19:00 GMT"}
+{"type":"log","callId":"call@238","time":640948.941,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@238","time":640948.943,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@238","time":640948.946,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@238","endTime":640952.053,"result":{"response":{"url":"http://localhost:3000/api/scan","status":200,"statusText":"OK","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"no-store"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2026-07-31T03:20:00.820Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Fri, 31 Jul 2026 03:19:00 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"serverAddr":{"ipAddress":"127.0.0.1","port":3000},"timing":{"startTime":1785467940815,"domainLookupStart":-1,"domainLookupEnd":-1,"connectStart":-1,"secureConnectionStart":-1,"connectEnd":-1,"requestStart":0.35300000000279397,"responseStart":41.875},"responseEndTiming":43.540999999968335,"fetchUid":"64540f120f67ca981a1ecd54f6dcef4a"}}}
+{"type":"before","callId":"call@240","startTime":642960.341,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://stripe.com\",\"quality\":\"standard\",\"mode\":\"fast\"}","timeout":180000},"stepId":"pw:api@32"}
+{"type":"log","callId":"call@240","time":642961.005,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@240","time":642961.022,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0"}
+{"type":"log","callId":"call@240","time":642961.025,"message":"  accept: */*"}
+{"type":"log","callId":"call@240","time":642961.027,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@240","time":642961.03,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@240","time":642961.032,"message":"  content-length: 63"}
+{"type":"log","callId":"call@240","time":643226.472,"message":"← 200 OK"}
+{"type":"log","callId":"call@240","time":643226.501,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@240","time":643226.508,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@240","time":643226.513,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@240","time":643226.517,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@240","time":643226.522,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@240","time":643226.526,"message":"  cache-control: no-store"}
+{"type":"log","callId":"call@240","time":643226.53,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@240","time":643226.534,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@240","time":643226.539,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@240","time":643226.543,"message":"  x-ratelimit-reset: 2026-07-31T03:20:03.106Z"}
+{"type":"log","callId":"call@240","time":643226.547,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@240","time":643226.552,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@240","time":643226.557,"message":"  date: Fri, 31 Jul 2026 03:19:03 GMT"}
+{"type":"log","callId":"call@240","time":643226.561,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@240","time":643226.565,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@240","time":643226.569,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@240","endTime":643230.434,"result":{"response":{"url":"http://localhost:3000/api/scan","status":200,"statusText":"OK","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"no-store"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2026-07-31T03:20:03.106Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Fri, 31 Jul 2026 03:19:03 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"serverAddr":{"ipAddress":"127.0.0.1","port":3000},"timing":{"startTime":1785467942869,"domainLookupStart":-1,"domainLookupEnd":-1,"connectStart":-1,"secureConnectionStart":-1,"connectEnd":-1,"requestStart":0.3299999999580905,"responseStart":265.33499999996275},"responseEndTiming":267.33700000005774,"fetchUid":"e06057609198df00122f8e8d5c4bf991"}}}
+{"type":"before","callId":"call@242","startTime":645235.49,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://amazon.com\",\"quality\":\"standard\",\"mode\":\"fast\"}","timeout":180000},"stepId":"pw:api@33"}
+{"type":"log","callId":"call@242","time":645236.485,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@242","time":645236.54,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0"}
+{"type":"log","callId":"call@242","time":645236.546,"message":"  accept: */*"}
+{"type":"log","callId":"call@242","time":645236.551,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@242","time":645236.556,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@242","time":645236.56,"message":"  content-length: 63"}
+{"type":"log","callId":"call@242","time":645253.382,"message":"← 200 OK"}
+{"type":"log","callId":"call@242","time":645253.403,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@242","time":645253.407,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@242","time":645253.409,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@242","time":645253.412,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@242","time":645253.414,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@242","time":645253.416,"message":"  cache-control: no-store"}
+{"type":"log","callId":"call@242","time":645253.419,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@242","time":645253.421,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@242","time":645253.424,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@242","time":645253.426,"message":"  x-ratelimit-reset: 2026-07-31T03:20:05.150Z"}
+{"type":"log","callId":"call@242","time":645253.428,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@242","time":645253.431,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@242","time":645253.433,"message":"  date: Fri, 31 Jul 2026 03:19:05 GMT"}
+{"type":"log","callId":"call@242","time":645253.435,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@242","time":645253.437,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@242","time":645253.439,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@242","endTime":645254.244,"result":{"response":{"url":"http://localhost:3000/api/scan","status":200,"statusText":"OK","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"no-store"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2026-07-31T03:20:05.150Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Fri, 31 Jul 2026 03:19:05 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"serverAddr":{"ipAddress":"127.0.0.1","port":3000},"timing":{"startTime":1785467945144,"domainLookupStart":-1,"domainLookupEnd":-1,"connectStart":-1,"secureConnectionStart":-1,"connectEnd":-1,"requestStart":0.4340000000083819,"responseStart":17.013999999966472},"responseEndTiming":17.415000000037253,"fetchUid":"acb78d5bd1916a8b3a1c727c65bc2111"}}}
+{"type":"before","callId":"call@244","startTime":647258.731,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://amazon.com\",\"quality\":\"standard\",\"mode\":\"fast\"}","timeout":180000},"stepId":"pw:api@34"}
+{"type":"log","callId":"call@244","time":647259.605,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@244","time":647259.674,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0"}
+{"type":"log","callId":"call@244","time":647259.679,"message":"  accept: */*"}
+{"type":"log","callId":"call@244","time":647259.682,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@244","time":647259.684,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@244","time":647259.686,"message":"  content-length: 63"}
+{"type":"log","callId":"call@244","time":647277.124,"message":"← 200 OK"}
+{"type":"log","callId":"call@244","time":647277.148,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@244","time":647277.152,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@244","time":647277.154,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@244","time":647277.163,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@244","time":647277.166,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@244","time":647277.169,"message":"  cache-control: no-store"}
+{"type":"log","callId":"call@244","time":647277.171,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@244","time":647277.173,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@244","time":647277.175,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@244","time":647277.178,"message":"  x-ratelimit-reset: 2026-07-31T03:20:07.174Z"}
+{"type":"log","callId":"call@244","time":647277.18,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@244","time":647277.186,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@244","time":647277.192,"message":"  date: Fri, 31 Jul 2026 03:19:07 GMT"}
+{"type":"log","callId":"call@244","time":647277.194,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@244","time":647277.196,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@244","time":647277.198,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@244","endTime":647278.022,"result":{"response":{"url":"http://localhost:3000/api/scan","status":200,"statusText":"OK","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"no-store"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2026-07-31T03:20:07.174Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Fri, 31 Jul 2026 03:19:07 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"serverAddr":{"ipAddress":"127.0.0.1","port":3000},"timing":{"startTime":1785467947168,"domainLookupStart":-1,"domainLookupEnd":-1,"connectStart":-1,"secureConnectionStart":-1,"connectEnd":-1,"requestStart":0.40200000000186265,"responseStart":17.584000000031665},"responseEndTiming":18.113000000012107,"fetchUid":"0fd54003a6a7f7f98eb8ad5953982290"}}}
+{"type":"before","callId":"call@246","startTime":649282.377,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://amazon.com\",\"quality\":\"standard\",\"mode\":\"fast\"}","timeout":180000},"stepId":"pw:api@35"}
+{"type":"log","callId":"call@246","time":649283.11,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@246","time":649283.126,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0"}
+{"type":"log","callId":"call@246","time":649283.13,"message":"  accept: */*"}
+{"type":"log","callId":"call@246","time":649283.132,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@246","time":649283.134,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@246","time":649283.137,"message":"  content-length: 63"}
+{"type":"log","callId":"call@246","time":649301.056,"message":"← 200 OK"}
+{"type":"log","callId":"call@246","time":649301.07,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@246","time":649301.074,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@246","time":649301.076,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@246","time":649301.079,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@246","time":649301.082,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@246","time":649301.084,"message":"  cache-control: no-store"}
+{"type":"log","callId":"call@246","time":649301.087,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@246","time":649301.09,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@246","time":649301.092,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@246","time":649301.095,"message":"  x-ratelimit-reset: 2026-07-31T03:20:09.196Z"}
+{"type":"log","callId":"call@246","time":649301.097,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@246","time":649301.1,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@246","time":649301.103,"message":"  date: Fri, 31 Jul 2026 03:19:09 GMT"}
+{"type":"log","callId":"call@246","time":649301.105,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@246","time":649301.108,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@246","time":649301.111,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@246","endTime":649301.3,"result":{"response":{"url":"http://localhost:3000/api/scan","status":200,"statusText":"OK","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"no-store"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2026-07-31T03:20:09.196Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Fri, 31 Jul 2026 03:19:09 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"serverAddr":{"ipAddress":"127.0.0.1","port":3000},"timing":{"startTime":1785467949191,"domainLookupStart":-1,"domainLookupEnd":-1,"connectStart":-1,"secureConnectionStart":-1,"connectEnd":-1,"requestStart":0.30999999993946403,"responseStart":17.385999999940395},"responseEndTiming":17.807000000029802,"fetchUid":"f18a412717323d2fd14b9d46ed66d1bf"}}}
+{"type":"before","callId":"call@248","startTime":651306.071,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://amazon.com\",\"quality\":\"standard\",\"mode\":\"fast\"}","timeout":180000},"stepId":"pw:api@36"}
+{"type":"log","callId":"call@248","time":651306.861,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@248","time":651306.885,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0"}
+{"type":"log","callId":"call@248","time":651306.892,"message":"  accept: */*"}
+{"type":"log","callId":"call@248","time":651306.898,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@248","time":651306.904,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@248","time":651306.907,"message":"  content-length: 63"}
+{"type":"log","callId":"call@248","time":651323.581,"message":"← 200 OK"}
+{"type":"log","callId":"call@248","time":651323.603,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@248","time":651323.606,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@248","time":651323.609,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@248","time":651323.611,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@248","time":651323.613,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@248","time":651323.616,"message":"  cache-control: no-store"}
+{"type":"log","callId":"call@248","time":651323.618,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@248","time":651323.62,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@248","time":651323.623,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@248","time":651323.625,"message":"  x-ratelimit-reset: 2026-07-31T03:20:11.220Z"}
+{"type":"log","callId":"call@248","time":651323.627,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@248","time":651323.63,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@248","time":651323.632,"message":"  date: Fri, 31 Jul 2026 03:19:11 GMT"}
+{"type":"log","callId":"call@248","time":651323.634,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@248","time":651323.637,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@248","time":651323.639,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@248","endTime":651324.337,"result":{"response":{"url":"http://localhost:3000/api/scan","status":200,"statusText":"OK","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"no-store"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2026-07-31T03:20:11.220Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Fri, 31 Jul 2026 03:19:11 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"serverAddr":{"ipAddress":"127.0.0.1","port":3000},"timing":{"startTime":1785467951215,"domainLookupStart":-1,"domainLookupEnd":-1,"connectStart":-1,"secureConnectionStart":-1,"connectEnd":-1,"requestStart":0.4029999999329448,"responseStart":16.836000000010245},"responseEndTiming":17.245999999926426,"fetchUid":"e23cbc1db2fb1b571bdf795addb11336"}}}
+{"type":"before","callId":"call@250","startTime":653328.982,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/scan","method":"POST","jsonData":"{\"url\":\"https://amazon.com\",\"quality\":\"standard\",\"mode\":\"fast\"}","timeout":180000},"stepId":"pw:api@37"}
+{"type":"log","callId":"call@250","time":653329.637,"message":"→ POST http://localhost:3000/api/scan"}
+{"type":"log","callId":"call@250","time":653329.673,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0"}
+{"type":"log","callId":"call@250","time":653329.676,"message":"  accept: */*"}
+{"type":"log","callId":"call@250","time":653329.679,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@250","time":653329.681,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@250","time":653329.685,"message":"  content-length: 63"}
+{"type":"log","callId":"call@250","time":653368.197,"message":"← 200 OK"}
+{"type":"log","callId":"call@250","time":653368.242,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@250","time":653368.249,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@250","time":653368.254,"message":"  x-xss-protection: 1; mode=block"}
+{"type":"log","callId":"call@250","time":653368.259,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@250","time":653368.263,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@250","time":653368.267,"message":"  cache-control: no-store"}
+{"type":"log","callId":"call@250","time":653368.272,"message":"  content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"}
+{"type":"log","callId":"call@250","time":653368.277,"message":"  x-ratelimit-limit: 1000"}
+{"type":"log","callId":"call@250","time":653368.282,"message":"  x-ratelimit-remaining: 999"}
+{"type":"log","callId":"call@250","time":653368.286,"message":"  x-ratelimit-reset: 2026-07-31T03:20:13.243Z"}
+{"type":"log","callId":"call@250","time":653368.29,"message":"  vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"}
+{"type":"log","callId":"call@250","time":653368.294,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@250","time":653368.298,"message":"  date: Fri, 31 Jul 2026 03:19:13 GMT"}
+{"type":"log","callId":"call@250","time":653368.302,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@250","time":653368.307,"message":"  keep-alive: timeout=5"}
+{"type":"log","callId":"call@250","time":653368.31,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@250","endTime":653372.2,"result":{"response":{"url":"http://localhost:3000/api/scan","status":200,"statusText":"OK","headers":[{"name":"x-content-type-options","value":"nosniff"},{"name":"x-frame-options","value":"DENY"},{"name":"x-xss-protection","value":"1; mode=block"},{"name":"referrer-policy","value":"strict-origin-when-cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Cache-Control","value":"no-store"},{"name":"content-security-policy","value":"default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"},{"name":"x-ratelimit-limit","value":"1000"},{"name":"x-ratelimit-remaining","value":"999"},{"name":"x-ratelimit-reset","value":"2026-07-31T03:20:13.243Z"},{"name":"vary","value":"rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"},{"name":"content-type","value":"application/json"},{"name":"Date","value":"Fri, 31 Jul 2026 03:19:13 GMT"},{"name":"Connection","value":"keep-alive"},{"name":"Keep-Alive","value":"timeout=5"},{"name":"Transfer-Encoding","value":"chunked"}],"serverAddr":{"ipAddress":"127.0.0.1","port":3000},"timing":{"startTime":1785467953238,"domainLookupStart":-1,"domainLookupEnd":-1,"connectStart":-1,"secureConnectionStart":-1,"connectEnd":-1,"requestStart":0.3229999999748543,"responseStart":38.41299999994226},"responseEndTiming":39.14799999992829,"fetchUid":"5f9a3f833f22f44e7678613b25d7faf2"}}}

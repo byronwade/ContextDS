@@ -24,6 +24,7 @@ import {
   slugify,
   type StudioSystem,
 } from '@/lib/contracts/authored-contract'
+import { isFontFamily } from '@/lib/analyzers/token-sanitizer'
 
 export type BlendSource = {
   domain: string
@@ -153,6 +154,10 @@ export function blendSystems(sources: BlendSource[], name?: string): BlendResult
   const fontVotes = new Map<string, { count: number; class: string; domain: string }>()
   for (const site of typePerSite) {
     for (const font of site.analysis.families) {
+      // A scan can carry a family that never grounded to a real name
+      // (var(--hds-font-family) and friends). It must not win a vote and end
+      // up in a blended DESIGN.md as if it were a typeface.
+      if (!isFontFamily(font.primary)) continue
       const entry = fontVotes.get(font.primary)
       if (entry) entry.count += 1
       else fontVotes.set(font.primary, { count: 1, class: font.class, domain: site.domain })

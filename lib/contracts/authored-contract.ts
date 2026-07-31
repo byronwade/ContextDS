@@ -10,6 +10,7 @@ import {
   generatePhilosophy,
   type DesignPhilosophy,
 } from '@/lib/analyzers/design-philosophy'
+import { isFontFamily } from '@/lib/analyzers/token-sanitizer'
 
 export type StudioColor = { id: string; role: string; value: string }
 
@@ -106,6 +107,14 @@ export function studioPhilosophy(system: StudioSystem): DesignPhilosophy {
   })
 }
 
+/**
+ * Last line of defence before a family reaches a contract. An unresolved
+ * var(--x) is not a typeface — an agent reading it would style nothing.
+ */
+function safeFamily(value: string, fallback: string): string {
+  return isFontFamily(value ?? '') ? value : fallback
+}
+
 export function generateAuthoredDesignMd(system: StudioSystem): string {
   const philosophy = studioPhilosophy(system)
   const sizes = typeScale(system)
@@ -123,9 +132,9 @@ export function generateAuthoredDesignMd(system: StudioSystem): string {
     lines.push(`    ${color.role}: "${color.value}"`)
   }
   lines.push('  typography:')
-  lines.push(`    display: "${system.fontDisplay}"`)
-  lines.push(`    body: "${system.fontBody}"`)
-  lines.push(`    mono: "${system.fontMono}"`)
+  lines.push(`    display: "${safeFamily(system.fontDisplay, 'Geist')}"`)
+  lines.push(`    body: "${safeFamily(system.fontBody, 'Geist')}"`)
+  lines.push(`    mono: "${safeFamily(system.fontMono, 'Geist Mono')}"`)
   lines.push(`    baseSize: ${system.baseSize}px`)
   lines.push(`    scale: ${system.scaleRatio}`)
   lines.push(`    sizes: [${sizes.map((size) => `${size}px`).join(', ')}]`)

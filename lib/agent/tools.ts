@@ -885,7 +885,7 @@ export const designContractTools = {
 
   open_canvas: tool({
     description:
-      'Open the live design canvas with a system the user can then edit visually — seeded from ONE scanned domain, a deterministic blend of 2–10 scanned domains, or a blank system. Use this the moment someone wants to start designing ("open this in the editor", "make my own from these"), not just read a report. Pass exactly one of domain / blendOf / fromScratch. The canvas is the artifact — do not restate its tokens in chat.',
+      'Open the live design canvas with a system the user can then edit visually — seeded from a blend of 2–10 scanned domains, ONE scanned domain, or a blank system. Use this the moment someone wants to start designing ("open this in the editor", "make my own from these"), not just read a report. Seeds are ranked: blendOf wins over domain, domain wins over fromScratch, so passing extras is safe. The canvas is the artifact — do not restate its tokens in chat.',
     inputSchema: z.object({
       domain: z.string().optional().describe('Seed from one scanned domain, e.g. stripe.com'),
       blendOf: z
@@ -898,25 +898,21 @@ export const designContractTools = {
       name: z.string().max(80).optional().describe('Name for the system on the canvas'),
     }),
     execute: async ({ domain, blendOf, fromScratch, name }) => {
-      const modes = [
-        domain ? 'domain' : null,
-        blendOf?.length ? 'blendOf' : null,
-        fromScratch ? 'fromScratch' : null,
-      ].filter((mode): mode is string => mode !== null)
-      if (modes.length !== 1) {
+      const named = (system: WorkingSystem) => (name ? applyPatch(system, { name }) : system)
+
+      // Seeds are ranked rather than mutually exclusive: blendOf > domain >
+      // fromScratch. Asking to open "the blend of stripe + thorbis" naturally
+      // carries a domain too; rejecting that just makes the agent retry it
+      // verbatim. Only a completely empty call is an error.
+      if (!blendOf?.length && !domain && !fromScratch) {
         return {
           ok: false,
-          modes,
           error:
-            modes.length === 0
-              ? 'Pass exactly one seed: domain, blendOf (2–10 scanned domains), or fromScratch:true.'
-              : `Ambiguous seed (${modes.join(' + ')}). Pass exactly one of domain, blendOf, or fromScratch.`,
+            'No seed given. Pass blendOf (2–10 scanned domains), domain (one scanned domain), or fromScratch:true.',
         }
       }
 
-      const named = (system: WorkingSystem) => (name ? applyPatch(system, { name }) : system)
-
-      if (domain) {
+      if (domain && !blendOf?.length) {
         const key = normalizeDomain(domain)
         const scan = await getScan(key)
         if (!scan?.curatedTokens) {

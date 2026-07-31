@@ -334,8 +334,13 @@ export function analyzeColors(tokens: TokenLike[]): ColorSystem {
     ['green', 'teal', 'cyan', 'blue', 'indigo', 'violet'].includes(color.family)
   ).length
 
-  const darkSurfaces = all.filter((color) => color.luminance < 0.2).length
-  const lightSurfaces = all.filter((color) => color.luminance > 0.7).length
+  // Polarity is a question about SURFACES, so judge it on the neutral ramp.
+  // Counting every color lets dark accents (a deep navy, an oxblood red) vote
+  // a white-background system "dark-leaning". Fall back to the full set only
+  // when there are too few neutrals to read.
+  const surfaces = neutrals.length >= 2 ? neutrals : all
+  const darkSurfaces = surfaces.filter((color) => color.luminance < 0.2).length
+  const lightSurfaces = surfaces.filter((color) => color.luminance > 0.7).length
 
   return {
     all,
