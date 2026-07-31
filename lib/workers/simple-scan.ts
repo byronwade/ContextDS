@@ -29,6 +29,7 @@ import {
   scanWithBrowserService,
 } from '@/lib/scanner/browser-service'
 import { reconcileWithAudit, type RenderCoverage } from '@/lib/analyzers/render-audit'
+import { sanitizeCuratedTokens } from '@/lib/analyzers/token-sanitizer'
 import { analyzeWithWallace, mergeCuratedSets } from '@/lib/scanner/wallace-bridge'
 import { uploadScreenshot } from '@/lib/storage/blob-storage'
 import { trackStatEvent } from '@/lib/storage/platform-stats'
@@ -478,6 +479,24 @@ export async function runSimpleScan({
     console.warn('[simple-scan] Wallace merge skipped:', error)
   }
 
+  // 2a) Sanitize: resolve leftover var() references against a global
+  // cross-sheet variable map; drop values that cannot be grounded.
+  try {
+    const sanitized = sanitizeCuratedTokens(
+      curated,
+      cssArtifacts.map((source) => source.content)
+    )
+    curated = sanitized.curated
+    tokenGroups = toLegacyGroups(curated)
+    if (sanitized.report.dropped > 0 || sanitized.report.resolved > 0) {
+      console.log(
+        `[simple-scan] sanitizer: ${sanitized.report.resolved} resolved, ${sanitized.report.dropped} dropped (vars indexed: ${sanitized.report.variablesIndexed})`
+      )
+    }
+  } catch (error) {
+    console.warn('[simple-scan] token sanitation skipped:', error)
+  }
+
   // 2b) Render-audit reconciliation — fold measured page reality into the
   // CSS-derived tokens: verified usage weights, dormant demotion, missed
   // rendered values, and a coverage score that feeds confidence.
@@ -541,6 +560,7 @@ export async function runSimpleScan({
     domain,
     url: target.toString(),
     curatedTokens: curated,
+    headings: browserAudit?.headings ?? null,
     layoutDNA: {
       containers: {
         maxWidth: layoutDNA.containers.maxWidth,

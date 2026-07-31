@@ -323,9 +323,32 @@ function auditInPage() {
     loadedFonts = []
   }
 
+  // Measured heading styles — majority vote per level
+  const headings = {}
+  for (const level of ['h1', 'h2', 'h3']) {
+    const votes = new Map()
+    for (const el of Array.from(document.querySelectorAll(level)).slice(0, 12)) {
+      const rect = el.getBoundingClientRect()
+      if (rect.width < 2 || rect.height < 2) continue
+      const cs = getComputedStyle(el)
+      const family = (cs.fontFamily || '').split(',')[0].replace(/['"]/g, '').trim()
+      const size = Math.round(parseFloat(cs.fontSize) || 0)
+      const weight = parseInt(cs.fontWeight, 10) || 400
+      if (!family || size <= 0) continue
+      const key = family + '|' + size + '|' + weight
+      votes.set(key, (votes.get(key) || 0) + 1)
+    }
+    const best = Array.from(votes.entries()).sort((a, b) => b[1] - a[1])[0]
+    if (best) {
+      const [family, size, weight] = best[0].split('|')
+      headings[level] = { family, size: Number(size), weight: Number(weight), count: best[1] }
+    }
+  }
+
   return {
     viewport: { width: vw, height: vh },
     elementCount: count,
+    headings,
     colors: top(colorMap, 64).map((entry) => {
       const split = entry.value.indexOf('|')
       return { kind: entry.value.slice(0, split), value: entry.value.slice(split + 1), weight: entry.weight }
@@ -348,6 +371,7 @@ function mergeAudit(target, audit) {
       viewport: audit.viewport,
       elementCount: audit.elementCount,
       pagesAudited: 1,
+      headings: { ...(audit.headings || {}) },
       colors: [...audit.colors],
       fonts: [...audit.fonts],
       fontSizes: [...audit.fontSizes],
@@ -379,6 +403,15 @@ function mergeAudit(target, audit) {
   mergeList(target.radius, audit.radius, (entry) => entry.value)
   mergeList(target.shadows, audit.shadows, (entry) => entry.value)
   target.loadedFonts = Array.from(new Set([...target.loadedFonts, ...audit.loadedFonts])).slice(0, 24)
+  if (audit.headings) {
+    target.headings = target.headings || {}
+    for (const [level, entry] of Object.entries(audit.headings)) {
+      const existing = target.headings[level]
+      if (!existing || (entry && entry.count > existing.count)) {
+        target.headings[level] = entry
+      }
+    }
+  }
   target.elementCount += audit.elementCount
   target.pagesAudited += 1
   return target
@@ -497,6 +530,38 @@ async function collectPage(url, { screenshot = true, pages = 6, paths = null, au
       screenshots.push(...(await captureViewportSet(page, 'homepage', { includeFullPage: true })))
     }
 
+    // Mobile audit pass — responsive-only tokens (stacked layouts, mobile nav)
+    try {
+      await page.setViewportSize({ width: 390, height: 844 })
+      await new Promise((resolve) => setTimeout(resolve, 450))
+      audit = mergeAudit(audit, await page.evaluate(auditInPage))
+      if (audit) audit.pagesAudited -= 1 // same page, different viewport
+    } catch {
+      // mobile pass is best-effort
+    }
+
+    // Sitemap discovery — pages the nav never links to
+    let sitemapLinks = []
+    try {
+      const sitemapUrl = new URL('/sitemap.xml', home.finalUrl).toString()
+      const response = await context.request.get(sitemapUrl, { timeout: 6000 })
+      if (response.ok()) {
+        let xml = (await response.text()).slice(0, 400000)
+        // Sitemap index → follow the first child sitemap
+        const childMatch = xml.match(/<sitemap>[\s\S]*?<loc>\s*([^<\s]+)\s*<\/loc>/i)
+        if (childMatch && /sitemapindex/i.test(xml)) {
+          const child = await context.request.get(childMatch[1], { timeout: 6000 })
+          if (child.ok()) xml = (await child.text()).slice(0, 400000)
+        }
+        const locs = xml.match(/<loc>\s*([^<\s]+)\s*<\/loc>/gi) || []
+        sitemapLinks = locs
+          .map((entry) => entry.replace(/<\/?loc>/gi, '').trim())
+          .slice(0, 300)
+      }
+    } catch {
+      // no sitemap — nav discovery only
+    }
+
     // ---- Crawl: aggregate evidence across the site under a time budget ----
     const maxPages = Math.max(0, Math.min(Number(pages) || 0, 12))
     const explicit = Array.isArray(paths)
@@ -505,7 +570,7 @@ async function collectPage(url, { screenshot = true, pages = 6, paths = null, au
     const queue =
       explicit && explicit.length > 0
         ? explicit
-        : buildCrawlQueue(home.links, home.finalUrl, maxPages)
+        : buildCrawlQueue([...home.links, ...sitemapLinks], home.finalUrl, maxPages)
 
     const CRAWL_BUDGET_MS = ON_VERCEL ? 22000 : 30000
     const crawlDeadline = Date.now() + CRAWL_BUDGET_MS

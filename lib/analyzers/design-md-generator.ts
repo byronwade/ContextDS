@@ -46,6 +46,12 @@ export type DesignMdInput = {
   confidence?: number
   /** Linked token↔role↔component↔layout model for agents */
   semanticGraph?: SemanticGraph | null
+  /** Measured heading styles from the render audit — ground truth for h1/h2 */
+  headings?: {
+    h1?: { family: string; size: number; weight: number } | null
+    h2?: { family: string; size: number; weight: number } | null
+    h3?: { family: string; size: number; weight: number } | null
+  } | null
 }
 
 export type DesignMdArtifact = {
@@ -109,35 +115,81 @@ function pickColors(input: DesignMdInput) {
   return map
 }
 
-function pickTypography(input: DesignMdInput) {
-  const families = input.curatedTokens.typography?.families ?? []
-  const sizes = [...(input.curatedTokens.typography?.sizes ?? [])].sort((a, b) => {
-    return parseFloat(String(b.value)) - parseFloat(String(a.value))
-  })
-  const weights = input.curatedTokens.typography?.weights ?? []
+function toPx(value: string): number | null {
+  const match = value.trim().match(/^(-?\d*\.?\d+)(px|rem|em)?$/)
+  if (!match) return null
+  const n = parseFloat(match[1])
+  if (!Number.isFinite(n)) return null
+  return match[2] === 'rem' || match[2] === 'em' ? n * 16 : n
+}
 
-  const primaryFamily = String(families[0]?.value || 'system-ui, sans-serif')
+function pickTypography(input: DesignMdInput) {
+  const families = (input.curatedTokens.typography?.families ?? []).filter(
+    (family) => !String(family.value).includes('var(')
+  )
+  // Ground sizes in real, parsable lengths; keep usage for body selection.
+  const sized = (input.curatedTokens.typography?.sizes ?? [])
+    .map((token) => ({ px: toPx(String(token.value)), usage: token.usage ?? 0 }))
+    .filter((entry): entry is { px: number; usage: number } =>
+      entry.px !== null && entry.px >= 9 && entry.px <= 120
+    )
+  const descending = Array.from(new Set(sized.map((entry) => entry.px))).sort((a, b) => b - a)
+
+  const weights = (input.curatedTokens.typography?.weights ?? [])
+    .map((token) => {
+      const raw = String(token.value).toLowerCase()
+      const n = raw === 'bold' ? 700 : raw === 'normal' ? 400 : parseInt(raw, 10)
+      return Number.isFinite(n) ? { weight: n, usage: token.usage ?? 0 } : null
+    })
+    .filter((entry): entry is { weight: number; usage: number } => entry !== null)
+  const headingWeight =
+    weights.filter((entry) => entry.weight >= 500).sort((a, b) => b.usage - a.usage)[0]
+      ?.weight ?? 700
+  const bodyWeight =
+    weights
+      .filter((entry) => entry.weight >= 300 && entry.weight <= 500)
+      .sort((a, b) => b.usage - a.usage)[0]?.weight ?? 400
+
+  // Body = the most-USED size in the readable range; headings = the LARGEST
+  // real sizes (measured headings from the render audit win when present).
+  const bodyPx =
+    sized
+      .filter((entry) => entry.px >= 13 && entry.px <= 19)
+      .sort((a, b) => b.usage - a.usage)[0]?.px ??
+    sized.sort((a, b) => b.usage - a.usage)[0]?.px ??
+    16
+  const measured = input.headings ?? null
+  const h1Px =
+    measured?.h1?.size ?? descending.find((px) => px > bodyPx * 1.4) ?? bodyPx * 2.25
+  const h2Px =
+    measured?.h2?.size ??
+    descending.find((px) => px < h1Px && px > bodyPx * 1.1) ??
+    Math.round(h1Px * 0.66)
+  const labelPx = descending.filter((px) => px < bodyPx).pop() ?? Math.round(bodyPx * 0.875)
+
+  const primaryFamily =
+    measured?.h1?.family || String(families[0]?.value || 'system-ui, sans-serif')
   const secondaryFamily = String(families[1]?.value || primaryFamily)
 
   const typography: Record<string, Record<string, string | number>> = {
     h1: {
       fontFamily: primaryFamily,
-      fontSize: String(sizes[0]?.value || '2.25rem'),
-      fontWeight: Number.parseInt(String(weights[0]?.value || '700'), 10) || 700,
+      fontSize: `${Math.round(h1Px)}px`,
+      fontWeight: measured?.h1?.weight ?? headingWeight,
     },
     h2: {
       fontFamily: primaryFamily,
-      fontSize: String(sizes[1]?.value || sizes[0]?.value || '1.5rem'),
-      fontWeight: Number.parseInt(String(weights[0]?.value || '600'), 10) || 600,
+      fontSize: `${Math.round(h2Px)}px`,
+      fontWeight: measured?.h2?.weight ?? headingWeight,
     },
     'body-md': {
       fontFamily: secondaryFamily,
-      fontSize: String(sizes[Math.min(2, sizes.length - 1)]?.value || '1rem'),
-      fontWeight: Number.parseInt(String(weights[weights.length - 1]?.value || '400'), 10) || 400,
+      fontSize: `${Math.round(bodyPx)}px`,
+      fontWeight: bodyWeight,
     },
     label: {
       fontFamily: secondaryFamily,
-      fontSize: String(sizes[sizes.length - 1]?.value || '0.875rem'),
+      fontSize: `${Math.round(labelPx)}px`,
       fontWeight: 500,
     },
   }
@@ -145,15 +197,33 @@ function pickTypography(input: DesignMdInput) {
   return typography
 }
 
+/** Ascending, deduped scale: xs is the smallest real value, xl the largest. */
 function pickScale(
   items: Array<{ name?: string; value: string }> | undefined,
   keys: string[]
 ): Record<string, string> {
-  const values = [...(items ?? [])].map((item) => String(item.value))
-  const unique = Array.from(new Set(values)).slice(0, keys.length)
+  const parsed = Array.from(
+    new Set(
+      (items ?? [])
+        .map((item) => toPx(String(item.value)))
+        .filter((px): px is number => px !== null && px >= 0 && px <= 400)
+    )
+  ).sort((a, b) => a - b)
+
   const scale: Record<string, string> = {}
+  if (parsed.length === 0) {
+    keys.forEach((key, index) => {
+      scale[key] = `${4 * (index + 1)}px`
+    })
+    return scale
+  }
+  // Spread the keys across the sorted range so labels match magnitude.
   keys.forEach((key, index) => {
-    scale[key] = unique[index] || unique[unique.length - 1] || (key === 'sm' ? '4px' : '8px')
+    const position =
+      parsed.length === 1
+        ? 0
+        : Math.round((index / (keys.length - 1)) * (parsed.length - 1))
+    scale[key] = `${parsed[position]}px`
   })
   return scale
 }

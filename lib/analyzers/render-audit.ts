@@ -19,6 +19,11 @@ export type RenderAudit = {
   viewport: { width: number; height: number }
   elementCount: number
   pagesAudited?: number
+  headings?: {
+    h1?: { family: string; size: number; weight: number; count: number } | null
+    h2?: { family: string; size: number; weight: number; count: number } | null
+    h3?: { family: string; size: number; weight: number; count: number } | null
+  }
   colors: Array<{ kind: string; value: string; weight: number }>
   fonts: Array<{ value: string; weight: number }>
   fontSizes: Array<{ value: string; weight: number }>

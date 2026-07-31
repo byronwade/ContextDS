@@ -36,6 +36,8 @@ import {
   CheckIcon,
   CircleNotchIcon,
   CopyIcon,
+  DownloadSimpleIcon,
+  FileTextIcon,
   WarningCircleIcon,
 } from '@/lib/phosphor'
 import {
@@ -115,15 +117,22 @@ function ToolPart({ part }: { part: UIMessage['parts'][number] }) {
   }
 
   // Non-scan tools render as quiet conversation markers — click to inspect.
+  // File-bearing results (DESIGN.md, themes, briefs) get real document cards.
+  const files = state === 'output-available' ? extractFiles(output) : []
   return (
-    <ToolMarker
-      label={TOOL_LABELS[name] ?? name}
-      detail={inputDomain || undefined}
-      state={state}
-      input={input}
-      output={output}
-      errorText={errorText}
-    />
+    <div className="flex flex-col">
+      <ToolMarker
+        label={TOOL_LABELS[name] ?? name}
+        detail={inputDomain || undefined}
+        state={state}
+        input={input}
+        output={files.length > 0 ? undefined : output}
+        errorText={errorText}
+      />
+      {files.map((file, index) => (
+        <FileCard key={`${file.name}-${index}`} file={file} defaultOpen={index === 0} />
+      ))}
+    </div>
   )
 }
 
@@ -188,6 +197,101 @@ function ToolMarker({
             </pre>
           )}
         </div>
+      ) : null}
+    </div>
+  )
+}
+
+type ChatFile = { name: string; content: string }
+
+/** Pull renderable file artifacts out of a tool result. */
+function extractFiles(output: unknown): ChatFile[] {
+  if (!output || typeof output !== 'object') return []
+  const record = output as Record<string, unknown>
+  const files: ChatFile[] = []
+  const push = (name: unknown, content: unknown) => {
+    if (typeof content === 'string' && content.trim().length > 0) {
+      files.push({ name: typeof name === 'string' && name ? name : 'file.md', content })
+    }
+  }
+
+  // get_design_md → { fileName, markdown, skill? }
+  if (typeof record.markdown === 'string') push(record.fileName ?? 'DESIGN.md', record.markdown)
+  const skill = record.skill as { fileName?: string; markdown?: string } | undefined
+  if (skill && typeof skill.markdown === 'string') push(skill.fileName ?? 'SKILL.md', skill.markdown)
+  // compose_design_artifacts / blend_systems → { designMd, tailwindTheme, cssTokens }
+  if (typeof record.designMd === 'string') push('DESIGN.md', record.designMd)
+  if (typeof record.tailwindTheme === 'string') push('theme.tailwind.css', record.tailwindTheme)
+  if (typeof record.cssTokens === 'string') push('tokens.css', record.cssTokens)
+  // generate_theme_css → { css, tailwind }
+  if (typeof record.css === 'string' && record.roles) push('tokens.css', record.css)
+  if (typeof record.tailwind === 'string') push('theme.tailwind.css', record.tailwind)
+  // restyle_page → { brief }
+  if (typeof record.brief === 'string') push('REBUILD.md', record.brief)
+  return files
+}
+
+/** In-chat document card: file name header, scrollable body, copy + download. */
+function FileCard({ file, defaultOpen }: { file: ChatFile; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen ?? true)
+  const [copied, setCopied] = useState(false)
+  return (
+    <div className="mt-1 overflow-hidden rounded-[12px] border border-[var(--ui-border-soft)] bg-[var(--ui-paper-subtle)] shadow-[var(--shadow-control)]">
+      <div className="flex items-center gap-2 border-b border-[var(--ui-border-soft)] px-3 py-2">
+        <FileTextIcon className="size-4 shrink-0 text-[var(--ui-accent)]" />
+        <button
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          className="min-w-0 flex-1 truncate text-left font-mono text-[12px] font-medium text-[var(--ui-ink)]"
+          aria-expanded={open}
+          title={open ? 'Collapse' : 'Expand'}
+        >
+          {file.name}
+        </button>
+        <span className="font-mono text-[10px] text-[var(--ui-ink-muted)]">
+          {(file.content.length / 1024).toFixed(1)}kb
+        </span>
+        <button
+          type="button"
+          onClick={() => {
+            void navigator.clipboard?.writeText(file.content).catch(() => {})
+            setCopied(true)
+            window.setTimeout(() => setCopied(false), 1400)
+          }}
+          aria-label={`Copy ${file.name}`}
+          className="inline-flex size-6 items-center justify-center rounded-[6px] text-[var(--ui-ink-muted)] transition-colors hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]"
+        >
+          {copied ? (
+            <CheckIcon className="size-3.5 text-[var(--ui-success)]" />
+          ) : (
+            <CopyIcon className="size-3.5" />
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            const blob = new Blob([file.content], { type: 'text/plain;charset=utf-8' })
+            const url = URL.createObjectURL(blob)
+            const anchor = document.createElement('a')
+            anchor.href = url
+            anchor.download = file.name
+            document.body.appendChild(anchor)
+            anchor.click()
+            anchor.remove()
+            URL.revokeObjectURL(url)
+          }}
+          aria-label={`Download ${file.name}`}
+          className="inline-flex size-6 items-center justify-center rounded-[6px] text-[var(--ui-ink-muted)] transition-colors hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]"
+        >
+          <DownloadSimpleIcon className="size-3.5" />
+        </button>
+      </div>
+      {open ? (
+        <pre className="max-h-80 overflow-auto px-4 py-3 font-mono text-[11.5px] leading-relaxed text-[var(--ui-ink-secondary)]">
+          {file.content.length > 24000
+            ? `${file.content.slice(0, 24000)}\n… (${file.content.length.toLocaleString()} chars — download for the rest)`
+            : file.content}
+        </pre>
       ) : null}
     </div>
   )

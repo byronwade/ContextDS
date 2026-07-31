@@ -7,6 +7,10 @@
 
 import postcss from 'postcss'
 import safeParser from 'postcss-safe-parser'
+import {
+  contrastRatio as wcagContrast,
+  parseColor as parseColorLoose,
+} from '@/lib/analyzers/design-philosophy'
 import type { LayoutDNA } from '@/lib/analyzers/layout-inspector'
 import type { CuratedToken, CuratedTokenSet } from '@/lib/analyzers/token-curator'
 
@@ -1147,7 +1151,28 @@ export function componentsYamlFromGraph(graph: SemanticGraph): string[] {
   const primaryBg = roleToken('color.primary') || '#0F172A'
   const secondaryBg = roleToken('color.secondary') || roleToken('color.accent') || primaryBg
   const neutral = roleToken('color.bg') || roleToken('color.muted') || '#F8FAFC'
-  const fg = roleToken('color.fg') || primaryBg
+  const rawFg = roleToken('color.fg') || primaryBg
+
+  // Text must actually read on its background — never emit bg == text.
+  const readableInk = (background: string, candidates: string[]): string => {
+    const bg = parseColorLoose(background)
+    if (!bg) return candidates[0] || '#ffffff'
+    let best: { value: string; ratio: number } | null = null
+    for (const candidate of candidates) {
+      const ink = parseColorLoose(candidate)
+      if (!ink) continue
+      const ratio = wcagContrast(ink, bg)
+      if (!best || ratio > best.ratio) best = { value: candidate, ratio }
+      if (ratio >= 4.5) return candidate
+    }
+    if (best && best.ratio >= 3) return best.value
+    // Neither role color reads — fall back by background luminance.
+    return bg.luminance > 0.45 ? '#0A0A0A' : '#FFFFFF'
+  }
+  const primaryInk = readableInk(primaryBg, [neutral, rawFg, '#FFFFFF', '#0A0A0A'])
+  const secondaryInk = readableInk(secondaryBg, [neutral, rawFg, '#FFFFFF', '#0A0A0A'])
+  const surfaceInk = readableInk(neutral, [rawFg, primaryBg, '#0A0A0A', '#FFFFFF'])
+
   const radiusControl = roleToken('radius.control') || '8px'
   const radiusSurface = roleToken('radius.surface') || radiusControl
   const pad = roleToken('space.sm') || '8px'
@@ -1160,17 +1185,17 @@ export function componentsYamlFromGraph(graph: SemanticGraph): string[] {
 
   lines.push('  button-primary:')
   lines.push(`    backgroundColor: ${yamlVal(primaryBg)}`)
-  lines.push(`    textColor: ${yamlVal(neutral)}`)
+  lines.push(`    textColor: ${yamlVal(primaryInk)}`)
   lines.push(`    rounded: ${yamlVal(radiusControl)}`)
   lines.push(`    padding: ${yamlVal(pad)}`)
   lines.push('  button-secondary:')
   lines.push(`    backgroundColor: ${yamlVal(secondaryBg)}`)
-  lines.push(`    textColor: ${yamlVal(neutral)}`)
+  lines.push(`    textColor: ${yamlVal(secondaryInk)}`)
   lines.push(`    rounded: ${yamlVal(radiusControl)}`)
   lines.push(`    padding: ${yamlVal(pad)}`)
   lines.push('  surface-card:')
   lines.push(`    backgroundColor: ${yamlVal(neutral)}`)
-  lines.push(`    textColor: ${yamlVal(fg)}`)
+  lines.push(`    textColor: ${yamlVal(surfaceInk)}`)
   lines.push(`    rounded: ${yamlVal(radiusSurface)}`)
   lines.push(`    padding: ${yamlVal(cardPad)}`)
 
