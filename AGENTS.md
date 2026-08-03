@@ -31,8 +31,8 @@ When adding pages:
 ## Design & UI rules (summary)
 - **Editorial Cream Workbench (light-first):** canvas `#f7f7f4` + paper `#ffffff` + Cursor Orange `#f54e00` (scarce).
 - Hairline-only depth (`--ui-border-soft` / `--ui-border` / `--ui-border-edge`) — no drop shadows.
-- App shell: 240px sidebar on cream canvas → inset 12px-radius white workspace (stats strip + body).
-- Controls: 40px primary CTAs / 44px inputs with 8px radius; theme toggle sits in the sidebar footer.
+- App shell: 240px sidebar on cream canvas → inset 12px-radius white workspace with stats strip inside the paper.
+- Controls: 40px primary CTAs / 44px inputs with 8px radius; full-width Light/Auto/Dark segment in the sidebar footer.
 - Inter + JetBrains Mono (`--font-geist-sans` / `--font-geist-mono` var names kept for compat); display weight stays 400.
 - Phosphor duotone icons — import from `@/lib/phosphor` outside the AppShell IconContext.
 - Timeline pastels are agent-UI only — never system action colors.

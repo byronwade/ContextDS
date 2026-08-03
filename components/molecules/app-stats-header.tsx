@@ -27,8 +27,8 @@ function StatItem({
   return (
     <div
       className={cn(
-        'relative flex items-baseline gap-1.5 whitespace-nowrap rounded-[6px] px-1.5 py-0.5 transition-colors duration-300',
-        bumped && 'bg-[var(--ui-accent-soft)]'
+        'relative flex items-baseline gap-1 whitespace-nowrap px-1 py-0.5 transition-colors duration-300',
+        bumped && 'text-[var(--ui-accent)]'
       )}
     >
       <AnimatedCounter
@@ -38,27 +38,17 @@ function StatItem({
         emptyLabel={emptyLabel}
         showZero={!emptyLabel}
         className={cn(
-          'font-mono text-[11px] font-semibold tracking-tight font-tabular',
+          'font-mono text-[11px] font-medium tabular-nums tracking-tight',
           emphasize || bumped ? 'text-[var(--ui-accent)]' : 'text-[var(--ui-ink)]'
         )}
       />
-      <span className="text-[10px] uppercase tracking-[0.08em] text-[var(--ui-ink-muted)]">
-        {label}
-      </span>
-      {bumped ? (
-        <span
-          className="pointer-events-none absolute -right-0.5 -top-1 font-mono text-[9px] font-semibold text-[var(--ui-accent)] animate-in fade-in-0 zoom-in-95 duration-300"
-          aria-hidden
-        >
-          +
-        </span>
-      ) : null}
+      <span className="text-[11px] text-[var(--ui-ink-muted)]">{label}</span>
     </div>
   )
 }
 
 /**
- * Live Redis-backed platform counters — integrated paper toolbar strip.
+ * Quiet live counters — integrated paper toolbar strip.
  */
 export function AppStatsHeader({ className }: { className?: string }) {
   const stats = useStatsStore((s) => s.stats)
@@ -86,20 +76,13 @@ export function AppStatsHeader({ className }: { className?: string }) {
   const opens = stats?.contractOpens ?? 0
   const chats = stats?.chatMessages ?? 0
   const downloads = stats?.downloads ?? 0
-  const libraryViews = stats?.libraryViews ?? 0
-  const confidencePct =
-    stats && stats.avgConfidence > 0
-      ? Math.round(
-          stats.avgConfidence > 1 ? stats.avgConfidence : stats.avgConfidence * 100
-        )
-      : 0
   const mode = stats?.storage.mode ?? '…'
   const redisLive = Boolean(stats?.storage.redis)
 
   return (
     <div
       className={cn(
-        'flex h-9 w-full items-center gap-1.5 overflow-x-auto px-2 scrollbar-none sm:gap-2 sm:px-3',
+        'flex h-9 w-full items-center gap-3 overflow-x-auto px-3 scrollbar-none sm:px-4',
         className
       )}
       aria-label="Platform stats"
@@ -110,15 +93,7 @@ export function AppStatsHeader({ className }: { className?: string }) {
       <StatItem label="tokens" value={tokens} bumped={bumped('tokens')} />
       <StatItem label="opens" value={opens} bumped={bumped('contractOpens')} />
       <StatItem label="chats" value={chats} bumped={bumped('chatMessages')} />
-      <StatItem label="views" value={libraryViews} bumped={bumped('libraryViews')} />
       <StatItem label="zips" value={downloads} bumped={bumped('downloads')} />
-      <StatItem
-        label="conf"
-        value={confidencePct}
-        suffix={confidencePct > 0 ? '%' : undefined}
-        emptyLabel="—"
-        bumped={bumped('avgConfidence')}
-      />
       <div
         className="ml-auto hidden items-center gap-1.5 sm:flex"
         title={
@@ -127,23 +102,13 @@ export function AppStatsHeader({ className }: { className?: string }) {
             : 'Redis not configured — set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN'
         }
       >
-        <span className="relative flex size-1.5">
-          <span
-            className={cn(
-              'absolute inline-flex size-full animate-ping rounded-full opacity-50',
-              redisLive ? 'bg-[var(--ui-success)]' : 'bg-[var(--ui-warning)]'
-            )}
-          />
-          <span
-            className={cn(
-              'relative inline-flex size-1.5 rounded-full',
-              redisLive ? 'bg-[var(--ui-success)]' : 'bg-[var(--ui-warning)]'
-            )}
-          />
-        </span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--ui-ink-muted)]">
-          {mode}
-        </span>
+        <span
+          className={cn(
+            'inline-flex size-1.5 rounded-full',
+            redisLive ? 'bg-[var(--ui-success)]' : 'bg-[var(--ui-warning)]'
+          )}
+        />
+        <span className="text-[11px] text-[var(--ui-ink-muted)]">{mode}</span>
       </div>
     </div>
   )

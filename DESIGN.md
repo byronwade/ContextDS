@@ -38,18 +38,18 @@ Design Contracts is an **app workbench**, not a brochure site.
 
 ```
 Outer cream canvas (`#f7f7f4` / dark `#161612`)
-├── Global sidebar: 240px (on canvas, hairline right edge)
-│   └── Theme segment (Light / Dark / Auto)
+├── Global sidebar: 240px (on canvas)
+│   └── Full-width theme segment (Light / Auto / Dark)
 └── Inset workspace: 8px margin, 12px radius white paper + 1px hairline
-    ├── Utility strip: live Redis stats (36–44px)
-    ├── Optional location / view bars (integrated paper__toolbar)
+    ├── Utility strip inside paper: quiet live stats (36px)
     └── Task body (chat / list / document)
 ```
 
 Rules:
-- Toolbar + body + footer = **one paper sheet** (no floating toolbars).
+- Stats strip + body + composer = **one paper sheet** (no chrome outside the sheet on desktop).
 - Prefer `--ui-border-soft` for internal dividers; `--ui-border` for card outlines; `--ui-border-edge` for stronger panel outlines / secondary buttons.
 - Theme defaults to **light**; FOUC script + `html.light` enforce it.
+- Keep uppercase/mono labels scarce — prefer calm sentence-case chrome.
 
 ---
 

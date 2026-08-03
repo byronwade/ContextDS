@@ -37,14 +37,14 @@ const bubbleVariants = cva('flex w-fit max-w-[80%] flex-col', {
 })
 
 const bubbleContentVariants = cva(
-  'relative min-w-0 max-w-full whitespace-pre-wrap break-words rounded-[12px] text-[14px] leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-focus)]',
+  'relative min-w-0 max-w-full whitespace-pre-wrap break-words rounded-[var(--radius-paper)] text-[15px] leading-relaxed outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ui-focus)]',
   {
     variants: {
       variant: {
         default:
-          'border border-[var(--ui-border)] bg-[var(--ui-paper)] px-3.5 py-2 text-[var(--ui-ink)]',
+          'border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] px-3.5 py-2.5 text-[var(--ui-ink)]',
         secondary:
-          'border border-[var(--ui-border-soft)] bg-[var(--ui-paper-subtle)] px-3.5 py-2 text-[var(--ui-ink)]',
+          'border border-[var(--ui-border-soft)] bg-[var(--ui-paper)] px-3.5 py-2.5 text-[var(--ui-ink)]',
         muted: 'bg-[var(--ui-paper-subtle)] px-3.5 py-2 text-[var(--ui-ink-secondary)]',
         tinted:
           'bg-[var(--ui-accent-soft)] px-3.5 py-2 text-[var(--ui-ink)]',

@@ -342,20 +342,15 @@ function EmptyState({
   disabled?: boolean
 }) {
   return (
-    <div className="mx-auto flex w-full max-w-[712px] flex-1 flex-col items-center justify-center px-4 pb-10 pt-14 animate-fade-in">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ui-ink-muted)]">
-        Design Contract workbench
-      </p>
-      <h1 className="mt-3 text-[clamp(1.75rem,4vw,2.25rem)] font-normal leading-tight tracking-[-0.03em] text-[var(--ui-ink)]">
+    <div className="mx-auto flex w-full max-w-[640px] flex-1 flex-col items-center justify-center px-4 pb-12 pt-16 animate-fade-in">
+      <h1 className="text-[clamp(2rem,5vw,2.75rem)] font-normal leading-[1.15] tracking-[-0.04em] text-[var(--ui-ink)]">
         designcontracts
-        <span className="font-mono text-[0.5em] font-medium tracking-normal text-[var(--ui-accent)]">
-          .sh
-        </span>
+        <span className="text-[var(--ui-accent)]">.sh</span>
       </h1>
-      <p className="mt-3 max-w-md text-center text-[15px] leading-relaxed text-[var(--ui-ink-secondary)]">
+      <p className="mt-4 max-w-sm text-center text-[15px] leading-relaxed text-[var(--ui-ink-secondary)]">
         Paste a URL. Get an installable Design Contract.
       </p>
-      <div className="mt-7 flex flex-wrap items-center justify-center gap-1.5">
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
         {EXAMPLES.map((example, index) => (
           <button
             key={example.label}
@@ -363,8 +358,8 @@ function EmptyState({
             disabled={disabled}
             onClick={() => onPick(example.prompt)}
             className={cn(
-              'h-8 rounded-[var(--radius-md)] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] px-2.5 font-mono text-[12px] text-[var(--ui-ink-secondary)] transition',
-              'hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)] disabled:opacity-50',
+              'h-9 rounded-[var(--radius-md)] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] px-3 text-[13px] text-[var(--ui-ink-secondary)] transition',
+              'hover:border-[var(--ui-border-edge)] hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)] disabled:opacity-50',
               'animate-slide-in'
             )}
             style={{ animationDelay: `${index * 40}ms` }}
@@ -374,23 +369,18 @@ function EmptyState({
         ))}
       </div>
 
-      <div className="mt-8 w-full max-w-md animate-fade-in border-t border-[var(--ui-border-soft)] pt-5">
-        <p className="text-center font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--ui-ink-muted)]">
-          Scan can also
-        </p>
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
-          {CAPABILITIES.map((capability) => (
-            <button
-              key={capability.label}
-              type="button"
-              disabled={disabled}
-              onClick={() => onPick(capability.prompt)}
-              className="text-[12.5px] text-[var(--ui-ink-secondary)] underline-offset-4 transition-colors hover:text-[var(--ui-accent)] hover:underline disabled:opacity-50"
-            >
-              {capability.label}
-            </button>
-          ))}
-        </div>
+      <div className="mt-10 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+        {CAPABILITIES.map((capability) => (
+          <button
+            key={capability.label}
+            type="button"
+            disabled={disabled}
+            onClick={() => onPick(capability.prompt)}
+            className="text-[13px] text-[var(--ui-ink-muted)] underline-offset-4 transition-colors hover:text-[var(--ui-ink)] hover:underline disabled:opacity-50"
+          >
+            {capability.label}
+          </button>
+        ))}
       </div>
     </div>
   )
@@ -667,14 +657,14 @@ export function ScanChat() {
           <ConversationScrollButton />
         </Conversation>
 
-        {/* Composer — integrated paper footer feel */}
-        <div className="relative shrink-0 border-t border-[var(--ui-border-soft)] bg-[color-mix(in_srgb,var(--ui-paper)_76%,var(--ui-paper-subtle))]">
-          <div className="mx-auto w-full max-w-[712px] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 sm:px-6">
+        {/* Composer — single hairline field on cream paper */}
+        <div className="relative shrink-0 bg-[var(--ui-paper)]">
+          <div className="mx-auto w-full max-w-[640px] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 sm:px-6">
             {slashMatches.length > 0 ? (
               <div
                 role="listbox"
                 aria-label="Slash commands"
-                className="mb-2 overflow-hidden rounded-[12px] border border-[var(--ui-border)] bg-[var(--ui-paper)]"
+                className="mb-2 overflow-hidden rounded-[var(--radius-paper)] border border-[var(--ui-border)] bg-[var(--ui-paper)]"
               >
                 {slashMatches.map((command) => {
                   const active = command.name === activeSlash?.name
@@ -686,9 +676,9 @@ export function ScanChat() {
                       aria-selected={active}
                       onClick={() => completeSlash(command)}
                       className={cn(
-                        'flex w-full items-baseline gap-2 px-3 py-1.5 text-left transition-colors',
+                        'flex w-full items-baseline gap-2 px-3 py-2 text-left transition-colors',
                         active
-                          ? 'bg-[color-mix(in_srgb,var(--ui-accent)_12%,transparent)]'
+                          ? 'bg-[var(--ui-accent-soft)]'
                           : 'hover:bg-[var(--ui-paper-subtle)]'
                       )}
                     >
@@ -710,7 +700,7 @@ export function ScanChat() {
             ) : null}
             <PromptInput
               onSubmit={onSubmit}
-              className="overflow-hidden rounded-[12px] border border-[var(--ui-border)] bg-[var(--ui-paper)]"
+              className="overflow-hidden rounded-[var(--radius-paper)] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] shadow-none"
             >
               <PromptInputBody>
                 <PromptInputTextarea
@@ -719,18 +709,19 @@ export function ScanChat() {
                   onKeyDown={onComposerKeyDown}
                   placeholder="Ask about a site, or / for commands"
                   disabled={busy && status === 'submitted'}
-                  className="min-h-[48px] text-[14px] leading-relaxed placeholder:text-[var(--ui-ink-muted)]"
+                  className="min-h-[52px] px-3 pt-3 text-[15px] leading-relaxed placeholder:text-[var(--ui-ink-muted)]"
                   aria-label="Message"
                 />
               </PromptInputBody>
-              <PromptInputFooter className="px-1.5">
-                <span className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ui-ink-muted)]">
-                  Design Contract
+              <PromptInputFooter className="px-2 pb-2">
+                <span className="truncate text-[12px] text-[var(--ui-ink-muted)]">
+                  Enter to send
                 </span>
                 <PromptInputSubmit
                   status={status}
                   disabled={!busy && !text.trim()}
                   onStop={() => stop()}
+                  className="rounded-[var(--radius-md)]"
                 />
               </PromptInputFooter>
             </PromptInput>

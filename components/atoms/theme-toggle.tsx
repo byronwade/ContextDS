@@ -4,24 +4,72 @@ import { DesktopIcon, MoonIcon, SunIcon } from "@phosphor-icons/react"
 import { useTheme, type Theme } from "@/hooks/use-theme"
 import { cn } from "@/lib/utils"
 
-const OPTIONS: Array<{ value: Theme; icon: typeof SunIcon; label: string }> = [
-  { value: "system", icon: DesktopIcon, label: "System theme" },
-  { value: "light", icon: SunIcon, label: "Light theme" },
-  { value: "dark", icon: MoonIcon, label: "Dark theme" },
+const OPTIONS: Array<{ value: Theme; icon: typeof SunIcon; label: string; short: string }> = [
+  { value: "light", icon: SunIcon, label: "Light theme", short: "Light" },
+  { value: "system", icon: DesktopIcon, label: "System theme", short: "Auto" },
+  { value: "dark", icon: MoonIcon, label: "Dark theme", short: "Dark" },
 ]
 
 /**
- * Segmented theme control — pill track, sliding thumb, hairline ring.
- * Geometry: 2px padding + three 28px cells, so the thumb always sits
- * concentric with the track (no clipped corners on the last cell).
+ * Theme segment — hairline track. Use `fullWidth` in the sidebar footer.
  */
-export function ThemeToggle({ className }: { className?: string }) {
+export function ThemeToggle({
+  className,
+  fullWidth = false,
+}: {
+  className?: string
+  fullWidth?: boolean
+}) {
   const { theme, setTheme, mounted } = useTheme()
 
   const activeIndex = Math.max(
     0,
     OPTIONS.findIndex((option) => option.value === theme)
   )
+
+  if (fullWidth) {
+    return (
+      <div
+        role="radiogroup"
+        aria-label="Color theme"
+        className={cn(
+          "relative grid h-9 w-full grid-cols-3 rounded-[var(--radius-md)] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] p-0.5",
+          className
+        )}
+      >
+        <span
+          aria-hidden
+          className={cn(
+            "absolute inset-y-0.5 left-0.5 w-[calc((100%-4px)/3)] rounded-[6px] border border-[var(--ui-border)] bg-[var(--ui-paper)] transition-transform duration-200 ease-out",
+            !mounted && "opacity-0"
+          )}
+          style={{ transform: `translateX(${activeIndex * 100}%)` }}
+        />
+        {OPTIONS.map((option) => {
+          const isActive = mounted && theme === option.value
+          return (
+            <button
+              key={option.value}
+              type="button"
+              role="radio"
+              aria-checked={isActive}
+              aria-label={option.label}
+              title={option.label}
+              onClick={() => setTheme(option.value)}
+              className={cn(
+                "relative z-10 flex items-center justify-center rounded-[6px] text-[12px] transition-colors duration-200",
+                isActive
+                  ? "text-[var(--ui-ink)]"
+                  : "text-[var(--ui-ink-muted)] hover:text-[var(--ui-ink)]"
+              )}
+            >
+              {option.short}
+            </button>
+          )
+        })}
+      </div>
+    )
+  }
 
   return (
     <div

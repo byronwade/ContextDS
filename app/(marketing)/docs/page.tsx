@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { AppShell } from '@/components/organisms/app-shell'
+import { PageCanvas } from '@/components/molecules/page-canvas'
 
 export const metadata: Metadata = {
   title: 'Docs — designcontracts.sh',
@@ -32,18 +33,15 @@ const endpoints = [
 export default function DocsPage() {
   return (
     <AppShell currentPage="docs">
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[760px] px-4 py-8 sm:px-6 sm:py-10">
-          <h1 className="text-[22px] font-semibold tracking-tight text-[var(--ui-ink)] sm:text-[26px]">
-            Docs
-          </h1>
+      <PageCanvas variant="document">
+          <h1 className="text-display-md text-[var(--ui-ink)]">Docs</h1>
           <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-[var(--ui-ink-secondary)]">
             Turn any public website into an installable Design Contract — tokens, layout DNA, a
             semantic graph, and agent-ready guidance.
           </p>
 
           <section className="mt-10 space-y-4">
-            <h2 className="text-[13px] font-semibold tracking-tight text-[var(--ui-ink)]">
+            <h2 className="text-[13px] font-medium tracking-tight text-[var(--ui-ink)]">
               Quick start
             </h2>
             <ol className="list-decimal space-y-2.5 pl-5 text-[13px] leading-relaxed text-[var(--ui-ink-secondary)]">
@@ -70,7 +68,7 @@ npx --yes github:byronwade/Design resolve --request "rebuild the hero"`}
           </section>
 
           <section className="mt-12 space-y-3">
-            <h2 className="text-[13px] font-semibold tracking-tight text-[var(--ui-ink)]">
+            <h2 className="text-[13px] font-medium tracking-tight text-[var(--ui-ink)]">
               Enforce with the engine
             </h2>
             <p className="text-[13px] leading-relaxed text-[var(--ui-ink-secondary)]">
@@ -96,7 +94,7 @@ npx --yes github:byronwade/Design verify --mode release`}
           </section>
 
           <section className="mt-12 space-y-3">
-            <h2 className="text-[13px] font-semibold tracking-tight text-[var(--ui-ink)]">
+            <h2 className="text-[13px] font-medium tracking-tight text-[var(--ui-ink)]">
               HTTP API
             </h2>
             {endpoints.map((endpoint) => (
@@ -119,7 +117,7 @@ npx --yes github:byronwade/Design verify --mode release`}
           </section>
 
           <section className="mt-12 space-y-3">
-            <h2 className="text-[13px] font-semibold tracking-tight text-[var(--ui-ink)]">
+            <h2 className="text-[13px] font-medium tracking-tight text-[var(--ui-ink)]">
               Chat agent
             </h2>
             <p className="text-[13px] leading-relaxed text-[var(--ui-ink-secondary)]">
@@ -139,8 +137,8 @@ SCANNER_SERVICE_URL=https://designcontracts-scanner.vercel.app`}
             </pre>
           </section>
 
-          <section className="mt-12 space-y-3 pb-16">
-            <h2 className="text-[13px] font-semibold tracking-tight text-[var(--ui-ink)]">
+          <section className="mt-12 space-y-3 pb-8">
+            <h2 className="text-[13px] font-medium tracking-tight text-[var(--ui-ink)]">
               Accurate scans
             </h2>
             <p className="text-[13px] leading-relaxed text-[var(--ui-ink-secondary)]">
@@ -148,8 +146,7 @@ SCANNER_SERVICE_URL=https://designcontracts-scanner.vercel.app`}
               defaults to accurate browser capture via the Vercel Chromium scanner.
             </p>
           </section>
-        </div>
-      </div>
+      </PageCanvas>
     </AppShell>
   )
 }
