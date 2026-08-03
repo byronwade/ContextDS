@@ -114,7 +114,7 @@ export function restyleToStudioSystem(input: {
     `- Page archetypes: ${archetypes || '—'}`,
     `- Engine profile: ${detection.profile} / ${detection.appType} (${Math.round(detection.confidence * 100)}%)`,
     '',
-    '## Apply from ' + skinKey + ' (system)',
+    `## Apply from ${skinKey} (system)`,
     `- Background ${role(system, 'background')} · Foreground ${role(system, 'foreground')} · Accent ${role(system, 'primary')}`,
     `- Type: ${system.fontDisplay} + ${system.fontBody}`,
     `- Spacing: ${system.spacingBase}px grid; Radius: ${system.radius}px; Depth: ${system.depth}`,
