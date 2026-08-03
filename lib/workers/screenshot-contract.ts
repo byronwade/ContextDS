@@ -6,21 +6,21 @@
  */
 
 import { put } from '@vercel/blob'
+import { isAiGatewayConfigured } from '@/lib/ai/gateway'
+import { generateDesignMd } from '@/lib/analyzers/design-md-generator'
+import { generateDesignSkill } from '@/lib/analyzers/design-skill-generator'
 import {
   extractVisionContractDraft,
   mapVisionDraftToContractInput,
   normalizeScreenshotImages,
-  syntheticUploadDomain,
   type ScreenshotImageInput,
+  syntheticUploadDomain,
 } from '@/lib/analyzers/screenshot-contract'
-import { generateDesignMd } from '@/lib/analyzers/design-md-generator'
-import { generateDesignSkill } from '@/lib/analyzers/design-skill-generator'
+import { BILLING } from '@/lib/billing/config'
 import type { DriftObservation } from '@/lib/contracts/contextds-drift'
 import { buildDesignContractPackage } from '@/lib/contracts/design-contract-package'
 import { contractDownloadPath, normalizeDomain } from '@/lib/domain'
-import { isAiGatewayConfigured } from '@/lib/ai/gateway'
-import { BILLING } from '@/lib/billing/config'
-import { getScan, saveScan, type StoredScanResult } from '@/lib/storage/serverless-store'
+import { getScan, type StoredScanResult, saveScan } from '@/lib/storage/serverless-store'
 
 export type ScreenshotContractInput = {
   /** Preferred multi-image App Pack payload */
@@ -300,10 +300,7 @@ export async function runScreenshotContract(
     },
     tokens: {
       colors: curated.colors ?? [],
-      typography: [
-        ...(curated.typography?.families ?? []),
-        ...(curated.typography?.sizes ?? []),
-      ],
+      typography: [...(curated.typography?.families ?? []), ...(curated.typography?.sizes ?? [])],
       spacing: curated.spacing ?? [],
       radius: curated.radius ?? [],
       shadows: curated.shadows ?? [],

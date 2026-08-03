@@ -6,17 +6,14 @@
  * Design Contract via buildStudioContractPack.
  */
 
-import { detectAppType, type AppTypeDetection } from '@/lib/analyzers/app-type'
+import { type AppTypeDetection, detectAppType } from '@/lib/analyzers/app-type'
+import { type CuratedLike, generatePhilosophy } from '@/lib/analyzers/design-philosophy'
 import {
-  generatePhilosophy,
-  type CuratedLike,
-} from '@/lib/analyzers/design-philosophy'
-import {
-  slugify,
   type StudioPackOptions,
   type StudioSystem,
+  slugify,
 } from '@/lib/contracts/authored-contract'
-import { workingSystemFromScan, toStudioSystem } from '@/lib/design-system/working-system'
+import { toStudioSystem, workingSystemFromScan } from '@/lib/design-system/working-system'
 
 export type RestyleLayout = {
   containers?: { maxWidth?: string | null; strategy?: string }
@@ -59,7 +56,7 @@ export function restyleToStudioSystem(input: {
   if (!structureKey || !skinKey) {
     throw new Error('structureDomain and skinDomain are required')
   }
-  if (!input.skinCurated || !(input.skinCurated.colors?.length)) {
+  if (!input.skinCurated?.colors?.length) {
     throw new Error('Skin domain has no curated color tokens')
   }
 
@@ -81,18 +78,13 @@ export function restyleToStudioSystem(input: {
     personality,
   })
 
-  const systemName =
-    input.name?.trim() ||
-    `${structureKey} × ${skinKey}`
+  const systemName = input.name?.trim() || `${structureKey} × ${skinKey}`
 
   const system: StudioSystem = {
     ...toStudioSystem(working),
     name: systemName,
     slug: slugify(systemName),
-    philosophyNote: [
-      `Structure from ${structureKey}; skin from ${skinKey}.`,
-      personality,
-    ]
+    philosophyNote: [`Structure from ${structureKey}; skin from ${skinKey}.`, personality]
       .filter(Boolean)
       .join(' ')
       .slice(0, 600),
@@ -111,11 +103,9 @@ export function restyleToStudioSystem(input: {
   const brief = [
     `# Rebuild: ${structureKey} structure × ${skinKey} skin`,
     '',
-    '## Keep from ' + structureKey + ' (structure)',
+    `## Keep from ${structureKey} (structure)`,
     `- Container: ${input.layout.containers?.strategy ?? 'centered'}${
-      input.layout.containers?.maxWidth
-        ? ` @ ${input.layout.containers.maxWidth}`
-        : ''
+      input.layout.containers?.maxWidth ? ` @ ${input.layout.containers.maxWidth}` : ''
     }`,
     `- Layout engine: ${input.layout.gridSystem ?? 'flexbox'}`,
     `- Breakpoints: ${(input.layout.breakpoints ?? []).join('px, ')}${

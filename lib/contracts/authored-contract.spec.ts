@@ -62,4 +62,3 @@ describe('Studio → Design Contract pack', () => {
     expect(input.appType).toBe('admin-console')
   })
 })
-

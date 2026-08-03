@@ -5,9 +5,9 @@
 
 import type { EngineAppType, EngineProfile } from '@/lib/analyzers/app-type'
 import {
-  slugify,
   type StudioPackOptions,
   type StudioSystem,
+  slugify,
 } from '@/lib/contracts/authored-contract'
 
 export type SystemRecipeId =

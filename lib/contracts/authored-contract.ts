@@ -6,21 +6,15 @@
  * scanned ones: `npx github:byronwade/Design init` consumes either.
  */
 
-import {
-  generatePhilosophy,
-  type DesignPhilosophy,
-} from '@/lib/analyzers/design-philosophy'
+import type { EngineAppType, EngineProfile } from '@/lib/analyzers/app-type'
+import { type DesignPhilosophy, generatePhilosophy } from '@/lib/analyzers/design-philosophy'
 import { isFontFamily } from '@/lib/analyzers/token-sanitizer'
-import type {
-  EngineAppType,
-  EngineProfile,
-} from '@/lib/analyzers/app-type'
+import type { DesignContractPackageInput } from '@/lib/contracts/design-contract-package'
 import {
   buildDesignContractPackage,
-  zipDesignContractPackage,
   type DesignContractPackage,
+  zipDesignContractPackage,
 } from '@/lib/contracts/design-contract-package'
-import type { DesignContractPackageInput } from '@/lib/contracts/design-contract-package'
 
 export type StudioPackOptions = {
   profile?: EngineProfile
@@ -205,7 +199,9 @@ export function generateAuthoredDesignMd(system: StudioSystem): string {
   lines.push('')
   lines.push('- Use only the tokens above; never invent colors, sizes or spacing.')
   lines.push(`- Snap all margins/padding to the ${system.spacingBase}px grid.`)
-  lines.push(`- Keep corner radii at ${system.radius}px — mixing corner languages breaks the system.`)
+  lines.push(
+    `- Keep corner radii at ${system.radius}px — mixing corner languages breaks the system.`
+  )
   lines.push('- Hierarchy comes from the type scale and weight, not new fonts.')
   lines.push('')
   return lines.join('\n')
@@ -227,9 +223,7 @@ export function studioSystemToPackInput(
   const domain = slug.endsWith('-studio') ? `${slug}.app` : `${slug}.studio`
   const url = `https://designcontracts.sh/studio/${slug}`
   const appType = options.appType ?? 'marketing-site'
-  const profile =
-    options.profile ??
-    (appType === 'marketing-site' ? 'web-marketing' : 'web-app')
+  const profile = options.profile ?? (appType === 'marketing-site' ? 'web-marketing' : 'web-app')
 
   const shadows =
     system.depth === 'flat'

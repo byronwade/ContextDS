@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { buildStudioContractPack } from '@/lib/contracts/authored-contract'
 import {
   importCssVariables,
   importDesignMd,
@@ -6,7 +7,6 @@ import {
   importDtcgTokens,
   importTailwindTheme,
 } from '@/lib/contracts/import-tokens'
-import { buildStudioContractPack } from '@/lib/contracts/authored-contract'
 
 describe('importDesignTokens', () => {
   it('imports W3C DTCG color + type tokens', () => {

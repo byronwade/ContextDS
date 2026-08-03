@@ -24,7 +24,14 @@ const bodySchema = z.object({
 })
 
 export async function GET() {
-  return NextResponse.json({ recipes: listSystemRecipes() })
+  return NextResponse.json(
+    { recipes: listSystemRecipes() },
+    {
+      headers: {
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+      },
+    }
+  )
 }
 
 export async function POST(request: NextRequest) {

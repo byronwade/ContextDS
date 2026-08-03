@@ -53,7 +53,8 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     example: '/canvas stripe.com',
     expand: (args) => {
       const domains = domainList(args)
-      if (domains.length === 0) return 'Open the design canvas with a blank system so I can author one by hand.'
+      if (domains.length === 0)
+        return 'Open the design canvas with a blank system so I can author one by hand.'
       if (domains.length === 1) return `Open the design canvas seeded from ${domains[0]}.`
       return `Blend ${domains.join(', ')} into one system and open it in the design canvas.`
     },
@@ -204,9 +205,7 @@ const BY_NAME = new Map(SLASH_COMMANDS.map((command) => [command.name, command])
  * Parse a composer value into a command + its arguments.
  * Returns null when the text is not a slash command.
  */
-export function parseSlashCommand(
-  text: string
-): { command: SlashCommand; args: string } | null {
+export function parseSlashCommand(text: string): { command: SlashCommand; args: string } | null {
   const match = /^\/([a-z][a-z0-9-]*)\s*([\s\S]*)$/i.exec(text.trim())
   if (!match) return null
   const command = BY_NAME.get(match[1].toLowerCase())

@@ -54,8 +54,9 @@ const nextConfig: NextConfig = {
     // Inline critical CSS (removes render-blocking stylesheets)
     inlineCss: true,
 
-    // Turbopack filesystem cache — faster cold starts / rebuilds (canary-grade)
+    // Turbopack filesystem cache — faster cold starts / rebuilds
     turbopackFileSystemCacheForDev: true,
+    turbopackFileSystemCacheForBuild: true,
 
     // Client router cache: keep soft navigations snappy
     staleTimes: {

@@ -75,7 +75,7 @@ function sha256Hex(content: string): string {
  */
 function normalizeObservation(
   observation: DriftObservation,
-  fallbackEvidence: unknown,
+  fallbackEvidence: unknown
 ): ContextDsDriftReceiptObservation {
   if (!observation || typeof observation !== 'object') {
     throw new Error('ContextDS observation must be an object.')
@@ -104,7 +104,7 @@ export function buildContextDsDriftReceipt(input: {
 }): ContextDsDriftReceipt {
   const fallbackEvidence = { domain: input.sourceDomain, url: input.sourceUrl }
   const observations = (input.observations ?? []).map((observation) =>
-    normalizeObservation(observation, fallbackEvidence),
+    normalizeObservation(observation, fallbackEvidence)
   )
   const adapter: ContextDsDriftAdapter = {
     name: 'ContextDS',

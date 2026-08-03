@@ -42,9 +42,7 @@ describe('design-contract-package screenshots', () => {
       ],
     })
 
-    const surface = pack.files.find((file) =>
-      file.path.startsWith('design/references/surfaces/')
-    )
+    const surface = pack.files.find((file) => file.path.startsWith('design/references/surfaces/'))
     expect(surface?.encoding).toBe('base64')
     expect(surface?.content).toBe(TINY_PNG_BASE64)
 
@@ -56,9 +54,7 @@ describe('design-contract-package screenshots', () => {
     expect(designMd).toContain('design/references/surfaces/')
     expect(designMd).toContain('Open these images')
 
-    const skill = pack.files.find((file) =>
-      file.path.includes('-design-system/SKILL.md')
-    )?.content
+    const skill = pack.files.find((file) => file.path.includes('-design-system/SKILL.md'))?.content
     expect(skill).toContain('design/references/surfaces/')
     expect(skill).toContain('open when stuck')
 

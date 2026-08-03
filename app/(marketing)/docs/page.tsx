@@ -30,6 +30,42 @@ const endpoints = [
   },
   {
     method: 'POST',
+    path: '/api/contracts/from-recipe',
+    body: '{ "recipeId": "saas-workbench", "name": "Ops" }',
+    note: 'Industry recipe → ZIP with correct --profile / --app-type. Free. GET lists recipes.',
+  },
+  {
+    method: 'POST',
+    path: '/api/contracts/from-brief',
+    body: '{ "brief": "Dense dark ops workbench…", "name": "Ops" }',
+    note: 'Natural-language brief → Studio pack ZIP (Pro).',
+  },
+  {
+    method: 'POST',
+    path: '/api/contracts/import',
+    body: '{ "content": "{…}", "format": "dtcg" }',
+    note: 'Import DTCG / DESIGN.md / CSS / Tailwind → pack ZIP (Pro).',
+  },
+  {
+    method: 'POST',
+    path: '/api/contracts/blend',
+    body: '{ "domains": ["stripe.com", "linear.app"] }',
+    note: 'Blend 2–10 scanned systems into one pack ZIP.',
+  },
+  {
+    method: 'POST',
+    path: '/api/contracts/restyle',
+    body: '{ "structureDomain": "stripe.com", "skinDomain": "linear.app" }',
+    note: 'Keep structure, apply skin → pack ZIP (Pro).',
+  },
+  {
+    method: 'POST',
+    path: '/api/contracts/mutate',
+    body: '{ "op": "contrast-fix", "target": "AA", "domain": "example.com" }',
+    note: 'contrast-fix / polarity / evolve mutations → pack ZIP (Pro).',
+  },
+  {
+    method: 'POST',
     path: '/api/billing/checkout',
     body: '{ "sku": "pack_single" | "pack_bundle" | "pro", "email": "you@example.com" }',
     note: 'Stripe Checkout — default pack_single (one-time credits).',
@@ -61,11 +97,20 @@ export default function DocsPage() {
                 Open{' '}
                 <Link
                   href="/"
+                  prefetch={false}
                   className="text-[var(--ui-ink)] underline-offset-4 hover:underline"
                 >
                   Chat
                 </Link>{' '}
-                and paste a public URL.
+                and paste a public URL — or start from{' '}
+                <Link
+                  href="/create"
+                  prefetch={false}
+                  className="text-[var(--ui-ink)] underline-offset-4 hover:underline"
+                >
+                  Create
+                </Link>{' '}
+                (brief, recipes, import, blend, restyle, mutate).
               </li>
               <li>
                 Scan gathers tokens via tools and shows an inline Design Contract — Open loads the

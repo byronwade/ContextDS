@@ -6,20 +6,23 @@
  * No Postgres required.
  */
 
+import { composeDesignMdProse } from '@/lib/ai/design-md-composer'
 import { detectAppType } from '@/lib/analyzers/app-type'
 import { generateTokenSet as generateTokenSetLegacy } from '@/lib/analyzers/basic-tokenizer'
+import { validateConsistency } from '@/lib/analyzers/consistency-validator'
 import { generateDesignMd } from '@/lib/analyzers/design-md-generator'
-import { generateDesignSkill } from '@/lib/analyzers/design-skill-generator'
 import { generatePhilosophy } from '@/lib/analyzers/design-philosophy'
-import { composeDesignMdProse } from '@/lib/ai/design-md-composer'
+import { generateDesignSkill } from '@/lib/analyzers/design-skill-generator'
 import { analyzeLayout } from '@/lib/analyzers/layout-inspector'
 import { buildPromptPack } from '@/lib/analyzers/prompt-pack'
+import { type RenderCoverage, reconcileWithAudit } from '@/lib/analyzers/render-audit'
 import {
   buildSemanticGraph,
   type SemanticGraph,
   slimSemanticGraph,
 } from '@/lib/analyzers/semantic-graph'
 import { type CuratedTokenSet, curateTokens } from '@/lib/analyzers/token-curator'
+import { sanitizeCuratedTokens } from '@/lib/analyzers/token-sanitizer'
 import { extractW3CTokens } from '@/lib/analyzers/w3c-tokenizer'
 import type { DriftObservation } from '@/lib/contracts/contextds-drift'
 import { buildDesignContractPackage } from '@/lib/contracts/design-contract-package'
@@ -32,9 +35,6 @@ import {
   isBrowserServiceConfigured,
   scanWithBrowserService,
 } from '@/lib/scanner/browser-service'
-import { reconcileWithAudit, type RenderCoverage } from '@/lib/analyzers/render-audit'
-import { sanitizeCuratedTokens } from '@/lib/analyzers/token-sanitizer'
-import { validateConsistency } from '@/lib/analyzers/consistency-validator'
 import { analyzeWithWallace, mergeCuratedSets } from '@/lib/scanner/wallace-bridge'
 import { uploadScreenshot } from '@/lib/storage/blob-storage'
 import { trackStatEvent } from '@/lib/storage/platform-stats'
@@ -176,10 +176,7 @@ function toLegacyGroups(curated: CuratedTokenSet) {
   }
 }
 
-function inferBrand(
-  curated: CuratedTokenSet,
-  traits?: string[]
-) {
+function inferBrand(curated: CuratedTokenSet, traits?: string[]) {
   const primaryColors = curated.colors.slice(0, 5).map((token) => String(token.value))
   const font = curated.typography.families[0]?.value
   const denseSpacing = curated.spacing.length >= 6
@@ -285,7 +282,14 @@ async function persistBrowserScreenshot(
     screenshotSet && screenshotSet.length > 0
       ? screenshotSet
       : screenshot?.base64
-        ? [{ label: 'homepage', viewport: 'desktop', mime: screenshot.mime, base64: screenshot.base64 }]
+        ? [
+            {
+              label: 'homepage',
+              viewport: 'desktop',
+              mime: screenshot.mime,
+              base64: screenshot.base64,
+            },
+          ]
         : []
   if (captures.length === 0) return undefined
 
@@ -375,9 +379,7 @@ export async function runSimpleScan({
         if (browser?.sources?.length) {
           computedCss = browser.sources
           const serviceUrl = process.env.SCANNER_SERVICE_URL || ''
-          browserEngine = /vercel\.app/i.test(serviceUrl)
-            ? 'vercel-chromium'
-            : 'docker-playwright'
+          browserEngine = /vercel\.app/i.test(serviceUrl) ? 'vercel-chromium' : 'docker-playwright'
           pageTitle = browser.title
           browserScreenshot = browser.screenshot ?? null
           browserScreenshotSet = browser.screenshots ?? null
@@ -541,10 +543,7 @@ export async function runSimpleScan({
       tokensExtracted = Math.max(tokensExtracted, countCurated(curated))
       // Confidence becomes evidence-based: blend CSS-derived score with how
       // much of the painted page the extraction actually explains.
-      confidence = Math.min(
-        99,
-        Math.round(confidence * 0.55 + reconciled.coverage.overall * 0.45)
-      )
+      confidence = Math.min(99, Math.round(confidence * 0.55 + reconciled.coverage.overall * 0.45))
       completeness = Math.min(100, completeness + 4)
       reliability = Math.round((confidence + completeness) / 2)
     } catch (error) {
@@ -669,20 +668,14 @@ export async function runSimpleScan({
     colorKeys: curated.colors.slice(0, 12).map((c) => String(c.value)),
     headlineFont: String(curated.typography.families[0]?.value || 'system-ui'),
     bodyFont: String(
-      curated.typography.families[1]?.value ||
-        curated.typography.families[0]?.value ||
-        'system-ui'
+      curated.typography.families[1]?.value || curated.typography.families[0]?.value || 'system-ui'
     ),
     spacingBase: philosophy.systems.space.base || layoutDNA.spacingBase || 8,
     motionTempo: philosophy.systems.motion.tempo,
     shellSummary: uxEvidence.shell
       ? [
-          uxEvidence.shell.header
-            ? `${uxEvidence.shell.header.height}px header`
-            : null,
-          uxEvidence.shell.sidebar
-            ? `${uxEvidence.shell.sidebar.width}px sidebar`
-            : null,
+          uxEvidence.shell.header ? `${uxEvidence.shell.header.height}px header` : null,
+          uxEvidence.shell.sidebar ? `${uxEvidence.shell.sidebar.width}px sidebar` : null,
         ]
           .filter(Boolean)
           .join(', ') || null
@@ -690,7 +683,11 @@ export async function runSimpleScan({
     densitySummary,
     interactionSummary,
     measuredComponentsSummary,
-    keyframeSummary: browserKeyframes?.map((frame) => frame.name).slice(0, 8).join(', ') || null,
+    keyframeSummary:
+      browserKeyframes
+        ?.map((frame) => frame.name)
+        .slice(0, 8)
+        .join(', ') || null,
     screenshotBase64: browserScreenshot?.base64 ?? null,
     screenshotMime: browserScreenshot?.mime ?? 'image/png',
   })
@@ -842,7 +839,11 @@ export async function runSimpleScan({
       kind: 'dormant-tokens',
       summary: `${renderCoverage.dormantColors} color token(s) found in CSS were never observed on rendered pages (${renderCoverage.verifiedColors} verified).`,
       observedAt: scannedAt,
-      evidence: { dormantColors: renderCoverage.dormantColors, verifiedColors: renderCoverage.verifiedColors, samples: dormantColors },
+      evidence: {
+        dormantColors: renderCoverage.dormantColors,
+        verifiedColors: renderCoverage.verifiedColors,
+        samples: dormantColors,
+      },
       suggestedAction:
         'Treat dormant tokens as low-authority; verify against more pages or prune them from the palette.',
     })
@@ -852,7 +853,9 @@ export async function runSimpleScan({
     const headingSummary = (['h1', 'h2', 'h3'] as const)
       .map((level) => {
         const heading = measuredHeadings[level]
-        return heading ? `${level} ${Math.round(heading.size)}px/${heading.weight} ${heading.family}` : null
+        return heading
+          ? `${level} ${Math.round(heading.size)}px/${heading.weight} ${heading.family}`
+          : null
       })
       .filter(Boolean)
       .join('; ')
@@ -862,7 +865,8 @@ export async function runSimpleScan({
       summary: `Measured heading styles on rendered pages: ${headingSummary}.`,
       observedAt: scannedAt,
       evidence: measuredHeadings,
-      suggestedAction: 'Compare against the DESIGN.md type scale; measured values are ground truth.',
+      suggestedAction:
+        'Compare against the DESIGN.md type scale; measured values are ground truth.',
     })
   }
   if (crawledPages && crawledPages.length > 0) {
@@ -879,7 +883,8 @@ export async function runSimpleScan({
         audited: crawledPages.filter((entry) => entry.audited).length,
         paths: crawledPages.slice(0, 12).map((entry) => entry.path),
       },
-      suggestedAction: 'Surfaces outside the crawl are unverified — scan them before extending the contract there.',
+      suggestedAction:
+        'Surfaces outside the crawl are unverified — scan them before extending the contract there.',
     })
   }
   if (browserAudit?.components) {

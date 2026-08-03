@@ -2,11 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { CuratedTokenSet } from '@/lib/analyzers/token-curator'
 import { mergeCurated } from '@/lib/workers/remeasure-contract'
 
-function token(
-  name: string,
-  value: string,
-  category = 'color'
-): CuratedTokenSet['colors'][number] {
+function token(name: string, value: string, category = 'color'): CuratedTokenSet['colors'][number] {
   return {
     name,
     value,

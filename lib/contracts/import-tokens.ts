@@ -8,12 +8,12 @@
  * - Lightweight Tailwind theme snippets (colors + borderRadius + fontFamily)
  */
 
+import { isFontFamily } from '@/lib/analyzers/token-sanitizer'
 import {
   DEFAULT_STUDIO_SYSTEM,
-  slugify,
   type StudioSystem,
+  slugify,
 } from '@/lib/contracts/authored-contract'
-import { isFontFamily } from '@/lib/analyzers/token-sanitizer'
 
 export type ImportFormat = 'dtcg' | 'design-md' | 'css' | 'tailwind' | 'auto'
 
@@ -25,8 +25,7 @@ export type ImportResult = {
 }
 
 const HEX = /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i
-const CSS_COLOR =
-  /^(#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})|rgba?\(|hsla?\(|oklch\(|color\()/i
+const CSS_COLOR = /^(#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})|rgba?\(|hsla?\(|oklch\(|color\()/i
 
 function isColorValue(value: unknown): value is string {
   return typeof value === 'string' && CSS_COLOR.test(value.trim())
@@ -146,9 +145,7 @@ export function importDtcgTokens(
         else {
           const c = (value as { components?: number[] }).components
           if (Array.isArray(c) && c.length >= 3) {
-            const [r, g, b] = c.map((n) =>
-              Math.round((n <= 1 ? n * 255 : n) as number)
-            )
+            const [r, g, b] = c.map((n) => Math.round((n <= 1 ? n * 255 : n) as number))
             hex = `#${[r, g, b].map((n) => n.toString(16).padStart(2, '0')).join('')}`
           }
         }
@@ -194,10 +191,7 @@ export function importDtcgTokens(
         // leave missing; studio defaults fill via spread below if empty core
       }
     }
-    system.colors =
-      colors.length >= 2
-        ? colors.slice(0, 16)
-        : DEFAULT_STUDIO_SYSTEM.colors
+    system.colors = colors.length >= 2 ? colors.slice(0, 16) : DEFAULT_STUDIO_SYSTEM.colors
   }
 
   if (fonts[0]) system.fontDisplay = fonts[0]
@@ -250,7 +244,10 @@ export function importDesignMd(markdown: string, options?: { name?: string }): I
   const body = fm?.[1] ?? ''
   const nameMatch = body.match(/^name:\s*(.+)$/m)
   if (nameMatch && !options?.name) {
-    system.name = nameMatch[1].replace(/^["']|["']$/g, '').trim().slice(0, 80)
+    system.name = nameMatch[1]
+      .replace(/^["']|["']$/g, '')
+      .trim()
+      .slice(0, 80)
     system.slug = slugify(system.name)
   }
 
@@ -258,14 +255,18 @@ export function importDesignMd(markdown: string, options?: { name?: string }): I
   const colorBlock = body.match(/colors:\s*\n([\s\S]*?)(?=\n[a-zA-Z][\w-]*:|\n*$)/)
   if (colorBlock) {
     for (const line of colorBlock[1].split('\n')) {
-      const match = line.match(/^\s*([A-Za-z0-9_-]+):\s*["']?(#[0-9A-Fa-f]{3,8}|rgba?\([^)]+\))["']?/)
+      const match = line.match(
+        /^\s*([A-Za-z0-9_-]+):\s*["']?(#[0-9A-Fa-f]{3,8}|rgba?\([^)]+\))["']?/
+      )
       if (match) {
         colors.push({ id: match[1], role: match[1], value: match[2] })
       }
     }
   }
   // Also pick `token: #hex` inline in prose tables
-  for (const match of markdown.matchAll(/\b([a-zA-Z][\w-]{1,24})\b[^\n#]{0,20}(#[0-9A-Fa-f]{6})\b/g)) {
+  for (const match of markdown.matchAll(
+    /\b([a-zA-Z][\w-]{1,24})\b[^\n#]{0,20}(#[0-9A-Fa-f]{6})\b/g
+  )) {
     if (colors.length >= 16) break
     if (!colors.some((c) => c.role === match[1])) {
       colors.push({ id: match[1], role: match[1], value: match[2] })
@@ -307,9 +308,8 @@ export function importCssVariables(css: string, options?: { name?: string }): Im
   const fonts: string[] = []
 
   const re = /--([A-Za-z0-9_-]+)\s*:\s*([^;]+);/g
-  let match: RegExpExecArray | null
   let count = 0
-  while ((match = re.exec(css))) {
+  for (const match of css.matchAll(re)) {
     count += 1
     const name = match[1]
     const value = match[2].trim()
@@ -350,10 +350,7 @@ export function importCssVariables(css: string, options?: { name?: string }): Im
 }
 
 /** Import a Tailwind-ish theme config string. */
-export function importTailwindTheme(
-  source: string,
-  options?: { name?: string }
-): ImportResult {
+export function importTailwindTheme(source: string, options?: { name?: string }): ImportResult {
   const warnings: string[] = []
   const system = baseSystem(options?.name)
   const colors: StudioSystem['colors'] = []
@@ -370,10 +367,7 @@ export function importTailwindTheme(
   const radiusMatch = source.match(/borderRadius[\s\S]{0,200}?['"](\d+(?:\.\d+)?)(px|rem)?['"]/i)
   if (radiusMatch) {
     const n = parseFloat(radiusMatch[1])
-    system.radius = Math.min(
-      48,
-      Math.max(0, Math.round(radiusMatch[2] === 'rem' ? n * 16 : n))
-    )
+    system.radius = Math.min(48, Math.max(0, Math.round(radiusMatch[2] === 'rem' ? n * 16 : n)))
   }
 
   const fontMatch = source.match(/fontFamily[\s\S]{0,300}?['"]([A-Za-z][^'"]+)['"]/i)

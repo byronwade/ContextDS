@@ -8,15 +8,11 @@
 
 import { generateDesignMd } from '@/lib/analyzers/design-md-generator'
 import { generateDesignSkill } from '@/lib/analyzers/design-skill-generator'
+import type { CuratedTokenSet } from '@/lib/analyzers/token-curator'
 import type { DriftObservation } from '@/lib/contracts/contextds-drift'
 import { buildDesignContractPackage } from '@/lib/contracts/design-contract-package'
 import { contractDownloadPath, normalizeDomain } from '@/lib/domain'
-import type { CuratedTokenSet } from '@/lib/analyzers/token-curator'
-import {
-  getScan,
-  saveScan,
-  type StoredScanResult,
-} from '@/lib/storage/serverless-store'
+import { getScan, type StoredScanResult, saveScan } from '@/lib/storage/serverless-store'
 import { runSimpleScan } from '@/lib/workers/simple-scan'
 
 export type RemeasureInput = {
@@ -82,12 +78,8 @@ export function mergeCurated(
       families: b.typography?.families?.length
         ? b.typography.families
         : a.typography?.families || [],
-      sizes: b.typography?.sizes?.length
-        ? b.typography.sizes
-        : a.typography?.sizes || [],
-      weights: b.typography?.weights?.length
-        ? b.typography.weights
-        : a.typography?.weights || [],
+      sizes: b.typography?.sizes?.length ? b.typography.sizes : a.typography?.sizes || [],
+      weights: b.typography?.weights?.length ? b.typography.weights : a.typography?.weights || [],
     },
     spacing: b.spacing?.length ? b.spacing : a.spacing,
     radius: b.radius?.length ? b.radius : a.radius,
@@ -102,15 +94,11 @@ export function mergeCurated(
   }
 }
 
-export async function runRemeasureContract(
-  input: RemeasureInput
-): Promise<RemeasureResult> {
+export async function runRemeasureContract(input: RemeasureInput): Promise<RemeasureResult> {
   const domain = normalizeDomain(input.domain)
   const baseline = await getScan(domain)
   if (!baseline || baseline.status !== 'completed') {
-    throw new Error(
-      `No completed App Pack / scan found for ${domain}. Create a vision pack first.`
-    )
+    throw new Error(`No completed App Pack / scan found for ${domain}. Create a vision pack first.`)
   }
 
   const isVision =
@@ -175,15 +163,11 @@ export async function runRemeasureContract(
     designMdFileName: designMd.fileName,
     curatedTokens: merged,
     personality:
-      typeof brandAnalysis.personality === 'string'
-        ? brandAnalysis.personality
-        : undefined,
+      typeof brandAnalysis.personality === 'string' ? brandAnalysis.personality : undefined,
   })
 
   // Prefer App Pack screenshots; fall back to measured captures
-  const screenshots = baseline.screenshots?.length
-    ? baseline.screenshots
-    : measured.screenshots
+  const screenshots = baseline.screenshots?.length ? baseline.screenshots : measured.screenshots
 
   const driftObservations: DriftObservation[] = [
     {
@@ -250,10 +234,7 @@ export async function runRemeasureContract(
     },
     tokens: {
       colors: merged.colors ?? [],
-      typography: [
-        ...(merged.typography?.families ?? []),
-        ...(merged.typography?.sizes ?? []),
-      ],
+      typography: [...(merged.typography?.families ?? []), ...(merged.typography?.sizes ?? [])],
       spacing: merged.spacing ?? [],
       radius: merged.radius ?? [],
       shadows: merged.shadows ?? [],
@@ -295,12 +276,11 @@ export async function runRemeasureContract(
       visionSignature: baseline.metadata.visionSignature,
       appPackImages: baseline.metadata.appPackImages,
       remeasuredAt: scannedAt,
-      remeasureSource:
-        measured.metadata.browserEngine
-          ? 'browser-service'
-          : measured.metadata.computedCssSources > 0
-            ? 'local-playwright'
-            : 'static-only',
+      remeasureSource: measured.metadata.browserEngine
+        ? 'browser-service'
+        : measured.metadata.computedCssSources > 0
+          ? 'local-playwright'
+          : 'static-only',
       visionBaselineScanId: baseline.metadata.scanId,
     },
   }
@@ -326,9 +306,7 @@ export async function runRemeasureContract(
       backend: {
         blob: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
         redis: Boolean(
-          process.env.UPSTASH_REDIS_REST_URL ||
-            process.env.REDIS_URL ||
-            process.env.KV_REST_API_URL
+          process.env.UPSTASH_REDIS_REST_URL || process.env.REDIS_URL || process.env.KV_REST_API_URL
         ),
         memory: true,
       },

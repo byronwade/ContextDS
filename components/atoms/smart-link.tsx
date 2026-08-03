@@ -2,47 +2,42 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { type ComponentProps } from 'react'
+import { type ComponentProps, useEffect, useRef } from 'react'
 
 /**
- * SmartLink - Optimized Link component with prefetch on hover
- *
- * Makes navigation feel instant by prefetching route data when user hovers.
- * Falls back gracefully for touch devices (prefetch on touchstart).
- *
- * Usage: Drop-in replacement for Next.js Link
- * <SmartLink href="/site/example.com">View Site</SmartLink>
+ * SmartLink — Link with hover/touch prefetch (default prefetch off to cut
+ * Vercel compute). Prefetch fires on intentional hover after a short debounce.
  */
 export function SmartLink({
   href,
   children,
-  prefetch = false,  // Disable default prefetch (we'll do it on hover)
+  prefetch = false,
+  onMouseEnter,
+  onMouseLeave,
+  onTouchStart,
   ...props
 }: ComponentProps<typeof Link>) {
   const router = useRouter()
-  let prefetchTimeout: NodeJS.Timeout | null = null
+  const prefetchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const handleMouseEnter = () => {
-    // Debounce prefetch by 50ms (avoid prefetching during rapid mouse movement)
-    prefetchTimeout = setTimeout(() => {
-      if (typeof href === 'string') {
-        router.prefetch(href)
-      }
+  useEffect(() => {
+    return () => {
+      if (prefetchTimeout.current) clearTimeout(prefetchTimeout.current)
+    }
+  }, [])
+
+  const schedulePrefetch = () => {
+    if (typeof href !== 'string') return
+    if (prefetchTimeout.current) clearTimeout(prefetchTimeout.current)
+    prefetchTimeout.current = setTimeout(() => {
+      router.prefetch(href)
     }, 50)
   }
 
-  const handleMouseLeave = () => {
-    // Cancel prefetch if user moves away quickly
-    if (prefetchTimeout) {
-      clearTimeout(prefetchTimeout)
-      prefetchTimeout = null
-    }
-  }
-
-  const handleTouchStart = () => {
-    // For touch devices, prefetch immediately on touch
-    if (typeof href === 'string') {
-      router.prefetch(href)
+  const cancelPrefetch = () => {
+    if (prefetchTimeout.current) {
+      clearTimeout(prefetchTimeout.current)
+      prefetchTimeout.current = null
     }
   }
 
@@ -50,9 +45,18 @@ export function SmartLink({
     <Link
       href={href}
       prefetch={prefetch}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onTouchStart={handleTouchStart}
+      onMouseEnter={(event) => {
+        schedulePrefetch()
+        onMouseEnter?.(event)
+      }}
+      onMouseLeave={(event) => {
+        cancelPrefetch()
+        onMouseLeave?.(event)
+      }}
+      onTouchStart={(event) => {
+        if (typeof href === 'string') router.prefetch(href)
+        onTouchStart?.(event)
+      }}
       {...props}
     >
       {children}

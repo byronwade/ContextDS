@@ -1,7 +1,5 @@
 'use client'
 
-import Link from 'next/link'
-import { useEffect, useState, useSyncExternalStore } from 'react'
 import {
   BookOpenIcon,
   BooksIcon,
@@ -15,16 +13,18 @@ import {
   SidebarSimpleIcon,
   XIcon,
 } from '@phosphor-icons/react'
+import Link from 'next/link'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { ThemeToggle } from '@/components/atoms/theme-toggle'
 import { AppStatsHeader } from '@/components/molecules/app-stats-header'
 import { Button } from '@/components/ui/button'
 import {
+  type ChatSummary,
   getChatsServerSnapshot,
   getChatsSnapshot,
   subscribeChats,
-  type ChatSummary,
 } from '@/lib/chat-history'
-import { pushRecent, readRecents, type RecentDomain } from '@/lib/recents'
+import { pushRecent, type RecentDomain, readRecents } from '@/lib/recents'
 import { cn } from '@/lib/utils'
 
 export type AppShellPage =
@@ -74,6 +74,7 @@ function SidebarBody({
   return (
     <div className="flex h-full flex-col px-3 py-3">
       <Link
+        prefetch={false}
         href="/"
         onClick={onNavigate}
         className="mb-3 flex items-baseline gap-0.5 px-1.5 py-1 outline-offset-4 transition-opacity hover:opacity-80"
@@ -86,6 +87,7 @@ function SidebarBody({
       </Link>
 
       <Link
+        prefetch={false}
         href="/"
         onClick={onNavigate}
         className="mb-3 inline-flex h-9 items-center gap-2 rounded-[var(--radius-md)] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] px-3 text-[13px] text-[var(--ui-ink)] transition hover:bg-[var(--ui-paper-hover)]"
@@ -100,6 +102,7 @@ function SidebarBody({
           const Icon = item.icon
           return (
             <Link
+              prefetch={false}
               key={item.href}
               href={item.href}
               onClick={onNavigate}
@@ -135,6 +138,7 @@ function SidebarBody({
               chats.slice(0, 8).map((chat) => (
                 <li key={chat.id}>
                   <Link
+                    prefetch={false}
                     href={`/?chat=${chat.id}` as '/'}
                     onClick={onNavigate}
                     className="block truncate rounded-[var(--radius-md)] px-2.5 py-1.5 text-[12px] text-[var(--ui-ink-secondary)] transition hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]"
@@ -155,6 +159,7 @@ function SidebarBody({
               {recents.slice(0, 6).map((item) => (
                 <li key={item.domain}>
                   <Link
+                    prefetch={false}
                     href={`/site/${item.domain}` as `/site/${string}`}
                     onClick={onNavigate}
                     className="block truncate rounded-[var(--radius-md)] px-2.5 py-1.5 font-mono text-[12px] text-[var(--ui-ink-secondary)] transition hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]"
@@ -179,20 +184,11 @@ function SidebarBody({
  * Full-viewport product chrome: cream canvas sidebar + inset white workspace.
  * Hairline-only depth. See DESIGN.md.
  */
-export function AppShell({
-  currentPage,
-  children,
-  recentDomain,
-  className,
-}: AppShellProps) {
+export function AppShell({ currentPage, children, recentDomain, className }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const [recents, setRecents] = useState<RecentDomain[]>([])
-  const chats = useSyncExternalStore(
-    subscribeChats,
-    getChatsSnapshot,
-    getChatsServerSnapshot
-  )
+  const chats = useSyncExternalStore(subscribeChats, getChatsSnapshot, getChatsServerSnapshot)
 
   useEffect(() => {
     setRecents(readRecents())
@@ -221,6 +217,7 @@ export function AppShell({
           {collapsed ? (
             <div className="flex h-full flex-col items-center gap-1.5 px-1.5 py-3">
               <Link
+                prefetch={false}
                 href="/"
                 className="flex size-9 items-center justify-center rounded-[var(--radius-md)] text-sm font-normal text-[var(--ui-accent)] hover:bg-[var(--ui-paper-hover)]"
                 aria-label="Chat"
@@ -232,6 +229,7 @@ export function AppShell({
                 const active = currentPage === item.page
                 return (
                   <Link
+                    prefetch={false}
                     key={item.href}
                     href={item.href}
                     title={item.label}
@@ -301,7 +299,7 @@ export function AppShell({
             >
               {mobileOpen ? <XIcon className="size-4" /> : <ListIcon className="size-4" />}
             </Button>
-            <Link href="/" className="flex items-baseline gap-0.5">
+            <Link prefetch={false} href="/" className="flex items-baseline gap-0.5">
               <span className="text-[15px] font-normal tracking-[-0.02em]">designcontracts</span>
               <span className="font-mono text-[10px] text-[var(--ui-accent)]">.sh</span>
             </Link>

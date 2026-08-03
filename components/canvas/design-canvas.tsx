@@ -9,8 +9,21 @@
  * `patchSystem`, which is the only way tokens change.
  */
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { ensureGoogleFont } from '@/components/dossier/shared'
+import { Button } from '@/components/ui/button'
+import { contrastRatio, inkFor, parseColor, wcagGrade } from '@/lib/analyzers/design-philosophy'
+import { spacingScale, typeScale } from '@/lib/contracts/authored-contract'
+import {
+  colorRole,
+  createWorkingSystem,
+  originLabel,
+  type SystemPatch,
+  systemToCssVars,
+  toStudioSystem,
+  type WorkingSystem,
+} from '@/lib/design-system/working-system'
 import {
   CheckCircleIcon,
   CircleNotchIcon,
@@ -21,26 +34,13 @@ import {
   SparkleIcon,
   WarningCircleIcon,
 } from '@/lib/phosphor'
-import { Button } from '@/components/ui/button'
-import { ensureGoogleFont } from '@/components/dossier/shared'
-import { contrastRatio, inkFor, parseColor, wcagGrade } from '@/lib/analyzers/design-philosophy'
-import { spacingScale, typeScale } from '@/lib/contracts/authored-contract'
-import {
-  colorRole,
-  createWorkingSystem,
-  originLabel,
-  systemToCssVars,
-  toStudioSystem,
-  type SystemPatch,
-  type WorkingSystem,
-} from '@/lib/design-system/working-system'
+import { cn } from '@/lib/utils'
 import {
   getCanvasDraftServerSnapshot,
   getCanvasDraftSnapshot,
   subscribeCanvasDraft,
   useCanvasStore,
 } from '@/stores/canvas-store'
-import { cn } from '@/lib/utils'
 
 const ROLES = ['background', 'foreground', 'muted', 'primary', 'border'] as const
 const FONTS = [
@@ -93,7 +93,15 @@ function RailGroup({ label, children }: { label: string; children: ReactNode }) 
   )
 }
 
-function ColorField({ role, value, onChange }: { role: string; value: string; onChange: (next: string) => void }) {
+function ColorField({
+  role,
+  value,
+  onChange,
+}: {
+  role: string
+  value: string
+  onChange: (next: string) => void
+}) {
   const hex = hexFor(value)
   return (
     <label className="flex items-center gap-2.5">
@@ -111,7 +119,10 @@ function ColorField({ role, value, onChange }: { role: string; value: string; on
         aria-label={`${role} color`}
         value={hex}
         onChange={(event) => onChange(event.target.value)}
-        className={cn('size-7 shrink-0 cursor-pointer rounded-md border bg-transparent p-0.5', HAIRLINE)}
+        className={cn(
+          'size-7 shrink-0 cursor-pointer rounded-md border bg-transparent p-0.5',
+          HAIRLINE
+        )}
       />
     </label>
   )
@@ -160,9 +171,9 @@ function Segmented<T extends string | number>({
   onChange: (next: T) => void
 }) {
   return (
-    <div>
-      <p className="mb-1 text-xs text-foreground">{label}</p>
-      <div role="group" aria-label={label} className={cn('flex gap-0.5 rounded-full border bg-secondary/40 p-0.5', HAIRLINE)}>
+    <fieldset className="min-w-0 border-0 p-0">
+      <legend className="mb-1 px-0 text-xs text-foreground">{label}</legend>
+      <div className={cn('flex gap-0.5 rounded-full border bg-secondary/40 p-0.5', HAIRLINE)}>
         {options.map((option) => (
           <button
             key={String(option.value)}
@@ -171,18 +182,28 @@ function Segmented<T extends string | number>({
             onClick={() => onChange(option.value)}
             className={cn(
               'flex-1 rounded-full px-2 py-1 text-[11px] transition-colors',
-              option.value === value ? 'bg-background text-foreground' : 'text-muted-foreground hover:text-foreground'
+              option.value === value
+                ? 'bg-background text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
             )}
           >
             {option.label}
           </button>
         ))}
       </div>
-    </div>
+    </fieldset>
   )
 }
 
-function TextField({ label, value, onChange }: { label: string; value: string; onChange: (next: string) => void }) {
+function TextField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: string
+  onChange: (next: string) => void
+}) {
   return (
     <label className="block">
       <span className="mb-1 block text-xs text-foreground">{label}</span>
@@ -228,7 +249,14 @@ function Panel({ label, children }: { label: string; children: ReactNode }) {
   return (
     <section>
       <p
-        style={{ ...MONO, margin: `0 0 ${sp(1.25)}`, color: 'var(--dc-muted)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.18em' }}
+        style={{
+          ...MONO,
+          margin: `0 0 ${sp(1.25)}`,
+          color: 'var(--dc-muted)',
+          fontSize: 10,
+          textTransform: 'uppercase',
+          letterSpacing: '0.18em',
+        }}
       >
         {label}
       </p>
@@ -242,13 +270,35 @@ function AppShellMini() {
   const navItem: CSSProperties = { color: 'var(--dc-muted)' }
   return (
     <div style={{ ...SURFACE, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: sp(1), padding: sp(1), borderBottom: RULE, fontSize: fs(0.75) }}>
-        <span style={{ width: 10, height: 10, borderRadius: 999, background: 'var(--dc-primary)' }} />
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: sp(1),
+          padding: sp(1),
+          borderBottom: RULE,
+          fontSize: fs(0.75),
+        }}
+      >
+        <span
+          style={{ width: 10, height: 10, borderRadius: 999, background: 'var(--dc-primary)' }}
+        />
         <span style={DISPLAY}>Product</span>
         <span style={{ ...navItem, marginLeft: 'auto' }}>Account</span>
       </div>
       <div style={{ display: 'flex', minHeight: 96 }}>
-        <div style={{ ...navItem, width: 96, display: 'flex', flexDirection: 'column', gap: sp(0.75), padding: sp(1), borderRight: RULE, fontSize: fs(0.7) }}>
+        <div
+          style={{
+            ...navItem,
+            width: 96,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: sp(0.75),
+            padding: sp(1),
+            borderRight: RULE,
+            fontSize: fs(0.7),
+          }}
+        >
           <span style={{ color: 'var(--dc-foreground)' }}>Overview</span>
           <span>Systems</span>
           <span>Scans</span>
@@ -274,9 +324,23 @@ function ControlSpecimens({ ink }: { ink: string }) {
   }
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: sp(1) }}>
-      <button type="button" style={{ ...base, background: 'var(--dc-primary)', color: ink, boxShadow: 'var(--dc-shadow)' }}>Primary</button>
-      <button type="button" style={{ ...base, color: 'var(--dc-foreground)', border: RULE }}>Secondary</button>
-      <button type="button" style={{ ...base, color: 'var(--dc-muted)' }}>Ghost</button>
+      <button
+        type="button"
+        style={{
+          ...base,
+          background: 'var(--dc-primary)',
+          color: ink,
+          boxShadow: 'var(--dc-shadow)',
+        }}
+      >
+        Primary
+      </button>
+      <button type="button" style={{ ...base, color: 'var(--dc-foreground)', border: RULE }}>
+        Secondary
+      </button>
+      <button type="button" style={{ ...base, color: 'var(--dc-muted)' }}>
+        Ghost
+      </button>
       <input
         readOnly
         aria-label="Preview input"
@@ -288,15 +352,34 @@ function ControlSpecimens({ ink }: { ink: string }) {
 }
 
 function CardSpecimen({ name, sizes, ink }: { name: string; sizes: number[]; ink: string }) {
-  const chip: CSSProperties = { ...MONO, borderRadius: 999, padding: `${sp(0.35)} ${sp(1.1)}`, fontSize: fs(0.7), transition: EASE }
+  const chip: CSSProperties = {
+    ...MONO,
+    borderRadius: 999,
+    padding: `${sp(0.35)} ${sp(1.1)}`,
+    fontSize: fs(0.7),
+    transition: EASE,
+  }
   return (
     <div style={{ ...SURFACE, padding: sp(2) }}>
-      <p style={{ ...DISPLAY, margin: 0, fontSize: sizes[Math.min(3, sizes.length - 1)], lineHeight: 1.15 }}>{name}</p>
-      <p style={{ margin: `${sp(1)} 0 0`, fontSize: fs(1), lineHeight: 1.6 }}>
-        Body copy rendered from the same tokens an agent will be held to — type
-        scale, grid and corner language all come from this system.
+      <p
+        style={{
+          ...DISPLAY,
+          margin: 0,
+          fontSize: sizes[Math.min(3, sizes.length - 1)],
+          lineHeight: 1.15,
+        }}
+      >
+        {name}
       </p>
-      <p style={{ ...MONO, margin: `${sp(0.75)} 0 0`, color: 'var(--dc-muted)', fontSize: fs(0.75) }}>Caption · muted role</p>
+      <p style={{ margin: `${sp(1)} 0 0`, fontSize: fs(1), lineHeight: 1.6 }}>
+        Body copy rendered from the same tokens an agent will be held to — type scale, grid and
+        corner language all come from this system.
+      </p>
+      <p
+        style={{ ...MONO, margin: `${sp(0.75)} 0 0`, color: 'var(--dc-muted)', fontSize: fs(0.75) }}
+      >
+        Caption · muted role
+      </p>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: sp(0.75), marginTop: sp(1.5) }}>
         <span style={{ ...chip, background: 'var(--dc-primary)', color: ink }}>active</span>
         <span style={{ ...chip, border: RULE, color: 'var(--dc-foreground)' }}>draft</span>
@@ -307,7 +390,11 @@ function CardSpecimen({ name, sizes, ink }: { name: string; sizes: number[]; ink
 }
 
 function TableSpecimen() {
-  const cell: CSSProperties = { padding: `${sp(0.75)} ${sp(1)}`, fontSize: fs(0.8), textAlign: 'left' }
+  const cell: CSSProperties = {
+    padding: `${sp(0.75)} ${sp(1)}`,
+    fontSize: fs(0.8),
+    textAlign: 'left',
+  }
   return (
     <table style={{ ...SURFACE, width: '100%', borderCollapse: 'collapse', boxShadow: 'none' }}>
       <tbody>
@@ -331,8 +418,21 @@ function TypeSpecimen({ sizes }: { sizes: number[] }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: sp(0.75) }}>
       {[...sizes].reverse().map((size) => (
         <div key={size} style={{ display: 'flex', alignItems: 'baseline', gap: sp(1) }}>
-          <span style={{ ...MONO, width: 56, flexShrink: 0, fontSize: 11, color: 'var(--dc-muted)' }}>{size}px</span>
-          <span style={{ ...DISPLAY, fontSize: size, lineHeight: 1.15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <span
+            style={{ ...MONO, width: 56, flexShrink: 0, fontSize: 11, color: 'var(--dc-muted)' }}
+          >
+            {size}px
+          </span>
+          <span
+            style={{
+              ...DISPLAY,
+              fontSize: size,
+              lineHeight: 1.15,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
             Design is a contract
           </span>
         </div>
@@ -346,8 +446,26 @@ function SpacingRuler({ steps }: { steps: number[] }) {
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: sp(0.5) }}>
       {steps.map((step) => (
         <div key={step} style={{ textAlign: 'center' }}>
-          <div style={{ width: step, height: 24, borderRadius: 2, background: 'var(--dc-primary)', opacity: 0.35 }} />
-          <span style={{ ...MONO, display: 'block', marginTop: 4, fontSize: 10, color: 'var(--dc-muted)' }}>{step}</span>
+          <div
+            style={{
+              width: step,
+              height: 24,
+              borderRadius: 2,
+              background: 'var(--dc-primary)',
+              opacity: 0.35,
+            }}
+          />
+          <span
+            style={{
+              ...MONO,
+              display: 'block',
+              marginTop: 4,
+              fontSize: 10,
+              color: 'var(--dc-muted)',
+            }}
+          >
+            {step}
+          </span>
         </div>
       ))}
     </div>
@@ -356,12 +474,17 @@ function SpacingRuler({ steps }: { steps: number[] }) {
 
 function EmptyState({ onStart }: { onStart: () => void }) {
   return (
-    <div className={cn('flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed px-6 py-12 text-center', HAIRLINE)}>
+    <div
+      className={cn(
+        'flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed px-6 py-12 text-center',
+        HAIRLINE
+      )}
+    >
       <PaletteIcon className="size-6 text-muted-foreground" />
       <p className={OVERLINE}>No system on the canvas</p>
       <p className="max-w-sm text-sm text-muted-foreground">
-        Scan a site to seed a system from real tokens, or start from a blank
-        canvas and author one by hand.
+        Scan a site to seed a system from real tokens, or start from a blank canvas and author one
+        by hand.
       </p>
       <Button size="sm" variant="outline" onClick={onStart}>
         <SparkleIcon /> Start from scratch
@@ -392,12 +515,18 @@ export function DesignCanvas({
   // Effect-free hydration: the persisted draft comes from a cached external
   // store snapshot, never from setState inside an effect. Edits run through
   // patchSystem, which pulls the draft into the store on first use.
-  const draft = useSyncExternalStore(subscribeCanvasDraft, getCanvasDraftSnapshot, getCanvasDraftServerSnapshot)
+  const draft = useSyncExternalStore(
+    subscribeCanvasDraft,
+    getCanvasDraftSnapshot,
+    getCanvasDraftServerSnapshot
+  )
   const system = storeSystem ?? draft
 
   useEffect(() => {
     if (!system) return
-    ;[system.fontDisplay, system.fontBody, system.fontMono].filter(Boolean).forEach(ensureGoogleFont)
+    ;[system.fontDisplay, system.fontBody, system.fontMono]
+      .filter(Boolean)
+      .forEach(ensureGoogleFont)
   }, [system])
 
   const vars = useMemo(() => (system ? systemToCssVars(system) : {}), [system])
@@ -422,12 +551,31 @@ export function DesignCanvas({
   // Ranges mirror the clamps in applyPatch, so the rail can never author a
   // value the system would silently reject.
   const sliders: SliderSpec[] = [
-    { label: 'Radius', value: system.radius, display: `${system.radius}px`, min: 0, max: 48,
-      onChange: (next) => patch({ radius: next }, `radius → ${next}px`) },
-    { label: 'Base size', value: system.baseSize, display: `${system.baseSize}px`, min: 10, max: 24,
-      onChange: (next) => patch({ baseSize: next }, `base size → ${next}px`) },
-    { label: 'Scale ratio', value: system.scaleRatio, display: system.scaleRatio.toFixed(3), min: 1.05, max: 1.8, step: 0.005,
-      onChange: (next) => patch({ scaleRatio: next }, `scale → ${next.toFixed(3)}`) },
+    {
+      label: 'Radius',
+      value: system.radius,
+      display: `${system.radius}px`,
+      min: 0,
+      max: 48,
+      onChange: (next) => patch({ radius: next }, `radius → ${next}px`),
+    },
+    {
+      label: 'Base size',
+      value: system.baseSize,
+      display: `${system.baseSize}px`,
+      min: 10,
+      max: 24,
+      onChange: (next) => patch({ baseSize: next }, `base size → ${next}px`),
+    },
+    {
+      label: 'Scale ratio',
+      value: system.scaleRatio,
+      display: system.scaleRatio.toFixed(3),
+      min: 1.05,
+      max: 1.8,
+      step: 0.005,
+      onChange: (next) => patch({ scaleRatio: next }, `scale → ${next.toFixed(3)}`),
+    },
   ]
 
   const specimens: Array<[string, ReactNode]> = [
@@ -435,7 +583,10 @@ export function DesignCanvas({
     ['Controls', <ControlSpecimens key="controls" ink={ink} />],
     ['Surface', <CardSpecimen key="card" name={system.name} sizes={sizes} ink={ink} />],
     ['Data', <TableSpecimen key="table" />],
-    [`Type scale · ${system.baseSize}px × ${system.scaleRatio}`, <TypeSpecimen key="type" sizes={sizes} />],
+    [
+      `Type scale · ${system.baseSize}px × ${system.scaleRatio}`,
+      <TypeSpecimen key="type" sizes={sizes} />,
+    ],
     [`Spacing · ${system.spacingBase}px grid`, <SpacingRuler key="space" steps={spaces} />],
   ]
 
@@ -483,23 +634,22 @@ export function DesignCanvas({
                 anchor.remove()
                 URL.revokeObjectURL(href)
               } catch (error) {
-                setExportError(
-                  error instanceof Error ? error.message : 'Export failed'
-                )
+                setExportError(error instanceof Error ? error.message : 'Export failed')
               } finally {
                 setExporting(false)
               }
             })()
           }}
         >
-          {exporting ? (
-            <CircleNotchIcon className="animate-spin" />
-          ) : (
-            <DownloadSimpleIcon />
-          )}
+          {exporting ? <CircleNotchIcon className="animate-spin" /> : <DownloadSimpleIcon />}
           {exporting ? 'Pack…' : 'Export pack'}
         </Button>
-        <Button size="sm" variant="outline" disabled={!dirty || saving} onClick={() => onSave?.(system)}>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={!dirty || saving}
+          onClick={() => onSave?.(system)}
+        >
           {saving ? <CircleNotchIcon className="animate-spin" /> : <FloppyDiskIcon />}
           {saving ? 'Saving' : 'Save'}
         </Button>
@@ -508,7 +658,9 @@ export function DesignCanvas({
       <div className="flex flex-wrap items-center gap-2 py-2">
         <ContrastChip label="text/bg" fg={foreground} bg={background} />
         <ContrastChip label="primary/bg" fg={primary} bg={background} />
-        {lastPatchSummary ? <span className={cn(OVERLINE, 'truncate')}>{lastPatchSummary}</span> : null}
+        {lastPatchSummary ? (
+          <span className={cn(OVERLINE, 'truncate')}>{lastPatchSummary}</span>
+        ) : null}
         {exportError ? (
           <span className="text-xs text-[var(--ui-danger)]" role="alert">
             {exportError}
@@ -581,7 +733,9 @@ export function DesignCanvas({
                 key={font.key}
                 label={font.label}
                 value={system[font.key]}
-                onChange={(next) => patch({ [font.key]: next }, `${font.label.toLowerCase()} → ${next}`)}
+                onChange={(next) =>
+                  patch({ [font.key]: next }, `${font.label.toLowerCase()} → ${next}`)
+                }
               />
             ))}
           </RailGroup>

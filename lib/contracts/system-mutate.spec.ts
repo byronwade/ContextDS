@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { getContrastRatio } from '@/lib/contrast-checker'
 import { DEFAULT_STUDIO_SYSTEM } from '@/lib/contracts/authored-contract'
 import {
   evolveStudioSystem,
   fixStudioContrast,
   invertStudioPolarity,
 } from '@/lib/contracts/system-mutate'
+import { getContrastRatio } from '@/lib/contrast-checker'
 
 describe('system mutate', () => {
   it('fixes failing foreground/background contrast to AA', () => {
@@ -35,12 +35,8 @@ describe('system mutate', () => {
     const inverted = invertStudioPolarity(DEFAULT_STUDIO_SYSTEM)
     const bg = inverted.colors.find((c) => c.role === 'background')!.value
     const fg = inverted.colors.find((c) => c.role === 'foreground')!.value
-    expect(bg).toBe(
-      DEFAULT_STUDIO_SYSTEM.colors.find((c) => c.role === 'foreground')!.value
-    )
-    expect(fg).toBe(
-      DEFAULT_STUDIO_SYSTEM.colors.find((c) => c.role === 'background')!.value
-    )
+    expect(bg).toBe(DEFAULT_STUDIO_SYSTEM.colors.find((c) => c.role === 'foreground')!.value)
+    expect(fg).toBe(DEFAULT_STUDIO_SYSTEM.colors.find((c) => c.role === 'background')!.value)
     expect(inverted.name).toMatch(/inverted/i)
   })
 

@@ -19,6 +19,7 @@
 
 import { createHash } from 'node:crypto'
 import { strToU8, zipSync } from 'fflate'
+import type { AppTypeDetection } from '@/lib/analyzers/app-type'
 import {
   type DesignMdArtifact,
   type DesignMdInput,
@@ -26,11 +27,10 @@ import {
 } from '@/lib/analyzers/design-md-generator'
 import { generateDesignSkill } from '@/lib/analyzers/design-skill-generator'
 import { type SemanticGraph, semanticGraphToMarkdown } from '@/lib/analyzers/semantic-graph'
-import { type AppTypeDetection } from '@/lib/analyzers/app-type'
 import {
   buildContextDsDriftReceipt,
-  driftReceiptJson,
   type DriftObservation,
+  driftReceiptJson,
 } from '@/lib/contracts/contextds-drift'
 
 export type DesignContractPackageInput = DesignMdInput & {
@@ -224,11 +224,7 @@ function looksLikeImageUrl(url?: string): boolean {
 }
 
 /** Stable pack-relative path for an embedded surface screenshot. */
-export function screenshotPackPath(
-  index: number,
-  label: string,
-  mime?: string
-): string {
+export function screenshotPackPath(index: number, label: string, mime?: string): string {
   const slug = slugify(label).slice(0, 40) || `surface-${index + 1}`
   return `design/references/surfaces/${String(index + 1).padStart(2, '0')}-${slug}.${extForMime(mime)}`
 }
@@ -246,9 +242,7 @@ function prepareScreenshots(
     const bytes = normalizeShotBytes(shot.bytesBase64)
     // ~24+ base64 chars ≈ tiny valid image; reject empty stubs only
     const hasLocal = Boolean(bytes && bytes.length >= 32)
-    const packPath = hasLocal
-      ? screenshotPackPath(index, shot.label, shot.mime)
-      : undefined
+    const packPath = hasLocal ? screenshotPackPath(index, shot.label, shot.mime) : undefined
     const sha256 =
       hasLocal && bytes
         ? createHash('sha256').update(Buffer.from(bytes, 'base64')).digest('hex')
@@ -330,11 +324,7 @@ function referencesMd(domain: string, screenshots: PackScreenshot[]): string {
   return lines.join('\n')
 }
 
-function referencesManifest(
-  url: string,
-  screenshots: PackScreenshot[],
-  appType?: string
-): string {
+function referencesManifest(url: string, screenshots: PackScreenshot[], appType?: string): string {
   const references = screenshots.map((shot, index) => {
     const usePath = Boolean(shot.packPath)
     return {
@@ -513,7 +503,9 @@ export function buildDesignContractPackage(
 ): DesignContractPackage {
   const detection = input.appTypeDetection ?? null
   const profile =
-    input.profile ?? (detection?.profile as 'web-app' | 'web-marketing' | undefined) ?? 'web-marketing'
+    input.profile ??
+    (detection?.profile as 'web-app' | 'web-marketing' | undefined) ??
+    'web-marketing'
   const appType = input.appType ?? detection?.appType ?? undefined
   const domain = input.domain.replace(/^www\./, '')
   const slug = slugify(domain)
@@ -747,13 +739,14 @@ export async function hydrateScreenshotFiles(
   )
 
   const domainGuess =
-    next
-      .find((f) => f.path === 'contract.json')
-      ?.content.match(/"domain"\s*:\s*"([^"]+)"/)?.[1] || 'site'
+    next.find((f) => f.path === 'contract.json')?.content.match(/"domain"\s*:\s*"([^"]+)"/)?.[1] ||
+    'site'
   const sourceUrl =
     next
       .find((f) => f.path === 'contract.json')
-      ?.content.match(/"sourceUrl"\s*:\s*"([^"]+)"/)?.[1] || screenshots[0]?.url || ''
+      ?.content.match(/"sourceUrl"\s*:\s*"([^"]+)"/)?.[1] ||
+    screenshots[0]?.url ||
+    ''
 
   const refsIdx = next.findIndex((f) => f.path === 'design/REFERENCES.md')
   if (refsIdx >= 0) {

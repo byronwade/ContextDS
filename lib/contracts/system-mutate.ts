@@ -3,14 +3,8 @@
  * and heuristic "evolve" directives (denser, warmer, sharper, …).
  */
 
-import {
-  getContrastRatio,
-  hexToRgb,
-} from '@/lib/contrast-checker'
-import {
-  slugify,
-  type StudioSystem,
-} from '@/lib/contracts/authored-contract'
+import { type StudioSystem, slugify } from '@/lib/contracts/authored-contract'
+import { getContrastRatio, hexToRgb } from '@/lib/contrast-checker'
 
 export type ContrastTarget = 'AA' | 'AAA'
 
@@ -53,11 +47,7 @@ function shiftToward(hex: string, toward: 'black' | 'white', amount: number): st
   if (toward === 'black') {
     return toHex(rgb.r * (1 - t), rgb.g * (1 - t), rgb.b * (1 - t))
   }
-  return toHex(
-    rgb.r + (255 - rgb.r) * t,
-    rgb.g + (255 - rgb.g) * t,
-    rgb.b + (255 - rgb.b) * t
-  )
+  return toHex(rgb.r + (255 - rgb.r) * t, rgb.g + (255 - rgb.g) * t, rgb.b + (255 - rgb.b) * t)
 }
 
 function roleColor(system: StudioSystem, role: string): string | null {
@@ -133,10 +123,7 @@ export function fixStudioContrast(
   pairs.push({
     pair: 'foreground/background',
     before: getContrastRatio(foreground, background),
-    after: getContrastRatio(
-      roleColor(next, 'foreground')!,
-      roleColor(next, 'background')!
-    ),
+    after: getContrastRatio(roleColor(next, 'foreground')!, roleColor(next, 'background')!),
     adjusted: textFix.adjusted,
   })
 
@@ -179,10 +166,7 @@ export function fixStudioContrast(
   if (changed) {
     next = {
       ...next,
-      philosophyNote: [
-        next.philosophyNote,
-        `Contrast fixed toward WCAG ${target}.`,
-      ]
+      philosophyNote: [next.philosophyNote, `Contrast fixed toward WCAG ${target}.`]
         .filter(Boolean)
         .join(' ')
         .slice(0, 600),
@@ -219,11 +203,7 @@ export function invertStudioPolarity(system: StudioSystem): StudioSystem {
     name: system.name.endsWith('(inverted)')
       ? system.name
       : `${system.name} (inverted)`.slice(0, 80),
-    slug: slugify(
-      system.name.endsWith('(inverted)')
-        ? system.name
-        : `${system.name} inverted`
-    ),
+    slug: slugify(system.name.endsWith('(inverted)') ? system.name : `${system.name} inverted`),
     philosophyNote: [
       system.philosophyNote,
       'Polarity inverted (light ↔ dark) while preserving primary accent.',
@@ -250,10 +230,7 @@ function mixHex(a: string, b: string, ratio: number): string {
  * Apply a short natural-language evolve directive onto an existing system
  * without discarding its identity colors unless the directive asks for a theme shift.
  */
-export function evolveStudioSystem(
-  system: StudioSystem,
-  directive: string
-): StudioSystem {
+export function evolveStudioSystem(system: StudioSystem, directive: string): StudioSystem {
   const lower = directive.trim().toLowerCase()
   if (lower.length < 4) {
     throw new Error('Evolve directive must be at least 4 characters')

@@ -1,7 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { Overline } from '@/components/dossier/shared'
+import { PageCanvas } from '@/components/molecules/page-canvas'
+import { AppShell } from '@/components/organisms/app-shell'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   ArrowsClockwiseIcon,
   DownloadSimpleIcon,
@@ -15,11 +20,6 @@ import {
   SwapIcon,
   WrenchIcon,
 } from '@/lib/phosphor'
-import { AppShell } from '@/components/organisms/app-shell'
-import { PageCanvas } from '@/components/molecules/page-canvas'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Overline } from '@/components/dossier/shared'
 import { useEntitlements } from '@/lib/premium'
 import { cn } from '@/lib/utils'
 
@@ -76,9 +76,7 @@ export default function CreateClient() {
   const [skinDomain, setSkinDomain] = useState('linear.app')
   const [restyleName, setRestyleName] = useState('')
 
-  const [mutateOp, setMutateOp] = useState<'contrast-fix' | 'polarity' | 'evolve'>(
-    'contrast-fix'
-  )
+  const [mutateOp, setMutateOp] = useState<'contrast-fix' | 'polarity' | 'evolve'>('contrast-fix')
   const [mutateDomain, setMutateDomain] = useState('example.com')
   const [mutateTarget, setMutateTarget] = useState<'AA' | 'AAA'>('AA')
   const [mutateDirective, setMutateDirective] = useState(
@@ -99,12 +97,13 @@ export default function CreateClient() {
       })
   }, [])
 
-  const run = async (fn: () => Promise<void>) => {
+  const run = async (fn: () => Promise<string | undefined>) => {
     setBusy(true)
     setError(null)
     setNote(null)
     try {
-      await fn()
+      const message = await fn()
+      if (typeof message === 'string' && message) setNote(message)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Generation failed')
     } finally {
@@ -127,31 +126,59 @@ export default function CreateClient() {
       <PageCanvas>
         <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
           <Overline>Create · advanced generators</Overline>
-          <h1 className="mt-2 font-serif text-4xl tracking-tight text-foreground">
+          <h1 className="mt-2 text-4xl font-normal tracking-[-0.02em] text-[var(--ui-ink)]">
             Generate a Design Contract
           </h1>
-          <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
-            Production paths into the same installable pack grammar — scan, vision
-            App Pack, Studio, NL brief, industry recipes, import, blend, structure×skin
-            restyle, and directed mutations (contrast / polarity / evolve).
+          <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-[var(--ui-ink-secondary)]">
+            One installable pack grammar — brief, recipes, import, blend, restyle, mutate, scan,
+            App Pack, or Studio. Every path emits{' '}
+            <span className="font-mono text-[12px]">--profile</span> +{' '}
+            <span className="font-mono text-[12px]">--app-type</span>.
           </p>
 
-          <div className="mt-8 flex flex-wrap gap-1 rounded-xl border border-[color:var(--soft-border)] bg-secondary/30 p-1">
+          <div
+            role="tablist"
+            aria-label="Generator type"
+            className="mt-8 flex flex-wrap gap-1 rounded-[var(--radius-md)] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] p-1"
+          >
             {tabs.map((entry) => {
               const Icon = entry.icon
+              const selected = tab === entry.id
               return (
                 <button
                   key={entry.id}
                   type="button"
-                  onClick={() => setTab(entry.id)}
+                  role="tab"
+                  id={`create-tab-${entry.id}`}
+                  aria-selected={selected}
+                  aria-controls={`create-panel-${entry.id}`}
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => {
+                    setTab(entry.id)
+                    setError(null)
+                    setNote(null)
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return
+                    event.preventDefault()
+                    const index = tabs.findIndex((item) => item.id === entry.id)
+                    const delta = event.key === 'ArrowRight' ? 1 : -1
+                    const next = tabs[(index + delta + tabs.length) % tabs.length]
+                    setTab(next.id)
+                    setError(null)
+                    setNote(null)
+                    queueMicrotask(() => {
+                      document.getElementById(`create-tab-${next.id}`)?.focus()
+                    })
+                  }}
                   className={cn(
-                    'inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] transition-colors sm:text-xs',
-                    tab === entry.id
-                      ? 'bg-[var(--ui-paper)] text-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
+                    'inline-flex flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] px-2 py-2 text-[11px] transition-colors sm:text-xs',
+                    selected
+                      ? 'bg-[var(--ui-paper)] text-[var(--ui-ink)]'
+                      : 'text-[var(--ui-ink-muted)] hover:text-[var(--ui-ink)]'
                   )}
                 >
-                  <Icon className="size-3.5" />
+                  <Icon className="size-3.5" aria-hidden />
                   {entry.label}
                 </button>
               )
@@ -171,10 +198,10 @@ export default function CreateClient() {
 
           <div className="mt-8 space-y-6">
             {tab === 'brief' ? (
-              <section className="space-y-4" data-testid="create-brief">
+              <section role="tabpanel" id="create-panel-brief" aria-labelledby="create-tab-brief" className="space-y-4" data-testid="create-brief">
                 <p className="text-sm text-muted-foreground">
-                  Describe product personality, density, and materials. We synthesize
-                  a full Studio system and ZIP pack.
+                  Describe product personality, density, and materials. We synthesize a full Studio
+                  system and ZIP pack.
                   {!isPro && ready ? ' Pro required.' : null}
                 </p>
                 <Input
@@ -207,7 +234,7 @@ export default function CreateClient() {
                         throw new Error(data?.error || `Brief failed (${response.status})`)
                       }
                       await downloadZip(response, 'brief-design-contract.zip')
-                      setNote('Pack downloaded — install with the emitted npx command.')
+                      return 'Pack downloaded — install with the emitted npx command.'
                     })
                   }
                 >
@@ -222,12 +249,12 @@ export default function CreateClient() {
             ) : null}
 
             {tab === 'recipes' ? (
-              <section className="space-y-4" data-testid="create-recipes">
+              <section role="tabpanel" id="create-panel-recipes" aria-labelledby="create-tab-recipes" className="space-y-4" data-testid="create-recipes">
                 <p className="text-sm text-muted-foreground">
                   Start from an industry recipe with the correct engine{' '}
                   <span className="font-mono text-[12px]">--profile</span> /{' '}
-                  <span className="font-mono text-[12px]">--app-type</span>. Free —
-                  deterministic, no scan required.
+                  <span className="font-mono text-[12px]">--app-type</span>. Free — deterministic,
+                  no scan required.
                 </p>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {(recipes.length
@@ -289,7 +316,7 @@ export default function CreateClient() {
                         throw new Error(data?.error || `Recipe failed (${response.status})`)
                       }
                       await downloadZip(response, 'recipe-design-contract.zip')
-                      setNote('Recipe pack downloaded.')
+                      return 'Recipe pack downloaded.'
                     })
                   }
                 >
@@ -300,29 +327,27 @@ export default function CreateClient() {
             ) : null}
 
             {tab === 'import' ? (
-              <section className="space-y-4" data-testid="create-import">
+              <section role="tabpanel" id="create-panel-import" aria-labelledby="create-tab-import" className="space-y-4" data-testid="create-import">
                 <p className="text-sm text-muted-foreground">
-                  Paste W3C tokens.json, DESIGN.md, CSS variables, or a Tailwind theme
-                  snippet. Pro unlocks pack export.
+                  Paste W3C tokens.json, DESIGN.md, CSS variables, or a Tailwind theme snippet. Pro
+                  unlocks pack export.
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {(['auto', 'dtcg', 'design-md', 'css', 'tailwind'] as const).map(
-                    (format) => (
-                      <button
-                        key={format}
-                        type="button"
-                        onClick={() => setImportFormat(format)}
-                        className={cn(
-                          'rounded-full border px-2.5 py-1 font-mono text-[11px]',
-                          importFormat === format
-                            ? 'border-[var(--ui-accent)] text-[var(--ui-accent)]'
-                            : 'border-[color:var(--soft-border)] text-muted-foreground'
-                        )}
-                      >
-                        {format}
-                      </button>
-                    )
-                  )}
+                  {(['auto', 'dtcg', 'design-md', 'css', 'tailwind'] as const).map((format) => (
+                    <button
+                      key={format}
+                      type="button"
+                      onClick={() => setImportFormat(format)}
+                      className={cn(
+                        'rounded-full border px-2.5 py-1 font-mono text-[11px]',
+                        importFormat === format
+                          ? 'border-[var(--ui-accent)] text-[var(--ui-accent)]'
+                          : 'border-[color:var(--soft-border)] text-muted-foreground'
+                      )}
+                    >
+                      {format}
+                    </button>
+                  ))}
                 </div>
                 <Input
                   value={importName}
@@ -378,7 +403,7 @@ export default function CreateClient() {
                         throw new Error(data?.error || `Import failed (${response.status})`)
                       }
                       await downloadZip(response, 'imported-design-contract.zip')
-                      setNote('Imported pack downloaded.')
+                      return 'Imported pack downloaded.'
                     })
                   }
                 >
@@ -393,10 +418,10 @@ export default function CreateClient() {
             ) : null}
 
             {tab === 'blend' ? (
-              <section className="space-y-4" data-testid="create-blend">
+              <section role="tabpanel" id="create-panel-blend" aria-labelledby="create-tab-blend" className="space-y-4" data-testid="create-blend">
                 <p className="text-sm text-muted-foreground">
-                  Merge 2–10 already-scanned domains into one coherent system and
-                  download the installable ZIP. Free — scan sources first.
+                  Merge 2–10 already-scanned domains into one coherent system and download the
+                  installable ZIP. Free — scan sources first.
                 </p>
                 <Input
                   value={blendDomains}
@@ -443,7 +468,7 @@ export default function CreateClient() {
                         )
                       }
                       await downloadZip(response, 'blend-design-contract.zip')
-                      setNote('Blend pack downloaded and saved to the Library.')
+                      return 'Blend pack downloaded and saved to the Library.'
                     })
                   }
                 >
@@ -454,11 +479,10 @@ export default function CreateClient() {
             ) : null}
 
             {tab === 'restyle' ? (
-              <section className="space-y-4" data-testid="create-restyle">
+              <section role="tabpanel" id="create-panel-restyle" aria-labelledby="create-tab-restyle" className="space-y-4" data-testid="create-restyle">
                 <p className="text-sm text-muted-foreground">
-                  Keep one site&apos;s page structure; apply another&apos;s skin. Emits a
-                  pack with detected{' '}
-                  <span className="font-mono text-[12px]">--profile</span> /{' '}
+                  Keep one site&apos;s page structure; apply another&apos;s skin. Emits a pack with
+                  detected <span className="font-mono text-[12px]">--profile</span> /{' '}
                   <span className="font-mono text-[12px]">--app-type</span>.
                   {!isPro && ready ? ' Pro required.' : null}
                 </p>
@@ -510,25 +534,21 @@ export default function CreateClient() {
                         )
                       }
                       await downloadZip(response, 'restyle-design-contract.zip')
-                      setNote('Restyle pack downloaded.')
+                      return 'Restyle pack downloaded.'
                     })
                   }
                 >
-                  {isPro ? (
-                    <SwapIcon className="size-3.5" />
-                  ) : (
-                    <LockIcon className="size-3.5" />
-                  )}
+                  {isPro ? <SwapIcon className="size-3.5" /> : <LockIcon className="size-3.5" />}
                   {busy ? 'Restyling…' : 'Restyle → pack ZIP'}
                 </Button>
               </section>
             ) : null}
 
             {tab === 'mutate' ? (
-              <section className="space-y-4" data-testid="create-mutate">
+              <section role="tabpanel" id="create-panel-mutate" aria-labelledby="create-tab-mutate" className="space-y-4" data-testid="create-mutate">
                 <p className="text-sm text-muted-foreground">
-                  Directed mutations on a scanned domain: WCAG contrast fix, light↔dark
-                  polarity twin, or evolve with a short directive.
+                  Directed mutations on a scanned domain: WCAG contrast fix, light↔dark polarity
+                  twin, or evolve with a short directive.
                   {!isPro && ready ? ' Pro required.' : null}
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -612,22 +632,18 @@ export default function CreateClient() {
                         throw new Error(data?.error || `Mutate failed (${response.status})`)
                       }
                       await downloadZip(response, 'mutated-design-contract.zip')
-                      setNote('Mutated pack downloaded.')
+                      return 'Mutated pack downloaded.'
                     })
                   }
                 >
-                  {isPro ? (
-                    <WrenchIcon className="size-3.5" />
-                  ) : (
-                    <LockIcon className="size-3.5" />
-                  )}
+                  {isPro ? <WrenchIcon className="size-3.5" /> : <LockIcon className="size-3.5" />}
                   {busy ? 'Mutating…' : 'Mutate → pack ZIP'}
                 </Button>
               </section>
             ) : null}
 
             {tab === 'scan' ? (
-              <section className="space-y-4" data-testid="create-scan">
+              <section role="tabpanel" id="create-panel-scan" aria-labelledby="create-tab-scan" className="space-y-4" data-testid="create-scan">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Link
                     href="/?url="
@@ -658,8 +674,8 @@ export default function CreateClient() {
                     <PenNibIcon className="size-5 text-[var(--ui-accent)]" />
                     <p className="mt-3 text-sm font-medium text-foreground">Studio</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Hand-author tokens and export a full pack ZIP (Pro). Canvas also
-                      exports packs.
+                      Hand-author tokens and export a full pack ZIP (Pro). Canvas also exports
+                      packs.
                     </p>
                   </Link>
                   <Link
@@ -667,9 +683,7 @@ export default function CreateClient() {
                     className="rounded-2xl border border-[color:var(--soft-border)] bg-card/40 p-5 transition-colors hover:bg-[var(--ui-paper-hover)]"
                   >
                     <SparkleIcon className="size-5 text-[var(--ui-accent)]" />
-                    <p className="mt-3 text-sm font-medium text-foreground">
-                      Fork from Library
-                    </p>
+                    <p className="mt-3 text-sm font-medium text-foreground">Fork from Library</p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       Continue or fork a community system into your canvas, then export.
                     </p>
