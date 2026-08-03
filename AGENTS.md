@@ -14,13 +14,14 @@
 | Route | Shell nav | Notes |
 |-------|-----------|-------|
 | `/` | Chat | Primary product — `ScanChat` full viewport |
-| `/community` | Library | Directory of scanned contracts |
+| `/create` | Create | Advanced generators — brief, import, blend, scan/App Pack |
+| `/community` | Library | Directory of scanned contracts (+ Fork) |
 | `/docs` | Docs | Install + API |
 | `/site/[domain]` | — | Detail view; **hydrate cache, don’t auto-rescan** |
 | `/features`, `/pricing`, `/about` | More | Same `AppShell`; quiet content via `PageCanvas` |
 | `/contact`, `/privacy`, `/terms` | Legal links | Same shell; no separate marketing chrome |
 | `/metrics` | — | Live metrics; still use `AppShell` |
-| `/scan`, `/agent` | → `/` | Redirects (keep `?url=`) |
+| `/scan`, `/agent` | → `/` | Redirects (keep `?url=` and `?system=`) |
 
 When adding pages:
 1. Wrap with `AppShell` + `currentPage` (and `PageCanvas` if scrollable).

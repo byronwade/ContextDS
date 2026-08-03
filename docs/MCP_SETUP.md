@@ -27,7 +27,9 @@ Tool names are **derived from the same `designContractTools` the Scan agent uses
 | `contract_from_screenshot` | Pro + credits | Multi-image App Pack (≥5 screenshots) |
 | `refine_design_md` | Pro | AI refine of DESIGN.md |
 | `compose_design_artifacts` | Pro | Compose pack artifacts |
-| `blend_systems` | Pro | Blend multiple scanned systems |
+| `blend_systems` | Pro | Blend multiple scanned systems → pack |
+| `generate_from_brief` | Pro | NL brief → Design Contract |
+| `import_design_tokens` | Pro | Import DTCG / DESIGN.md / CSS / Tailwind |
 | `restyle_page` | Pro | Restyle guidance |
 | `open_canvas` / `update_canvas` | Pro | Studio canvas tools |
 

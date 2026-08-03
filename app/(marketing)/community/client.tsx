@@ -233,7 +233,8 @@ function SystemCard({ system, loadFont }: { system: LibrarySystem; loadFont: boo
   const colors = system.preview?.colors ?? []
   const primaryFont = system.preview?.fonts?.[0] ?? null
   // Typed routes: the query string is opaque to the route type, hence the cast.
-  const href = `/scan?system=${encodeURIComponent(system.id)}` as Route
+  const href = `/?system=${encodeURIComponent(system.id)}` as Route
+  const [forking, setForking] = useState(false)
 
   useEffect(() => {
     if (loadFont && primaryFont) ensureGoogleFont(primaryFont)
@@ -246,6 +247,26 @@ function SystemCard({ system, loadFont }: { system: LibrarySystem; loadFont: boo
     if (Number.isNaN(n)) return null
     return raw.includes('rem') || raw.includes('em') ? n * 16 : n
   })()
+
+  const forkSystem = async () => {
+    if (forking) return
+    setForking(true)
+    try {
+      const response = await fetch('/api/systems/fork', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ systemId: system.id }),
+      })
+      const data = (await response.json()) as { canvasHref?: string; error?: string }
+      if (!response.ok || !data.canvasHref) {
+        throw new Error(data.error || 'Fork failed')
+      }
+      trackClientEvent('system_forked')
+      window.location.href = data.canvasHref
+    } catch {
+      setForking(false)
+    }
+  }
 
   return (
     <li className="group relative flex flex-col overflow-hidden rounded-[var(--radius-paper)] border border-[var(--ui-border)] bg-[var(--ui-paper)] transition-colors duration-150 hover:border-[var(--ui-border-edge)]">
@@ -323,13 +344,24 @@ function SystemCard({ system, loadFont }: { system: LibrarySystem; loadFont: boo
           </div>
 
           <div className="relative z-10 flex shrink-0 items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => void forkSystem()}
+              disabled={forking}
+              className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-md)] border border-[var(--ui-border)] px-2.5 text-[11px] text-[var(--ui-ink-muted)] transition-colors hover:border-[var(--ui-border-edge)] hover:text-[var(--ui-ink)] disabled:opacity-50"
+              aria-label={`Fork ${system.name}`}
+              data-testid="system-fork"
+            >
+              <SparkleIcon className="size-3" aria-hidden />
+              {forking ? 'Forking…' : 'Fork'}
+            </button>
             <Link
               href={href}
               className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-md)] border border-[var(--ui-border)] px-2.5 text-[11px] text-[var(--ui-ink-muted)] transition-colors hover:border-[var(--ui-border-edge)] hover:text-[var(--ui-ink)]"
               aria-label={`Continue editing ${system.name}`}
             >
               <PencilSimpleIcon className="size-3" aria-hidden />
-              Continue editing
+              Continue
             </Link>
           </div>
         </div>

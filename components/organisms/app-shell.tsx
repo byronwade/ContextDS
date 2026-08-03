@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils'
 export type AppShellPage =
   | 'chat'
   | 'library'
+  | 'create'
   | 'studio'
   | 'docs'
   | 'mcp'
@@ -52,6 +53,7 @@ type AppShellProps = {
 
 const PRIMARY_NAV = [
   { href: '/', label: 'Chat', page: 'chat' as const, icon: ChatCircleIcon, pro: false },
+  { href: '/create', label: 'Create', page: 'create' as const, icon: PlusIcon, pro: false },
   { href: '/community', label: 'Library', page: 'library' as const, icon: BooksIcon, pro: false },
   { href: '/studio', label: 'Studio', page: 'studio' as const, icon: PenNibIcon, pro: true },
   { href: '/mcp', label: 'MCP', page: 'mcp' as const, icon: PlugsIcon, pro: true },

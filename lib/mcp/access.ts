@@ -18,6 +18,8 @@ export const MCP_WRITE_TOOLS = new Set([
   'refine_design_md',
   'compose_design_artifacts',
   'blend_systems',
+  'generate_from_brief',
+  'import_design_tokens',
   'restyle_page',
   'open_canvas',
   'update_canvas',

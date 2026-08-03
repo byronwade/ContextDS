@@ -7,6 +7,8 @@ describe('MCP write gating', () => {
     expect(mcpWriteRequiresPro('contract_from_screenshot')).toBe(true)
     expect(mcpWriteRequiresPro('refine_design_md')).toBe(true)
     expect(mcpWriteRequiresPro('blend_systems')).toBe(true)
+    expect(mcpWriteRequiresPro('generate_from_brief')).toBe(true)
+    expect(mcpWriteRequiresPro('import_design_tokens')).toBe(true)
     expect(mcpWriteRequiresPro('compose_design_artifacts')).toBe(true)
   })
 

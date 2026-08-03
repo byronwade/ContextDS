@@ -26,7 +26,8 @@ Design Contracts is an **app workbench**, not a brochure site.
 | Route | Nav | Archetype |
 |-------|-----|-----------|
 | `/` | Chat | Centered action canvas (712px) |
-| `/community` | Library | Full operational canvas (dense list) |
+| `/create` | Create | Advanced generators (brief / import / blend / scan) |
+| `/community` | Library | Full operational canvas (dense list + Fork) |
 | `/docs` | Docs | Document (~760px) |
 | `/site/[domain]` | detail | Document + optional modules |
 | `/features` `/pricing` `/about` | More | Document |

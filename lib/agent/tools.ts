@@ -1157,7 +1157,9 @@ export const designContractTools = {
       }
 
       const { blendSystems } = await import('@/lib/analyzers/system-blend')
+      const { buildStudioContractPack } = await import('@/lib/contracts/authored-contract')
       const blend = blendSystems(sources, name)
+      const { pack, fileName } = buildStudioContractPack(blend.system)
 
       return {
         found: true,
@@ -1184,7 +1186,97 @@ export const designContractTools = {
         },
         attribution: blend.attribution,
         designMd: blend.designMd,
-        note: 'Deterministic merge — same inputs always blend to the same system. The DESIGN.md is drop-in ready; open /studio to tweak it by hand.',
+        installCommand: pack.installCommand,
+        packFileName: fileName,
+        packFileCount: pack.files.length,
+        downloadHint:
+          'POST /api/contracts/blend with the same domains to download the installable ZIP. Or open /create → Blend.',
+        note: 'Deterministic merge — same inputs always blend to the same system. DESIGN.md + full pack façade are ready; install with the emitted npx command.',
+      }
+    },
+  }),
+
+  generate_from_brief: tool({
+    description:
+      'Synthesize a full Design Contract from a natural-language product brief (personality, density, materials, audience). Returns Studio system tokens, DESIGN.md, and install command. Prefer this when the user has no live site or screenshots yet.',
+    inputSchema: z.object({
+      brief: z.string().min(12).max(4000),
+      name: z.string().max(80).optional(),
+    }),
+    execute: async ({ brief, name }) => {
+      const { briefToStudioSystem } = await import('@/lib/ai/brief-to-studio-system')
+      const { buildStudioContractPack } = await import('@/lib/contracts/authored-contract')
+      const { system, source } = await briefToStudioSystem({ brief, name })
+      const { pack, fileName } = buildStudioContractPack(system)
+      return {
+        found: true,
+        source,
+        name: system.name,
+        system: {
+          colors: system.colors,
+          fonts: {
+            display: system.fontDisplay,
+            body: system.fontBody,
+            mono: system.fontMono,
+          },
+          spacing: `${system.spacingBase}px`,
+          radius: `${system.radius}px`,
+          depth: system.depth,
+        },
+        designMd: pack.designMd.markdown,
+        installCommand: pack.installCommand,
+        packFileName: fileName,
+        downloadHint:
+          'Pro users can POST /api/contracts/from-brief for the ZIP, or use /create → From brief.',
+      }
+    },
+  }),
+
+  import_design_tokens: tool({
+    description:
+      'Import W3C DTCG tokens.json, DESIGN.md YAML front-matter, CSS variables, or a Tailwind theme snippet into a Design Contract. Returns the mapped Studio system + install command.',
+    inputSchema: z.object({
+      content: z.string().min(8).max(200_000),
+      format: z
+        .enum(['auto', 'dtcg', 'design-md', 'css', 'tailwind'])
+        .optional()
+        .describe('Force a parser; default auto-detect'),
+      name: z.string().max(80).optional(),
+    }),
+    execute: async ({ content, format, name }) => {
+      const { importDesignTokens } = await import('@/lib/contracts/import-tokens')
+      const { buildStudioContractPack } = await import('@/lib/contracts/authored-contract')
+      try {
+        const imported = importDesignTokens(content, { name, format: format || 'auto' })
+        const { pack, fileName } = buildStudioContractPack(imported.system)
+        return {
+          found: true,
+          format: imported.format,
+          warnings: imported.warnings,
+          tokenCount: imported.tokenCount,
+          name: imported.system.name,
+          system: {
+            colors: imported.system.colors,
+            fonts: {
+              display: imported.system.fontDisplay,
+              body: imported.system.fontBody,
+              mono: imported.system.fontMono,
+            },
+            spacing: `${imported.system.spacingBase}px`,
+            radius: `${imported.system.radius}px`,
+            depth: imported.system.depth,
+          },
+          designMd: pack.designMd.markdown,
+          installCommand: pack.installCommand,
+          packFileName: fileName,
+          downloadHint:
+            'Pro users can POST /api/contracts/import for the ZIP, or use /create → Import tokens.',
+        }
+      } catch (error) {
+        return {
+          found: false,
+          error: error instanceof Error ? error.message : 'Import failed',
+        }
       }
     },
   }),

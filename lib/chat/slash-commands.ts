@@ -61,14 +61,34 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   {
     name: 'blend',
     args: '<domain> <domain> …',
-    description: 'Merge 2–10 systems into one coherent system',
+    description: 'Merge 2–10 systems into an installable pack',
     example: '/blend stripe.com linear.app vercel.com',
     expand: (args) => {
       const domains = domainList(args)
       return domains.length >= 2
-        ? `Blend ${domains.join(', ')} into one coherent design system and give me the DESIGN.md.`
+        ? `Blend ${domains.join(', ')} into one coherent design system with blend_systems, then tell me the install command and how to download the pack ZIP from /api/contracts/blend or /create.`
         : 'Which sites should I blend? Give me at least two domains.'
     },
+  },
+  {
+    name: 'brief',
+    args: '<product description>',
+    description: 'Synthesize a Design Contract from a brief',
+    example: '/brief dark ops workbench with teal accents',
+    expand: (args) =>
+      args.trim()
+        ? `Generate a Design Contract from this brief using generate_from_brief: ${args.trim()}. Summarize the system and the install command.`
+        : 'Describe the product or visual direction for a new Design Contract.',
+  },
+  {
+    name: 'import',
+    args: '<paste tokens later>',
+    description: 'Import tokens.json / DESIGN.md / CSS / Tailwind',
+    example: '/import',
+    expand: (args) =>
+      args.trim().length > 20
+        ? `Import these design tokens with import_design_tokens and show the resulting system + install command:\n\n${args.trim()}`
+        : 'Paste W3C tokens.json, DESIGN.md, CSS variables, or a Tailwind theme — or open /create → Import tokens.',
   },
   {
     name: 'compare',
@@ -139,7 +159,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     description: 'List what Scan can do',
     example: '/help',
     expand: () =>
-      'What can you do? List your capabilities briefly — scanning, blending, the canvas, themes, contrast — with one example each.',
+      'What can you do? List your capabilities briefly — URL scan, App Pack screenshots, brief synthesis, token import, blending, Studio, canvas, themes, contrast — with one example each. Mention /create for the advanced generators.',
   },
 ]
 
