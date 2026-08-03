@@ -16,7 +16,6 @@ const OPTIONS: Array<{ value: Theme; icon: typeof SunIcon; label: string }> = [
  * concentric with the track (no clipped corners on the last cell).
  */
 export function ThemeToggle({ className }: { className?: string }) {
-  // mounted is false during SSR/hydration so the thumb only renders once theme is known
   const { theme, setTheme, mounted } = useTheme()
 
   const activeIndex = Math.max(
@@ -28,14 +27,14 @@ export function ThemeToggle({ className }: { className?: string }) {
     <div
       role="radiogroup"
       aria-label="Color theme"
- className={cn(
+      className={cn(
         "relative inline-flex h-8 items-center rounded-full border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] p-[2px]",
         className
       )}
     >
       <span
         aria-hidden
- className={cn(
+        className={cn(
           "absolute left-[2px] top-[2px] size-7 rounded-full border border-[var(--ui-border)] bg-[var(--ui-paper)] shadow-none transition-transform duration-200 ease-out",
           !mounted && "opacity-0"
         )}
@@ -53,14 +52,14 @@ export function ThemeToggle({ className }: { className?: string }) {
             aria-label={option.label}
             title={option.label}
             onClick={() => setTheme(option.value)}
- className={cn(
+            className={cn(
               "relative z-10 flex size-7 items-center justify-center rounded-full transition-colors duration-200",
               isActive
                 ? "text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
- <Icon className="size-3.5" weight="duotone" />
+            <Icon className="size-3.5" weight="duotone" />
           </button>
         )
       })}

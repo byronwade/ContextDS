@@ -343,10 +343,10 @@ function EmptyState({
 }) {
   return (
     <div className="mx-auto flex w-full max-w-[712px] flex-1 flex-col items-center justify-center px-4 pb-10 pt-14 animate-fade-in">
-      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--ui-ink-muted)]">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ui-ink-muted)]">
         Design Contract workbench
       </p>
-      <h1 className="mt-3 text-[clamp(1.75rem,4vw,2.25rem)] font-semibold leading-tight tracking-[-0.02em] text-[var(--ui-ink)]">
+      <h1 className="mt-3 text-[clamp(1.75rem,4vw,2.25rem)] font-normal leading-tight tracking-[-0.03em] text-[var(--ui-ink)]">
         designcontracts
         <span className="font-mono text-[0.5em] font-medium tracking-normal text-[var(--ui-accent)]">
           .sh
