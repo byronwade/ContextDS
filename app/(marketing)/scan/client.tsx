@@ -34,7 +34,6 @@ import {
   PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
-  PromptInputTools,
   type PromptInputMessage,
 } from '@/components/ai-elements/prompt-input'
 import {
@@ -715,11 +714,11 @@ export function ScanChat() {
                   onKeyDown={onComposerKeyDown}
                   placeholder="Ask about a site, or type / for commands"
                   disabled={busy && status === 'submitted'}
-                  className="min-h-[40px] max-h-48 px-3 py-2.5 text-[15px] leading-[1.45] text-[var(--ui-ink)] placeholder:text-[var(--ui-ink-muted-soft)]"
+                  className="min-h-[44px] max-h-48 px-3.5 pb-2 pt-3 text-[15px] leading-[1.45] text-[var(--ui-ink)] placeholder:text-[var(--ui-ink-muted-soft)]"
                   aria-label="Message"
                 />
               </PromptInputBody>
-              <PromptInputFooter className="h-10 items-center justify-end gap-2 border-t border-[var(--ui-border-soft)] bg-transparent px-3 py-0">
+              <PromptInputFooter className="h-9 items-center justify-end border-0 bg-transparent px-2.5 pb-2.5 pt-0">
                 <PromptInputSubmit
                   status={status}
                   disabled={!busy && !text.trim()}
