@@ -289,7 +289,7 @@ export function AppShell({
           </div>
         ) : null}
 
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-0 md:p-2">
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-0 md:p-3">
           <header className="flex h-14 shrink-0 items-center gap-2 border-b border-[var(--ui-border-soft)] px-3 md:hidden">
             <Button
               variant="ghost"

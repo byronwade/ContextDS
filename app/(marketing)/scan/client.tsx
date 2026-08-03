@@ -30,13 +30,11 @@ import {
 } from '@/components/ai-elements/message'
 import {
   PromptInput,
-  PromptInputBody,
-  PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
-  PromptInputTools,
   type PromptInputMessage,
 } from '@/components/ai-elements/prompt-input'
+import { InputGroupAddon } from '@/components/ui/input-group'
 import {
   Bubble,
   BubbleContent,
@@ -658,14 +656,14 @@ export function ScanChat() {
           <ConversationScrollButton />
         </Conversation>
 
-        {/* Composer — compact Cursor-style dock aligned to chat column */}
-        <div className="relative shrink-0 border-t border-[var(--ui-border-soft)] bg-[var(--ui-paper)]">
-          <div className="mx-auto w-full max-w-[712px] px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:px-6">
+        {/* Composer — single-row Cursor-style field, send inline */}
+        <div className="relative shrink-0 bg-[var(--ui-paper)]">
+          <div className="mx-auto w-full max-w-[712px] px-4 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-2 sm:px-6">
             {slashMatches.length > 0 ? (
               <div
                 role="listbox"
                 aria-label="Slash commands"
-                className="mb-2 overflow-hidden rounded-[var(--radius-md)] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)]"
+                className="mb-2 overflow-hidden rounded-[10px] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)]"
               >
                 {slashMatches.map((command) => {
                   const active = command.name === activeSlash?.name
@@ -701,37 +699,37 @@ export function ScanChat() {
             ) : null}
             <PromptInput
               onSubmit={onSubmit}
-              className="overflow-hidden rounded-[10px] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] shadow-none has-[[data-slot=input-group-control]:focus-visible]:border-[var(--ui-ink-muted)]"
+              className={cn(
+                'items-end overflow-hidden rounded-[10px] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] shadow-none',
+                'has-[[data-slot=input-group-control]:focus-visible]:border-[var(--ui-ink-muted)]'
+              )}
             >
-              <PromptInputBody>
-                <PromptInputTextarea
-                  value={text}
-                  onChange={(event) => setText(event.target.value)}
-                  onKeyDown={onComposerKeyDown}
-                  placeholder="Ask about a site, or type / for commands"
-                  disabled={busy && status === 'submitted'}
-                  className="min-h-10 max-h-40 px-3.5 py-2.5 text-[14px] leading-snug placeholder:text-[var(--ui-ink-muted)]"
-                  aria-label="Message"
-                />
-              </PromptInputBody>
-              <PromptInputFooter>
-                <PromptInputTools>
-                  <span className="select-none font-mono text-[11px] text-[var(--ui-ink-muted)]">
-                    / commands · ⏎ send
-                  </span>
-                </PromptInputTools>
+              <PromptInputTextarea
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                onKeyDown={onComposerKeyDown}
+                placeholder="Ask about a site, or type / for commands"
+                disabled={busy && status === 'submitted'}
+                className="min-h-[44px] max-h-40 px-3.5 py-3 text-[14px] leading-snug placeholder:text-[var(--ui-ink-muted)]"
+                aria-label="Message"
+              />
+              <InputGroupAddon
+                align="inline-end"
+                className="self-end py-2 pr-2"
+              >
                 <PromptInputSubmit
                   status={status}
                   disabled={!busy && !text.trim()}
                   onStop={() => stop()}
                   size="icon-xs"
-                  variant={
-                    busy || text.trim() ? 'default' : 'secondary'
-                  }
+                  variant={busy || text.trim() ? 'default' : 'secondary'}
                   className="rounded-[8px]"
                 />
-              </PromptInputFooter>
+              </InputGroupAddon>
             </PromptInput>
+            <p className="mt-1.5 px-0.5 font-mono text-[11px] leading-none text-[var(--ui-ink-muted-soft)]">
+              / commands · Enter send
+            </p>
           </div>
         </div>
       </div>
