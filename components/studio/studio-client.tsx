@@ -220,6 +220,8 @@ function StudioPreview({ system }: { system: StudioSystem }) {
 export default function StudioClient() {
   const [system, setSystem] = useState<StudioSystem>(DEFAULT_STUDIO_SYSTEM)
   const [view, setView] = useState<'preview' | 'contract'>('preview')
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
   const { isPro, ready } = useEntitlements()
   const { copiedKey, copy } = useCopy()
 
@@ -233,6 +235,41 @@ export default function StudioClient() {
 
   const markdown = useMemo(() => generateAuthoredDesignMd(system), [system])
   const philosophy = useMemo(() => studioPhilosophy(system), [system])
+
+  const exportPack = async () => {
+    if (!isPro || exporting) return
+    setExporting(true)
+    setExportError(null)
+    try {
+      const response = await fetch('/api/contracts/authored', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ system }),
+      })
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as {
+          error?: string
+        } | null
+        throw new Error(data?.error || `Export failed (${response.status})`)
+      }
+      const blob = await response.blob()
+      const disposition = response.headers.get('Content-Disposition') || ''
+      const match = disposition.match(/filename="([^"]+)"/)
+      const fileName = match?.[1] || `${system.slug}-design-contract.zip`
+      const href = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = href
+      anchor.download = fileName
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      URL.revokeObjectURL(href)
+    } catch (error) {
+      setExportError(error instanceof Error ? error.message : 'Export failed')
+    } finally {
+      setExporting(false)
+    }
+  }
 
   return (
     <AppShell currentPage="studio">
@@ -248,8 +285,13 @@ export default function StudioClient() {
                 Define the system by hand — same grammar the scanner produces, installable
                 with <span className="font-mono text-xs">npx github:byronwade/Design init</span>.
               </p>
+              {exportError ? (
+                <p className="mt-2 text-sm text-[var(--ui-danger)]" role="alert">
+                  {exportError}
+                </p>
+              ) : null}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {!isPro && ready ? (
                 <Button asChild variant="outline" size="sm" className="gap-2">
                   <Link href="/pricing">
@@ -260,13 +302,33 @@ export default function StudioClient() {
               ) : null}
               <Button
                 size="sm"
+                variant="outline"
                 className="gap-2"
                 disabled={!isPro}
                 title={isPro ? 'Download DESIGN.md' : 'Exporting authored contracts is a Pro feature'}
                 onClick={() => downloadText(`${system.slug}-DESIGN.md`, markdown)}
               >
-                {isPro ? <DownloadSimpleIcon className="size-3.5" /> : <LockIcon className="size-3.5" />}
-                Export DESIGN.md
+                {isPro ? <FileTextIcon className="size-3.5" /> : <LockIcon className="size-3.5" />}
+                DESIGN.md
+              </Button>
+              <Button
+                size="sm"
+                className="gap-2"
+                disabled={!isPro || exporting}
+                title={
+                  isPro
+                    ? 'Download full Design Contract ZIP'
+                    : 'Full pack export is a Pro feature'
+                }
+                onClick={() => void exportPack()}
+                data-testid="studio-export-pack"
+              >
+                {isPro ? (
+                  <DownloadSimpleIcon className="size-3.5" />
+                ) : (
+                  <LockIcon className="size-3.5" />
+                )}
+                {exporting ? 'Building pack…' : 'Export pack ZIP'}
               </Button>
             </div>
           </header>

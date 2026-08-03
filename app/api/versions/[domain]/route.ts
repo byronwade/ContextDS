@@ -1,92 +1,26 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db, tokenSets, tokenVersions, sites } from '@/lib/db'
-import { eq, desc } from 'drizzle-orm'
-
 /**
- * GET /api/versions/[domain]
- * List all versions for a domain
+ * Legacy Postgres version list — superseded by:
+ *   GET /api/sites/[domain]/versions
  */
+
+import { NextResponse } from 'next/server'
+
+export const runtime = 'nodejs'
+
 export async function GET(
-  request: NextRequest,
+  _request: Request,
   { params }: { params: Promise<{ domain: string }> }
 ) {
-  try {
-    const { domain: rawDomain } = await params
-    const domain = decodeURIComponent(rawDomain)
-
-    // Find site
-    const [site] = await db
-      .select()
-      .from(sites)
-      .where(eq(sites.domain, domain))
-      .limit(1)
-
-    if (!site) {
-      return NextResponse.json(
-        { error: 'Site not found' },
-        { status: 404 }
-      )
-    }
-
-    // Get all token sets for this site with version info
-    const versions = await db
-      .select({
-        id: tokenSets.id,
-        versionNumber: tokenSets.versionNumber,
-        createdAt: tokenSets.createdAt,
-        tokensJson: tokenSets.tokensJson,
-        packJson: tokenSets.packJson,
-        consensusScore: tokenSets.consensusScore
-      })
-      .from(tokenSets)
-      .where(eq(tokenSets.siteId, site.id))
-      .orderBy(desc(tokenSets.versionNumber))
-
-    // Count tokens in each version
-    const versionsWithCounts = versions.map((v: typeof versions[number]) => ({
-      id: v.id,
-      versionNumber: v.versionNumber,
-      createdAt: v.createdAt.toISOString(),
-      tokenCount: countTokens(v.tokensJson),
-      confidence: v.consensusScore ? parseFloat(v.consensusScore) * 100 : 0,
-      isCurrent: v.versionNumber === versions[0]?.versionNumber
-    }))
-
-    return NextResponse.json({
-      domain,
-      siteId: site.id,
-      versions: versionsWithCounts,
-      totalVersions: versions.length
-    })
-  } catch (error) {
-    console.error('Failed to fetch versions:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch versions' },
-      { status: 500 }
-    )
-  }
-}
-
-/**
- * Helper: Count tokens in a token set
- */
-function countTokens(tokensJson: any): number {
-  let count = 0
-
-  function traverse(obj: any) {
-    if (!obj || typeof obj !== 'object') return
-
-    for (const [key, value] of Object.entries(obj)) {
-      if (key.startsWith('$')) continue
-
-      if (value && typeof value === 'object' && '$value' in value) {
-        count++
-      } else if (value && typeof value === 'object') {
-        traverse(value)
-      }
-    }
-  }
-
-  traverse(tokensJson)
-  return count
+  const { domain: rawDomain } = await params
+  const domain = decodeURIComponent(rawDomain || '').trim()
+  return NextResponse.json(
+    {
+      error:
+        'Postgres version listing is retired. Use GET /api/sites/{domain}/versions.',
+      migrateTo: domain
+        ? `/api/sites/${encodeURIComponent(domain)}/versions`
+        : '/api/sites/{domain}/versions',
+    },
+    { status: 410 }
+  )
 }

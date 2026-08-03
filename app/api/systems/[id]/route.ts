@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { deleteSystem, getSystem } from '@/lib/storage/system-store'
+import { getEntitlementFromRequest } from '@/lib/billing/entitlements'
+import { canAccessSystem, deleteSystem, getSystem } from '@/lib/storage/system-store'
 
 export const runtime = 'nodejs'
 
@@ -8,7 +9,7 @@ function normalizeId(raw: string): string {
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -24,6 +25,15 @@ export async function GET(
       return NextResponse.json({ error: 'System not found' }, { status: 404 })
     }
 
+    if (stored.visibility === 'private') {
+      const entitlement = await getEntitlementFromRequest(request)
+      const customerId = entitlement?.customerId || entitlement?.stripeCustomerId
+      if (!canAccessSystem(stored, customerId) && process.env.BILLING_BYPASS !== '1') {
+        // Opaque 404 — don't leak private id existence
+        return NextResponse.json({ error: 'System not found' }, { status: 404 })
+      }
+    }
+
     return NextResponse.json(stored)
   } catch (error) {
     console.error('Error loading system:', error)
@@ -32,7 +42,7 @@ export async function GET(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -41,6 +51,25 @@ export async function DELETE(
 
     if (!id) {
       return NextResponse.json({ error: 'System id is required' }, { status: 400 })
+    }
+
+    const stored = await getSystem(id)
+    if (!stored) {
+      return NextResponse.json({ error: 'System not found' }, { status: 404 })
+    }
+
+    const entitlement = await getEntitlementFromRequest(request)
+    const customerId = entitlement?.customerId || entitlement?.stripeCustomerId
+
+    if (stored.visibility === 'private') {
+      if (!canAccessSystem(stored, customerId) && process.env.BILLING_BYPASS !== '1') {
+        return NextResponse.json({ error: 'System not found' }, { status: 404 })
+      }
+    } else if (stored.ownerCustomerId && stored.ownerCustomerId !== customerId) {
+      // Public systems with an owner can only be deleted by that owner
+      if (process.env.BILLING_BYPASS !== '1') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
     }
 
     const deleted = await deleteSystem(id)

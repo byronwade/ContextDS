@@ -148,14 +148,15 @@ export default function McpClient({ tools }: { tools: McpToolSummary[] }) {
                   </li>
                   <li>
                     <span className="font-mono text-[11px] text-muted-foreground/70">02 </span>
-                    The agent calls <code className="font-mono text-xs">get_tokens</code> and{' '}
-                    <code className="font-mono text-xs">layout_profile</code>.
+                    The agent calls <code className="font-mono text-xs">scan_site</code> then{' '}
+                    <code className="font-mono text-xs">get_tokens</code> /{' '}
+                    <code className="font-mono text-xs">get_design_md</code>.
                   </li>
                   <li>
                     <span className="font-mono text-[11px] text-muted-foreground/70">03 </span>
-                    It builds with the site&apos;s real palette, scale and grid — and{' '}
-                    <code className="font-mono text-xs">compose_pack</code> pins the contract
-                    into your repo so it stays true over time.
+                    It builds with the site&apos;s real palette and scale — and{' '}
+                    <code className="font-mono text-xs">get_contract_download</code> pins the
+                    installable pack into your repo so it stays true over time.
                   </li>
                 </ol>
               </div>
@@ -232,16 +233,16 @@ export default function McpClient({ tools }: { tools: McpToolSummary[] }) {
                 </div>
                 <dl className="mt-3 space-y-1.5 font-mono text-[11px] text-muted-foreground">
                   <div className="flex justify-between">
-                    <dt>get_tokens</dt>
+                    <dt>anonymous reads</dt>
                     <dd>60 req/min</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt>layout_profile</dt>
-                    <dd>30 req/min</dd>
+                    <dt>Pro key</dt>
+                    <dd>120 req/min</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt>scan_tokens</dt>
-                    <dd>10 req/min</dd>
+                    <dt>write tools</dt>
+                    <dd>20 req/min</dd>
                   </div>
                 </dl>
               </div>

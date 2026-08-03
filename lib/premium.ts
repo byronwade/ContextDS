@@ -177,6 +177,6 @@ export function useProCheckout() {
 export const PRO_FEATURES = [
   `${BILLING.proCreditsPerMonth} App Pack credits every month (unused stack)`,
   'Personal MCP API key for Claude / Cursor',
-  'Studio export',
+  'Studio DESIGN.md + full pack ZIP',
   'For people who keep designing in the agent loop',
 ] as const

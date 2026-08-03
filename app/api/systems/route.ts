@@ -1,8 +1,9 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { getEntitlementFromRequest } from '@/lib/billing/entitlements'
 import { slugify } from '@/lib/contracts/authored-contract'
 import { createWorkingSystem, type WorkingSystem } from '@/lib/design-system/working-system'
-import { listSystems, saveSystem } from '@/lib/storage/system-store'
+import { canAccessSystem, getSystem, listSystems, saveSystem } from '@/lib/storage/system-store'
 
 export const runtime = 'nodejs'
 
@@ -86,11 +87,28 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const rawLimit = Number.parseInt(searchParams.get('limit') || '50', 10)
+    const mine = searchParams.get('mine') === '1'
+    const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 200) : 50
 
-    // This listing is unauthenticated, so it only ever enumerates public
-    // systems. Private systems stay reachable by direct id, never by listing.
+    if (mine) {
+      const entitlement = await getEntitlementFromRequest(request)
+      const customerId = entitlement?.customerId || entitlement?.stripeCustomerId
+      if (!customerId) {
+        return NextResponse.json(
+          { error: 'Sign in via Stripe checkout to list your private systems', systems: [] },
+          { status: 401 }
+        )
+      }
+      const systems = await listSystems({
+        limit,
+        ownerCustomerId: customerId,
+      })
+      return NextResponse.json({ systems, total: systems.length, mine: true })
+    }
+
+    // Unauthenticated listing only enumerates public systems.
     const systems = await listSystems({
-      limit: Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 200) : 50,
+      limit,
       visibility: 'public',
     })
 
@@ -122,11 +140,37 @@ export async function POST(request: NextRequest) {
     }
 
     const params = saveRequestSchema.parse(JSON.parse(raw))
+    const visibility = params.visibility ?? 'public'
+    const entitlement = await getEntitlementFromRequest(request)
+    const customerId = entitlement?.customerId || entitlement?.stripeCustomerId
+
+    if (visibility === 'private' && !customerId && process.env.BILLING_BYPASS !== '1') {
+      return NextResponse.json(
+        {
+          error:
+            'Private systems require a billing session. Complete checkout at /pricing first.',
+          upgradePath: '/pricing',
+        },
+        { status: 401 }
+      )
+    }
+
+    if (params.id) {
+      const existing = await getSystem(params.id)
+      if (existing && !canAccessSystem(existing, customerId)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    }
 
     const stored = await saveSystem({
       id: params.id,
       system: toWorkingSystem(params.system),
-      visibility: params.visibility,
+      visibility,
+      ownerCustomerId:
+        visibility === 'private'
+          ? customerId || (process.env.BILLING_BYPASS === '1' ? 'bypass' : null)
+          : customerId ?? null,
+      ownerEmail: entitlement?.email ?? null,
     })
 
     return NextResponse.json(stored)

@@ -320,6 +320,54 @@ export async function getEntitlementFromRequest(
   return { ...entitlement, stripeCustomerId: entitlement.customerId }
 }
 
+/** Studio export + Pro-only MCP write tools. */
+export async function assertProAccess(): Promise<
+  | { ok: true; entitlement: Entitlement }
+  | {
+      ok: false
+      status: number
+      error: string
+      code: 'payment_required' | 'pro_required'
+      upgradePath: string
+    }
+> {
+  if (
+    !process.env.STRIPE_SECRET_KEY &&
+    (process.env.NODE_ENV === 'development' ||
+      process.env.VERCEL_ENV === 'preview' ||
+      bypassEntitlement())
+  ) {
+    return {
+      ok: true,
+      entitlement: bypassEntitlement() || {
+        plan: 'pro',
+        status: 'active',
+        appPackCredits: 99,
+        source: 'bypass',
+      },
+    }
+  }
+
+  if (bypassEntitlement()) {
+    return { ok: true, entitlement: bypassEntitlement()! }
+  }
+
+  const entitlement = await getRequestEntitlement()
+  if (!isProEntitlement(entitlement)) {
+    return {
+      ok: false,
+      status: 402,
+      code: entitlement ? 'pro_required' : 'payment_required',
+      upgradePath: '/pricing',
+      error: entitlement
+        ? `Studio pack export and Pro MCP write tools need an active Pro plan ($${BILLING.proPriceUsd}/mo). See /pricing.`
+        : `Pro required — start a trial or subscribe at /pricing.`,
+    }
+  }
+
+  return { ok: true, entitlement }
+}
+
 export async function assertCanCreateAppPack(): Promise<
   | { ok: true; entitlement: Entitlement }
   | {

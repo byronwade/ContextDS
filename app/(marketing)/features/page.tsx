@@ -36,7 +36,7 @@ const features = [
   },
   {
     title: 'MCP-ready',
-    body: 'scan_tokens / get_tokens expose the same curated packs and contract download URLs to Claude Code and other agents.',
+    body: 'scan_site / get_tokens / get_design_md / get_contract_download expose the same curated packs and ZIP URLs to Claude Code and other agents.',
   },
 ] as const
 

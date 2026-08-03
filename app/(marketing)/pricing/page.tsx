@@ -77,7 +77,8 @@ const comparison: Array<{
   },
   { feature: 'Credits never expire', free: false, credits: true, pro: true },
   { feature: 'Personal MCP API key', free: false, credits: false, pro: true },
-  { feature: 'Studio export', free: false, credits: false, pro: true },
+  { feature: 'Studio DESIGN.md + full pack ZIP', free: false, credits: false, pro: true },
+  { feature: 'CSS remeasure of App Packs', free: false, credits: true, pro: true },
   { feature: 'Subscription', free: false, credits: false, pro: true },
 ]
 

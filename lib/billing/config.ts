@@ -80,7 +80,7 @@ export const PRO_PLAN = {
   features: [
     `${BILLING.proCreditsPerMonth} App Pack credits every month (unused stack)`,
     'Personal MCP API key — contracts inside Claude / Cursor',
-    'Studio export (DESIGN.md + pack download)',
+    'Studio export (DESIGN.md + full pack ZIP)',
     'Priority for people who keep designing in the agent loop',
   ],
 } as const

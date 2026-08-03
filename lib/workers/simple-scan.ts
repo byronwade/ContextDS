@@ -222,6 +222,7 @@ function slimContract(
     files: (contract.files || []).map((file) => ({
       path: file.path,
       content: '',
+      ...(file.encoding ? { encoding: file.encoding } : {}),
     })),
   }
 }

@@ -9,6 +9,7 @@
 
 import { z } from 'zod'
 import { designContractTools } from '@/lib/agent/tools'
+import { mcpWriteRequiresPro, type McpAuthContext } from '@/lib/mcp/access'
 
 /** Protocol revision this server implements. */
 export const PROTOCOL_VERSION = '2024-11-05'
@@ -91,7 +92,10 @@ function textContent(value: unknown) {
   return [{ type: 'text' as const, text }]
 }
 
-async function callTool(params: Record<string, unknown> | undefined) {
+async function callTool(
+  params: Record<string, unknown> | undefined,
+  auth?: McpAuthContext
+) {
   const name = typeof params?.name === 'string' ? params.name : ''
   const args = (params?.arguments ?? {}) as Record<string, unknown>
   const item = TOOLS[name]
@@ -99,6 +103,19 @@ async function callTool(params: Record<string, unknown> | undefined) {
   if (!item || typeof item.execute !== 'function') {
     return {
       content: textContent(`Unknown tool: ${name}`),
+      isError: true,
+    }
+  }
+
+  if (mcpWriteRequiresPro(name) && !auth?.isPro) {
+    return {
+      content: textContent({
+        error: 'Pro required',
+        tool: name,
+        message:
+          'This MCP write tool requires a Design Contracts Pro key. Generate one at /mcp after subscribing, then send Authorization: Bearer dc_live_…',
+        upgradePath: '/pricing',
+      }),
       isError: true,
     }
   }
@@ -134,7 +151,10 @@ async function callTool(params: Record<string, unknown> | undefined) {
  * Handle one JSON-RPC message. Returns null for notifications (no `id`),
  * which per spec must not receive a response body.
  */
-export async function handleRpc(message: JsonRpcRequest): Promise<JsonRpcResponse | null> {
+export async function handleRpc(
+  message: JsonRpcRequest,
+  auth?: McpAuthContext
+): Promise<JsonRpcResponse | null> {
   const id = message?.id ?? null
   const method = message?.method
   const isNotification = message?.id === undefined || message?.id === null
@@ -153,7 +173,7 @@ export async function handleRpc(message: JsonRpcRequest): Promise<JsonRpcRespons
         capabilities: { tools: { listChanged: false } },
         serverInfo: SERVER_INFO,
         instructions:
-          'Scan public websites into installable Design Contracts. Call scan_site first for an unknown domain, then get_tokens / get_design_md / blend_systems. Results are JSON.',
+          'Scan public websites into installable Design Contracts. Call scan_site first for an unknown domain, then get_tokens / get_design_md / get_contract_download. Write tools (scan_site, contract_from_screenshot, refine_design_md, blend_systems, …) require a Pro MCP key (Authorization: Bearer dc_live_…).',
       })
 
     case 'ping':
@@ -164,7 +184,7 @@ export async function handleRpc(message: JsonRpcRequest): Promise<JsonRpcRespons
 
     case 'tools/call':
       try {
-        return ok(id, await callTool(message.params))
+        return ok(id, await callTool(message.params, auth))
       } catch (error) {
         return ok(id, {
           content: textContent(
@@ -181,14 +201,15 @@ export async function handleRpc(message: JsonRpcRequest): Promise<JsonRpcRespons
 
 /** Handle a single message or a JSON-RPC batch. */
 export async function handleMessage(
-  payload: unknown
+  payload: unknown,
+  auth?: McpAuthContext
 ): Promise<JsonRpcResponse | JsonRpcResponse[] | null> {
   if (Array.isArray(payload)) {
     const responses = await Promise.all(
-      payload.map((entry) => handleRpc(entry as JsonRpcRequest))
+      payload.map((entry) => handleRpc(entry as JsonRpcRequest, auth))
     )
     const real = responses.filter((entry): entry is JsonRpcResponse => entry !== null)
     return real.length > 0 ? real : null
   }
-  return handleRpc(payload as JsonRpcRequest)
+  return handleRpc(payload as JsonRpcRequest, auth)
 }
