@@ -493,6 +493,29 @@ function EmptyState({ onStart }: { onStart: () => void }) {
   )
 }
 
+async function downloadAuthoredPack(system: WorkingSystem): Promise<void> {
+  const response = await fetch('/api/contracts/authored', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ system: toStudioSystem(system) }),
+  })
+  if (!response.ok) {
+    const data = (await response.json().catch(() => null)) as { error?: string } | null
+    throw new Error(data?.error || `Export failed (${response.status})`)
+  }
+  const blob = await response.blob()
+  const disposition = response.headers.get('Content-Disposition') || ''
+  const match = disposition.match(/filename="([^"]+)"/)
+  const href = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = href
+  anchor.download = match?.[1] || `${system.slug}-design-contract.zip`
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  URL.revokeObjectURL(href)
+}
+
 // --- canvas ------------------------------------------------------------------
 
 export function DesignCanvas({
@@ -607,38 +630,17 @@ export function DesignCanvas({
           disabled={exporting}
           data-testid="canvas-export-pack"
           onClick={() => {
-            void (async () => {
-              setExporting(true)
-              setExportError(null)
-              try {
-                const response = await fetch('/api/contracts/authored', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ system: toStudioSystem(system) }),
-                })
-                if (!response.ok) {
-                  const data = (await response.json().catch(() => null)) as {
-                    error?: string
-                  } | null
-                  throw new Error(data?.error || `Export failed (${response.status})`)
-                }
-                const blob = await response.blob()
-                const disposition = response.headers.get('Content-Disposition') || ''
-                const match = disposition.match(/filename="([^"]+)"/)
-                const href = URL.createObjectURL(blob)
-                const anchor = document.createElement('a')
-                anchor.href = href
-                anchor.download = match?.[1] || `${system.slug}-design-contract.zip`
-                document.body.appendChild(anchor)
-                anchor.click()
-                anchor.remove()
-                URL.revokeObjectURL(href)
-              } catch (error) {
+            setExporting(true)
+            setExportError(null)
+            void downloadAuthoredPack(system).then(
+              () => {
+                setExporting(false)
+              },
+              (error: unknown) => {
                 setExportError(error instanceof Error ? error.message : 'Export failed')
-              } finally {
                 setExporting(false)
               }
-            })()
+            )
           }}
         >
           {exporting ? <CircleNotchIcon className="animate-spin" /> : <DownloadSimpleIcon />}
