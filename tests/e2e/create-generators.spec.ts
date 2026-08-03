@@ -1,14 +1,20 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Create hub — advanced generators', () => {
-  test('Create page exposes brief / import / blend tabs', async ({ page }) => {
+  test('Create page exposes advanced generator tabs', async ({ page }) => {
     await page.goto('/create?pro=1')
     await expect(page.getByRole('heading', { name: /Generate a Design Contract/i })).toBeVisible()
     await expect(page.getByTestId('create-brief')).toBeVisible()
-    await page.getByRole('button', { name: /Import tokens/i }).click()
+    await page.getByRole('button', { name: /^Recipes$/i }).click()
+    await expect(page.getByTestId('create-recipes')).toBeVisible()
+    await page.getByRole('button', { name: /^Import$/i }).click()
     await expect(page.getByTestId('create-import')).toBeVisible()
-    await page.getByRole('button', { name: /Blend scans/i }).click()
+    await page.getByRole('button', { name: /^Blend$/i }).click()
     await expect(page.getByTestId('create-blend')).toBeVisible()
+    await page.getByRole('button', { name: /^Restyle$/i }).click()
+    await expect(page.getByTestId('create-restyle')).toBeVisible()
+    await page.getByRole('button', { name: /^Mutate$/i }).click()
+    await expect(page.getByTestId('create-mutate')).toBeVisible()
   })
 
   test('POST /api/contracts/from-brief returns ZIP (bypass/Pro)', async ({ request }) => {
@@ -135,11 +141,128 @@ test.describe('Create hub — advanced generators', () => {
     await expect(page).toHaveURL(/[?&]system=sys_demo_redirect/)
   })
 
-  test('MCP lists generate_from_brief and import_design_tokens', async ({ request }) => {
+  test('MCP lists advanced generation tools', async ({ request }) => {
     const response = await request.get('/api/mcp')
     const data = await response.json()
     expect(data.tools).toContain('generate_from_brief')
     expect(data.tools).toContain('import_design_tokens')
     expect(data.tools).toContain('blend_systems')
+    expect(data.tools).toContain('generate_from_recipe')
+    expect(data.tools).toContain('mutate_system')
+    expect(data.tools).toContain('restyle_page')
+  })
+
+  test('POST /api/contracts/from-recipe returns ZIP with web-app profile', async ({
+    request,
+  }) => {
+    const listed = await request.get('/api/contracts/from-recipe')
+    expect(listed.ok()).toBeTruthy()
+    const catalog = await listed.json()
+    expect(catalog.recipes.length).toBeGreaterThanOrEqual(4)
+
+    const json = await request.post('/api/contracts/from-recipe', {
+      data: {
+        recipeId: 'saas-workbench',
+        name: 'Workbench Recipe',
+        format: 'json',
+      },
+    })
+    expect(json.ok()).toBeTruthy()
+    const data = await json.json()
+    expect(data.profile).toBe('web-app')
+    expect(data.appType).toBe('saas-workbench')
+    expect(data.installCommand).toContain('--profile web-app')
+    expect(data.installCommand).toContain('--app-type saas-workbench')
+
+    const zip = await request.post('/api/contracts/from-recipe', {
+      data: { recipeId: 'editorial-magazine', name: 'Mag Recipe' },
+    })
+    expect(zip.status()).toBe(200)
+    expect(zip.headers()['content-type']).toMatch(/zip/)
+    const body = await zip.body()
+    expect(body[0]).toBe(0x50)
+    expect(body[1]).toBe(0x4b)
+  })
+
+  test('POST /api/contracts/mutate contrast-fix + polarity on Studio system', async ({
+    request,
+  }) => {
+    const contrast = await request.post('/api/contracts/mutate', {
+      data: {
+        op: 'contrast-fix',
+        target: 'AA',
+        format: 'json',
+        system: {
+          name: 'Weak Contrast',
+          colors: [
+            { id: 'background', role: 'background', value: '#eeeeee' },
+            { id: 'foreground', role: 'foreground', value: '#cccccc' },
+            { id: 'primary', role: 'primary', value: '#2563eb' },
+            { id: 'muted', role: 'muted', value: '#d0d0d0' },
+          ],
+        },
+      },
+    })
+    expect(contrast.ok()).toBeTruthy()
+    const fixed = await contrast.json()
+    expect(fixed.op).toBe('contrast-fix')
+    expect(fixed.report.changed).toBe(true)
+    expect(fixed.installCommand).toMatch(/--profile/)
+
+    const polarity = await request.post('/api/contracts/mutate', {
+      data: {
+        op: 'polarity',
+        format: 'json',
+        system: {
+          name: 'Polar Base',
+          colors: [
+            { id: 'background', role: 'background', value: '#0e0f12' },
+            { id: 'foreground', role: 'foreground', value: '#f4f4f5' },
+            { id: 'primary', role: 'primary', value: '#2dd4bf' },
+          ],
+        },
+      },
+    })
+    expect(polarity.ok()).toBeTruthy()
+    const twin = await polarity.json()
+    expect(twin.system.colors.find((c: { role: string }) => c.role === 'background').value).toBe(
+      '#f4f4f5'
+    )
+  })
+
+  test('POST /api/contracts/restyle needs scanned sources', async ({ request }) => {
+    const missing = await request.post('/api/contracts/restyle', {
+      data: {
+        structureDomain: `missing-struct-${Date.now()}.invalid`,
+        skinDomain: `missing-skin-${Date.now()}.invalid`,
+        format: 'json',
+      },
+    })
+    expect(missing.status()).toBe(404)
+  })
+
+  test('library system export returns ZIP', async ({ request }) => {
+    const created = await request.post('/api/systems', {
+      data: {
+        visibility: 'public',
+        system: {
+          name: `Export Source ${Date.now()}`,
+          colors: [
+            { role: 'background', value: '#101010' },
+            { role: 'foreground', value: '#f0f0f0' },
+            { role: 'primary', value: '#22d3ee' },
+          ],
+        },
+      },
+    })
+    expect(created.ok()).toBeTruthy()
+    const source = await created.json()
+
+    const exported = await request.post(`/api/systems/${source.id}/export`)
+    expect(exported.status()).toBe(200)
+    expect(exported.headers()['content-type']).toMatch(/zip/)
+    const body = await exported.body()
+    expect(body[0]).toBe(0x50)
+    expect(body[1]).toBe(0x4b)
   })
 })

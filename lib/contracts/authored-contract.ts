@@ -11,12 +11,25 @@ import {
   type DesignPhilosophy,
 } from '@/lib/analyzers/design-philosophy'
 import { isFontFamily } from '@/lib/analyzers/token-sanitizer'
+import type {
+  EngineAppType,
+  EngineProfile,
+} from '@/lib/analyzers/app-type'
 import {
   buildDesignContractPackage,
   zipDesignContractPackage,
   type DesignContractPackage,
 } from '@/lib/contracts/design-contract-package'
 import type { DesignContractPackageInput } from '@/lib/contracts/design-contract-package'
+
+export type StudioPackOptions = {
+  profile?: EngineProfile
+  appType?: EngineAppType
+  confidence?: number
+  driftKind?: string
+  driftSummary?: string
+  driftEvidence?: Record<string, unknown>
+}
 
 export type StudioColor = { id: string; role: string; value: string }
 
@@ -203,7 +216,8 @@ export function generateAuthoredDesignMd(system: StudioSystem): string {
  * Emits a full installable façade (skills, config, REFERENCES, INSTALL, …).
  */
 export function studioSystemToPackInput(
-  system: StudioSystem
+  system: StudioSystem,
+  options: StudioPackOptions = {}
 ): DesignContractPackageInput {
   const philosophy = studioPhilosophy(system)
   const sizes = typeScale(system)
@@ -212,6 +226,10 @@ export function studioSystemToPackInput(
   // Use a dotted studio host without repeating "studio" in the pack slug.
   const domain = slug.endsWith('-studio') ? `${slug}.app` : `${slug}.studio`
   const url = `https://designcontracts.sh/studio/${slug}`
+  const appType = options.appType ?? 'marketing-site'
+  const profile =
+    options.profile ??
+    (appType === 'marketing-site' ? 'web-marketing' : 'web-app')
 
   const shadows =
     system.depth === 'flat'
@@ -232,9 +250,9 @@ export function studioSystemToPackInput(
   return {
     domain,
     url,
-    profile: 'web-marketing',
-    appType: 'marketing-site',
-    confidence: 90,
+    profile,
+    appType,
+    confidence: options.confidence ?? 90,
     philosophy,
     brandAnalysis: {
       primaryColors: system.colors.map((color) => color.value),
@@ -306,10 +324,19 @@ export function studioSystemToPackInput(
     driftObservations: [
       {
         surface: 'site',
-        kind: 'authored-studio',
-        summary: `Design Contract authored in Design Contracts Studio (${system.name}).`,
+        kind: options.driftKind || 'authored-studio',
+        summary:
+          options.driftSummary ||
+          `Design Contract authored in Design Contracts Studio (${system.name}).`,
         observedAt: new Date().toISOString(),
-        evidence: { slug, depth: system.depth, source: 'studio' },
+        evidence: {
+          slug,
+          depth: system.depth,
+          source: 'studio',
+          appType,
+          profile,
+          ...(options.driftEvidence ?? {}),
+        },
         suggestedAction:
           'Treat Studio tokens as the source of truth. Re-scan a live site later if you want CSS measurement.',
       },
@@ -318,12 +345,15 @@ export function studioSystemToPackInput(
 }
 
 /** Build + zip a Studio Design Contract pack. */
-export function buildStudioContractPack(system: StudioSystem): {
+export function buildStudioContractPack(
+  system: StudioSystem,
+  options: StudioPackOptions = {}
+): {
   pack: DesignContractPackage
   zip: Uint8Array
   fileName: string
 } {
-  const input = studioSystemToPackInput(system)
+  const input = studioSystemToPackInput(system, options)
   const pack = buildDesignContractPackage(input)
   // Prefer Studio-authored DESIGN.md prose while keeping the rest of the façade
   const authoredMd = generateAuthoredDesignMd(system)

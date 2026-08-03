@@ -46,4 +46,20 @@ describe('Studio → Design Contract pack', () => {
     const design = pack.files.find((file) => file.path === 'DESIGN.md')
     expect(design?.content).toContain('UNIQUE_STUDIO_SIGNATURE_LINE')
   })
+
+  it('accepts profile / app-type pack options for web-app recipes', () => {
+    const { pack } = buildStudioContractPack(DEFAULT_STUDIO_SYSTEM, {
+      profile: 'web-app',
+      appType: 'saas-workbench',
+      driftKind: 'recipe-preset',
+    })
+    expect(pack.installCommand).toContain('--profile web-app')
+    expect(pack.installCommand).toContain('--app-type saas-workbench')
+    const input = studioSystemToPackInput(DEFAULT_STUDIO_SYSTEM, {
+      appType: 'admin-console',
+    })
+    expect(input.profile).toBe('web-app')
+    expect(input.appType).toBe('admin-console')
+  })
 })
+

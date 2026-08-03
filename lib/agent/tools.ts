@@ -1283,12 +1283,13 @@ export const designContractTools = {
 
   restyle_page: tool({
     description:
-      'Rebuild guide combining two scanned sites: the page STRUCTURE (layout DNA, containers, breakpoints, archetypes) of one domain re-skinned with the design SYSTEM (colors, type, spacing, shape) of another. Returns a concrete markdown brief an agent or developer can build from.',
+      'Combine two scanned sites into an installable Design Contract: keep STRUCTURE (layout DNA, containers, breakpoints, archetypes) from one domain and apply SKIN (colors, type, spacing, shape) from another. Returns rebuild brief + pack metadata with correct --profile / --app-type.',
     inputSchema: z.object({
       structureDomain: z.string().describe('Domain whose page layout/structure to keep'),
       skinDomain: z.string().describe('Domain whose design system to apply'),
+      name: z.string().max(80).optional(),
     }),
-    execute: async ({ structureDomain, skinDomain }) => {
+    execute: async ({ structureDomain, skinDomain, name }) => {
       const [structureKey, skinKey] = [
         normalizeDomain(structureDomain),
         normalizeDomain(skinDomain),
@@ -1304,6 +1305,16 @@ export const designContractTools = {
             spacingBase?: number | null
             breakpoints?: number[]
             archetypes?: Array<{ type: string; confidence: number }>
+            shell?: {
+              header?: { height: number; sticky: boolean } | null
+              sidebar?: { width: number; fixed: boolean } | null
+              footer?: { height: number } | null
+            } | null
+            density?: {
+              elementsInViewport: number
+              imageAreaRatio: number
+              textChars: number
+            } | null
           }
         | undefined
       const skin = skinScan?.curatedTokens as CuratedLike | undefined
@@ -1315,51 +1326,218 @@ export const designContractTools = {
         }
       }
 
-      const philosophy = generatePhilosophy({ domain: skinKey, curated: skin })
-      const { color, type, space, shape } = philosophy.systems
-      const background =
-        color.polarity === 'dark-leaning' ? color.darkest : color.lightest
-      const foreground =
-        color.polarity === 'dark-leaning' ? color.lightest : color.darkest
-
-      const brief = [
-        `# Rebuild: ${structureKey} structure × ${skinKey} skin`,
-        '',
-        '## Keep from ' + structureKey + ' (structure)',
-        `- Container: ${layout.containers?.strategy ?? 'centered'}${layout.containers?.maxWidth ? ` @ ${layout.containers.maxWidth}` : ''}`,
-        `- Layout engine: ${layout.gridSystem ?? 'flexbox'}`,
-        `- Breakpoints: ${(layout.breakpoints ?? []).join('px, ')}px`,
-        `- Page archetypes: ${(layout.archetypes ?? [])
-          .slice(0, 5)
-          .map((archetype) => archetype.type)
-          .join(', ')}`,
-        '',
-        '## Apply from ' + skinKey + ' (system)',
-        `- Background ${background?.hex ?? '—'} · Foreground ${foreground?.hex ?? '—'} · Accent ${color.accent?.hex ?? '—'}`,
-        `- Palette: ${color.chromatic.slice(0, 6).map((c) => c.hex).join(', ')}`,
-        `- Type: ${type.families.map((f) => f.primary).join(' + ')}${type.scaleLabel ? ` on a ${type.scaleLabel} scale` : ''}`,
-        `- Spacing: ${space.base ? `${space.base}px grid` : 'optical'}; Corners: ${shape.character} (${shape.radiiPx.slice(0, 4).join(', ')}px); Depth: ${shape.depth}`,
-        '',
-        '## Rules',
-        `- Rebuild each ${structureKey} section with the archetype it already has, restyled with the tokens above — never invent new colors or sizes.`,
-        `- ${philosophy.principles[0]?.body ?? ''}`,
-        `- Verify text/surface pairings with check_contrast before shipping.`,
-      ].join('\n')
+      const { restyleToStudioSystem } = await import('@/lib/analyzers/system-restyle')
+      const { buildStudioContractPack } = await import('@/lib/contracts/authored-contract')
+      const restyle = restyleToStudioSystem({
+        structureDomain: structureKey,
+        skinDomain: skinKey,
+        layout,
+        skinCurated: skin,
+        name,
+      })
+      const { pack, fileName } = buildStudioContractPack(
+        restyle.system,
+        restyle.packOptions
+      )
 
       return {
         found: true,
+        name: restyle.name,
         structure: { domain: structureKey, layout },
         skin: {
           domain: skinKey,
-          background: background?.hex ?? null,
-          foreground: foreground?.hex ?? null,
-          accent: color.accent?.hex ?? null,
-          fonts: type.families.map((font) => font.primary),
-          spacingBase: space.base,
-          radii: shape.radiiPx,
-          depth: shape.depth,
+          background:
+            restyle.system.colors.find((c) => c.role === 'background')?.value ?? null,
+          foreground:
+            restyle.system.colors.find((c) => c.role === 'foreground')?.value ?? null,
+          accent: restyle.system.colors.find((c) => c.role === 'primary')?.value ?? null,
+          fonts: [restyle.system.fontDisplay, restyle.system.fontBody],
+          spacingBase: restyle.system.spacingBase,
+          radius: restyle.system.radius,
+          depth: restyle.system.depth,
         },
-        brief,
+        appType: restyle.appType,
+        brief: restyle.brief,
+        designMd: pack.designMd.markdown,
+        installCommand: pack.installCommand,
+        packFileName: fileName,
+        downloadHint:
+          'Pro users can POST /api/contracts/restyle for the ZIP, or use /create → Restyle.',
+      }
+    },
+  }),
+
+  generate_from_recipe: tool({
+    description:
+      'Seed a full Design Contract from an industry recipe preset (saas-workbench, admin-console, content-studio, marketing-site, editorial-magazine, commerce-storefront). Deterministic — no live scan required. Returns system + install command with correct profile/app-type.',
+    inputSchema: z.object({
+      recipeId: z
+        .enum([
+          'saas-workbench',
+          'admin-console',
+          'content-studio',
+          'marketing-site',
+          'editorial-magazine',
+          'commerce-storefront',
+        ])
+        .describe('Industry recipe id'),
+      name: z.string().max(80).optional(),
+    }),
+    execute: async ({ recipeId, name }) => {
+      const { recipeToStudioSystem, listSystemRecipes } = await import(
+        '@/lib/contracts/system-recipes'
+      )
+      const { buildStudioContractPack } = await import('@/lib/contracts/authored-contract')
+      const { system, packOptions, recipe } = recipeToStudioSystem(recipeId, name)
+      const { pack, fileName } = buildStudioContractPack(system, packOptions)
+      return {
+        found: true,
+        recipeId: recipe.id,
+        label: recipe.label,
+        profile: recipe.profile,
+        appType: recipe.appType,
+        available: listSystemRecipes(),
+        system: {
+          name: system.name,
+          colors: system.colors,
+          fonts: {
+            display: system.fontDisplay,
+            body: system.fontBody,
+            mono: system.fontMono,
+          },
+          spacing: `${system.spacingBase}px`,
+          radius: `${system.radius}px`,
+          depth: system.depth,
+        },
+        designMd: pack.designMd.markdown,
+        installCommand: pack.installCommand,
+        packFileName: fileName,
+        downloadHint:
+          'Anyone can POST /api/contracts/from-recipe for the ZIP, or use /create → Recipes.',
+      }
+    },
+  }),
+
+  mutate_system: tool({
+    description:
+      'Advanced StudioSystem mutations: contrast-fix (WCAG AA/AAA), polarity invert (light↔dark), or evolve with a short directive (denser, warmer, sharper…). Pass a Studio system JSON or a scanned domain. Returns mutated tokens + pack metadata.',
+    inputSchema: z.object({
+      op: z.enum(['contrast-fix', 'polarity', 'evolve']),
+      target: z.enum(['AA', 'AAA']).optional(),
+      directive: z.string().min(4).max(400).optional(),
+      domain: z.string().optional(),
+      system: z
+        .object({
+          name: z.string(),
+          colors: z.array(
+            z.object({
+              id: z.string(),
+              role: z.string(),
+              value: z.string(),
+            })
+          ),
+          philosophyNote: z.string().optional(),
+          fontDisplay: z.string().optional(),
+          fontBody: z.string().optional(),
+          fontMono: z.string().optional(),
+          baseSize: z.number().optional(),
+          scaleRatio: z.number().optional(),
+          spacingBase: z.union([z.literal(4), z.literal(8)]).optional(),
+          radius: z.number().optional(),
+          depth: z.enum(['flat', 'soft', 'layered']).optional(),
+        })
+        .optional(),
+    }),
+    execute: async ({ op, target, directive, domain, system: inputSystem }) => {
+      const {
+        DEFAULT_STUDIO_SYSTEM,
+        buildStudioContractPack,
+        slugify,
+      } = await import('@/lib/contracts/authored-contract')
+      const {
+        evolveStudioSystem,
+        fixStudioContrast,
+        invertStudioPolarity,
+      } = await import('@/lib/contracts/system-mutate')
+      const { workingSystemFromScan, toStudioSystem } = await import(
+        '@/lib/design-system/working-system'
+      )
+
+      let system = inputSystem
+        ? {
+            ...DEFAULT_STUDIO_SYSTEM,
+            ...inputSystem,
+            slug: slugify(inputSystem.name),
+            philosophyNote: inputSystem.philosophyNote ?? '',
+            colors: inputSystem.colors,
+          }
+        : null
+
+      if (!system) {
+        if (!domain) {
+          return { found: false, error: 'Provide system or domain' }
+        }
+        const key = normalizeDomain(domain)
+        const scan = await getScan(key)
+        const curated = scan?.curatedTokens as CuratedLike | undefined
+        if (!curated) {
+          return {
+            found: false,
+            missing: [key],
+            suggestion: 'Scan the domain with scan_site first.',
+          }
+        }
+        system = toStudioSystem(
+          workingSystemFromScan({
+            domain: key,
+            curatedTokens: curated,
+            personality: scan?.personality ?? null,
+          })
+        )
+      }
+
+      let report: unknown = null
+      if (op === 'contrast-fix') {
+        const fixed = fixStudioContrast(system, target ?? 'AA')
+        system = fixed.system
+        report = { pairs: fixed.pairs, target: fixed.target, changed: fixed.changed }
+      } else if (op === 'polarity') {
+        system = invertStudioPolarity(system)
+        report = { polarity: 'inverted' }
+      } else {
+        if (!directive) {
+          return { found: false, error: 'evolve requires directive' }
+        }
+        system = evolveStudioSystem(system, directive)
+        report = { directive }
+      }
+
+      const { pack, fileName } = buildStudioContractPack(system, {
+        driftKind: `mutate-${op}`,
+        driftSummary: `Mutated via ${op}.`,
+      })
+
+      return {
+        found: true,
+        op,
+        report,
+        system: {
+          name: system.name,
+          colors: system.colors,
+          fonts: {
+            display: system.fontDisplay,
+            body: system.fontBody,
+            mono: system.fontMono,
+          },
+          spacing: `${system.spacingBase}px`,
+          radius: `${system.radius}px`,
+          depth: system.depth,
+        },
+        designMd: pack.designMd.markdown,
+        installCommand: pack.installCommand,
+        packFileName: fileName,
+        downloadHint:
+          'Pro users can POST /api/contracts/mutate for the ZIP, or use /create → Mutate.',
       }
     },
   }),

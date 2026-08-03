@@ -9,6 +9,8 @@ describe('MCP write gating', () => {
     expect(mcpWriteRequiresPro('blend_systems')).toBe(true)
     expect(mcpWriteRequiresPro('generate_from_brief')).toBe(true)
     expect(mcpWriteRequiresPro('import_design_tokens')).toBe(true)
+    expect(mcpWriteRequiresPro('mutate_system')).toBe(true)
+    expect(mcpWriteRequiresPro('restyle_page')).toBe(true)
     expect(mcpWriteRequiresPro('compose_design_artifacts')).toBe(true)
   })
 
@@ -19,6 +21,7 @@ describe('MCP write gating', () => {
     expect(mcpWriteRequiresPro('compare_systems')).toBe(false)
     expect(mcpWriteRequiresPro('check_contrast')).toBe(false)
     expect(mcpWriteRequiresPro('find_similar_systems')).toBe(false)
+    expect(mcpWriteRequiresPro('generate_from_recipe')).toBe(false)
   })
 
   it('has a stable write-tool set size', () => {

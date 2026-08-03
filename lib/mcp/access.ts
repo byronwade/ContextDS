@@ -20,6 +20,8 @@ export const MCP_WRITE_TOOLS = new Set([
   'blend_systems',
   'generate_from_brief',
   'import_design_tokens',
+  // generate_from_recipe stays public (deterministic, mirrors free HTTP API)
+  'mutate_system',
   'restyle_page',
   'open_canvas',
   'update_canvas',

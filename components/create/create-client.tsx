@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
   ArrowsClockwiseIcon,
@@ -11,7 +11,10 @@ import {
   MagnifyingGlassIcon,
   PenNibIcon,
   SparkleIcon,
-} from '@phosphor-icons/react'
+  StackIcon,
+  SwapIcon,
+  WrenchIcon,
+} from '@/lib/phosphor'
 import { AppShell } from '@/components/organisms/app-shell'
 import { PageCanvas } from '@/components/molecules/page-canvas'
 import { Button } from '@/components/ui/button'
@@ -20,7 +23,15 @@ import { Overline } from '@/components/dossier/shared'
 import { useEntitlements } from '@/lib/premium'
 import { cn } from '@/lib/utils'
 
-type Tab = 'brief' | 'import' | 'blend' | 'scan'
+type Tab = 'brief' | 'recipes' | 'import' | 'blend' | 'restyle' | 'mutate' | 'scan'
+
+type RecipeMeta = {
+  id: string
+  label: string
+  blurb: string
+  profile: string
+  appType: string
+}
 
 async function downloadZip(response: Response, fallbackName: string) {
   const blob = await response.blob()
@@ -48,6 +59,10 @@ export default function CreateClient() {
   )
   const [briefName, setBriefName] = useState('Ops Workbench')
 
+  const [recipes, setRecipes] = useState<RecipeMeta[]>([])
+  const [recipeId, setRecipeId] = useState('saas-workbench')
+  const [recipeName, setRecipeName] = useState('')
+
   const [importText, setImportText] = useState('')
   const [importName, setImportName] = useState('')
   const [importFormat, setImportFormat] = useState<
@@ -56,6 +71,33 @@ export default function CreateClient() {
 
   const [blendDomains, setBlendDomains] = useState('stripe.com, linear.app')
   const [blendName, setBlendName] = useState('')
+
+  const [structureDomain, setStructureDomain] = useState('stripe.com')
+  const [skinDomain, setSkinDomain] = useState('linear.app')
+  const [restyleName, setRestyleName] = useState('')
+
+  const [mutateOp, setMutateOp] = useState<'contrast-fix' | 'polarity' | 'evolve'>(
+    'contrast-fix'
+  )
+  const [mutateDomain, setMutateDomain] = useState('example.com')
+  const [mutateTarget, setMutateTarget] = useState<'AA' | 'AAA'>('AA')
+  const [mutateDirective, setMutateDirective] = useState(
+    'Make it denser and sharper with a terminal ops feel'
+  )
+
+  useEffect(() => {
+    void fetch('/api/contracts/from-recipe')
+      .then((response) => response.json())
+      .then((data: { recipes?: RecipeMeta[] }) => {
+        if (Array.isArray(data.recipes) && data.recipes.length) {
+          setRecipes(data.recipes)
+          setRecipeId(data.recipes[0].id)
+        }
+      })
+      .catch(() => {
+        /* offline Create still works with hardcoded ids */
+      })
+  }, [])
 
   const run = async (fn: () => Promise<void>) => {
     setBusy(true)
@@ -71,10 +113,13 @@ export default function CreateClient() {
   }
 
   const tabs: Array<{ id: Tab; label: string; icon: typeof SparkleIcon }> = [
-    { id: 'brief', label: 'From brief', icon: SparkleIcon },
-    { id: 'import', label: 'Import tokens', icon: FileTextIcon },
-    { id: 'blend', label: 'Blend scans', icon: ArrowsClockwiseIcon },
-    { id: 'scan', label: 'Scan / App Pack', icon: MagnifyingGlassIcon },
+    { id: 'brief', label: 'Brief', icon: SparkleIcon },
+    { id: 'recipes', label: 'Recipes', icon: StackIcon },
+    { id: 'import', label: 'Import', icon: FileTextIcon },
+    { id: 'blend', label: 'Blend', icon: ArrowsClockwiseIcon },
+    { id: 'restyle', label: 'Restyle', icon: SwapIcon },
+    { id: 'mutate', label: 'Mutate', icon: WrenchIcon },
+    { id: 'scan', label: 'Scan', icon: MagnifyingGlassIcon },
   ]
 
   return (
@@ -86,9 +131,9 @@ export default function CreateClient() {
             Generate a Design Contract
           </h1>
           <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
-            Four production paths into the same installable pack grammar — scan a
-            live site, vision-sample product UI, author in Studio, or synthesize
-            from a brief, import, or blend.
+            Production paths into the same installable pack grammar — scan, vision
+            App Pack, Studio, NL brief, industry recipes, import, blend, structure×skin
+            restyle, and directed mutations (contrast / polarity / evolve).
           </p>
 
           <div className="mt-8 flex flex-wrap gap-1 rounded-xl border border-[color:var(--soft-border)] bg-secondary/30 p-1">
@@ -100,7 +145,7 @@ export default function CreateClient() {
                   type="button"
                   onClick={() => setTab(entry.id)}
                   className={cn(
-                    'inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs transition-colors sm:text-sm',
+                    'inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] transition-colors sm:text-xs',
                     tab === entry.id
                       ? 'bg-[var(--ui-paper)] text-foreground'
                       : 'text-muted-foreground hover:text-foreground'
@@ -172,6 +217,84 @@ export default function CreateClient() {
                     <LockIcon className="size-3.5" />
                   )}
                   {busy ? 'Generating…' : 'Generate pack ZIP'}
+                </Button>
+              </section>
+            ) : null}
+
+            {tab === 'recipes' ? (
+              <section className="space-y-4" data-testid="create-recipes">
+                <p className="text-sm text-muted-foreground">
+                  Start from an industry recipe with the correct engine{' '}
+                  <span className="font-mono text-[12px]">--profile</span> /{' '}
+                  <span className="font-mono text-[12px]">--app-type</span>. Free —
+                  deterministic, no scan required.
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {(recipes.length
+                    ? recipes
+                    : [
+                        {
+                          id: 'saas-workbench',
+                          label: 'SaaS workbench',
+                          blurb: 'Dense product chrome',
+                          profile: 'web-app',
+                          appType: 'saas-workbench',
+                        },
+                      ]
+                  ).map((recipe) => (
+                    <button
+                      key={recipe.id}
+                      type="button"
+                      onClick={() => setRecipeId(recipe.id)}
+                      className={cn(
+                        'rounded-2xl border p-4 text-left transition-colors',
+                        recipeId === recipe.id
+                          ? 'border-[var(--ui-accent)] bg-card/60'
+                          : 'border-[color:var(--soft-border)] bg-card/30 hover:bg-[var(--ui-paper-hover)]'
+                      )}
+                      data-testid={`create-recipe-${recipe.id}`}
+                    >
+                      <p className="text-sm font-medium text-foreground">{recipe.label}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{recipe.blurb}</p>
+                      <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+                        {recipe.profile} · {recipe.appType}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+                <Input
+                  value={recipeName}
+                  onChange={(event) => setRecipeName(event.target.value)}
+                  placeholder="Optional rename"
+                  className="rounded-xl"
+                />
+                <Button
+                  disabled={busy}
+                  className="gap-2"
+                  data-testid="create-recipe-submit"
+                  onClick={() =>
+                    void run(async () => {
+                      const response = await fetch('/api/contracts/from-recipe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          recipeId,
+                          name: recipeName || undefined,
+                        }),
+                      })
+                      if (!response.ok) {
+                        const data = (await response.json().catch(() => null)) as {
+                          error?: string
+                        } | null
+                        throw new Error(data?.error || `Recipe failed (${response.status})`)
+                      }
+                      await downloadZip(response, 'recipe-design-contract.zip')
+                      setNote('Recipe pack downloaded.')
+                    })
+                  }
+                >
+                  <StackIcon className="size-3.5" />
+                  {busy ? 'Building…' : 'Recipe → pack ZIP'}
                 </Button>
               </section>
             ) : null}
@@ -330,6 +453,179 @@ export default function CreateClient() {
               </section>
             ) : null}
 
+            {tab === 'restyle' ? (
+              <section className="space-y-4" data-testid="create-restyle">
+                <p className="text-sm text-muted-foreground">
+                  Keep one site&apos;s page structure; apply another&apos;s skin. Emits a
+                  pack with detected{' '}
+                  <span className="font-mono text-[12px]">--profile</span> /{' '}
+                  <span className="font-mono text-[12px]">--app-type</span>.
+                  {!isPro && ready ? ' Pro required.' : null}
+                </p>
+                <Input
+                  value={structureDomain}
+                  onChange={(event) => setStructureDomain(event.target.value)}
+                  placeholder="Structure domain (layout)"
+                  className="rounded-xl"
+                  data-testid="create-restyle-structure"
+                />
+                <Input
+                  value={skinDomain}
+                  onChange={(event) => setSkinDomain(event.target.value)}
+                  placeholder="Skin domain (tokens)"
+                  className="rounded-xl"
+                  data-testid="create-restyle-skin"
+                />
+                <Input
+                  value={restyleName}
+                  onChange={(event) => setRestyleName(event.target.value)}
+                  placeholder="Optional system name"
+                  className="rounded-xl"
+                />
+                <Button
+                  disabled={busy || !isPro}
+                  className="gap-2"
+                  data-testid="create-restyle-submit"
+                  onClick={() =>
+                    void run(async () => {
+                      const response = await fetch('/api/contracts/restyle', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          structureDomain,
+                          skinDomain,
+                          name: restyleName || undefined,
+                        }),
+                      })
+                      if (!response.ok) {
+                        const data = (await response.json().catch(() => null)) as {
+                          error?: string
+                          missing?: string[]
+                        } | null
+                        throw new Error(
+                          data?.error ||
+                            (data?.missing?.length
+                              ? `Scan missing: ${data.missing.join(', ')}`
+                              : `Restyle failed (${response.status})`)
+                        )
+                      }
+                      await downloadZip(response, 'restyle-design-contract.zip')
+                      setNote('Restyle pack downloaded.')
+                    })
+                  }
+                >
+                  {isPro ? (
+                    <SwapIcon className="size-3.5" />
+                  ) : (
+                    <LockIcon className="size-3.5" />
+                  )}
+                  {busy ? 'Restyling…' : 'Restyle → pack ZIP'}
+                </Button>
+              </section>
+            ) : null}
+
+            {tab === 'mutate' ? (
+              <section className="space-y-4" data-testid="create-mutate">
+                <p className="text-sm text-muted-foreground">
+                  Directed mutations on a scanned domain: WCAG contrast fix, light↔dark
+                  polarity twin, or evolve with a short directive.
+                  {!isPro && ready ? ' Pro required.' : null}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {(
+                    [
+                      ['contrast-fix', 'Contrast fix'],
+                      ['polarity', 'Polarity'],
+                      ['evolve', 'Evolve'],
+                    ] as const
+                  ).map(([id, label]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setMutateOp(id)}
+                      className={cn(
+                        'rounded-full border px-2.5 py-1 text-xs',
+                        mutateOp === id
+                          ? 'border-[var(--ui-accent)] text-[var(--ui-accent)]'
+                          : 'border-[color:var(--soft-border)] text-muted-foreground'
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <Input
+                  value={mutateDomain}
+                  onChange={(event) => setMutateDomain(event.target.value)}
+                  placeholder="Scanned domain"
+                  className="rounded-xl"
+                  data-testid="create-mutate-domain"
+                />
+                {mutateOp === 'contrast-fix' ? (
+                  <div className="flex gap-2">
+                    {(['AA', 'AAA'] as const).map((level) => (
+                      <button
+                        key={level}
+                        type="button"
+                        onClick={() => setMutateTarget(level)}
+                        className={cn(
+                          'rounded-full border px-2.5 py-1 font-mono text-[11px]',
+                          mutateTarget === level
+                            ? 'border-[var(--ui-accent)] text-[var(--ui-accent)]'
+                            : 'border-[color:var(--soft-border)] text-muted-foreground'
+                        )}
+                      >
+                        {level}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                {mutateOp === 'evolve' ? (
+                  <textarea
+                    value={mutateDirective}
+                    onChange={(event) => setMutateDirective(event.target.value)}
+                    rows={3}
+                    className="w-full rounded-xl border border-[color:var(--soft-border)] bg-card/40 px-3 py-2 text-sm leading-relaxed text-foreground"
+                    data-testid="create-mutate-directive"
+                  />
+                ) : null}
+                <Button
+                  disabled={busy || !isPro}
+                  className="gap-2"
+                  data-testid="create-mutate-submit"
+                  onClick={() =>
+                    void run(async () => {
+                      const response = await fetch('/api/contracts/mutate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          op: mutateOp,
+                          domain: mutateDomain,
+                          target: mutateOp === 'contrast-fix' ? mutateTarget : undefined,
+                          directive: mutateOp === 'evolve' ? mutateDirective : undefined,
+                        }),
+                      })
+                      if (!response.ok) {
+                        const data = (await response.json().catch(() => null)) as {
+                          error?: string
+                        } | null
+                        throw new Error(data?.error || `Mutate failed (${response.status})`)
+                      }
+                      await downloadZip(response, 'mutated-design-contract.zip')
+                      setNote('Mutated pack downloaded.')
+                    })
+                  }
+                >
+                  {isPro ? (
+                    <WrenchIcon className="size-3.5" />
+                  ) : (
+                    <LockIcon className="size-3.5" />
+                  )}
+                  {busy ? 'Mutating…' : 'Mutate → pack ZIP'}
+                </Button>
+              </section>
+            ) : null}
+
             {tab === 'scan' ? (
               <section className="space-y-4" data-testid="create-scan">
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -362,7 +658,8 @@ export default function CreateClient() {
                     <PenNibIcon className="size-5 text-[var(--ui-accent)]" />
                     <p className="mt-3 text-sm font-medium text-foreground">Studio</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Hand-author tokens and export a full pack ZIP (Pro).
+                      Hand-author tokens and export a full pack ZIP (Pro). Canvas also
+                      exports packs.
                     </p>
                   </Link>
                   <Link
@@ -374,7 +671,7 @@ export default function CreateClient() {
                       Fork from Library
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Continue or fork a community system into your canvas.
+                      Continue or fork a community system into your canvas, then export.
                     </p>
                   </Link>
                 </div>

@@ -14,7 +14,7 @@
 | Route | Shell nav | Notes |
 |-------|-----------|-------|
 | `/` | Chat | Primary product — `ScanChat` full viewport |
-| `/create` | Create | Advanced generators — brief, import, blend, scan/App Pack |
+| `/create` | Create | Advanced generators — brief, recipes, import, blend, restyle, mutate, scan/App Pack |
 | `/community` | Library | Directory of scanned contracts (+ Fork) |
 | `/docs` | Docs | Install + API |
 | `/site/[domain]` | — | Detail view; **hydrate cache, don’t auto-rescan** |
