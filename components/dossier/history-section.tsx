@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { parseColor } from '@/lib/analyzers/design-philosophy'
+import type { TokenDiff } from '@/lib/analyzers/version-diff'
 import { cn } from '@/lib/utils'
 import { SectionShell } from './shared'
 
@@ -77,6 +78,11 @@ export function HistorySection({
 }) {
   const [versions, setVersions] = useState<ScanVersion[] | null>(null)
   const [compareIndex, setCompareIndex] = useState(1)
+  const [richDiff, setRichDiff] = useState<{
+    key: string
+    diff: TokenDiff
+    changelog: string | null
+  } | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -117,6 +123,45 @@ export function HistorySection({
       confidenceDelta: latest.confidence - previous.confidence,
     }
   }, [versions, compareIndex])
+
+  const compareKey = diff
+    ? `${diff.previous.scanId}->${diff.latest.scanId}`
+    : null
+
+  useEffect(() => {
+    if (!compareKey || !diff) return
+    let cancelled = false
+    const oldScanId = diff.previous.scanId
+    const newScanId = diff.latest.scanId
+    const key = compareKey
+    fetch(`/api/sites/${encodeURIComponent(domain)}/versions/compare`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ oldScanId, newScanId }),
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { diff?: TokenDiff; changelog?: string } | null) => {
+        if (cancelled || !data?.diff) return
+        setRichDiff({
+          key,
+          diff: data.diff,
+          changelog: typeof data.changelog === 'string' ? data.changelog : null,
+        })
+      })
+      .catch(() => {
+        /* keep previous richDiff only if same key — otherwise hide */
+      })
+    return () => {
+      cancelled = true
+    }
+    // compareKey encodes the scan pair; diff fields are read once per key
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [domain, compareKey])
+
+  const activeTokenDiff =
+    richDiff && compareKey && richDiff.key === compareKey ? richDiff.diff : null
+  const activeChangelog =
+    richDiff && compareKey && richDiff.key === compareKey ? richDiff.changelog : null
 
   // History becomes interesting from the second scan onward.
   if (!versions || versions.length < 2) return null
@@ -209,6 +254,56 @@ export function HistorySection({
                   confidence {diff.confidenceDelta === 0 ? '±0' : diff.confidenceDelta > 0 ? `+${diff.confidenceDelta}%` : `${diff.confidenceDelta}%`}
                 </span>
               </div>
+
+              {activeTokenDiff && activeTokenDiff.summary.totalChanges > 0 ? (
+                <div
+                  className="mt-4 space-y-2 border-t border-border/40 pt-3"
+                  data-testid="token-version-diff"
+                >
+                  <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    Token paths · {activeTokenDiff.summary.totalChanges} changes
+                  </p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px]">
+                    <span className="text-[var(--ui-success)]">
+                      +{activeTokenDiff.summary.addedCount}
+                    </span>
+                    <span className="text-[var(--ui-danger)]">
+                      −{activeTokenDiff.summary.removedCount}
+                    </span>
+                    <span className="text-muted-foreground">
+                      ~{activeTokenDiff.summary.modifiedCount}
+                    </span>
+                  </div>
+                  <ul className="max-h-40 space-y-1 overflow-y-auto font-mono text-[11px] text-muted-foreground">
+                    {[
+                      ...activeTokenDiff.added.slice(0, 6).map((change) => ({
+                        key: `a-${change.path}`,
+                        label: `+ ${change.path}`,
+                        tone: 'text-[var(--ui-success)]' as const,
+                      })),
+                      ...activeTokenDiff.removed.slice(0, 6).map((change) => ({
+                        key: `r-${change.path}`,
+                        label: `− ${change.path}`,
+                        tone: 'text-[var(--ui-danger)]' as const,
+                      })),
+                      ...activeTokenDiff.modified.slice(0, 6).map((change) => ({
+                        key: `m-${change.path}`,
+                        label: `~ ${change.path}`,
+                        tone: 'text-foreground/80' as const,
+                      })),
+                    ].map((row) => (
+                      <li key={row.key} className={row.tone}>
+                        {row.label}
+                      </li>
+                    ))}
+                  </ul>
+                  {activeChangelog ? (
+                    <pre className="max-h-28 overflow-auto whitespace-pre-wrap rounded-lg border border-[color:var(--soft-border)] bg-[var(--ui-paper-subtle)] p-3 font-mono text-[10px] text-muted-foreground">
+                      {activeChangelog}
+                    </pre>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
 
             {(diff.latest.screenshot || diff.previous.screenshot) && (

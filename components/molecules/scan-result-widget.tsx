@@ -75,7 +75,7 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
     return (
       <div
         className={cn(
-          'flex items-center gap-2.5 rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper)] px-3 py-2.5 shadow-[var(--shadow-paper)]',
+          'flex items-center gap-2.5 rounded-[var(--radius-paper)] border border-[var(--ui-border)] bg-[var(--ui-paper)] px-3 py-2.5',
           className
         )}
       >
@@ -116,7 +116,7 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
   return (
     <div
       className={cn(
-        'paper overflow-hidden !rounded-[10px]',
+        'paper overflow-hidden',
         className
       )}
     >
@@ -135,7 +135,7 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
         <div className="flex min-w-0 flex-1 flex-col gap-2 px-3 py-2.5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ui-ink-muted)]">
+              <p className="text-[11px] text-[var(--ui-ink-muted)]">
                 Contract
                 {typeof confidence === 'number' ? ` · ${Math.round(confidence)}%` : ''}
                 {data.mode ? ` · ${data.mode}` : ''}
@@ -152,7 +152,7 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
             <Link
               href={`/site/${domain}` as `/site/${string}`}
               onClick={() => stashSiteHandoff(domain, data)}
-              className="inline-flex h-7 shrink-0 items-center gap-1 rounded-[7px] bg-[var(--ui-paper)] px-2 text-[12px] text-[var(--ui-ink-secondary)] shadow-[var(--shadow-control)] transition hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]"
+              className="inline-flex h-8 shrink-0 items-center gap-1 rounded-[var(--radius-md)] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] px-2.5 text-[12px] text-[var(--ui-ink-secondary)] transition hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]"
             >
               Open
               <ArrowUpRight className="size-3.5" />
@@ -188,7 +188,7 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
 
 /** True when a tool part should render as the scan results widget. */
 export function isScanResultToolName(name: string): boolean {
-  return name === 'scan_site' || name === 'get_tokens'
+  return name === 'scan_site' || name === 'get_tokens' || name === 'contract_from_screenshot'
 }
 
 export function asScanWidgetPayload(output: unknown): ScanWidgetPayload | null {

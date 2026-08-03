@@ -5,6 +5,7 @@ describe('scan-result-widget helpers', () => {
   it('recognizes scan tools', () => {
     expect(isScanResultToolName('scan_site')).toBe(true)
     expect(isScanResultToolName('get_tokens')).toBe(true)
+    expect(isScanResultToolName('contract_from_screenshot')).toBe(true)
     expect(isScanResultToolName('resolve_graph')).toBe(false)
   })
 

@@ -21,6 +21,9 @@ export interface StoredSystem {
   system: WorkingSystem
   origin: SystemOrigin
   visibility: 'public' | 'private'
+  /** Stripe customer id that owns private systems (null for public/legacy) */
+  ownerCustomerId: string | null
+  ownerEmail?: string | null
   createdAt: string
   updatedAt: string
   revisionCount: number
@@ -261,6 +264,8 @@ export async function saveSystem(input: {
   id?: string
   system: WorkingSystem
   visibility?: 'public' | 'private'
+  ownerCustomerId?: string | null
+  ownerEmail?: string | null
 }): Promise<StoredSystem> {
   const existing = input.id ? await getSystem(input.id) : null
   const id = existing?.id ?? input.id?.trim() ?? createId('sys')
@@ -268,6 +273,13 @@ export async function saveSystem(input: {
 
   const system: WorkingSystem = { ...input.system, id }
   const name = (system.name || existing?.name || 'Untitled system').slice(0, 80)
+  const visibility = input.visibility ?? existing?.visibility ?? 'public'
+
+  // Never let a client forge another owner's id — preserve or stamp from session.
+  const ownerCustomerId =
+    visibility === 'private'
+      ? input.ownerCustomerId ?? existing?.ownerCustomerId ?? null
+      : existing?.ownerCustomerId ?? input.ownerCustomerId ?? null
 
   const stored: StoredSystem = {
     id,
@@ -275,7 +287,9 @@ export async function saveSystem(input: {
     name,
     system,
     origin: system.origin ?? existing?.origin ?? { kind: 'blank' },
-    visibility: input.visibility ?? existing?.visibility ?? 'public',
+    visibility,
+    ownerCustomerId,
+    ownerEmail: input.ownerEmail ?? existing?.ownerEmail ?? null,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
     revisionCount: (existing?.revisionCount ?? 0) + 1,
@@ -297,17 +311,38 @@ export async function saveSystem(input: {
     ])
   }
 
-  // Always mirror the directory to Blob — the library must survive Redis
-  // flushes, env swaps and cold regions.
-  await upsertDirectoryBlob(stored)
+  // Public directory must never list private systems.
+  if (stored.visibility === 'public') {
+    await upsertDirectoryBlob(stored)
+  } else {
+    try {
+      const directory = await loadDirectoryFromBlob()
+      if (directory.some((entry) => entry.id === stored.id)) {
+        await saveDirectoryToBlob(directory.filter((entry) => entry.id !== stored.id))
+      }
+    } catch (error) {
+      console.warn('[system-store] private directory strip failed:', error)
+    }
+  }
 
   return stored
+}
+
+/** True when the caller may read/mutate this system. */
+export function canAccessSystem(
+  stored: StoredSystem,
+  customerId: string | null | undefined
+): boolean {
+  if (stored.visibility !== 'private') return true
+  if (!stored.ownerCustomerId) return false
+  return Boolean(customerId && stored.ownerCustomerId === customerId)
 }
 
 /** User systems, newest first. */
 export async function listSystems(options?: {
   limit?: number
   visibility?: 'public' | 'private'
+  ownerCustomerId?: string
 }): Promise<StoredSystem[]> {
   const limit = options?.limit ?? 50
   const redis = getRedis()
@@ -334,9 +369,18 @@ export async function listSystems(options?: {
     systems = await loadDirectoryFromBlob()
   }
 
-  const filtered = options?.visibility
-    ? systems.filter((stored) => stored.visibility === options.visibility)
-    : systems
+  let filtered = systems
+  if (options?.visibility) {
+    filtered = filtered.filter((stored) => stored.visibility === options.visibility)
+  }
+  if (options?.ownerCustomerId) {
+    filtered = filtered.filter(
+      (stored) => stored.ownerCustomerId === options.ownerCustomerId
+    )
+  } else if (options?.visibility === 'private') {
+    // Never dump all private systems without an owner scope.
+    filtered = []
+  }
 
   return [...filtered]
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())

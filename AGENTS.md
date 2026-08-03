@@ -14,13 +14,14 @@
 | Route | Shell nav | Notes |
 |-------|-----------|-------|
 | `/` | Chat | Primary product — `ScanChat` full viewport |
-| `/community` | Library | Directory of scanned contracts |
+| `/create` | Create | Advanced generators — brief, recipes, import, blend, restyle, mutate, scan/App Pack |
+| `/community` | Library | Directory of scanned contracts (+ Fork) |
 | `/docs` | Docs | Install + API |
 | `/site/[domain]` | — | Detail view; **hydrate cache, don’t auto-rescan** |
 | `/features`, `/pricing`, `/about` | More | Same `AppShell`; quiet content via `PageCanvas` |
 | `/contact`, `/privacy`, `/terms` | Legal links | Same shell; no separate marketing chrome |
 | `/metrics` | — | Live metrics; still use `AppShell` |
-| `/scan`, `/agent` | → `/` | Redirects (keep `?url=`) |
+| `/scan`, `/agent` | → `/` | Redirects (keep `?url=` and `?system=`) |
 
 When adding pages:
 1. Wrap with `AppShell` + `currentPage` (and `PageCanvas` if scrollable).
@@ -29,13 +30,15 @@ When adding pages:
 4. Never introduce a second competing nav (`MarketingHeader` / `MarketingFooter` / `VercelHeader`) on public routes.
 
 ## Design & UI rules (summary)
-- **Warm Paper Workbench (dark-first):** canvas `#161310` + paper `#1f1b16` + terracotta accent; light cream optional.
-- Soft borders only (`--ui-border-soft` / `--ui-border`) — avoid hard outlines.
-- App shell: 240px sidebar on canvas → inset 12px-radius paper workspace (stats strip + body).
-- Controls: 28/32px with Shopify-style bevel shadows; theme toggle is a full-width segment in the sidebar.
-- Geist Sans + Geist Mono (`--font-geist-sans` / `--font-geist-mono`); Phosphor duotone icons — import from `@/lib/phosphor` outside the AppShell IconContext. Paper lift only on meaningful surfaces.
+- **Editorial Cream Workbench (light-first):** canvas `#f7f7f4` + paper `#ffffff` + Cursor Orange `#f54e00` (scarce).
+- Hairline-only depth (`--ui-border-soft` / `--ui-border` / `--ui-border-edge`) — no drop shadows.
+- App shell: 240px sidebar on cream canvas → 12px inset white workspace (all sides) with stats strip inside the paper; chat composer is a writing surface + compact ↑ send toolbar.
+- Controls: 40px primary CTAs / 44px inputs with 8px radius; full-width Light/Auto/Dark segment in the sidebar footer.
+- Inter + JetBrains Mono (`--font-geist-sans` / `--font-geist-mono` var names kept for compat); display weight stays 400.
+- Phosphor duotone icons — import from `@/lib/phosphor` outside the AppShell IconContext.
+- Timeline pastels are agent-UI only — never system action colors.
 - Archetypes: chat = centered action (712px); library = dense operational list; docs = document (~760px).
-- No marketing footer / competing headers on AppShell routes. No nested card-shadow stacks.
+- No marketing footer / competing headers on AppShell routes.
 - Inline scan widgets stay compact; Open uses cache/handoff (no auto-rescan).
 - Details: [`DESIGN.md`](./DESIGN.md).
 

@@ -47,22 +47,22 @@ export async function GET(
 
     const palette = {
       dark: {
-        bg: '#1d1813',
-        subtle: '#18130f',
-        ink: '#f4efe5',
-        muted: '#aaa196',
-        faint: '#7f766c',
-        border: 'rgba(240,235,227,0.10)',
-        accent: '#c08a5f',
+        bg: '#1f1e1a',
+        subtle: '#1a1915',
+        ink: '#f7f7f4',
+        muted: '#a09c92',
+        faint: '#807d72',
+        border: 'rgba(247,247,244,0.12)',
+        accent: '#f54e00',
       },
       light: {
-        bg: '#fffdf8',
-        subtle: '#faf5ec',
-        ink: '#2b2723',
-        muted: '#675f57',
-        faint: '#766e65',
-        border: 'rgba(67,52,38,0.13)',
-        accent: '#8f5a38',
+        bg: '#ffffff',
+        subtle: '#fafaf7',
+        ink: '#26251e',
+        muted: '#5a5852',
+        faint: '#807d72',
+        border: '#e6e5e0',
+        accent: '#f54e00',
       },
     }[theme]
 

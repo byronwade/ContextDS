@@ -37,6 +37,16 @@ export const SLASH_COMMANDS: SlashCommand[] = [
         : 'Which site should I scan? Give me a domain.',
   },
   {
+    name: 'app',
+    args: '<product name?>',
+    description: 'App Pack — attach ≥5 product UI screenshots (credits)',
+    example: '/app Cursor',
+    expand: (args) =>
+      args.trim()
+        ? `I want an App Pack for ${args.trim()} — APPLICATION design, not marketing. I will attach at least 5 product UI screenshots; call contract_from_screenshot with preferApp=true.`
+        : 'I want an App Pack — an APPLICATION Design Contract from at least 5 product UI screenshots (not marketing). Call contract_from_screenshot when I have enough images attached.',
+  },
+  {
     name: 'canvas',
     args: '<domain | blank>',
     description: 'Open the live design canvas to edit a system',
@@ -51,13 +61,68 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   {
     name: 'blend',
     args: '<domain> <domain> …',
-    description: 'Merge 2–10 systems into one coherent system',
+    description: 'Merge 2–10 systems into an installable pack',
     example: '/blend stripe.com linear.app vercel.com',
     expand: (args) => {
       const domains = domainList(args)
       return domains.length >= 2
-        ? `Blend ${domains.join(', ')} into one coherent design system and give me the DESIGN.md.`
+        ? `Blend ${domains.join(', ')} into one coherent design system with blend_systems, then tell me the install command and how to download the pack ZIP from /api/contracts/blend or /create.`
         : 'Which sites should I blend? Give me at least two domains.'
+    },
+  },
+  {
+    name: 'brief',
+    args: '<product description>',
+    description: 'Synthesize a Design Contract from a brief',
+    example: '/brief dark ops workbench with teal accents',
+    expand: (args) =>
+      args.trim()
+        ? `Generate a Design Contract from this brief using generate_from_brief: ${args.trim()}. Summarize the system and the install command.`
+        : 'Describe the product or visual direction for a new Design Contract.',
+  },
+  {
+    name: 'import',
+    args: '<paste tokens later>',
+    description: 'Import tokens.json / DESIGN.md / CSS / Tailwind',
+    example: '/import',
+    expand: (args) =>
+      args.trim().length > 20
+        ? `Import these design tokens with import_design_tokens and show the resulting system + install command:\n\n${args.trim()}`
+        : 'Paste W3C tokens.json, DESIGN.md, CSS variables, or a Tailwind theme — or open /create → Import tokens.',
+  },
+  {
+    name: 'recipe',
+    args: '<recipe-id>',
+    description: 'Seed a pack from an industry recipe preset',
+    example: '/recipe saas-workbench',
+    expand: (args) => {
+      const id = args.trim() || 'saas-workbench'
+      return `Generate a Design Contract from the industry recipe "${id}" using generate_from_recipe. Summarize the system, profile/app-type, and install command. Mention /create → Recipes for the ZIP.`
+    },
+  },
+  {
+    name: 'restyle',
+    args: '<structure-domain> <skin-domain>',
+    description: 'Structure × skin → installable pack',
+    example: '/restyle stripe.com linear.app',
+    expand: (args) => {
+      const domains = domainList(args)
+      return domains.length >= 2
+        ? `Restyle ${domains[0]} structure with ${domains[1]} skin using restyle_page. Return the rebuild brief, detected profile/app-type, and install command.`
+        : 'Which structure domain and skin domain should I restyle?'
+    },
+  },
+  {
+    name: 'mutate',
+    args: '<contrast-fix|polarity|evolve> <domain or directive>',
+    description: 'Contrast-fix, polarity twin, or evolve a system',
+    example: '/mutate contrast-fix example.com',
+    expand: (args) => {
+      const trimmed = args.trim()
+      if (!trimmed) {
+        return 'Choose contrast-fix, polarity, or evolve — e.g. /mutate polarity stripe.com'
+      }
+      return `Mutate a design system with mutate_system using: ${trimmed}. Summarize what changed and the install command.`
     },
   },
   {
@@ -129,7 +194,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     description: 'List what Scan can do',
     example: '/help',
     expand: () =>
-      'What can you do? List your capabilities briefly — scanning, blending, the canvas, themes, contrast — with one example each.',
+      'What can you do? List your capabilities briefly — URL scan, App Pack screenshots, brief synthesis, industry recipes, token import, blending, structure×skin restyle, contrast/polarity/evolve mutate, Studio, canvas export, themes — with one example each. Mention /create for the advanced generators.',
   },
 ]
 

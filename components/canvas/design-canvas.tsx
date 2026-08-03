@@ -9,11 +9,12 @@
  * `patchSystem`, which is the only way tokens change.
  */
 
-import { useEffect, useMemo, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import {
   CheckCircleIcon,
   CircleNotchIcon,
+  DownloadSimpleIcon,
   FloppyDiskIcon,
   PaletteIcon,
   SlidersHorizontalIcon,
@@ -385,6 +386,8 @@ export function DesignCanvas({
   const lastPatchSummary = useCanvasStore((state) => state.lastPatchSummary)
   const patchSystem = useCanvasStore((state) => state.patchSystem)
   const openCanvas = useCanvasStore((state) => state.openCanvas)
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
 
   // Effect-free hydration: the persisted draft comes from a cached external
   // store snapshot, never from setState inside an effect. Edits run through
@@ -447,6 +450,55 @@ export function DesignCanvas({
           className="min-w-0 flex-1 bg-transparent font-serif text-xl tracking-tight text-foreground outline-none"
         />
         <span className={OVERLINE}>{originLabel(system.origin)}</span>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={exporting}
+          data-testid="canvas-export-pack"
+          onClick={() => {
+            void (async () => {
+              setExporting(true)
+              setExportError(null)
+              try {
+                const response = await fetch('/api/contracts/authored', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ system: toStudioSystem(system) }),
+                })
+                if (!response.ok) {
+                  const data = (await response.json().catch(() => null)) as {
+                    error?: string
+                  } | null
+                  throw new Error(data?.error || `Export failed (${response.status})`)
+                }
+                const blob = await response.blob()
+                const disposition = response.headers.get('Content-Disposition') || ''
+                const match = disposition.match(/filename="([^"]+)"/)
+                const href = URL.createObjectURL(blob)
+                const anchor = document.createElement('a')
+                anchor.href = href
+                anchor.download = match?.[1] || `${system.slug}-design-contract.zip`
+                document.body.appendChild(anchor)
+                anchor.click()
+                anchor.remove()
+                URL.revokeObjectURL(href)
+              } catch (error) {
+                setExportError(
+                  error instanceof Error ? error.message : 'Export failed'
+                )
+              } finally {
+                setExporting(false)
+              }
+            })()
+          }}
+        >
+          {exporting ? (
+            <CircleNotchIcon className="animate-spin" />
+          ) : (
+            <DownloadSimpleIcon />
+          )}
+          {exporting ? 'Pack…' : 'Export pack'}
+        </Button>
         <Button size="sm" variant="outline" disabled={!dirty || saving} onClick={() => onSave?.(system)}>
           {saving ? <CircleNotchIcon className="animate-spin" /> : <FloppyDiskIcon />}
           {saving ? 'Saving' : 'Save'}
@@ -457,6 +509,11 @@ export function DesignCanvas({
         <ContrastChip label="text/bg" fg={foreground} bg={background} />
         <ContrastChip label="primary/bg" fg={primary} bg={background} />
         {lastPatchSummary ? <span className={cn(OVERLINE, 'truncate')}>{lastPatchSummary}</span> : null}
+        {exportError ? (
+          <span className="text-xs text-[var(--ui-danger)]" role="alert">
+            {exportError}
+          </span>
+        ) : null}
       </div>
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-[1fr_260px]">

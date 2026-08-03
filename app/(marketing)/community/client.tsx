@@ -115,7 +115,7 @@ function SiteCard({
   })()
 
   return (
-    <li className="group relative flex flex-col overflow-hidden rounded-2xl border border-[color:var(--soft-border)] bg-card/40 transition-all duration-200 hover:border-border hover:bg-card/70">
+    <li className="group relative flex flex-col overflow-hidden rounded-[var(--radius-paper)] border border-[var(--ui-border)] bg-[var(--ui-paper)] transition-colors duration-150 hover:border-[var(--ui-border-edge)]">
       {/* Palette band — the site's system at a glance */}
       <Link
         href={`/site/${site.domain}`}
@@ -145,11 +145,11 @@ function SiteCard({
             <img
               src={site.favicon}
               alt=""
-              className="mt-0.5 size-8 shrink-0 rounded-lg border border-[color:var(--soft-border)] bg-background object-cover"
+              className="mt-0.5 size-8 shrink-0 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-paper)] object-cover"
             />
           ) : (
             <div
-              className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border border-[color:var(--soft-border)] bg-muted/40 font-mono text-[10px] text-muted-foreground"
+              className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] font-mono text-[10px] text-[var(--ui-ink-muted)]"
               aria-hidden
             >
               {site.domain.slice(0, 2).toUpperCase()}
@@ -202,10 +202,10 @@ function SiteCard({
               onClick={() => onVote(site.id)}
               disabled={site.hasVoted || votingId === site.id}
               className={cn(
-                'inline-flex h-7 items-center gap-1 rounded-full border px-2.5 font-mono text-[11px] transition-colors',
+                'inline-flex h-7 items-center gap-1 rounded-[var(--radius-md)] border px-2.5 text-[11px] transition-colors',
                 site.hasVoted
                   ? 'border-[color-mix(in_oklab,var(--ui-accent)_45%,transparent)] bg-[color-mix(in_oklab,var(--ui-accent)_8%,transparent)] text-[var(--ui-accent)]'
-                  : 'border-[color:var(--soft-border)] text-muted-foreground hover:border-foreground/30 hover:text-foreground'
+                  : 'border-[var(--ui-border)] text-[var(--ui-ink-muted)] hover:border-[var(--ui-border-edge)] hover:text-[var(--ui-ink)]'
               )}
               aria-label={`Vote for ${site.domain}`}
               aria-pressed={site.hasVoted}
@@ -218,7 +218,7 @@ function SiteCard({
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Visit ${site.domain}`}
-              className="inline-flex size-7 items-center justify-center rounded-full border border-[color:var(--soft-border)] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+              className="inline-flex size-7 items-center justify-center rounded-[var(--radius-md)] border border-[var(--ui-border)] text-[var(--ui-ink-muted)] transition-colors hover:border-[var(--ui-border-edge)] hover:text-[var(--ui-ink)]"
             >
               <ArrowUpRightIcon className="size-3.5" />
             </a>
@@ -233,7 +233,8 @@ function SystemCard({ system, loadFont }: { system: LibrarySystem; loadFont: boo
   const colors = system.preview?.colors ?? []
   const primaryFont = system.preview?.fonts?.[0] ?? null
   // Typed routes: the query string is opaque to the route type, hence the cast.
-  const href = `/scan?system=${encodeURIComponent(system.id)}` as Route
+  const href = `/?system=${encodeURIComponent(system.id)}` as Route
+  const [forking, setForking] = useState(false)
 
   useEffect(() => {
     if (loadFont && primaryFont) ensureGoogleFont(primaryFont)
@@ -247,8 +248,28 @@ function SystemCard({ system, loadFont }: { system: LibrarySystem; loadFont: boo
     return raw.includes('rem') || raw.includes('em') ? n * 16 : n
   })()
 
+  const forkSystem = async () => {
+    if (forking) return
+    setForking(true)
+    try {
+      const response = await fetch('/api/systems/fork', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ systemId: system.id }),
+      })
+      const data = (await response.json()) as { canvasHref?: string; error?: string }
+      if (!response.ok || !data.canvasHref) {
+        throw new Error(data.error || 'Fork failed')
+      }
+      trackClientEvent('system_forked')
+      window.location.href = data.canvasHref
+    } catch {
+      setForking(false)
+    }
+  }
+
   return (
-    <li className="group relative flex flex-col overflow-hidden rounded-2xl border border-[color:var(--soft-border)] bg-card/40 transition-all duration-200 hover:border-border hover:bg-card/70">
+    <li className="group relative flex flex-col overflow-hidden rounded-[var(--radius-paper)] border border-[var(--ui-border)] bg-[var(--ui-paper)] transition-colors duration-150 hover:border-[var(--ui-border-edge)]">
       {/* Palette band — the authored system at a glance */}
       <Link
         href={href}
@@ -274,7 +295,7 @@ function SystemCard({ system, loadFont }: { system: LibrarySystem; loadFont: boo
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="flex items-start gap-3">
           <div
-            className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border border-[color:var(--soft-border)] bg-muted/40 text-muted-foreground"
+            className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] text-[var(--ui-ink-muted)]"
             aria-hidden
           >
             <SparkleIcon className="size-4" />
@@ -323,13 +344,24 @@ function SystemCard({ system, loadFont }: { system: LibrarySystem; loadFont: boo
           </div>
 
           <div className="relative z-10 flex shrink-0 items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => void forkSystem()}
+              disabled={forking}
+              className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-md)] border border-[var(--ui-border)] px-2.5 text-[11px] text-[var(--ui-ink-muted)] transition-colors hover:border-[var(--ui-border-edge)] hover:text-[var(--ui-ink)] disabled:opacity-50"
+              aria-label={`Fork ${system.name}`}
+              data-testid="system-fork"
+            >
+              <SparkleIcon className="size-3" aria-hidden />
+              {forking ? 'Forking…' : 'Fork'}
+            </button>
             <Link
               href={href}
-              className="inline-flex h-7 items-center gap-1 rounded-full border border-[color:var(--soft-border)] px-2.5 font-mono text-[11px] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+              className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-md)] border border-[var(--ui-border)] px-2.5 text-[11px] text-[var(--ui-ink-muted)] transition-colors hover:border-[var(--ui-border-edge)] hover:text-[var(--ui-ink)]"
               aria-label={`Continue editing ${system.name}`}
             >
               <PencilSimpleIcon className="size-3" aria-hidden />
-              Continue editing
+              Continue
             </Link>
           </div>
         </div>
@@ -458,17 +490,17 @@ export default function CommunityClient() {
   return (
     <AppShell currentPage="library">
       <div className="min-h-0 flex-1 overflow-y-auto" role="region" aria-label="Design Contracts library">
-        <section className="border-b border-[color:var(--soft-border)] px-4 pb-6 pt-8 sm:px-6">
+        <section className="border-b border-[var(--ui-border-soft)] px-4 pb-6 pt-8 sm:px-6">
           <div className="mx-auto max-w-5xl">
-            <h1 className="font-serif text-3xl tracking-tight text-foreground">Library</h1>
-            <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+            <h1 className="text-display-md text-[var(--ui-ink)]">Library</h1>
+            <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-[var(--ui-ink-secondary)]">
               Every card previews a real system — palette, primary face, corner language.
               Open one, or ask Chat to gather a new site.
             </p>
 
             <div className="relative mt-6 max-w-xl">
               <MagnifyingGlassIcon
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ui-ink-muted)]"
                 aria-hidden
               />
               <Input
@@ -477,29 +509,29 @@ export default function CommunityClient() {
                 placeholder="Search domains and systems…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-11 rounded-xl border-[color:var(--soft-border)] bg-card/60 pl-10"
+                className="h-11 rounded-[var(--radius-md)] border-[var(--ui-border-edge)] bg-[var(--ui-paper)] pl-10"
                 aria-label="Search scanned sites and user systems"
               />
             </div>
           </div>
         </section>
 
-        <section className="sticky top-0 z-20 border-b border-[color:var(--soft-border)] bg-background/90 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-            <p className="font-mono text-[11px] text-muted-foreground">
+        <section className="sticky top-0 z-20 border-b border-[var(--ui-border-soft)] bg-[var(--ui-paper)]">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
+            <p className="text-[12px] text-[var(--ui-ink-muted)]">
               {totalShown} {totalShown === 1 ? 'system' : 'systems'}
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <div
-                className="flex gap-0.5 rounded-full border border-[color:var(--soft-border)] bg-secondary/40 p-0.5"
+                className="flex gap-0.5 rounded-[var(--radius-md)] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] p-0.5"
                 role="tablist"
                 aria-label="Library filter"
               >
                 {(
                   [
                     ['all', 'All'],
-                    ['sites', 'Scanned sites'],
-                    ['systems', 'User systems'],
+                    ['sites', 'Sites'],
+                    ['systems', 'Systems'],
                   ] as const
                 ).map(([value, label]) => (
                   <button
@@ -509,10 +541,10 @@ export default function CommunityClient() {
                     aria-selected={kind === value}
                     onClick={() => setKind(value)}
                     className={cn(
-                      'rounded-full px-3 py-1.5 text-xs transition-colors sm:text-[13px]',
+                      'rounded-[6px] px-2.5 py-1.5 text-[12px] transition-colors sm:text-[13px]',
                       kind === value
-                        ? 'bg-background text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.2)]'
-                        : 'text-muted-foreground hover:text-foreground'
+                        ? 'border border-[var(--ui-border)] bg-[var(--ui-paper)] text-[var(--ui-ink)]'
+                        : 'text-[var(--ui-ink-muted)] hover:text-[var(--ui-ink)]'
                     )}
                   >
                     {label}
@@ -521,7 +553,7 @@ export default function CommunityClient() {
               </div>
               {kind === 'systems' ? null : (
                 <div
-                  className="flex gap-0.5 rounded-full border border-[color:var(--soft-border)] bg-secondary/40 p-0.5"
+                  className="flex gap-0.5 rounded-[var(--radius-md)] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] p-0.5"
                   role="tablist"
                   aria-label="Sort options"
                 >
@@ -539,10 +571,10 @@ export default function CommunityClient() {
                       aria-selected={sortBy === value}
                       onClick={() => setSortBy(value)}
                       className={cn(
-                        'rounded-full px-3 py-1.5 text-xs transition-colors sm:text-[13px]',
+                        'rounded-[6px] px-2.5 py-1.5 text-[12px] transition-colors sm:text-[13px]',
                         sortBy === value
-                          ? 'bg-background text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.2)]'
-                          : 'text-muted-foreground hover:text-foreground'
+                          ? 'border border-[var(--ui-border)] bg-[var(--ui-paper)] text-[var(--ui-ink)]'
+                          : 'text-[var(--ui-ink-muted)] hover:text-[var(--ui-ink)]'
                       )}
                     >
                       {label}
@@ -558,23 +590,23 @@ export default function CommunityClient() {
           <div className="mx-auto max-w-5xl">
             {loading ? (
               <div
-                className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
                 role="status"
                 aria-label="Loading sites"
               >
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div
                     key={i}
-                    className="h-48 animate-pulse rounded-2xl border border-[color:var(--soft-border)] bg-muted/20"
+                    className="h-48 animate-pulse rounded-[var(--radius-paper)] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)]"
                   />
                 ))}
               </div>
             ) : totalShown === 0 ? (
-              <div className="rounded-2xl border border-[color:var(--soft-border)] bg-card/40 px-6 py-16 text-center">
-                <h2 className="font-serif text-2xl text-foreground">
+              <div className="rounded-[var(--radius-paper)] border border-[var(--ui-border)] bg-[var(--ui-paper)] px-6 py-20 text-center">
+                <h2 className="text-display-sm text-[var(--ui-ink)]">
                   {kind === 'systems' ? 'No systems yet' : 'No sites yet'}
                 </h2>
-                <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                <p className="mx-auto mt-2 max-w-md text-[14px] leading-relaxed text-[var(--ui-ink-secondary)]">
                   {searchQuery
                     ? 'Nothing matched that search.'
                     : kind === 'systems'
@@ -593,7 +625,7 @@ export default function CommunityClient() {
                 </div>
               </div>
             ) : (
-              <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredSystems.map((system, index) => (
                   <SystemCard key={system.id} system={system} loadFont={index < 12} />
                 ))}

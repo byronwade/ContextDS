@@ -1,68 +1,63 @@
-import type { Metadata } from "next"
-import type { Route } from "next"
-import Link from "next/link"
-import { CheckIcon, MinusIcon } from "@phosphor-icons/react/dist/ssr"
-import { AppShell } from "@/components/organisms/app-shell"
-import { PageCanvas } from "@/components/molecules/page-canvas"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import type { Metadata } from 'next'
+import type { Route } from 'next'
+import Link from 'next/link'
+import { CheckIcon, MinusIcon } from '@phosphor-icons/react/dist/ssr'
+import { AppShell } from '@/components/organisms/app-shell'
+import { PageCanvas } from '@/components/molecules/page-canvas'
+import { CheckoutButton } from '@/components/molecules/pro-checkout-button'
+import { Button } from '@/components/ui/button'
+import { BILLING, CREDIT_SKUS, PRO_PLAN } from '@/lib/billing/config'
+import { cn } from '@/lib/utils'
 
 export const metadata: Metadata = {
-  title: "Pricing — designcontracts.sh",
-  description:
-    "Free scans for everyone. Pro adds the Design Contract Studio, the MCP server, private contracts and unlimited accurate scans.",
+  title: 'Pricing — designcontracts.sh',
+  description: `Buy App Pack credits (never expire) from $${BILLING.packSingleUsd}. Optional Pro $${BILLING.proPriceUsd}/mo for MCP + monthly credits.`,
   openGraph: {
-    title: "Pricing — designcontracts.sh",
-    description:
-      "Free scans for everyone. Pro unlocks the Studio and the MCP server.",
+    title: 'Pricing — designcontracts.sh',
+    description: `Credits-first App Packs. $${BILLING.packSingleUsd} for one, $${BILLING.packBundleUsd} for five. Pro optional.`,
   },
 }
 
 const plans = [
   {
-    name: "Free",
-    price: "$0",
-    period: "forever",
-    description: "Scan public sites and read every contract in the Library.",
+    name: 'Free',
+    price: '$0',
+    period: 'forever',
+    description: 'Scan public sites and read every contract in the Library.',
     features: [
-      "10 scans per month",
-      "Full Design System Dossier for any scanned site",
-      "Library access with community contracts",
-      "DESIGN.md + tokens.json export",
-      "Public MCP read tools (get_tokens, layout_profile)",
+      'Public URL scans (marketing surfaces)',
+      'Full Design System Dossier',
+      'Library access',
+      'DESIGN.md + tokens.json from scans',
+      'Public MCP read tools',
     ],
-    cta: { label: "Start scanning", href: "/" },
+    cta: { kind: 'link' as const, label: 'Start scanning', href: '/' as Route },
     highlight: false,
   },
   {
-    name: "Pro",
-    price: "$12",
-    period: "per month",
-    description: "Author your own contracts and bring them into your agent.",
+    name: 'App Pack credits',
+    price: CREDIT_SKUS.pack_single.priceLabel,
+    period: 'one-time',
+    description:
+      'Pay for the work you actually do. Credits never expire — generate one system and move on.',
     features: [
-      "Everything in Free, unlimited accurate scans",
-      "Design Contract Studio — author + export your own systems",
-      "MCP server API key — scan_tokens, research_artifacts, compose_pack",
-      "Private contracts & version history",
-      "Semantic graph + full pack downloads via API",
-      "Priority support",
+      `${CREDIT_SKUS.pack_single.priceLabel} → ${CREDIT_SKUS.pack_single.credits} App Pack`,
+      `${CREDIT_SKUS.pack_bundle.priceLabel} → ${CREDIT_SKUS.pack_bundle.credits} App Packs (best value)`,
+      `≥${BILLING.minAppPackImages} product UI screenshots per pack`,
+      'Credits never expire or auto-renew',
+      'No subscription required',
     ],
-    cta: { label: "Upgrade to Pro", href: "/studio" },
+    cta: { kind: 'credits' as const },
     highlight: true,
   },
   {
-    name: "Team",
-    price: "$29",
-    period: "per seat / month",
-    description: "Shared contract libraries for product teams and agencies.",
-    features: [
-      "Everything in Pro",
-      "Shared team workspace and contract library",
-      "Org-wide MCP keys with usage analytics",
-      "Role-based permissions & SSO",
-      "Onboarding + migration help",
-    ],
-    cta: { label: "Contact us", href: "/contact" },
+    name: 'Pro',
+    price: `$${BILLING.proPriceUsd}`,
+    period: 'per month',
+    description:
+      'For people who live in the agent loop — not a one-shot download.',
+    features: PRO_PLAN.features,
+    cta: { kind: 'pro' as const, label: 'Start Pro trial' },
     highlight: false,
   },
 ]
@@ -70,43 +65,50 @@ const plans = [
 const comparison: Array<{
   feature: string
   free: string | boolean
+  credits: string | boolean
   pro: string | boolean
-  team: string | boolean
 }> = [
-  { feature: "Site scans", free: "10 / month", pro: "Unlimited", team: "Unlimited" },
-  { feature: "Design System Dossier", free: true, pro: true, team: true },
-  { feature: "Design Contract Studio", free: false, pro: true, team: true },
-  { feature: "MCP server (write tools + API key)", free: false, pro: true, team: true },
-  { feature: "Private contracts", free: false, pro: true, team: true },
-  { feature: "Team workspace & SSO", free: false, pro: false, team: true },
+  { feature: 'Public URL scans', free: true, credits: true, pro: true },
+  {
+    feature: `App Packs (≥${BILLING.minAppPackImages} screenshots)`,
+    free: false,
+    credits: 'Pay per pack',
+    pro: `${BILLING.proCreditsPerMonth} / mo + buy more`,
+  },
+  { feature: 'Credits never expire', free: false, credits: true, pro: true },
+  { feature: 'Personal MCP API key', free: false, credits: false, pro: true },
+  { feature: 'Studio DESIGN.md + full pack ZIP', free: false, credits: false, pro: true },
+  { feature: 'CSS remeasure of App Packs', free: false, credits: true, pro: true },
+  { feature: 'Subscription', free: false, credits: false, pro: true },
 ]
 
 const faqs = [
   {
-    question: "What exactly is a Design Contract?",
-    answer:
-      "An installable pack — DESIGN.md grammar, agent skills, references and config — that pins a site's design system so AI agents keep new UI on-system over time. Scans produce one automatically; Pro lets you author your own in the Studio.",
+    question: 'Why not only a monthly plan?',
+    answer: `Most people generate one application Design Contract (or a few tweaks) and leave. Charging $${BILLING.proPriceUsd}/mo for that invites cancel-after-month-1 churn. Credits match the real job: pay once, credits never expire.`,
   },
   {
-    question: "What does the MCP server add?",
-    answer:
-      "It exposes designcontracts.sh as tools inside Claude, Cursor and any MCP client: fetch a site's tokens mid-build, profile its layout, trigger scans and compose packs without leaving your editor. Read tools are free; scanning, research and pack composition need a Pro key.",
+    question: 'When should I buy Pro?',
+    answer: `When you keep pulling contracts into Claude / Cursor via MCP, iterate across many apps, or want Studio export. Pro adds ${BILLING.proCreditsPerMonth} credits every month (unused stack) plus a personal MCP key — sticky value beyond a single pack.`,
   },
   {
-    question: "Do I need Pro to use scanned contracts?",
-    answer:
-      "No. Every public scan's dossier, DESIGN.md and pack download stay free. Pro is for creating your own contracts, private storage, and the full MCP toolset.",
+    question: 'What is an App Pack?',
+    answer: `${BILLING.minAppPackImages}–${BILLING.maxAppPackImages} product UI screenshots → one installable web-app Design Contract. Public URL scans usually only see marketing sites.`,
   },
   {
-    question: "Can I cancel anytime?",
+    question: 'Do unused Pro credits disappear?',
     answer:
-      "Yes — cancel whenever you like and keep Pro until the end of the billing period. Paid plans come with a 14-day money-back guarantee.",
+      'No. Monthly Pro credits stack onto your balance. If you cancel Pro, leftover credits stay for App Packs; the MCP key stops working.',
   },
 ]
 
 function CellValue({ value }: { value: string | boolean }) {
-  if (value === true) return <CheckIcon weight="duotone" className="mx-auto size-4 text-[var(--ui-success)]" />
-  if (value === false) return <MinusIcon weight="duotone" className="mx-auto size-4 text-muted-foreground/40" />
+  if (value === true) {
+    return <CheckIcon weight="duotone" className="mx-auto size-4 text-[var(--ui-success)]" />
+  }
+  if (value === false) {
+    return <MinusIcon weight="duotone" className="mx-auto size-4 text-muted-foreground/40" />
+  }
   return <span className="font-mono text-xs text-foreground">{value}</span>
 }
 
@@ -116,15 +118,15 @@ export default function PricingPage() {
       <PageCanvas variant="operational">
         <section className="px-4 pb-4 pt-10 sm:px-6">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ui-ink-muted)]">
               Pricing
             </p>
-            <h1 className="mt-3 font-serif text-5xl tracking-tight text-foreground sm:text-6xl">
-              Scan free. Create with Pro.
+            <h1 className="text-display-lg mt-3 text-[var(--ui-ink)] sm:text-[56px] sm:tracking-[-1.6px]">
+              Pay for packs. Subscribe only if you stay.
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
-              Reading design systems is free forever. Pro is for making your own —
-              the Studio, the MCP server, and private contracts.
+              URL scans stay free. App Packs are one-time credits that never expire.
+              Pro is optional — for MCP + monthly top-ups if you keep designing in your agent.
             </p>
           </div>
         </section>
@@ -135,46 +137,97 @@ export default function PricingPage() {
               <div
                 key={plan.name}
                 className={cn(
-                  "flex flex-col rounded-2xl border p-6",
+                  'flex flex-col rounded-[var(--radius-paper)] border p-8',
                   plan.highlight
-                    ? "border-[color-mix(in_oklab,var(--ui-accent)_45%,transparent)] bg-[color-mix(in_oklab,var(--ui-accent)_5%,transparent)]"
-                    : "border-[color:var(--soft-border)] bg-card/40"
+                    ? 'border-[var(--ui-ink)] bg-[var(--ui-ink)] text-[var(--ui-canvas)]'
+                    : 'border-[var(--ui-border)] bg-[var(--ui-paper)]'
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <h2 className="font-serif text-2xl tracking-tight text-foreground">
+                  <h2
+                    className={cn(
+                      'text-display-sm',
+                      plan.highlight ? 'text-[var(--ui-canvas)]' : 'text-[var(--ui-ink)]'
+                    )}
+                  >
                     {plan.name}
                   </h2>
-                  {plan.highlight && (
-                    <span className="rounded-full border border-[color-mix(in_oklab,var(--ui-accent)_45%,transparent)] px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--ui-accent)]">
-                      Recommended
+                  {plan.highlight ? (
+                    <span className="rounded-full bg-[var(--ui-canvas)]/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ui-canvas)]">
+                      Most people
                     </span>
-                  )}
+                  ) : null}
                 </div>
                 <p className="mt-4">
-                  <span className="font-mono text-4xl text-foreground">{plan.price}</span>
-                  <span className="ml-2 font-mono text-[11px] text-muted-foreground">
+                  <span
+                    className={cn(
+                      'font-mono text-4xl',
+                      plan.highlight ? 'text-[var(--ui-canvas)]' : 'text-[var(--ui-ink)]'
+                    )}
+                  >
+                    {plan.price}
+                  </span>
+                  <span
+                    className={cn(
+                      'ml-2 font-mono text-[11px]',
+                      plan.highlight ? 'text-[var(--ui-canvas)]/70' : 'text-muted-foreground'
+                    )}
+                  >
                     {plan.period}
                   </span>
                 </p>
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                <p
+                  className={cn(
+                    'mt-3 text-sm leading-relaxed',
+                    plan.highlight ? 'text-[var(--ui-canvas)]/75' : 'text-muted-foreground'
+                  )}
+                >
                   {plan.description}
                 </p>
                 <ul className="mt-6 flex-1 space-y-2.5">
                   {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                      <CheckIcon weight="duotone" className="mt-0.5 size-3.5 shrink-0 text-[var(--ui-success)]" />
+                    <li
+                      key={feature}
+                      className={cn(
+                        'flex items-start gap-2.5 text-sm',
+                        plan.highlight ? 'text-[var(--ui-canvas)]/80' : 'text-muted-foreground'
+                      )}
+                    >
+                      <CheckIcon
+                        weight="duotone"
+                        className={cn(
+                          'mt-0.5 size-3.5 shrink-0',
+                          plan.highlight ? 'text-[var(--ui-canvas)]' : 'text-[var(--ui-success)]'
+                        )}
+                      />
                       {feature}
                     </li>
                   ))}
                 </ul>
-                <Button
-                  asChild
-                  variant={plan.highlight ? "default" : "outline"}
-                  className="mt-8 w-full"
-                >
-                  <Link href={plan.cta.href as Route}>{plan.cta.label}</Link>
-                </Button>
+                {plan.cta.kind === 'credits' ? (
+                  <div className="mt-8 space-y-2">
+                    <CheckoutButton
+                      sku="pack_single"
+                      label={`Buy 1 pack · $${BILLING.packSingleUsd}`}
+                      variant="secondary"
+                      className="border-transparent bg-[var(--ui-accent)] text-[var(--ui-on-primary)] hover:bg-[var(--ui-accent-hover)]"
+                    />
+                    <CheckoutButton
+                      sku="pack_bundle"
+                      label={`Buy 5 packs · $${BILLING.packBundleUsd}`}
+                      variant="outline"
+                      className="border-[var(--ui-canvas)]/30 bg-transparent text-[var(--ui-canvas)] hover:bg-[var(--ui-canvas)]/10"
+                    />
+                  </div>
+                ) : plan.cta.kind === 'pro' ? (
+                  <div className="mt-8">
+                    <CheckoutButton sku="pro" label={plan.cta.label} variant="outline" />
+                  </div>
+                ) : (
+                  <Button asChild variant="outline" className="mt-8 w-full">
+                    <Link href={plan.cta.href}>{plan.cta.label}</Link>
+                  </Button>
+                )}
               </div>
             ))}
           </div>
@@ -182,26 +235,32 @@ export default function PricingPage() {
 
         <section className="px-4 py-12 sm:px-6">
           <div className="mx-auto max-w-3xl">
-            <h2 className="text-center font-serif text-3xl tracking-tight text-foreground">
-              Compare plans
-            </h2>
-            <div className="mt-8 overflow-x-auto rounded-2xl border border-[color:var(--soft-border)]">
+            <h2 className="text-display-lg text-center text-[var(--ui-ink)]">Compare</h2>
+            <div className="mt-8 overflow-x-auto rounded-[var(--radius-paper)] border border-[var(--ui-border)] bg-[var(--ui-paper)]">
               <table className="w-full min-w-[520px] text-sm">
                 <thead>
                   <tr className="border-b border-border/40 text-left">
                     <th className="px-4 py-3 font-medium text-muted-foreground">Feature</th>
                     <th className="px-4 py-3 text-center font-medium text-muted-foreground">Free</th>
-                    <th className="px-4 py-3 text-center font-medium text-[var(--ui-accent)]">Pro</th>
-                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">Team</th>
+                    <th className="px-4 py-3 text-center font-medium text-[var(--ui-accent)]">
+                      Credits
+                    </th>
+                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">Pro</th>
                   </tr>
                 </thead>
                 <tbody>
                   {comparison.map((row) => (
                     <tr key={row.feature} className="border-b border-border/30 last:border-b-0">
                       <td className="px-4 py-3 text-foreground">{row.feature}</td>
-                      <td className="px-4 py-3 text-center"><CellValue value={row.free} /></td>
-                      <td className="px-4 py-3 text-center"><CellValue value={row.pro} /></td>
-                      <td className="px-4 py-3 text-center"><CellValue value={row.team} /></td>
+                      <td className="px-4 py-3 text-center">
+                        <CellValue value={row.free} />
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <CellValue value={row.credits} />
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <CellValue value={row.pro} />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -212,9 +271,7 @@ export default function PricingPage() {
 
         <section className="px-4 py-12 sm:px-6">
           <div className="mx-auto max-w-2xl">
-            <h2 className="text-center font-serif text-3xl tracking-tight text-foreground">
-              Questions
-            </h2>
+            <h2 className="text-display-lg text-center text-[var(--ui-ink)]">Questions</h2>
             <div className="mt-8 space-y-0 border-t border-border/40">
               {faqs.map((faq) => (
                 <details key={faq.question} className="group border-b border-border/40 py-4">
@@ -232,18 +289,21 @@ export default function PricingPage() {
 
         <section className="px-4 py-20 text-center sm:px-6">
           <div className="mx-auto max-w-xl">
-            <h2 className="font-serif text-3xl tracking-tight text-foreground">
-              Gather your first system in seconds
+            <h2 className="text-display-lg text-[var(--ui-ink)]">
+              One system, or a seat in the loop
             </h2>
             <p className="mt-3 text-sm text-muted-foreground">
-              Paste a URL in Chat — the dossier, the pack and the philosophy are free.
+              Most people buy a pack. Subscribe only if MCP and monthly credits earn their keep.
             </p>
-            <div className="mt-6 flex justify-center gap-3">
-              <Button asChild>
-                <Link href="/">Open chat</Link>
-              </Button>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <div className="w-full max-w-[220px]">
+                <CheckoutButton
+                  sku="pack_single"
+                  label={`Get 1 App Pack · $${BILLING.packSingleUsd}`}
+                />
+              </div>
               <Button asChild variant="outline">
-                <Link href="/studio">Try the Studio</Link>
+                <Link href="/">Open chat</Link>
               </Button>
             </div>
           </div>

@@ -3,6 +3,7 @@ import { trackStatEvent } from '@/lib/storage/platform-stats'
 import { getScan } from '@/lib/storage/serverless-store'
 import {
   buildDesignContractPackage,
+  hydrateScreenshotFiles,
   zipDesignContractPackage,
 } from '@/lib/contracts/design-contract-package'
 
@@ -38,7 +39,9 @@ export async function GET(request: NextRequest) {
   }
 
   // Prefer stored pack files; rebuild if an older scan lacks them
-  let files = scan.designContract?.files?.filter((file) => file.content)
+  let files = scan.designContract?.files?.filter(
+    (file) => file.content || file.encoding === 'base64'
+  )
   if (!files?.length) {
     const rebuilt = buildDesignContractPackage({
       domain: scan.domain,
@@ -50,9 +53,18 @@ export async function GET(request: NextRequest) {
       scanId: scan.metadata.scanId,
       profile: (scan.designContract?.profile as 'web-app' | 'web-marketing') || 'web-marketing',
       semanticGraph: (scan.semanticGraph || null) as never,
+      screenshots: scan.screenshots?.map((shot) => ({
+        label: shot.label,
+        url: shot.url,
+        mime: shot.mime,
+        note: 'Hydrated from scan store for download.',
+      })),
     })
     files = rebuilt.files
   }
+
+  // Pull screenshot bytes into the ZIP when stored pack only has remote URLs
+  files = await hydrateScreenshotFiles(files, scan.screenshots)
 
   const pack = {
     slug: scan.designContract?.slug || domain.replace(/[^a-z0-9]+/g, '-'),
@@ -60,6 +72,7 @@ export async function GET(request: NextRequest) {
     domain,
     profile:
       (scan.designContract?.profile as 'web-app' | 'web-marketing') || 'web-marketing',
+    appType: (scan.metadata?.appType as string) || null,
     files,
     designMd: scan.designMd || {
       markdown: files.find((f) => f.path === 'DESIGN.md')?.content || '',

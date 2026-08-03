@@ -152,8 +152,8 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans), system-ui, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-mono: var(--font-geist-mono), "Geist Mono", "Fira Code", ui-monospace, monospace;
-  --font-serif: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), "JetBrains Mono", ui-monospace, monospace;
+  --font-serif: var(--font-geist-sans), system-ui, "Helvetica Neue", Helvetica, Arial, sans-serif;
 
   /* Enhanced semantic colors */
   --color-destructive: var(--destructive);
@@ -220,81 +220,66 @@
 }
 
 /*
- * Warm Paper Workbench — Design Contracts
- * Dark-first warm paper · soft borders · terracotta accent · bevel controls.
+ * Editorial Cream Workbench — Design Contracts
+ * Light-first warm cream · Cursor Orange · hairline-only depth.
  * See DESIGN.md.
  */
 :root {
-  --radius: 0.5rem;
-  --font-ui: var(--font-geist-sans), ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --radius: 0.75rem; /* 12px cards / IDE panes */
+  --font-ui: var(--font-geist-sans), system-ui, "Helvetica Neue", Helvetica, Arial, sans-serif;
 
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;
-  --radius-paper: 10px;
+  --radius-paper: 12px;
   --radius-shell: 12px;
+  --radius-xl: 16px;
   --radius-full: 9999px;
 
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
+  --space-5: 20px;
   --space-6: 24px;
   --space-8: 32px;
+  --space-12: 48px;
+  --space-section: 80px;
 
-  /* Dark-first default palette */
-  --ui-canvas: #151210;
-  --ui-paper: #1f1b16;
-  --ui-paper-subtle: #1a1612;
-  --ui-paper-hover: #29241e;
-  --ui-paper-selected: #342e26;
-  --ui-ink: #f4efe5;
-  --ui-ink-secondary: #aaa196;
-  --ui-ink-muted: #7f766c;
-  /* Softer borders — barely-there edges */
-  --ui-border-soft: rgba(240, 235, 227, 0.05);
-  --ui-border: rgba(240, 235, 227, 0.08);
-  --ui-border-edge: rgba(240, 235, 227, 0.12);
-  --ui-accent: #c08a5f;
-  --ui-accent-hover: #d09b70;
-  --ui-accent-soft: rgba(192, 138, 95, 0.16);
-  --ui-focus: #dcb28c;
-  --ui-success: #6fad88;
-  --ui-success-soft: rgba(111, 173, 136, 0.14);
-  --ui-warning: #d4a45a;
-  --ui-warning-soft: rgba(212, 164, 90, 0.14);
-  --ui-danger: #d4786e;
-  --ui-danger-soft: rgba(212, 120, 110, 0.14);
-  --ui-info: #7a9aa3;
-  --ui-info-soft: rgba(122, 154, 163, 0.14);
+  /* Light-first Cursor cream palette */
+  --ui-canvas: #f7f7f4;
+  --ui-paper: #ffffff;
+  --ui-paper-subtle: #fafaf7;
+  --ui-paper-hover: #f0efe9;
+  --ui-paper-selected: #e6e5e0;
+  --ui-ink: #26251e;
+  --ui-ink-secondary: #5a5852;
+  --ui-ink-muted: #807d72;
+  --ui-ink-muted-soft: #a09c92;
+  --ui-border-soft: #efeee8;
+  --ui-border: #e6e5e0;
+  --ui-border-edge: #cfcdc4;
+  --ui-accent: #f54e00;
+  --ui-accent-hover: #d04200;
+  --ui-accent-soft: rgba(245, 78, 0, 0.1);
+  --ui-focus: #f54e00;
+  --ui-success: #1f8a65;
+  --ui-success-soft: rgba(31, 138, 101, 0.12);
+  --ui-warning: #c08532;
+  --ui-warning-soft: rgba(192, 133, 50, 0.14);
+  --ui-danger: #cf2d56;
+  --ui-danger-soft: rgba(207, 45, 86, 0.12);
+  --ui-info: #9fbbe0;
+  --ui-info-soft: rgba(159, 187, 224, 0.18);
+  --ui-on-primary: #ffffff;
 
-  --shadow-control:
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
-    inset 0 0 0 1px rgba(240, 235, 227, 0.06),
-    inset 0 0.5px 0 1.5px rgba(255, 255, 255, 0.035),
-    0 1px 1px rgba(0, 0, 0, 0.22);
-  --shadow-control-hover:
-    inset 0 -1px 0 rgba(0, 0, 0, 0.45),
-    inset 0 0 0 1px rgba(240, 235, 227, 0.09),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 1px 2px rgba(0, 0, 0, 0.28);
-  --shadow-control-primary:
-    inset 0 -1px 0 1px rgba(0, 0, 0, 0.45),
-    inset 0 0 0 1px rgba(192, 138, 95, 0.85),
-    inset 0 0.5px 0 1.5px rgba(255, 255, 255, 0.12),
-    0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-paper:
-    0 1px 0 rgba(0, 0, 0, 0.18),
-    0 4px 14px -6px rgba(0, 0, 0, 0.45),
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.035);
-  --shadow-paper-hover:
-    0 1px 0 rgba(0, 0, 0, 0.2),
-    0 8px 18px -8px rgba(0, 0, 0, 0.5),
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.045);
-  --shadow-float:
-    0 16px 40px -12px rgba(0, 0, 0, 0.55),
-    0 4px 12px -4px rgba(0, 0, 0, 0.4),
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.04);
+  /* Hairline-only depth — no drop shadows */
+  --shadow-control: none;
+  --shadow-control-hover: none;
+  --shadow-control-primary: none;
+  --shadow-paper: none;
+  --shadow-paper-hover: none;
+  --shadow-float: none;
 
   --background: var(--ui-canvas);
   --foreground: var(--ui-ink);
@@ -303,36 +288,36 @@
   --popover: var(--ui-paper);
   --popover-foreground: var(--ui-ink);
   --primary: var(--ui-accent);
-  --primary-foreground: #161310;
-  --secondary: var(--ui-paper-subtle);
+  --primary-foreground: var(--ui-on-primary);
+  --secondary: var(--ui-paper);
   --secondary-foreground: var(--ui-ink);
   --muted: var(--ui-paper-subtle);
   --muted-foreground: var(--ui-ink-secondary);
   --accent: var(--ui-accent-soft);
   --accent-foreground: var(--ui-ink);
   --destructive: var(--ui-danger);
-  --destructive-foreground: #161310;
+  --destructive-foreground: var(--ui-on-primary);
   --warning: var(--ui-warning);
-  --warning-foreground: #161310;
+  --warning-foreground: var(--ui-ink);
   --success: var(--ui-success);
-  --success-foreground: #161310;
+  --success-foreground: var(--ui-on-primary);
   --border: var(--ui-border);
-  --input: var(--ui-border);
+  --input: var(--ui-border-edge);
   --ring: var(--ui-focus);
   --chart-1: var(--ui-accent);
   --chart-2: #9fc9a2;
   --chart-3: #9fbbe0;
   --chart-4: #c0a8dd;
-  --chart-5: var(--ui-warning);
-  --sidebar: transparent;
+  --chart-5: #c08532;
+  --sidebar: var(--ui-canvas);
   --sidebar-foreground: var(--ui-ink);
   --sidebar-primary: var(--ui-accent);
-  --sidebar-primary-foreground: #161310;
+  --sidebar-primary-foreground: var(--ui-on-primary);
   --sidebar-accent: var(--ui-paper-selected);
   --sidebar-accent-foreground: var(--ui-ink);
   --sidebar-border: var(--ui-border-soft);
   --sidebar-ring: var(--ui-focus);
-  --soft-shadow: var(--shadow-paper);
+  --soft-shadow: none;
   --soft-border: var(--ui-border-soft);
 
   --timeline-thinking: #dfa88f;
@@ -345,62 +330,43 @@
   --ink-muted: var(--ui-ink-muted);
 }
 
-.dark {
-  /* aliases :root dark-first tokens */
+.light {
+  /* aliases :root light-first tokens */
 }
 
-.light {
-  --ui-canvas: #f5f0e6;
-  --ui-paper: #fffdf8;
-  --ui-paper-subtle: #faf5ec;
-  --ui-paper-hover: #f5eee3;
-  --ui-paper-selected: #ede3d5;
-  --ui-ink: #2b2723;
-  --ui-ink-secondary: #675f57;
-  --ui-ink-muted: #766e65;
-  --ui-border-soft: rgba(67, 52, 38, 0.055);
-  --ui-border: rgba(67, 52, 38, 0.09);
-  --ui-border-edge: rgba(67, 52, 38, 0.13);
-  --ui-accent: #8f5a38;
-  --ui-accent-hover: #75482d;
-  --ui-accent-soft: #f2e7d9;
-  --ui-focus: #7d5335;
-  --ui-success: #356548;
-  --ui-success-soft: #e8f2e7;
-  --ui-warning: #7a5417;
-  --ui-warning-soft: #fff1d6;
-  --ui-danger: #9c3c32;
-  --ui-danger-soft: #f9e4e0;
-  --ui-info: #3e6670;
-  --ui-info-soft: #e5f0f1;
+.dark {
+  --ui-canvas: #161612;
+  --ui-paper: #1f1e1a;
+  --ui-paper-subtle: #1a1915;
+  --ui-paper-hover: #2a2924;
+  --ui-paper-selected: #34332d;
+  --ui-ink: #f7f7f4;
+  --ui-ink-secondary: #a09c92;
+  --ui-ink-muted: #807d72;
+  --ui-ink-muted-soft: #5a5852;
+  --ui-border-soft: rgba(247, 247, 244, 0.06);
+  --ui-border: rgba(247, 247, 244, 0.1);
+  --ui-border-edge: rgba(247, 247, 244, 0.16);
+  --ui-accent: #f54e00;
+  --ui-accent-hover: #ff6a24;
+  --ui-accent-soft: rgba(245, 78, 0, 0.18);
+  --ui-focus: #f54e00;
+  --ui-success: #1f8a65;
+  --ui-success-soft: rgba(31, 138, 101, 0.18);
+  --ui-warning: #c08532;
+  --ui-warning-soft: rgba(192, 133, 50, 0.18);
+  --ui-danger: #cf2d56;
+  --ui-danger-soft: rgba(207, 45, 86, 0.18);
+  --ui-info: #9fbbe0;
+  --ui-info-soft: rgba(159, 187, 224, 0.18);
+  --ui-on-primary: #ffffff;
 
-  --shadow-control:
-    inset 0 -1px 0 rgba(72, 56, 40, 0.22),
-    inset 0 0 0 1px rgba(72, 56, 40, 0.07),
-    inset 0 0.5px 0 1.5px rgba(255, 255, 255, 0.78),
-    0 1px 1px rgba(72, 56, 40, 0.04);
-  --shadow-control-hover:
-    inset 0 -1px 0 rgba(72, 56, 40, 0.28),
-    inset 0 0 0 1px rgba(72, 56, 40, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.88),
-    0 1px 2px rgba(72, 56, 40, 0.06);
-  --shadow-control-primary:
-    inset 0 -1px 0 1px rgba(58, 36, 21, 0.55),
-    inset 0 0 0 1px rgba(117, 72, 45, 0.88),
-    inset 0 0.5px 0 1.5px rgba(255, 255, 255, 0.26),
-    0 1px 2px rgba(58, 42, 26, 0.14);
-  --shadow-paper:
-    0 1px 0 rgba(67, 52, 38, 0.05),
-    0 3px 10px -5px rgba(67, 52, 38, 0.16),
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.72);
-  --shadow-paper-hover:
-    0 1px 0 rgba(67, 52, 38, 0.06),
-    0 6px 14px -8px rgba(67, 52, 38, 0.2),
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.78);
-  --shadow-float:
-    0 16px 40px -12px rgba(52, 40, 29, 0.24),
-    0 4px 12px -4px rgba(52, 40, 29, 0.14),
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.75);
+  --shadow-control: none;
+  --shadow-control-hover: none;
+  --shadow-control-primary: none;
+  --shadow-paper: none;
+  --shadow-paper-hover: none;
+  --shadow-float: none;
 
   --background: var(--ui-canvas);
   --foreground: var(--ui-ink);
@@ -409,50 +375,50 @@
   --popover: var(--ui-paper);
   --popover-foreground: var(--ui-ink);
   --primary: var(--ui-accent);
-  --primary-foreground: var(--ui-paper);
-  --secondary: var(--ui-paper-subtle);
+  --primary-foreground: var(--ui-on-primary);
+  --secondary: var(--ui-paper);
   --secondary-foreground: var(--ui-ink);
   --muted: var(--ui-paper-subtle);
   --muted-foreground: var(--ui-ink-secondary);
   --accent: var(--ui-accent-soft);
   --accent-foreground: var(--ui-ink);
   --destructive: var(--ui-danger);
-  --destructive-foreground: var(--ui-paper);
+  --destructive-foreground: var(--ui-on-primary);
   --warning: var(--ui-warning);
   --warning-foreground: var(--ui-ink);
   --success: var(--ui-success);
-  --success-foreground: var(--ui-paper);
+  --success-foreground: var(--ui-on-primary);
   --border: var(--ui-border);
-  --input: var(--ui-border);
+  --input: var(--ui-border-edge);
   --ring: var(--ui-focus);
   --chart-1: var(--ui-accent);
   --chart-2: #9fc9a2;
   --chart-3: #9fbbe0;
   --chart-4: #c0a8dd;
-  --chart-5: var(--ui-warning);
-  --sidebar: transparent;
+  --chart-5: #c08532;
+  --sidebar: var(--ui-canvas);
   --sidebar-foreground: var(--ui-ink);
   --sidebar-primary: var(--ui-accent);
-  --sidebar-primary-foreground: var(--ui-paper);
+  --sidebar-primary-foreground: var(--ui-on-primary);
   --sidebar-accent: var(--ui-paper-selected);
   --sidebar-accent-foreground: var(--ui-ink);
   --sidebar-border: var(--ui-border-soft);
   --sidebar-ring: var(--ui-focus);
-  --soft-shadow: var(--shadow-paper);
+  --soft-shadow: none;
   --soft-border: var(--ui-border-soft);
   --canvas-soft: var(--ui-paper-subtle);
   --primary-active: var(--ui-accent-hover);
   --ink-muted: var(--ui-ink-muted);
 }
 
-/* Integrated paper containers + workbench helpers */
+/* Integrated paper containers + workbench helpers — hairline depth only */
 .paper {
   overflow: clip;
   background: var(--ui-paper);
   color: var(--ui-ink);
-  border: 1px solid var(--ui-border-soft);
+  border: 1px solid var(--ui-border);
   border-radius: var(--radius-paper);
-  box-shadow: var(--shadow-paper);
+  box-shadow: none;
 }
 
 .paper--shell {
@@ -467,7 +433,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: color-mix(in srgb, var(--ui-paper) 76%, var(--ui-paper-subtle));
+  background: var(--ui-paper-subtle);
 }
 
 .paper__toolbar {
@@ -484,32 +450,53 @@
 }
 
 .ui-control {
-  box-shadow: var(--shadow-control);
+  box-shadow: none;
   background: var(--ui-paper);
-  border-radius: 7px;
-  transition: background-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+  border: 1px solid var(--ui-border-edge);
+  border-radius: var(--radius-md);
+  transition: background-color 120ms ease, border-color 120ms ease;
 }
 
 .ui-control:hover {
   background: var(--ui-paper-hover);
-  box-shadow: var(--shadow-control-hover);
 }
 
 .ui-control:active {
-  transform: translateY(1px);
-  box-shadow:
-    inset 0 2px 2px rgba(72, 56, 40, 0.16),
-    inset 0 0 0 1px rgba(72, 56, 40, 0.14);
+  background: var(--ui-paper-selected);
 }
 
 .ui-control-primary {
-  box-shadow: var(--shadow-control-primary);
+  box-shadow: none;
+  border-color: transparent;
   background: var(--ui-accent);
-  color: var(--ui-paper);
+  color: var(--ui-on-primary);
 }
 
 .ui-control-primary:hover {
   background: var(--ui-accent-hover);
+}
+
+/* AI timeline pills — product visualizations only */
+.timeline-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.88px;
+  text-transform: uppercase;
+  color: var(--ui-ink);
+}
+
+.timeline-pill--thinking { background: var(--timeline-thinking); }
+.timeline-pill--grep { background: var(--timeline-grep); }
+.timeline-pill--read { background: var(--timeline-read); }
+.timeline-pill--edit { background: var(--timeline-edit); }
+.timeline-pill--done {
+  background: var(--timeline-done);
+  color: var(--ui-on-primary);
 }
 
 .font-tabular {
@@ -606,11 +593,52 @@
     background: var(--ui-accent-soft);
   }
 
-  /* Display slots (formerly serif) speak in confident Geist.
-     Utility classes on the element still win over these defaults. */
+  /* Display slots — magazine voice: weight 400, negative tracking */
   .font-serif {
-    font-weight: 600;
-    letter-spacing: -0.03em;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+
+  .text-display-mega {
+    font-size: 72px;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -2.16px;
+  }
+
+  .text-display-lg {
+    font-size: 36px;
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.72px;
+  }
+
+  .text-display-md {
+    font-size: 26px;
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: -0.325px;
+  }
+
+  .text-display-sm {
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 1.3;
+    letter-spacing: -0.11px;
+  }
+
+  @media (max-width: 639px) {
+    .text-display-mega {
+      font-size: 32px;
+      letter-spacing: -0.8px;
+    }
+  }
+
+  @media (min-width: 640px) and (max-width: 1023px) {
+    .text-display-mega {
+      font-size: 56px;
+      letter-spacing: -1.6px;
+    }
   }
 
   /* Ultrathink: Enhanced code rendering */
@@ -876,15 +904,26 @@
     color: var(--muted-foreground);
   }
 
-  /* Code typography improvements */
+  /* Code typography — JetBrains Mono on every code surface */
   .text-code {
-    font-family: var(--font-geist-mono), 'Consolas', monospace;
-    font-size: 0.875rem;
-    line-height: 1.6;
-    letter-spacing: 0.01em;
+    font-family: var(--font-geist-mono), "JetBrains Mono", ui-monospace, monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    letter-spacing: 0;
     font-weight: 400;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'zero';
     font-variant-ligatures: common-ligatures;
+  }
+
+  .code-block {
+    background: var(--ui-paper);
+    color: var(--ui-ink);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--radius-paper);
+    padding: 20px;
+    font-family: var(--font-geist-mono), "JetBrains Mono", ui-monospace, monospace;
+    font-size: 13px;
+    line-height: 1.5;
   }
 
   /* Vercel-inspired scan interface */

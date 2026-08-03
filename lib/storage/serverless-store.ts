@@ -82,6 +82,9 @@ export interface StoredScanResult {
       typographyCount: number
       spacingCount: number
       hasComponents: boolean
+      hasMotion?: boolean
+      hasPhilosophy?: boolean
+      aiComposed?: boolean
     }
   }
   designSkill?: {
@@ -101,16 +104,17 @@ export interface StoredScanResult {
       spacingCount: number
       fileCount: number
     }
-    files: Array<{ path: string; content: string }>
+    files: Array<{ path: string; content: string; encoding?: 'utf8' | 'base64' }>
     /** Present on API responses so clients can download the full pack */
     download?: string
   }
   /** Linked token↔role↔component↔layout model for agents */
   semanticGraph?: unknown
-  /** UX DNA: app shell, page flow, motion vocabulary, density */
+  /** UX DNA: app shell, page flow, motion vocabulary, density, measured components */
   uxDna?: {
     shell?: unknown
     density?: unknown
+    components?: unknown
     flow?: Array<{ from: string; to: string }>
     keyframes?: Array<{ name: string; css: string }>
     transitions?: Array<{ value: string; weight: number }>
@@ -161,8 +165,36 @@ export interface StoredScanResult {
     }
     /** Multi-page crawl summary */
     crawl?: { pages: number; paths: string[] }
+    /** Token-system consistency 0–100 from consistency-validator */
+    consistencyScore?: number
+    /** Vision draft surface kind when source is a screenshot */
+    visionSurface?: string
+    /** Vision distinctive signature */
+    visionSignature?: string
+    /** Number of screenshots in a Pro App Pack */
+    appPackImages?: number
+    /** ISO timestamp of last CSS remeasure */
+    remeasuredAt?: string
+    /** How CSS was collected during remeasure */
+    remeasureSource?: 'browser-service' | 'local-playwright' | 'static-only'
+    /** Prior vision / App Pack scan id before remeasure */
+    visionBaselineScanId?: string
   }
   error?: string
+}
+
+/** Slim curated tokens stored on each version for rich diffs (no Postgres). */
+export type ScanVersionCurated = {
+  colors?: Array<{ name?: string; value?: string }>
+  typography?: {
+    families?: Array<{ name?: string; value?: string }>
+    sizes?: Array<{ name?: string; value?: string }>
+    weights?: Array<{ name?: string; value?: string }>
+  }
+  spacing?: Array<{ name?: string; value?: string }>
+  radius?: Array<{ name?: string; value?: string }>
+  shadows?: Array<{ name?: string; value?: string }>
+  motion?: Array<{ name?: string; value?: string }>
 }
 
 /** Slim historical snapshot of one scan — enough to diff without the full payload. */
@@ -177,6 +209,8 @@ export interface ScanVersion {
   radius: string[]
   screenshot: string | null
   personality: string | null
+  /** Curated snapshot for compareTokenSets via curatedToW3CTokenSet */
+  curated?: ScanVersionCurated
 }
 
 const MEMORY_SITES = new Map<string, SiteIndexEntry>()
@@ -481,13 +515,52 @@ export async function getScan(domain: string): Promise<StoredScanResult | null> 
   return null
 }
 
-function buildVersionSnapshot(result: StoredScanResult): ScanVersion {
+function slimCuratedForVersion(result: StoredScanResult): ScanVersionCurated {
   const curated = (result.curatedTokens ?? {}) as {
-    colors?: Array<{ value?: unknown; usage?: number }>
-    typography?: { families?: Array<{ value?: unknown }> }
-    spacing?: Array<{ value?: unknown }>
-    radius?: Array<{ value?: unknown }>
+    colors?: Array<{ name?: unknown; value?: unknown; usage?: number }>
+    typography?: {
+      families?: Array<{ name?: unknown; value?: unknown }>
+      sizes?: Array<{ name?: unknown; value?: unknown }>
+      weights?: Array<{ name?: unknown; value?: unknown }>
+    }
+    spacing?: Array<{ name?: unknown; value?: unknown }>
+    radius?: Array<{ name?: unknown; value?: unknown }>
+    shadows?: Array<{ name?: unknown; value?: unknown }>
+    motion?: Array<{ name?: unknown; value?: unknown }>
   }
+  const pick = (
+    tokens: Array<{ name?: unknown; value?: unknown }> | undefined,
+    limit: number
+  ) =>
+    (tokens ?? [])
+      .map((token) => ({
+        name: token.name != null ? String(token.name) : undefined,
+        value: token.value != null ? String(token.value) : undefined,
+      }))
+      .filter((token) => Boolean(token.value))
+      .slice(0, limit)
+
+  return {
+    colors: pick(
+      (curated.colors ?? [])
+        .slice()
+        .sort((a, b) => (b.usage ?? 0) - (a.usage ?? 0)),
+      32
+    ),
+    typography: {
+      families: pick(curated.typography?.families, 8),
+      sizes: pick(curated.typography?.sizes, 16),
+      weights: pick(curated.typography?.weights, 8),
+    },
+    spacing: pick(curated.spacing, 24),
+    radius: pick(curated.radius, 12),
+    shadows: pick(curated.shadows, 8),
+    motion: pick(curated.motion, 8),
+  }
+}
+
+function buildVersionSnapshot(result: StoredScanResult): ScanVersion {
+  const curated = slimCuratedForVersion(result)
   const brand = (result.brandAnalysis ?? {}) as { personality?: unknown }
   return {
     ts: result.scannedAt || new Date().toISOString(),
@@ -495,8 +568,6 @@ function buildVersionSnapshot(result: StoredScanResult): ScanVersion {
     tokensExtracted: result.summary.tokensExtracted,
     confidence: Math.round(result.summary.confidence),
     colors: (curated.colors ?? [])
-      .slice()
-      .sort((a, b) => (b.usage ?? 0) - (a.usage ?? 0))
       .map((token) => String(token.value ?? ''))
       .filter(Boolean)
       .slice(0, 24),
@@ -514,6 +585,7 @@ function buildVersionSnapshot(result: StoredScanResult): ScanVersion {
       null,
     personality:
       typeof brand.personality === 'string' && brand.personality ? brand.personality : null,
+    curated,
   }
 }
 

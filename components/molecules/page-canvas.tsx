@@ -15,7 +15,7 @@ const INNER: Record<PageCanvasVariant, string> = {
 
 /**
  * Scrollable main canvas for non-chat product pages inside AppShell.
- * Warm Paper Workbench — see DESIGN.md.
+ * Editorial Cream Workbench — see DESIGN.md.
  */
 export function PageCanvas({
   children,

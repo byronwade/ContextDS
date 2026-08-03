@@ -30,10 +30,13 @@ import {
 } from '@/components/ai-elements/message'
 import {
   PromptInput,
-  PromptInputBody,
-  PromptInputFooter,
+  PromptInputActionAddAttachments,
+  PromptInputActionMenu,
+  PromptInputActionMenuContent,
+  PromptInputActionMenuTrigger,
   PromptInputSubmit,
   PromptInputTextarea,
+  usePromptInputAttachments,
   type PromptInputMessage,
 } from '@/components/ai-elements/prompt-input'
 import {
@@ -43,12 +46,16 @@ import {
 } from '@/components/ui/bubble'
 import { Marker, MarkerContent, MarkerIcon } from '@/components/ui/marker'
 import {
+  ArrowUpIcon,
   CheckIcon,
   CircleNotchIcon,
   CopyIcon,
   DownloadSimpleIcon,
   FileTextIcon,
+  ImageIcon,
+  PlusIcon,
   WarningCircleIcon,
+  XIcon,
 } from '@/lib/phosphor'
 import {
   ScanResultWidget,
@@ -69,6 +76,11 @@ const EXAMPLES = [
 ] as const
 
 const CAPABILITIES = [
+  {
+    label: 'App Pack (5+ shots)',
+    prompt:
+      'I want an App Pack — an APPLICATION Design Contract from at least 5 product UI screenshots, not the marketing site. Ask me to attach ≥5 shots, then call contract_from_screenshot.',
+  },
   { label: 'Critique a system', prompt: "Critique stripe.com's design system — how consistent is it?" },
   { label: 'Compare two sites', prompt: 'Compare the design systems of linear.app and vercel.com' },
   { label: 'Theme CSS', prompt: 'Generate a Tailwind theme from cursor.com' },
@@ -80,6 +92,7 @@ const CAPABILITIES = [
 
 const TOOL_LABELS: Record<string, string> = {
   scan_site: 'Scanning site',
+  contract_from_screenshot: 'Building App Pack',
   get_tokens: 'Reading cached contract',
   get_design_md: 'Reading DESIGN.md',
   resolve_graph: 'Walking the semantic graph',
@@ -246,7 +259,7 @@ function FileCard({ file, defaultOpen }: { file: ChatFile; defaultOpen?: boolean
   const [open, setOpen] = useState(defaultOpen ?? true)
   const [copied, setCopied] = useState(false)
   return (
-    <div className="mt-1 overflow-hidden rounded-[12px] border border-[var(--ui-border-soft)] bg-[var(--ui-paper-subtle)] shadow-[var(--shadow-control)]">
+    <div className="mt-1 overflow-hidden rounded-[12px] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)]">
       <div className="flex items-center gap-2 border-b border-[var(--ui-border-soft)] px-3 py-2">
         <FileTextIcon className="size-4 shrink-0 text-[var(--ui-accent)]" />
         <button
@@ -334,6 +347,75 @@ function MessageActions({ text }: { text: string }) {
   )
 }
 
+function ComposerAttachments() {
+  const attachments = usePromptInputAttachments()
+  if (attachments.files.length === 0) return null
+  return (
+    <div className="flex flex-wrap gap-2 px-3 pt-3">
+      {attachments.files.map((file) => (
+        <div
+          key={file.id}
+          className="relative h-14 w-14 overflow-hidden rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)]"
+        >
+          {file.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={file.url} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <ImageIcon className="size-4 text-[var(--ui-ink-muted)]" />
+            </div>
+          )}
+          <button
+            type="button"
+            aria-label="Remove screenshot"
+            onClick={() => attachments.remove(file.id)}
+            className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--ui-ink)] text-[var(--ui-paper)]"
+          >
+            <XIcon className="size-2.5" weight="bold" />
+          </button>
+        </div>
+      ))}
+      <p className="self-center text-[11px] text-[var(--ui-ink-muted)]">
+        App screenshot → web-app contract
+      </p>
+    </div>
+  )
+}
+
+function ComposerSendButton({
+  status,
+  text,
+  busy,
+  onStop,
+}: {
+  status: 'ready' | 'submitted' | 'streaming' | 'error'
+  text: string
+  busy: boolean
+  onStop: () => void
+}) {
+  const attachments = usePromptInputAttachments()
+  const canSend = Boolean(text.trim() || attachments.files.length > 0)
+  return (
+    <PromptInputSubmit
+      status={status}
+      disabled={!busy && !canSend}
+      onStop={onStop}
+      size="icon-xs"
+      variant="default"
+      className={cn(
+        'h-7 w-7 min-h-7 max-h-7 rounded-full border-0 p-0 shadow-none disabled:opacity-100',
+        !canSend && !busy
+          ? 'bg-[var(--ui-paper-selected)] text-[var(--ui-ink-secondary)] hover:bg-[var(--ui-paper-hover)]'
+          : 'bg-[var(--ui-accent)] text-[var(--ui-on-primary)] hover:bg-[var(--ui-accent-hover)]'
+      )}
+    >
+      {status === 'streaming' || status === 'submitted' ? null : (
+        <ArrowUpIcon className="size-3.5" weight="bold" />
+      )}
+    </PromptInputSubmit>
+  )
+}
+
 function EmptyState({
   onPick,
   disabled,
@@ -342,18 +424,13 @@ function EmptyState({
   disabled?: boolean
 }) {
   return (
-    <div className="mx-auto flex w-full max-w-[712px] flex-1 flex-col items-center justify-center px-4 pb-10 pt-14 animate-fade-in">
-      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--ui-ink-muted)]">
-        Design Contract workbench
-      </p>
-      <h1 className="mt-3 text-[clamp(1.75rem,4vw,2.25rem)] font-semibold leading-tight tracking-[-0.02em] text-[var(--ui-ink)]">
+    <div className="mx-auto flex w-full max-w-[712px] flex-1 flex-col items-center justify-center px-1 pb-10 pt-14 animate-fade-in">
+      <h1 className="text-[clamp(2rem,5vw,2.75rem)] font-normal leading-[1.15] tracking-[-0.04em] text-[var(--ui-ink)]">
         designcontracts
-        <span className="font-mono text-[0.5em] font-medium tracking-normal text-[var(--ui-accent)]">
-          .sh
-        </span>
+        <span className="text-[var(--ui-accent)]">.sh</span>
       </h1>
-      <p className="mt-3 max-w-md text-center text-[15px] leading-relaxed text-[var(--ui-ink-secondary)]">
-        Paste a URL. Get an installable Design Contract.
+      <p className="mt-3 max-w-sm text-center text-[15px] leading-relaxed text-[var(--ui-ink-secondary)]">
+        Paste a URL for marketing systems — or attach an app screenshot for product UI.
       </p>
       <div className="mt-7 flex flex-wrap items-center justify-center gap-1.5">
         {EXAMPLES.map((example, index) => (
@@ -363,8 +440,8 @@ function EmptyState({
             disabled={disabled}
             onClick={() => onPick(example.prompt)}
             className={cn(
-              'h-7 rounded-[7px] bg-[var(--ui-paper)] px-2.5 font-mono text-[12px] text-[var(--ui-ink-secondary)] shadow-[var(--shadow-control)] transition',
-              'hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)] hover:shadow-[var(--shadow-control-hover)] disabled:opacity-50',
+              'h-8 rounded-[var(--radius-md)] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] px-2.5 text-[13px] text-[var(--ui-ink-secondary)] transition',
+              'hover:border-[var(--ui-border-edge)] hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)] disabled:opacity-50',
               'animate-slide-in'
             )}
             style={{ animationDelay: `${index * 40}ms` }}
@@ -374,23 +451,18 @@ function EmptyState({
         ))}
       </div>
 
-      <div className="mt-8 w-full max-w-md animate-fade-in border-t border-[var(--ui-border-soft)] pt-5">
-        <p className="text-center font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--ui-ink-muted)]">
-          Scan can also
-        </p>
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
-          {CAPABILITIES.map((capability) => (
-            <button
-              key={capability.label}
-              type="button"
-              disabled={disabled}
-              onClick={() => onPick(capability.prompt)}
-              className="text-[12.5px] text-[var(--ui-ink-secondary)] underline-offset-4 transition-colors hover:text-[var(--ui-accent)] hover:underline disabled:opacity-50"
-            >
-              {capability.label}
-            </button>
-          ))}
-        </div>
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+        {CAPABILITIES.map((capability) => (
+          <button
+            key={capability.label}
+            type="button"
+            disabled={disabled}
+            onClick={() => onPick(capability.prompt)}
+            className="text-[13px] text-[var(--ui-ink-muted)] underline-offset-4 transition-colors hover:text-[var(--ui-ink)] hover:underline disabled:opacity-50"
+          >
+            {capability.label}
+          </button>
+        ))}
       </div>
     </div>
   )
@@ -529,8 +601,88 @@ export function ScanChat() {
     void sendMessage({ text: outgoing })
   }
 
-  const onSubmit = (message: PromptInputMessage) => {
-    send(message.text ?? '')
+  const onSubmit = async (message: PromptInputMessage) => {
+    const imageFiles = (message.files || []).filter((file) =>
+      (file.mediaType || '').startsWith('image/')
+    )
+    const rawText = (message.text || '').trim()
+
+    if (imageFiles.length > 0) {
+      if (busy) return
+      const minShots = 5
+      if (imageFiles.length < minShots) {
+        void sendMessage({
+          text: `App Packs need at least ${minShots} product UI screenshots (you attached ${imageFiles.length}). Add more shots of the same app — sidebar, editor, settings, lists, modals — then send again. Credits are $4 for 1 pack or $15 for 5 (never expire) at /pricing.`,
+        })
+        return
+      }
+      setText('')
+      setSlashIndex(0)
+      trackClientEvent('chat_message')
+      const nameHint =
+        parseSlashCommand(rawText)?.args?.trim() ||
+        (rawText && !rawText.startsWith('/') ? rawText.slice(0, 80) : '') ||
+        'App UI'
+      try {
+        const response = await fetch('/api/contracts/from-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            images: imageFiles.map((file) => ({
+              imageBase64: file.url || '',
+              mimeType: file.mediaType || 'image/png',
+            })),
+            name: nameHint,
+            preferApp: true,
+          }),
+        })
+        const payload = (await response.json()) as {
+          error?: string
+          code?: string
+          upgradePath?: string
+          domain?: string
+          imageCount?: number
+          designContract?: { installCommand?: string }
+          metadata?: { visionSignature?: string; appType?: string }
+          billing?: { appPacksRemaining?: number }
+        }
+        if (!response.ok) {
+          const upgradeHint =
+            response.status === 402
+              ? ` Buy credits at ${payload.upgradePath || '/pricing'} ($4 / 1 pack, $15 / 5 — never expire).`
+              : ''
+          void sendMessage({
+            text: `App Pack failed: ${payload.error || response.statusText}.${upgradeHint} ${rawText || ''}`.trim(),
+          })
+          return
+        }
+        pushRecent(payload.domain || '')
+        void sendMessage({
+          text: [
+            `I built an App Pack (${payload.imageCount || imageFiles.length} screenshots) as \`${payload.domain}\`.`,
+            payload.metadata?.visionSignature
+              ? `Signature: ${payload.metadata.visionSignature}`
+              : null,
+            `App type: ${payload.metadata?.appType || 'saas-workbench'}.`,
+            typeof payload.billing?.appPacksRemaining === 'number'
+              ? `${payload.billing.appPacksRemaining} App Pack credits left.`
+              : null,
+            'Call get_tokens on that domain, summarize the system, and give the install command. This is app UI — not marketing.',
+          ]
+            .filter(Boolean)
+            .join(' '),
+        })
+      } catch (error) {
+        void sendMessage({
+          text: `Could not process the App Pack: ${
+            error instanceof Error ? error.message : 'unknown error'
+          }`,
+        })
+      }
+      return
+    }
+
+    send(rawText)
   }
 
   /** Complete the highlighted command instead of sending a bare "/sc". */
@@ -667,14 +819,14 @@ export function ScanChat() {
           <ConversationScrollButton />
         </Conversation>
 
-        {/* Composer — integrated paper footer feel */}
-        <div className="relative shrink-0 border-t border-[var(--ui-border-soft)] bg-[color-mix(in_srgb,var(--ui-paper)_76%,var(--ui-paper-subtle))]">
-          <div className="mx-auto w-full max-w-[712px] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 sm:px-6">
+        {/* Composer — warm field on paper, even padding, token colors only */}
+        <div className="relative shrink-0 bg-[var(--ui-paper)]">
+          <div className="mx-auto w-full max-w-[640px] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 sm:px-6">
             {slashMatches.length > 0 ? (
               <div
                 role="listbox"
                 aria-label="Slash commands"
-                className="mb-2 overflow-hidden rounded-[10px] border border-[var(--ui-border-soft)] bg-[var(--ui-paper)] shadow-[var(--shadow-control)]"
+                className="mb-2 overflow-hidden rounded-[var(--radius-paper)] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)]"
               >
                 {slashMatches.map((command) => {
                   const active = command.name === activeSlash?.name
@@ -686,10 +838,10 @@ export function ScanChat() {
                       aria-selected={active}
                       onClick={() => completeSlash(command)}
                       className={cn(
-                        'flex w-full items-baseline gap-2 px-3 py-1.5 text-left transition-colors',
+                        'flex w-full items-baseline gap-2 px-3.5 py-2 text-left transition-colors',
                         active
-                          ? 'bg-[color-mix(in_srgb,var(--ui-accent)_12%,transparent)]'
-                          : 'hover:bg-[var(--ui-paper-subtle)]'
+                          ? 'bg-[var(--ui-accent-soft)]'
+                          : 'hover:bg-[var(--ui-paper-hover)]'
                       )}
                     >
                       <span className="font-mono text-[12px] text-[var(--ui-ink)]">
@@ -710,29 +862,45 @@ export function ScanChat() {
             ) : null}
             <PromptInput
               onSubmit={onSubmit}
-              className="overflow-hidden rounded-[10px] border border-[var(--ui-border-soft)] bg-[var(--ui-paper)] shadow-[var(--shadow-control)]"
+              accept="image/*"
+              multiple
+              maxFiles={12}
+              maxFileSize={6_000_000}
+              className={cn(
+                'relative overflow-hidden rounded-[14px] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] shadow-none',
+                'transition-[border-color,background-color] duration-150',
+                'has-[[data-slot=input-group-control]:focus-visible]:border-[var(--ui-ink-muted)]'
+              )}
             >
-              <PromptInputBody>
-                <PromptInputTextarea
-                  value={text}
-                  onChange={(event) => setText(event.target.value)}
-                  onKeyDown={onComposerKeyDown}
-                  placeholder="Ask about a site, or / for commands"
-                  disabled={busy && status === 'submitted'}
-                  className="min-h-[48px] text-[14px] leading-relaxed placeholder:text-[var(--ui-ink-muted)]"
-                  aria-label="Message"
-                />
-              </PromptInputBody>
-              <PromptInputFooter className="px-1.5">
-                <span className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ui-ink-muted)]">
-                  Design Contract
-                </span>
-                <PromptInputSubmit
+              <ComposerAttachments />
+              <PromptInputTextarea
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                onKeyDown={onComposerKeyDown}
+                placeholder="Ask about a site, attach an app screenshot, or type /"
+                disabled={busy && status === 'submitted'}
+                className="min-h-[52px] max-h-48 w-full resize-none px-4 py-3.5 pr-20 text-[15px] leading-[1.45] text-[var(--ui-ink)] placeholder:text-[var(--ui-ink-muted)]"
+                aria-label="Message"
+              />
+              <div className="absolute bottom-2.5 right-2.5 z-10 flex items-center gap-1">
+                <PromptInputActionMenu>
+                  <PromptInputActionMenuTrigger
+                    tooltip="Attach App Pack screenshots (5+)"
+                    className="h-7 w-7 min-h-7 rounded-full border-0 bg-transparent p-0 text-[var(--ui-ink-muted)] shadow-none hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]"
+                  >
+                    <PlusIcon className="size-3.5" />
+                  </PromptInputActionMenuTrigger>
+                  <PromptInputActionMenuContent align="end">
+                    <PromptInputActionAddAttachments label="App Pack screenshots (min 5, credits)" />
+                  </PromptInputActionMenuContent>
+                </PromptInputActionMenu>
+                <ComposerSendButton
                   status={status}
-                  disabled={!busy && !text.trim()}
+                  text={text}
+                  busy={busy}
                   onStop={() => stop()}
                 />
-              </PromptInputFooter>
+              </div>
             </PromptInput>
           </div>
         </div>

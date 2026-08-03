@@ -106,6 +106,7 @@ export default defineConfig({
 		timeout: 120000,
 		env: {
 			NODE_ENV: 'test',
+			BILLING_BYPASS: '1',
 		},
 	},
 

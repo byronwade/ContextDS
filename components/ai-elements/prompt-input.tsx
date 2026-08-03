@@ -909,12 +909,14 @@ export const PromptInput = ({
         type="file"
       />
       <form
-        className={cn("w-full", className)}
+        className="w-full"
         onSubmit={handleSubmit}
         ref={formRef}
         {...props}
       >
-        <InputGroup className="overflow-hidden">{children}</InputGroup>
+        <InputGroup className={cn("overflow-hidden", className)}>
+          {children}
+        </InputGroup>
       </form>
     </>
   );
@@ -1048,7 +1050,10 @@ export const PromptInputTextarea = ({
 
   return (
     <InputGroupTextarea
-      className={cn("field-sizing-content max-h-48 min-h-16", className)}
+      className={cn(
+        "field-sizing-content max-h-48 min-h-10 py-2.5 text-[15px] leading-snug",
+        className
+      )}
       name="message"
       onCompositionEnd={handleCompositionEnd}
       onCompositionStart={handleCompositionStart}
@@ -1088,7 +1093,10 @@ export const PromptInputFooter = ({
 }: PromptInputFooterProps) => (
   <InputGroupAddon
     align="block-end"
-    className={cn("justify-between gap-1", className)}
+    className={cn(
+      "items-center justify-end gap-2 border-0 bg-transparent px-2.5 pb-2.5 pt-0",
+      className
+    )}
     {...props}
   />
 );

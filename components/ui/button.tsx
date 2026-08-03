@@ -5,31 +5,33 @@ import { Slot } from "radix-ui"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap font-medium outline-none transition-[background-color,box-shadow,transform] duration-120 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ui-focus)] disabled:pointer-events-none disabled:opacity-50 aria-invalid:outline-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5 active:translate-y-px",
+  "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap font-medium outline-none transition-[background-color,border-color,color] duration-120 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ui-focus)] disabled:pointer-events-none disabled:opacity-50 aria-invalid:outline-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
   {
     variants: {
       variant: {
         default:
-          "bg-[var(--ui-accent)] text-[var(--ui-paper)] shadow-[var(--shadow-control-primary)] hover:bg-[var(--ui-accent-hover)]",
+          "bg-[var(--ui-accent)] text-[var(--ui-on-primary)] hover:bg-[var(--ui-accent-hover)]",
         destructive:
-          "bg-[var(--ui-danger)] text-[var(--ui-paper)] shadow-[var(--shadow-control-primary)] hover:brightness-95",
+          "bg-[var(--ui-danger)] text-[var(--ui-on-primary)] hover:brightness-95",
         outline:
-          "bg-[var(--ui-paper)] text-[var(--ui-ink)] shadow-[var(--shadow-control)] hover:bg-[var(--ui-paper-hover)] hover:shadow-[var(--shadow-control-hover)]",
+          "border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] text-[var(--ui-ink)] hover:bg-[var(--ui-paper-hover)]",
         secondary:
-          "bg-[var(--ui-paper-subtle)] text-[var(--ui-ink)] shadow-[var(--shadow-control)] hover:bg-[var(--ui-paper-hover)]",
+          "border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] text-[var(--ui-ink)] hover:bg-[var(--ui-paper-hover)]",
         ghost:
-          "bg-transparent text-[var(--ui-ink-secondary)] shadow-none hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)] active:translate-y-0",
-        link: "bg-transparent text-[var(--ui-accent)] shadow-none underline-offset-4 hover:underline active:translate-y-0",
+          "bg-transparent text-[var(--ui-ink-secondary)] hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]",
+        link: "bg-transparent text-[var(--ui-ink)] underline-offset-4 hover:underline",
+        download:
+          "bg-[var(--ui-ink)] text-[var(--ui-canvas)] hover:opacity-90",
       },
       size: {
-        default: "h-8 min-h-8 rounded-[7px] px-2.5 text-[13px]",
-        xs: "h-7 min-h-7 gap-1 rounded-[7px] px-2 text-xs [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-7 min-h-7 gap-1 rounded-[7px] px-2 text-xs",
-        lg: "h-9 min-h-9 rounded-[7px] px-3.5 text-sm",
-        icon: "size-8 min-h-8 rounded-[7px]",
-        "icon-xs": "size-7 min-h-7 rounded-[7px] [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-7 min-h-7 rounded-[7px]",
-        "icon-lg": "size-9 min-h-9 rounded-[7px]",
+        default: "h-10 min-h-10 rounded-[var(--radius-md)] px-[18px] text-sm",
+        xs: "h-7 min-h-7 gap-1 rounded-[var(--radius-md)] px-2 text-xs [&_svg:not([class*='size-'])]:size-3",
+        sm: "h-8 min-h-8 gap-1 rounded-[var(--radius-md)] px-3 text-xs",
+        lg: "h-11 min-h-11 rounded-[var(--radius-md)] px-5 text-sm",
+        icon: "size-10 min-h-10 rounded-[var(--radius-md)]",
+        "icon-xs": "size-7 min-h-7 rounded-[var(--radius-md)] [&_svg:not([class*='size-'])]:size-3",
+        "icon-sm": "size-8 min-h-8 rounded-[var(--radius-md)]",
+        "icon-lg": "size-11 min-h-11 rounded-[var(--radius-md)]",
       },
     },
     defaultVariants: {

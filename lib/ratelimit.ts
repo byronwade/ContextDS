@@ -67,3 +67,33 @@ export const searchRatelimit = redis
       prefix: 'contextds:search',
     })
   : mockRatelimit
+
+/** Anonymous / public MCP reads */
+export const mcpRatelimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(60, '1 m'),
+      analytics: true,
+      prefix: 'designcontracts:mcp',
+    })
+  : mockRatelimit
+
+/** Authenticated Pro MCP keys (personal dc_live_ or shared MCP_API_KEY) */
+export const mcpProRatelimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(120, '1 m'),
+      analytics: true,
+      prefix: 'designcontracts:mcp-pro',
+    })
+  : mockRatelimit
+
+/** MCP write tools that start scans / mutate packs */
+export const mcpWriteRatelimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(20, '1 m'),
+      analytics: true,
+      prefix: 'designcontracts:mcp-write',
+    })
+  : mockRatelimit

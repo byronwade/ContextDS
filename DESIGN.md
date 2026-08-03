@@ -1,7 +1,7 @@
 # Design Contracts — DESIGN.md
 
 Canonical product design system for **designcontracts.sh**.  
-**Warm Paper Workbench** — calm professional instrument: cream canvas, warm-white paper, terracotta accent, Shopify-style bevels.
+**Editorial Cream Workbench** — warm cream canvas, warm near-black ink, Cursor Orange accent, hairline-only depth.
 
 All UI work must follow this document. `DESIGN_SYSTEM.md` is legacy.
 
@@ -14,10 +14,11 @@ Design Contracts is an **app workbench**, not a brochure site.
 | Principle | Rule |
 |-----------|------|
 | Chat first | `/` is the centered action canvas. Scanning happens in-chat. |
-| App chrome | Canvas + 240px sidebar + **inset paper workspace**. No marketing footer. |
-| Warm canvas | Outer `#f3eee5`; paper surfaces `#fffdf8`. Never pure white page bg. |
-| Single accent | Terracotta `#9b4f32` — scarce primary actions + `.sh` wordmark. |
-| Bevel depth | Controls use inset `--shadow-control`; paper uses `--shadow-paper`. |
+| App chrome | Cream canvas + 240px sidebar + **inset white workspace** (hairline border). No marketing footer. |
+| Warm canvas | Outer `#f7f7f4`; cards/workspace `#ffffff`. Never pure-white page floor. |
+| Single accent | Cursor Orange `#f54e00` — scarce primary actions + `.sh` wordmark. |
+| Hairline depth | No drop shadows. Cards float via 1px hairlines + white-on-cream contrast. |
+| Magazine voice | Display weight stays at **400**. Negative letter-spacing on display only. |
 | Dense ops | Compress lists/queues; relax nav and empty states. |
 
 ### Product routes (use `AppShell`)
@@ -25,7 +26,8 @@ Design Contracts is an **app workbench**, not a brochure site.
 | Route | Nav | Archetype |
 |-------|-----|-----------|
 | `/` | Chat | Centered action canvas (712px) |
-| `/community` | Library | Full operational canvas (dense list) |
+| `/create` | Create | Advanced generators (brief / recipes / import / blend / restyle / mutate / scan) |
+| `/community` | Library | Full operational canvas (dense list + Fork) |
 | `/docs` | Docs | Document (~760px) |
 | `/site/[domain]` | detail | Document + optional modules |
 | `/features` `/pricing` `/about` | More | Document |
@@ -36,19 +38,21 @@ Design Contracts is an **app workbench**, not a brochure site.
 ## Shell geometry
 
 ```
-Outer warm canvas (dark `#161310` / light `#f3eee5`)
-├── Global sidebar: 240px (on canvas, no card chrome)
-│   └── Theme segment (Dark / Light / Auto)
-└── Inset workspace: 8px inset, 12px radius paper
-    ├── Utility strip: live Redis stats (36–44px)
-    ├── Optional location / view bars (integrated paper__toolbar)
-    └── Task body (chat / list / document)
+Outer cream canvas (`#f7f7f4` / dark `#161612`)
+├── Global sidebar: 240px (on canvas)
+│   └── Full-width theme segment (Light / Auto / Dark)
+└── Inset workspace: 12px margin on **all sides**, 12px radius white paper + 1px edge hairline
+    ├── Utility strip inside paper: quiet live stats (36px)
+    └── Task body (chat / list / document) — same sheet on home and every AppShell route
 ```
 
 Rules:
-- Toolbar + body + footer = **one paper sheet** (no floating toolbars).
-- Prefer `--ui-border-soft` everywhere; `--ui-border` only for shell edges.
-- Theme defaults to **dark**; FOUC script + `html.dark` enforce it.
+- Stats strip + body + composer = **one paper sheet** (no chrome outside the sheet on desktop).
+- Home chat uses the same paper inset as docs/library — never flush the sheet to the sidebar.
+- Chat composer: writing surface + compact toolbar (`max-w` 712px), edge border, ↑ send, grows with content.
+- Prefer `--ui-border-soft` for internal dividers; `--ui-border` for card outlines; `--ui-border-edge` for stronger panel outlines / secondary buttons.
+- Theme defaults to **light**; FOUC script + `html.light` enforce it.
+- Keep uppercase/mono labels scarce — prefer calm sentence-case chrome.
 
 ---
 
@@ -56,38 +60,61 @@ Rules:
 
 Defined in `app/globals.css` as `--ui-*` and mapped to shadcn semantics.
 
+### Brand & surfaces
+
 | Token | Value | Role |
 |-------|-------|------|
-| `--ui-canvas` | `#f3eee5` | Outer app canvas |
-| `--ui-paper` | `#fffdf8` | Workspace / cards |
-| `--ui-paper-subtle` | `#faf5ec` | Toolbar tint, insets |
-| `--ui-paper-hover` | `#f5eee3` | Hover fill |
-| `--ui-paper-selected` | `#ede3d5` | Selected nav / segment |
-| `--ui-ink` | `#2b2723` | Primary text |
-| `--ui-ink-secondary` | `#675f57` | Body secondary |
-| `--ui-ink-muted` | `#766e65` | Meta / captions |
-| `--ui-accent` | `#9b4f32` | Primary CTA |
-| `--ui-accent-hover` | `#7a3f2a` | Pressed CTA |
-| `--ui-accent-soft` | `#f4e5db` | Soft accent wash |
-| `--ui-border-soft` | `rgba(67,52,38,0.10)` | Internal dividers |
-| `--ui-border` | `rgba(67,52,38,0.15)` | Default borders |
-| `--ui-border-edge` | `rgba(67,52,38,0.22)` | Shell edges |
+| `--ui-canvas` | `#f7f7f4` | Outer app canvas (warm cream) |
+| `--ui-paper` | `#ffffff` | Workspace / cards |
+| `--ui-paper-subtle` | `#fafaf7` | IDE pane / toolbar tint |
+| `--ui-paper-hover` | `#f0efe9` | Hover fill |
+| `--ui-paper-selected` | `#e6e5e0` | Selected nav / badges |
+| `--ui-ink` | `#26251e` | Display, body emphasis |
+| `--ui-ink-secondary` | `#5a5852` | Default running text |
+| `--ui-ink-muted` | `#807d72` | Sub-titles / captions |
+| `--ui-ink-muted-soft` | `#a09c92` | Disabled text |
+| `--ui-accent` | `#f54e00` | Primary CTA (scarce) |
+| `--ui-accent-hover` | `#d04200` | Pressed CTA |
+| `--ui-accent-soft` | `rgba(245,78,0,0.1)` | Soft accent wash |
+| `--ui-on-primary` | `#ffffff` | Text on orange |
+| `--ui-border-soft` | `#efeee8` | Internal dividers |
+| `--ui-border` | `#e6e5e0` | Card outlines |
+| `--ui-border-edge` | `#cfcdc4` | Stronger panel / secondary btn |
 
-Dark mode is optional (warm dark paper). Light warm paper is the brand default.
+### Timeline (AI-action signature — product UI only)
+
+| Token | Value | Stage |
+|-------|-------|-------|
+| `--timeline-thinking` | `#dfa88f` | Thinking |
+| `--timeline-grep` | `#9fc9a2` | Grepping |
+| `--timeline-read` | `#9fbbe0` | Reading |
+| `--timeline-edit` | `#c0a8dd` | Editing |
+| `--timeline-done` | `#c08532` | Done |
+
+Never use timeline pastels as system action colors.
+
+### Semantic
+
+| Token | Value |
+|-------|-------|
+| `--ui-success` | `#1f8a65` |
+| `--ui-danger` | `#cf2d56` |
+
+Dark mode is optional (warm dark ink canvas). Light cream is the brand default.
 
 ---
 
-## Shadows
+## Elevation & depth
 
-| Token | Use |
-|-------|-----|
-| `--shadow-control` | Buttons, inputs, segmented controls |
-| `--shadow-control-primary` | Primary buttons |
-| `--shadow-paper` | Persistent cards / inset workspace |
-| `--shadow-paper-hover` | Interactive cards (≤1px lift) |
-| `--shadow-float` | Menus, dialogs, drawers |
+**Hairline-only.** No drop shadows, no elevation tiers.
 
-Do **not** stack paper shadows through nested cards. Rows and nav items: no external shadow.
+| Level | Treatment | Use |
+|-------|-----------|-----|
+| Flat (canvas) | `--ui-canvas` | Body bands, sidebar, footer |
+| Card | `--ui-paper` + 1px `--ui-border` | Content cards, inset workspace |
+| IDE pane | `--ui-paper-subtle` | Inside IDE mockup cards |
+
+`--shadow-*` tokens exist for compatibility but resolve to `none`.
 
 ---
 
@@ -95,12 +122,23 @@ Do **not** stack paper shadows through nested cards. Rows and nav items: no exte
 
 | Role | Spec |
 |------|------|
-| UI / body | Geist Sans (`--font-ui`), 13–15px |
-| Dense labels / meta | 12–13px, muted ink |
-| Section titles | 18–22px semibold |
-| Page titles | 22–28px semibold, restrained tracking (`font-serif` slots render as Geist 600 / −0.03em) |
-| Code / domains | Geist Mono |
+| UI / body | Inter (`--font-ui`) — open-source substitute for CursorGothic |
+| Display | Inter 400, negative tracking (`text-display-*` / `.font-serif`) |
+| Section titles | 22–36px weight 400 |
+| Component titles | 16–18px weight 600 |
+| Code / domains | JetBrains Mono 13px |
+| Caption uppercase | 11px / 600 / 0.88px tracking |
+| Button labels | 14px / 500 |
 | Counts / dates | Tabular numerals |
+
+### Display scale
+
+| Class | Size | Weight | Tracking |
+|-------|------|--------|----------|
+| `.text-display-mega` | 72px (56 tablet / 32 mobile) | 400 | −2.16px |
+| `.text-display-lg` | 36px | 400 | −0.72px |
+| `.text-display-md` | 26px | 400 | −0.325px |
+| `.text-display-sm` | 22px | 400 | −0.11px |
 
 Icons are **Phosphor duotone** (`@phosphor-icons/react`): product surfaces inherit
 `weight="duotone"` from the AppShell `IconContext`; surfaces outside the shell import
@@ -108,15 +146,44 @@ from `lib/phosphor.tsx`. No lucide in new UI.
 
 ---
 
+## Shapes
+
+| Token | Value | Use |
+|-------|-------|-----|
+| `--radius-xs` | 4px | Inline tags |
+| `--radius-sm` | 6px | Compact rows |
+| `--radius-md` | 8px | CTA buttons, inputs |
+| `--radius-paper` / `--radius-shell` | 12px | Cards, IDE panes, workspace |
+| `--radius-xl` | 16px | Larger feature cards (rare) |
+| `--radius-full` | 9999px | Timeline pills, badges |
+
+---
+
+## Spacing
+
+Base unit **4px**. Section rhythm **80px** (`--space-section`).
+
+| Token | Value |
+|-------|-------|
+| `--space-1` … `--space-8` | 4 / 8 / 12 / 16 / 20 / 24 / 32 |
+| `--space-12` | 48px |
+| `--space-section` | 80px |
+
+Max content width ~1200px. Editorial body / docs ~760px. Chat action column 712px.
+
+---
+
 ## Controls
 
 | Size | Height | Use |
 |------|--------|-----|
-| Compact | 28px | Icon buttons, dense chrome |
-| Normal | 32px | Default buttons / inputs |
-| Emphasis | 36px | Rare high-emphasis only |
+| Compact | 28–32px | Icon buttons, dense chrome |
+| Default CTA | 40px | Primary / secondary pills (`rounded.md` 8px) |
+| Download / input | 44px | Emphasis CTAs, text inputs |
 
-Beveled paper buttons via `Button` variants. At most one primary action per local region.
+Flat fills + hairline borders. At most one orange primary action per local region.
+
+Button variants: `default` (orange), `secondary`/`outline` (white + hairline), `download` (ink on cream), `ghost`, `link`.
 
 ---
 
@@ -134,11 +201,13 @@ Use `PageCanvas` variants: `action` | `document` | `settings` | `operational`.
 
 | Do | Don’t |
 |----|-------|
-| `AppShell` + inset paper | Marketing header/footer forks |
+| `AppShell` + inset white paper | Marketing header/footer forks |
 | `--ui-*` / semantic tokens | Cool blue-gray outlines, pure-white canvas |
-| One terracotta primary | Accent washes, purple gradients, glow |
-| Integrated `paper__toolbar` | Floating rounded toolbars above content |
-| Bevel controls + paper lift | Shadow on every nested box |
+| One Cursor Orange primary | Secondary brand action colors, purple gradients, glow |
+| Display weight 400 | Bold (700+) display headlines |
+| Hairline borders only | Drop shadows / nested elevation |
+| JetBrains Mono on code | Sans on code surfaces |
+| Timeline pastels in agent UI only | Pastels as success/error/CTA |
 | Hydrate `/site` from cache/handoff | Auto-rescan on Open |
 
 ---
@@ -154,11 +223,13 @@ Use `PageCanvas` variants: `action` | `document` | `settings` | `operational`.
 
 ## Checklist for new UI
 
-- [ ] Outer canvas `#f3eee5`, paper `#fffdf8`
-- [ ] Inset workspace reads as one sheet
-- [ ] Controls 28/32px with bevel shadows
-- [ ] At most one terracotta CTA in view
+- [ ] Outer canvas `#f7f7f4`, paper `#ffffff`
+- [ ] Inset workspace reads as one hairline sheet
+- [ ] Controls 40/44px CTAs with 8px radius; no bevel shadows
+- [ ] At most one Cursor Orange CTA in view
+- [ ] Display weight 400 (magazine voice)
+- [ ] Code surfaces use JetBrains Mono
 - [ ] Archetype chosen (action / document / operational)
-- [ ] No nested card-shadow stacks
+- [ ] No drop shadows / nested card stacks
 - [ ] Mobile drawer + touch targets OK
 - [ ] Light default correct; dark optional

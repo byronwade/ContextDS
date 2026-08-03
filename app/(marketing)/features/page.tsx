@@ -36,7 +36,7 @@ const features = [
   },
   {
     title: 'MCP-ready',
-    body: 'scan_tokens / get_tokens expose the same curated packs and contract download URLs to Claude Code and other agents.',
+    body: 'scan_site / get_tokens / get_design_md / get_contract_download expose the same curated packs and ZIP URLs to Claude Code and other agents.',
   },
 ] as const
 
@@ -44,9 +44,7 @@ export default function FeaturesPage() {
   return (
     <AppShell currentPage="features">
       <PageCanvas variant="document">
-        <h1 className="text-[22px] font-semibold tracking-tight text-[var(--ui-ink)] sm:text-[26px]">
-          Features
-        </h1>
+        <h1 className="text-display-md text-[var(--ui-ink)]">Features</h1>
         <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-[var(--ui-ink-secondary)]">
           Turn a live site into AI-readable design context — without dashboard clutter.
         </p>
@@ -70,13 +68,13 @@ export default function FeaturesPage() {
         <div className="mt-12 flex flex-wrap gap-2">
           <Link
             href="/"
-            className="inline-flex h-8 items-center rounded-[7px] bg-[var(--ui-accent)] px-2.5 text-[13px] font-medium text-[var(--ui-paper)] shadow-[var(--shadow-control-primary)] transition hover:bg-[var(--ui-accent-hover)]"
+            className="inline-flex h-10 items-center rounded-[var(--radius-md)] bg-[var(--ui-accent)] px-[18px] text-sm font-medium text-[var(--ui-on-primary)] transition hover:bg-[var(--ui-accent-hover)]"
           >
             Open Chat
           </Link>
           <Link
             href="/docs"
-            className="inline-flex h-8 items-center rounded-[7px] bg-[var(--ui-paper)] px-2.5 text-[13px] font-medium text-[var(--ui-ink)] shadow-[var(--shadow-control)] transition hover:bg-[var(--ui-paper-hover)]"
+            className="inline-flex h-10 items-center rounded-[var(--radius-md)] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] px-[18px] text-sm font-medium text-[var(--ui-ink)] transition hover:bg-[var(--ui-paper-hover)]"
           >
             Read the docs
           </Link>

@@ -11,6 +11,25 @@ import {
   type DesignPhilosophy,
 } from '@/lib/analyzers/design-philosophy'
 import { isFontFamily } from '@/lib/analyzers/token-sanitizer'
+import type {
+  EngineAppType,
+  EngineProfile,
+} from '@/lib/analyzers/app-type'
+import {
+  buildDesignContractPackage,
+  zipDesignContractPackage,
+  type DesignContractPackage,
+} from '@/lib/contracts/design-contract-package'
+import type { DesignContractPackageInput } from '@/lib/contracts/design-contract-package'
+
+export type StudioPackOptions = {
+  profile?: EngineProfile
+  appType?: EngineAppType
+  confidence?: number
+  driftKind?: string
+  driftSummary?: string
+  driftEvidence?: Record<string, unknown>
+}
 
 export type StudioColor = { id: string; role: string; value: string }
 
@@ -190,4 +209,169 @@ export function generateAuthoredDesignMd(system: StudioSystem): string {
   lines.push('- Hierarchy comes from the type scale and weight, not new fonts.')
   lines.push('')
   return lines.join('\n')
+}
+
+/**
+ * Map a Studio system into the pack builder input used by scanned contracts.
+ * Emits a full installable façade (skills, config, REFERENCES, INSTALL, …).
+ */
+export function studioSystemToPackInput(
+  system: StudioSystem,
+  options: StudioPackOptions = {}
+): DesignContractPackageInput {
+  const philosophy = studioPhilosophy(system)
+  const sizes = typeScale(system)
+  const spaces = spacingScale(system)
+  const slug = system.slug || slugify(system.name)
+  // Use a dotted studio host without repeating "studio" in the pack slug.
+  const domain = slug.endsWith('-studio') ? `${slug}.app` : `${slug}.studio`
+  const url = `https://designcontracts.sh/studio/${slug}`
+  const appType = options.appType ?? 'marketing-site'
+  const profile =
+    options.profile ??
+    (appType === 'marketing-site' ? 'web-marketing' : 'web-app')
+
+  const shadows =
+    system.depth === 'flat'
+      ? []
+      : system.depth === 'soft'
+        ? [{ value: '0 1px 2px rgba(0,0,0,0.08)', usage: 6 }]
+        : [
+            {
+              value: '0 1px 2px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.12)',
+              usage: 6,
+            },
+            {
+              value: '0 16px 48px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.08)',
+              usage: 4,
+            },
+          ]
+
+  return {
+    domain,
+    url,
+    profile,
+    appType,
+    confidence: options.confidence ?? 90,
+    philosophy,
+    brandAnalysis: {
+      primaryColors: system.colors.map((color) => color.value),
+      personality: system.philosophyNote || philosophy.statement,
+    },
+    curatedTokens: {
+      colors: system.colors.map((color) => ({
+        name: color.role,
+        value: color.value,
+        usage: 20,
+        semantic: color.role,
+      })),
+      typography: {
+        families: [
+          {
+            name: 'display',
+            value: safeFamily(system.fontDisplay, 'Geist'),
+            usage: 20,
+          },
+          {
+            name: 'body',
+            value: safeFamily(system.fontBody, 'Geist'),
+            usage: 40,
+          },
+          {
+            name: 'mono',
+            value: safeFamily(system.fontMono, 'Geist Mono'),
+            usage: 8,
+          },
+        ],
+        sizes: sizes.map((size, index) => ({
+          name: index === 0 ? 'body' : `step-${index}`,
+          value: `${size}px`,
+          usage: Math.max(4, 20 - index * 2),
+        })),
+        weights: [
+          { name: 'regular', value: '400', usage: 40 },
+          { name: 'semibold', value: '600', usage: 12 },
+        ],
+      },
+      spacing: spaces.map((value) => ({ value: `${value}px`, usage: 12 })),
+      radius: [
+        { value: `${Math.max(0, system.radius - 4)}px`, usage: 8 },
+        { value: `${system.radius}px`, usage: 20 },
+      ],
+      shadows,
+      motion: [
+        { value: '160ms', usage: 4 },
+        { value: 'ease-out', usage: 4 },
+      ],
+    },
+    aiProse: {
+      distinctiveSignature: philosophy.statement,
+      overview: system.philosophyNote || philosophy.statement,
+      preferred: philosophy.principles.slice(0, 4).map((p) => p.title),
+      dos: [
+        'Use only the authored token scale',
+        `Snap spacing to the ${system.spacingBase}px grid`,
+        `Keep radius at ${system.radius}px`,
+      ],
+      donts: [
+        'Do not invent brand colors',
+        'Do not mix corner languages',
+        'Do not add theatrical motion',
+      ],
+      motionGuidance: 'Prefer short feedback transitions; honor reduced motion.',
+      typeVoice: philosophy.systems.type.voice,
+    },
+    driftObservations: [
+      {
+        surface: 'site',
+        kind: options.driftKind || 'authored-studio',
+        summary:
+          options.driftSummary ||
+          `Design Contract authored in Design Contracts Studio (${system.name}).`,
+        observedAt: new Date().toISOString(),
+        evidence: {
+          slug,
+          depth: system.depth,
+          source: 'studio',
+          appType,
+          profile,
+          ...(options.driftEvidence ?? {}),
+        },
+        suggestedAction:
+          'Treat Studio tokens as the source of truth. Re-scan a live site later if you want CSS measurement.',
+      },
+    ],
+  }
+}
+
+/** Build + zip a Studio Design Contract pack. */
+export function buildStudioContractPack(
+  system: StudioSystem,
+  options: StudioPackOptions = {}
+): {
+  pack: DesignContractPackage
+  zip: Uint8Array
+  fileName: string
+} {
+  const input = studioSystemToPackInput(system, options)
+  const pack = buildDesignContractPackage(input)
+  // Prefer Studio-authored DESIGN.md prose while keeping the rest of the façade
+  const authoredMd = generateAuthoredDesignMd(system)
+  const files = pack.files.map((file) =>
+    file.path === 'DESIGN.md' ? { ...file, content: authoredMd } : file
+  )
+  const withAuthored: DesignContractPackage = {
+    ...pack,
+    files,
+    designMd: {
+      ...pack.designMd,
+      markdown: authoredMd,
+    },
+  }
+  const zip = zipDesignContractPackage(withAuthored)
+  return {
+    pack: withAuthored,
+    zip,
+    fileName: `${system.slug || pack.slug}-design-contract.zip`,
+  }
 }

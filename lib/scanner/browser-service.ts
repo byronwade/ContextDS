@@ -42,6 +42,29 @@ export type BrowserRenderAudit = {
     imageAreaRatio: number
     textChars: number
   } | null
+  /** Live computed recipes for core UI components (majority cluster) */
+  components?: Record<
+    string,
+    {
+      backgroundColor?: string
+      textColor?: string
+      borderColor?: string
+      rounded?: string
+      padding?: string
+      fontSize?: string
+      fontWeight?: string
+      boxShadow?: string
+      sampleCount?: number
+      hover?: {
+        backgroundColor?: string
+        textColor?: string
+        borderColor?: string
+        boxShadow?: string
+        opacity?: string
+        transform?: string
+      }
+    } | null
+  > | null
   /** Rendered transitions/animations attached to visible elements */
   transitions?: Array<{ value: string; weight: number }>
   /** Interaction feedback vocabulary parsed from :hover/:focus/:active rules */
