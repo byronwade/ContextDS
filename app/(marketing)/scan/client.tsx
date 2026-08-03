@@ -719,12 +719,7 @@ export function ScanChat() {
                   aria-label="Message"
                 />
               </PromptInputBody>
-              <PromptInputFooter className="h-10 items-center gap-2 border-t border-[var(--ui-border-soft)] bg-transparent px-3 py-0">
-                <PromptInputTools>
-                  <span className="select-none text-[12px] leading-none text-[var(--ui-ink-muted-soft)]">
-                    Enter to send
-                  </span>
-                </PromptInputTools>
+              <PromptInputFooter className="h-10 items-center justify-end gap-2 border-t border-[var(--ui-border-soft)] bg-transparent px-3 py-0">
                 <PromptInputSubmit
                   status={status}
                   disabled={!busy && !text.trim()}
