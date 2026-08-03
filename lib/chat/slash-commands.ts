@@ -91,6 +91,41 @@ export const SLASH_COMMANDS: SlashCommand[] = [
         : 'Paste W3C tokens.json, DESIGN.md, CSS variables, or a Tailwind theme — or open /create → Import tokens.',
   },
   {
+    name: 'recipe',
+    args: '<recipe-id>',
+    description: 'Seed a pack from an industry recipe preset',
+    example: '/recipe saas-workbench',
+    expand: (args) => {
+      const id = args.trim() || 'saas-workbench'
+      return `Generate a Design Contract from the industry recipe "${id}" using generate_from_recipe. Summarize the system, profile/app-type, and install command. Mention /create → Recipes for the ZIP.`
+    },
+  },
+  {
+    name: 'restyle',
+    args: '<structure-domain> <skin-domain>',
+    description: 'Structure × skin → installable pack',
+    example: '/restyle stripe.com linear.app',
+    expand: (args) => {
+      const domains = domainList(args)
+      return domains.length >= 2
+        ? `Restyle ${domains[0]} structure with ${domains[1]} skin using restyle_page. Return the rebuild brief, detected profile/app-type, and install command.`
+        : 'Which structure domain and skin domain should I restyle?'
+    },
+  },
+  {
+    name: 'mutate',
+    args: '<contrast-fix|polarity|evolve> <domain or directive>',
+    description: 'Contrast-fix, polarity twin, or evolve a system',
+    example: '/mutate contrast-fix example.com',
+    expand: (args) => {
+      const trimmed = args.trim()
+      if (!trimmed) {
+        return 'Choose contrast-fix, polarity, or evolve — e.g. /mutate polarity stripe.com'
+      }
+      return `Mutate a design system with mutate_system using: ${trimmed}. Summarize what changed and the install command.`
+    },
+  },
+  {
     name: 'compare',
     args: '<domain> <domain>',
     description: 'Compare two design systems side by side',
@@ -159,7 +194,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     description: 'List what Scan can do',
     example: '/help',
     expand: () =>
-      'What can you do? List your capabilities briefly — URL scan, App Pack screenshots, brief synthesis, token import, blending, Studio, canvas, themes, contrast — with one example each. Mention /create for the advanced generators.',
+      'What can you do? List your capabilities briefly — URL scan, App Pack screenshots, brief synthesis, industry recipes, token import, blending, structure×skin restyle, contrast/polarity/evolve mutate, Studio, canvas export, themes — with one example each. Mention /create for the advanced generators.',
   },
 ]
 
