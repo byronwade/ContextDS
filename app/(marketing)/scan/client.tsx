@@ -658,7 +658,7 @@ export function ScanChat() {
 
         {/* Composer — warm field on paper, even padding, token colors only */}
         <div className="relative shrink-0 bg-[var(--ui-paper)]">
-          <div className="mx-auto w-full max-w-[712px] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-6">
+          <div className="mx-auto w-full max-w-[640px] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 sm:px-6">
             {slashMatches.length > 0 ? (
               <div
                 role="listbox"

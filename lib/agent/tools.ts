@@ -96,7 +96,7 @@ const systemPatchSchema = z.object({
 export const designContractTools = {
   scan_site: tool({
     description:
-      'Primary gather tool: scan a public website into curated tokens, layout DNA, a semantic graph, and an installable Design Contract pack. The chat UI renders the result as an inline widget — keep follow-up text short.',
+      'Primary gather tool: scan a public site into curated tokens, layout/UX DNA, measured component recipes, philosophy, design-director DESIGN.md, semantic graph, and an installable Design Contract pack. Prefer accurate mode (browser) for elite quality. The chat UI renders an inline widget — keep follow-up text short.',
     inputSchema: z.object({
       url: z
         .string()
@@ -105,7 +105,7 @@ export const designContractTools = {
         .enum(['fast', 'accurate'])
         .optional()
         .describe(
-          'fast = static CSS only; accurate = Vercel/Docker Playwright browser capture when SCANNER_SERVICE_URL is set. Omit to auto-pick accurate when the scanner is configured.'
+          'fast = static CSS only; accurate = Playwright browser capture with measured components/shell/density/interaction when SCANNER_SERVICE_URL is set. Omit to auto-pick accurate when the scanner is configured.'
         ),
       force: z.boolean().default(false).describe('Bypass the 24h cache and rescan'),
       paths: z
@@ -213,7 +213,7 @@ export const designContractTools = {
 
   get_design_md: tool({
     description:
-      'Return DESIGN.md (and optional agent skill markdown) for a scanned domain so you can reason about the system in prose.',
+      'Return the elite DESIGN.md contract for a scanned domain (YAML tokens + philosophy + measured component recipes + director prose). Quote its principles when advising; never invent competing tokens.',
     inputSchema: z.object({
       domain: z.string(),
       includeSkill: z.boolean().default(true),

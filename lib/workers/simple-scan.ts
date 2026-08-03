@@ -10,6 +10,8 @@ import { detectAppType } from '@/lib/analyzers/app-type'
 import { generateTokenSet as generateTokenSetLegacy } from '@/lib/analyzers/basic-tokenizer'
 import { generateDesignMd } from '@/lib/analyzers/design-md-generator'
 import { generateDesignSkill } from '@/lib/analyzers/design-skill-generator'
+import { generatePhilosophy } from '@/lib/analyzers/design-philosophy'
+import { composeDesignMdProse } from '@/lib/ai/design-md-composer'
 import { analyzeLayout } from '@/lib/analyzers/layout-inspector'
 import { buildPromptPack } from '@/lib/analyzers/prompt-pack'
 import {
@@ -173,15 +175,21 @@ function toLegacyGroups(curated: CuratedTokenSet) {
   }
 }
 
-function inferBrand(curated: CuratedTokenSet) {
+function inferBrand(
+  curated: CuratedTokenSet,
+  traits?: string[]
+) {
   const primaryColors = curated.colors.slice(0, 5).map((token) => String(token.value))
   const font = curated.typography.families[0]?.value
   const denseSpacing = curated.spacing.length >= 6
-  const personality = [
-    primaryColors.length >= 4 ? 'chromatic' : 'restrained',
-    font ? 'typed' : 'system-type',
-    denseSpacing ? 'rhythmic' : 'sparse',
-  ].join('-')
+  const personality =
+    traits && traits.length > 0
+      ? traits.slice(0, 5).join(', ')
+      : [
+          primaryColors.length >= 4 ? 'chromatic' : 'restrained',
+          font ? 'typed' : 'system-type',
+          denseSpacing ? 'rhythmic' : 'sparse',
+        ].join('-')
 
   return { primaryColors, personality, primaryFont: font ? String(font) : null }
 }
@@ -546,7 +554,49 @@ export async function runSimpleScan({
   // Layout on a smaller CSS subset for speed
   const layoutSources = cssArtifacts.slice(0, Math.min(16, cssArtifacts.length))
   const layoutDNA = analyzeLayout(layoutSources)
-  const brandAnalysis = inferBrand(curated)
+
+  // UX DNA first — philosophy + DESIGN.md need measured shell/density/motion.
+  const uxDna: StoredScanResult['uxDna'] =
+    browserAudit || browserKeyframes || browserFlow
+      ? {
+          shell: browserAudit?.shell ?? undefined,
+          density: browserAudit?.density ?? undefined,
+          components: browserAudit?.components ?? undefined,
+          flow: browserFlow ?? undefined,
+          keyframes: browserKeyframes?.slice(0, 16) ?? undefined,
+          transitions: browserAudit?.transitions?.slice(0, 12) ?? undefined,
+          interaction: browserAudit?.interaction
+            ? {
+                rules: browserAudit.interaction.rules,
+                effects: browserAudit.interaction.effects.slice(0, 12),
+                samples: browserAudit.interaction.samples.slice(0, 10),
+              }
+            : undefined,
+        }
+      : undefined
+
+  const uxEvidence = {
+    shell: browserAudit?.shell ?? null,
+    density: browserAudit?.density ?? null,
+    interaction: browserAudit?.interaction
+      ? {
+          rules: browserAudit.interaction.rules,
+          effects: browserAudit.interaction.effects.slice(0, 12),
+        }
+      : null,
+    keyframeCount: browserKeyframes?.length ?? 0,
+    pagesAudited: crawledPages?.length ?? undefined,
+  }
+
+  const philosophy = generatePhilosophy({
+    domain,
+    curated,
+    primaryFont: curated.typography.families[0]?.value
+      ? String(curated.typography.families[0].value)
+      : null,
+    ux: uxEvidence,
+  })
+  const brandAnalysis = inferBrand(curated, philosophy.traits)
 
   const promptPack = buildPromptPack(
     {
@@ -574,18 +624,90 @@ export async function runSimpleScan({
     pageTitle,
   })
 
-  progress.phase('design-md', 'Composing Design Contract pack')
+  progress.phase('design-md', 'Composing elite Design Contract')
   const screenshots =
     (await persistBrowserScreenshot(scanId, browserScreenshot, browserScreenshotSet)) || undefined
+
+  const firstArchetype = layoutDNA.archetypes?.[0]
+  const archetypeLabel =
+    typeof firstArchetype === 'string'
+      ? firstArchetype
+      : firstArchetype?.type || layoutDNA.gridSystem || 'marketing site'
+
+  const densitySummary = uxEvidence.density
+    ? `${uxEvidence.density.elementsInViewport} els/viewport, imageRatio=${uxEvidence.density.imageAreaRatio}, textChars=${uxEvidence.density.textChars}`
+    : null
+  const interactionSummary = uxEvidence.interaction?.effects?.length
+    ? uxEvidence.interaction.effects
+        .slice(0, 6)
+        .map((effect) => effect.value)
+        .join('; ')
+    : null
+  const measuredComponentsSummary = browserAudit?.components
+    ? Object.entries(browserAudit.components)
+        .filter(([, recipe]) => Boolean(recipe))
+        .map(([key, recipe]) => {
+          const parts = [
+            recipe?.backgroundColor,
+            recipe?.textColor,
+            recipe?.rounded,
+            recipe?.padding,
+          ].filter(Boolean)
+          return `${key}=[${parts.join(', ')}]`
+        })
+        .join('; ')
+    : null
+
+  const aiProse = await composeDesignMdProse({
+    domain,
+    url: target.toString(),
+    philosophy,
+    archetype: archetypeLabel,
+    confidence,
+    colorKeys: curated.colors.slice(0, 12).map((c) => String(c.value)),
+    headlineFont: String(curated.typography.families[0]?.value || 'system-ui'),
+    bodyFont: String(
+      curated.typography.families[1]?.value ||
+        curated.typography.families[0]?.value ||
+        'system-ui'
+    ),
+    spacingBase: philosophy.systems.space.base || layoutDNA.spacingBase || 8,
+    motionTempo: philosophy.systems.motion.tempo,
+    shellSummary: uxEvidence.shell
+      ? [
+          uxEvidence.shell.header
+            ? `${uxEvidence.shell.header.height}px header`
+            : null,
+          uxEvidence.shell.sidebar
+            ? `${uxEvidence.shell.sidebar.width}px sidebar`
+            : null,
+        ]
+          .filter(Boolean)
+          .join(', ') || null
+      : null,
+    densitySummary,
+    interactionSummary,
+    measuredComponentsSummary,
+    screenshotBase64: browserScreenshot?.base64 ?? null,
+    screenshotMime: browserScreenshot?.mime ?? 'image/png',
+  })
 
   const designMdInput = {
     domain,
     url: target.toString(),
     curatedTokens: curated,
     headings: browserAudit?.headings ?? null,
+    measuredComponents: browserAudit?.components ?? null,
     layoutDNA: {
       containers: {
         maxWidth: layoutDNA.containers.maxWidth,
+        maxWidths: Array.from(
+          new Set(
+            layoutDNA.containers.snapshots
+              .map((snapshot) => snapshot.maxWidth)
+              .filter((value): value is string => Boolean(value))
+          )
+        ).slice(0, 6),
         strategy: layoutDNA.containers.strategy,
       },
       breakpoints: layoutDNA.breakpoints,
@@ -596,6 +718,9 @@ export async function runSimpleScan({
     brandAnalysis,
     confidence,
     semanticGraph,
+    philosophy,
+    uxEvidence,
+    aiProse,
   }
   const designMd = generateDesignMd(designMdInput)
   const designSkill = generateDesignSkill({
@@ -706,6 +831,22 @@ export async function runSimpleScan({
       suggestedAction: 'Surfaces outside the crawl are unverified — scan them before extending the contract there.',
     })
   }
+  if (browserAudit?.components) {
+    const recipeKeys = Object.entries(browserAudit.components)
+      .filter(([, recipe]) => Boolean(recipe))
+      .map(([key]) => key)
+    if (recipeKeys.length > 0) {
+      driftObservations.push({
+        surface: 'site',
+        kind: 'measured-components',
+        summary: `Measured live component recipes: ${recipeKeys.join(', ')}.`,
+        observedAt: scannedAt,
+        evidence: browserAudit.components,
+        suggestedAction:
+          'YAML component recipes were taken from rendered computed styles — treat them as ground truth over guessed mappings.',
+      })
+    }
+  }
 
   const contractPack = buildDesignContractPackage({
     ...designMdInput,
@@ -727,24 +868,6 @@ export async function runSimpleScan({
   }
 
   progress.phase('persist', 'Saving scan results')
-
-  const uxDna: StoredScanResult['uxDna'] =
-    browserAudit || browserKeyframes || browserFlow
-      ? {
-          shell: browserAudit?.shell ?? undefined,
-          density: browserAudit?.density ?? undefined,
-          flow: browserFlow ?? undefined,
-          keyframes: browserKeyframes?.slice(0, 16) ?? undefined,
-          transitions: browserAudit?.transitions?.slice(0, 12) ?? undefined,
-          interaction: browserAudit?.interaction
-            ? {
-                rules: browserAudit.interaction.rules,
-                effects: browserAudit.interaction.effects.slice(0, 12),
-                samples: browserAudit.interaction.samples.slice(0, 10),
-              }
-            : undefined,
-        }
-      : undefined
 
   const stored: StoredScanResult = {
     id: scanId,

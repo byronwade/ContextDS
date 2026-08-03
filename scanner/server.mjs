@@ -478,12 +478,156 @@ function auditInPage() {
     }
   }
 
+  // Measured component recipes — live computed styles for buttons / inputs / cards
+  const parseRgb = (value) => {
+    if (!value || value === 'transparent') return null
+    const m = String(value).match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)/i)
+    if (!m) return null
+    const a = m[4] === undefined ? 1 : Number(m[4])
+    if (a < 0.08) return null
+    return { r: Number(m[1]), g: Number(m[2]), b: Number(m[3]), a }
+  }
+  const rgbToHex = (rgb) => {
+    const h = (n) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0')
+    return `#${h(rgb.r)}${h(rgb.g)}${h(rgb.b)}`
+  }
+  const chromaOf = (rgb) => {
+    const max = Math.max(rgb.r, rgb.g, rgb.b)
+    const min = Math.min(rgb.r, rgb.g, rgb.b)
+    return max - min
+  }
+  const luminanceOf = (rgb) => (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b) / 255
+  const pxRound = (raw) => {
+    const n = parseFloat(raw)
+    return Number.isFinite(n) && n >= 0 ? `${Math.round(n)}px` : null
+  }
+  const padBox = (cs) => {
+    const y = Math.round(
+      ((parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0)) / 2
+    )
+    const x = Math.round(
+      ((parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0)) / 2
+    )
+    if (y <= 0 && x <= 0) return null
+    return `${Math.max(y, 0)}px ${Math.max(x, 0)}px`
+  }
+  const recipeFromEl = (el) => {
+    const rect = el.getBoundingClientRect()
+    if (rect.width < 8 || rect.height < 8) return null
+    if (rect.bottom < 0 || rect.top > vh * 2.5) return null
+    const cs = getComputedStyle(el)
+    if (cs.visibility === 'hidden' || cs.display === 'none' || Number(cs.opacity) === 0) return null
+    const bgRgb = parseRgb(cs.backgroundColor)
+    const fgRgb = parseRgb(cs.color)
+    const borderRgb =
+      parseFloat(cs.borderTopWidth) > 0 ? parseRgb(cs.borderTopColor) : null
+    return {
+      backgroundColor: bgRgb ? rgbToHex(bgRgb) : undefined,
+      textColor: fgRgb ? rgbToHex(fgRgb) : undefined,
+      borderColor: borderRgb ? rgbToHex(borderRgb) : undefined,
+      rounded: pxRound(cs.borderTopLeftRadius) || undefined,
+      padding: padBox(cs) || undefined,
+      fontSize: pxRound(cs.fontSize) || undefined,
+      fontWeight: String(parseInt(cs.fontWeight, 10) || cs.fontWeight || ''),
+      boxShadow: cs.boxShadow && cs.boxShadow !== 'none' ? cs.boxShadow.slice(0, 120) : undefined,
+      _chroma: bgRgb ? chromaOf(bgRgb) : 0,
+      _luma: bgRgb ? luminanceOf(bgRgb) : 1,
+      _area: rect.width * rect.height,
+    }
+  }
+  const clusterRecipes = (els, limit = 24) => {
+    const votes = new Map()
+    for (const el of Array.from(els).slice(0, limit)) {
+      const recipe = recipeFromEl(el)
+      if (!recipe) continue
+      const key = [
+        recipe.backgroundColor || 'none',
+        recipe.textColor || 'none',
+        recipe.rounded || '0',
+        recipe.padding || '0',
+        recipe.fontSize || '0',
+        recipe.fontWeight || '0',
+      ].join('|')
+      const existing = votes.get(key)
+      if (existing) {
+        existing.sampleCount += 1
+        existing._area += recipe._area
+      } else {
+        votes.set(key, { ...recipe, sampleCount: 1 })
+      }
+    }
+    return Array.from(votes.values()).sort(
+      (a, b) => b.sampleCount - a.sampleCount || b._area - a._area
+    )
+  }
+  const stripInternal = (recipe) => {
+    if (!recipe) return null
+    const {
+      backgroundColor,
+      textColor,
+      borderColor,
+      rounded,
+      padding,
+      fontSize,
+      fontWeight,
+      boxShadow,
+      sampleCount,
+    } = recipe
+    return {
+      backgroundColor,
+      textColor,
+      borderColor,
+      rounded,
+      padding,
+      fontSize,
+      fontWeight: fontWeight || undefined,
+      boxShadow,
+      sampleCount,
+    }
+  }
+
+  const buttonEls = document.querySelectorAll(
+    'button, [role="button"], a.button, .btn, [class*="btn-"], input[type="submit"], input[type="button"]'
+  )
+  const buttonClusters = clusterRecipes(buttonEls, 40)
+  const filled = buttonClusters.filter((r) => r.backgroundColor && r._chroma >= 18)
+  const quiet = buttonClusters.filter(
+    (r) => !r.backgroundColor || r._chroma < 18 || r._luma > 0.92
+  )
+  const primaryBtn =
+    filled.sort((a, b) => b._chroma - a._chroma || b.sampleCount - a.sampleCount)[0] ||
+    buttonClusters[0] ||
+    null
+  const secondaryBtn =
+    quiet.find((r) => r !== primaryBtn) ||
+    buttonClusters.find((r) => r !== primaryBtn) ||
+    null
+
+  const inputClusters = clusterRecipes(
+    document.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]), textarea, select'),
+    24
+  )
+  const cardClusters = clusterRecipes(
+    document.querySelectorAll(
+      'article, [class*="card" i], [data-card], section[class*="panel" i], .surface'
+    ),
+    30
+  ).filter((r) => r._area > 8000)
+
+  const components = {
+    'button-primary': stripInternal(primaryBtn),
+    'button-secondary': stripInternal(secondaryBtn),
+    input: stripInternal(inputClusters[0]),
+    'surface-card': stripInternal(cardClusters[0]),
+  }
+
   return {
     viewport: { width: vw, height: vh },
     elementCount: count,
     headings,
     shell,
     density,
+    components,
     transitions: top(motionMap, 12),
     interaction: {
       rules: interactionRules,
@@ -515,6 +659,7 @@ function mergeAudit(target, audit) {
       headings: { ...(audit.headings || {}) },
       shell: audit.shell || null,
       density: audit.density || null,
+      components: audit.components ? { ...audit.components } : null,
       transitions: [...(audit.transitions || [])],
       interaction: audit.interaction
         ? {
@@ -595,6 +740,16 @@ function mergeAudit(target, audit) {
       const existing = target.headings[level]
       if (!existing || (entry && entry.count > existing.count)) {
         target.headings[level] = entry
+      }
+    }
+  }
+  if (audit.components) {
+    target.components = target.components || {}
+    for (const [key, recipe] of Object.entries(audit.components)) {
+      if (!recipe) continue
+      const existing = target.components[key]
+      if (!existing || (recipe.sampleCount || 0) > (existing.sampleCount || 0)) {
+        target.components[key] = recipe
       }
     }
   }
