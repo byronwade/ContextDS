@@ -188,7 +188,7 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
 
 /** True when a tool part should render as the scan results widget. */
 export function isScanResultToolName(name: string): boolean {
-  return name === 'scan_site' || name === 'get_tokens'
+  return name === 'scan_site' || name === 'get_tokens' || name === 'contract_from_screenshot'
 }
 
 export function asScanWidgetPayload(output: unknown): ScanWidgetPayload | null {

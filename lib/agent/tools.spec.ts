@@ -9,6 +9,7 @@ describe('designContractTools', () => {
         'check_contrast',
         'compare_systems',
         'compose_design_artifacts',
+        'contract_from_screenshot',
         'critique_design',
         'find_similar_systems',
         'generate_theme_css',

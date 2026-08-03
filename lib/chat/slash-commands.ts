@@ -37,6 +37,16 @@ export const SLASH_COMMANDS: SlashCommand[] = [
         : 'Which site should I scan? Give me a domain.',
   },
   {
+    name: 'app',
+    args: '<product name?>',
+    description: 'App UI from a screenshot (attach an image)',
+    example: '/app Cursor',
+    expand: (args) =>
+      args.trim()
+        ? `I want the APPLICATION design system for ${args.trim()}, not the marketing site. Use my attached screenshot (or ask me to attach one) and call contract_from_screenshot with preferApp=true.`
+        : 'I want an APPLICATION Design Contract from a product UI screenshot — not marketing. I will attach an image; call contract_from_screenshot.',
+  },
+  {
     name: 'canvas',
     args: '<domain | blank>',
     description: 'Open the live design canvas to edit a system',

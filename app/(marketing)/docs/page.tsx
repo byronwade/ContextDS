@@ -23,6 +23,12 @@ const endpoints = [
     note: 'Download the installable contract ZIP for the latest scan.',
   },
   {
+    method: 'POST',
+    path: '/api/contracts/from-image',
+    body: '{ "imageBase64": "<…>", "name": "Cursor", "preferApp": true }',
+    note: 'Application Design Contract from a product UI screenshot (web-app). Multipart image upload also works.',
+  },
+  {
     method: 'GET',
     path: '/api/scan/export-llm?domain=stripe.com',
     body: null,
@@ -121,11 +127,12 @@ npx --yes github:byronwade/Design verify --mode release`}
               Chat agent
             </h2>
             <p className="text-[13px] leading-relaxed text-[var(--ui-ink-secondary)]">
-              Chat uses the Vercel AI SDK + AI Gateway (`ToolLoopAgent`) with tools{' '}
+              Chat uses the Vercel AI SDK + AI Gateway (`ToolLoopAgent`) with tools including{' '}
               <code className="text-[var(--ui-ink)]">scan_site</code>,{' '}
-              <code className="text-[var(--ui-ink)]">get_tokens</code>,{' '}
-              <code className="text-[var(--ui-ink)]">resolve_graph</code>, and{' '}
-              <code className="text-[var(--ui-ink)]">get_contract_download</code>.
+              <code className="text-[var(--ui-ink)]">contract_from_screenshot</code>,{' '}
+              <code className="text-[var(--ui-ink)]">get_tokens</code>, and{' '}
+              <code className="text-[var(--ui-ink)]">get_contract_download</code>. Attach an app
+              screenshot when you need product UI (IDE/dashboard) instead of marketing pages.
             </p>
             <pre className="overflow-x-auto rounded-[12px] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] p-3.5 font-mono text-[12px] leading-relaxed">
               {`POST /api/agent/chat
@@ -137,13 +144,26 @@ SCANNER_SERVICE_URL=https://designcontracts-scanner.vercel.app`}
             </pre>
           </section>
 
-          <section className="mt-12 space-y-3 pb-8">
+          <section className="mt-12 space-y-3">
             <h2 className="text-[13px] font-medium tracking-tight text-[var(--ui-ink)]">
               Accurate scans
             </h2>
             <p className="text-[13px] leading-relaxed text-[var(--ui-ink-secondary)]">
               When <code className="text-[var(--ui-ink)]">SCANNER_SERVICE_URL</code> is set, chat
               defaults to accurate browser capture via the Vercel Chromium scanner.
+            </p>
+          </section>
+
+          <section className="mt-12 space-y-3 pb-8">
+            <h2 className="text-[13px] font-medium tracking-tight text-[var(--ui-ink)]">
+              Application UI from screenshots
+            </h2>
+            <p className="text-[13px] leading-relaxed text-[var(--ui-ink-secondary)]">
+              Public crawls usually see marketing sites. For product chrome (Cursor, dashboards,
+              workbenches), attach a screenshot in chat or POST{' '}
+              <code className="text-[var(--ui-ink)]">/api/contracts/from-image</code>. Vision
+              samples colors and shell into a <code className="text-[var(--ui-ink)]">web-app</code>{' '}
+              Design Contract. Requires AI Gateway.
             </p>
           </section>
       </PageCanvas>

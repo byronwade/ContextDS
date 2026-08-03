@@ -30,8 +30,13 @@ import {
 } from '@/components/ai-elements/message'
 import {
   PromptInput,
+  PromptInputActionAddAttachments,
+  PromptInputActionMenu,
+  PromptInputActionMenuContent,
+  PromptInputActionMenuTrigger,
   PromptInputSubmit,
   PromptInputTextarea,
+  usePromptInputAttachments,
   type PromptInputMessage,
 } from '@/components/ai-elements/prompt-input'
 import {
@@ -47,7 +52,10 @@ import {
   CopyIcon,
   DownloadSimpleIcon,
   FileTextIcon,
+  ImageIcon,
+  PlusIcon,
   WarningCircleIcon,
+  XIcon,
 } from '@/lib/phosphor'
 import {
   ScanResultWidget,
@@ -68,6 +76,11 @@ const EXAMPLES = [
 ] as const
 
 const CAPABILITIES = [
+  {
+    label: 'App UI from screenshot',
+    prompt:
+      'I want an APPLICATION Design Contract from a product UI screenshot — not the marketing site. Ask me to attach a screenshot, then call contract_from_screenshot.',
+  },
   { label: 'Critique a system', prompt: "Critique stripe.com's design system — how consistent is it?" },
   { label: 'Compare two sites', prompt: 'Compare the design systems of linear.app and vercel.com' },
   { label: 'Theme CSS', prompt: 'Generate a Tailwind theme from cursor.com' },
@@ -79,6 +92,7 @@ const CAPABILITIES = [
 
 const TOOL_LABELS: Record<string, string> = {
   scan_site: 'Scanning site',
+  contract_from_screenshot: 'Reading app screenshot',
   get_tokens: 'Reading cached contract',
   get_design_md: 'Reading DESIGN.md',
   resolve_graph: 'Walking the semantic graph',
@@ -333,6 +347,75 @@ function MessageActions({ text }: { text: string }) {
   )
 }
 
+function ComposerAttachments() {
+  const attachments = usePromptInputAttachments()
+  if (attachments.files.length === 0) return null
+  return (
+    <div className="flex flex-wrap gap-2 px-3 pt-3">
+      {attachments.files.map((file) => (
+        <div
+          key={file.id}
+          className="relative h-14 w-14 overflow-hidden rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)]"
+        >
+          {file.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={file.url} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <ImageIcon className="size-4 text-[var(--ui-ink-muted)]" />
+            </div>
+          )}
+          <button
+            type="button"
+            aria-label="Remove screenshot"
+            onClick={() => attachments.remove(file.id)}
+            className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--ui-ink)] text-[var(--ui-paper)]"
+          >
+            <XIcon className="size-2.5" weight="bold" />
+          </button>
+        </div>
+      ))}
+      <p className="self-center text-[11px] text-[var(--ui-ink-muted)]">
+        App screenshot → web-app contract
+      </p>
+    </div>
+  )
+}
+
+function ComposerSendButton({
+  status,
+  text,
+  busy,
+  onStop,
+}: {
+  status: 'ready' | 'submitted' | 'streaming' | 'error'
+  text: string
+  busy: boolean
+  onStop: () => void
+}) {
+  const attachments = usePromptInputAttachments()
+  const canSend = Boolean(text.trim() || attachments.files.length > 0)
+  return (
+    <PromptInputSubmit
+      status={status}
+      disabled={!busy && !canSend}
+      onStop={onStop}
+      size="icon-xs"
+      variant="default"
+      className={cn(
+        'h-7 w-7 min-h-7 max-h-7 rounded-full border-0 p-0 shadow-none disabled:opacity-100',
+        !canSend && !busy
+          ? 'bg-[var(--ui-paper-selected)] text-[var(--ui-ink-secondary)] hover:bg-[var(--ui-paper-hover)]'
+          : 'bg-[var(--ui-accent)] text-[var(--ui-on-primary)] hover:bg-[var(--ui-accent-hover)]'
+      )}
+    >
+      {status === 'streaming' || status === 'submitted' ? null : (
+        <ArrowUpIcon className="size-3.5" weight="bold" />
+      )}
+    </PromptInputSubmit>
+  )
+}
+
 function EmptyState({
   onPick,
   disabled,
@@ -347,7 +430,7 @@ function EmptyState({
         <span className="text-[var(--ui-accent)]">.sh</span>
       </h1>
       <p className="mt-3 max-w-sm text-center text-[15px] leading-relaxed text-[var(--ui-ink-secondary)]">
-        Paste a URL. Get an installable Design Contract.
+        Paste a URL for marketing systems — or attach an app screenshot for product UI.
       </p>
       <div className="mt-7 flex flex-wrap items-center justify-center gap-1.5">
         {EXAMPLES.map((example, index) => (
@@ -518,8 +601,70 @@ export function ScanChat() {
     void sendMessage({ text: outgoing })
   }
 
-  const onSubmit = (message: PromptInputMessage) => {
-    send(message.text ?? '')
+  const onSubmit = async (message: PromptInputMessage) => {
+    const imageFiles = (message.files || []).filter((file) =>
+      (file.mediaType || '').startsWith('image/')
+    )
+    const rawText = (message.text || '').trim()
+
+    if (imageFiles.length > 0) {
+      if (busy) return
+      setText('')
+      setSlashIndex(0)
+      trackClientEvent('chat_message')
+      const nameHint =
+        parseSlashCommand(rawText)?.args?.trim() ||
+        (rawText && !rawText.startsWith('/') ? rawText.slice(0, 80) : '') ||
+        'App UI'
+      const primary = imageFiles[0]
+      const dataUrl = primary.url || ''
+      try {
+        const response = await fetch('/api/contracts/from-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: dataUrl,
+            mimeType: primary.mediaType || 'image/png',
+            name: nameHint,
+            preferApp: true,
+          }),
+        })
+        const payload = (await response.json()) as {
+          error?: string
+          domain?: string
+          designContract?: { installCommand?: string }
+          metadata?: { visionSignature?: string; appType?: string }
+        }
+        if (!response.ok) {
+          void sendMessage({
+            text: `Screenshot → Design Contract failed: ${payload.error || response.statusText}. ${rawText || ''}`.trim(),
+          })
+          return
+        }
+        pushRecent(payload.domain || '')
+        void sendMessage({
+          text: [
+            `I extracted an APPLICATION Design Contract from my screenshot as \`${payload.domain}\`.`,
+            payload.metadata?.visionSignature
+              ? `Signature: ${payload.metadata.visionSignature}`
+              : null,
+            `App type: ${payload.metadata?.appType || 'saas-workbench'}.`,
+            'Call get_tokens on that domain, summarize the system, and give the install command. This is app UI — not marketing.',
+          ]
+            .filter(Boolean)
+            .join(' '),
+        })
+      } catch (error) {
+        void sendMessage({
+          text: `Could not process the screenshot: ${
+            error instanceof Error ? error.message : 'unknown error'
+          }`,
+        })
+      }
+      return
+    }
+
+    send(rawText)
   }
 
   /** Complete the highlighted command instead of sending a bare "/sc". */
@@ -699,38 +844,45 @@ export function ScanChat() {
             ) : null}
             <PromptInput
               onSubmit={onSubmit}
+              accept="image/*"
+              multiple={false}
+              maxFiles={1}
+              maxFileSize={6_000_000}
               className={cn(
                 'relative overflow-hidden rounded-[14px] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] shadow-none',
                 'transition-[border-color,background-color] duration-150',
                 'has-[[data-slot=input-group-control]:focus-visible]:border-[var(--ui-ink-muted)]'
               )}
             >
+              <ComposerAttachments />
               <PromptInputTextarea
                 value={text}
                 onChange={(event) => setText(event.target.value)}
                 onKeyDown={onComposerKeyDown}
-                placeholder="Ask about a site, or type / for commands"
+                placeholder="Ask about a site, attach an app screenshot, or type /"
                 disabled={busy && status === 'submitted'}
-                className="min-h-[52px] max-h-48 w-full resize-none px-4 py-3.5 pr-12 text-[15px] leading-[1.45] text-[var(--ui-ink)] placeholder:text-[var(--ui-ink-muted)]"
+                className="min-h-[52px] max-h-48 w-full resize-none px-4 py-3.5 pr-20 text-[15px] leading-[1.45] text-[var(--ui-ink)] placeholder:text-[var(--ui-ink-muted)]"
                 aria-label="Message"
               />
-              <PromptInputSubmit
-                status={status}
-                disabled={!busy && !text.trim()}
-                onStop={() => stop()}
-                size="icon-xs"
-                variant="default"
-                className={cn(
-                  'absolute bottom-2.5 right-2.5 z-10 h-7 w-7 min-h-7 max-h-7 rounded-full border-0 p-0 shadow-none disabled:opacity-100',
-                  !text.trim() && !busy
-                    ? 'bg-[var(--ui-paper-selected)] text-[var(--ui-ink-secondary)] hover:bg-[var(--ui-paper-hover)]'
-                    : 'bg-[var(--ui-accent)] text-[var(--ui-on-primary)] hover:bg-[var(--ui-accent-hover)]'
-                )}
-              >
-                {status === 'streaming' || status === 'submitted' ? null : (
-                  <ArrowUpIcon className="size-3.5" weight="bold" />
-                )}
-              </PromptInputSubmit>
+              <div className="absolute bottom-2.5 right-2.5 z-10 flex items-center gap-1">
+                <PromptInputActionMenu>
+                  <PromptInputActionMenuTrigger
+                    tooltip="Attach app screenshot"
+                    className="h-7 w-7 min-h-7 rounded-full border-0 bg-transparent p-0 text-[var(--ui-ink-muted)] shadow-none hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]"
+                  >
+                    <PlusIcon className="size-3.5" />
+                  </PromptInputActionMenuTrigger>
+                  <PromptInputActionMenuContent align="end">
+                    <PromptInputActionAddAttachments label="App screenshot (for product UI)" />
+                  </PromptInputActionMenuContent>
+                </PromptInputActionMenu>
+                <ComposerSendButton
+                  status={status}
+                  text={text}
+                  busy={busy}
+                  onStop={() => stop()}
+                />
+              </div>
             </PromptInput>
           </div>
         </div>

@@ -167,6 +167,10 @@ export interface StoredScanResult {
     crawl?: { pages: number; paths: string[] }
     /** Token-system consistency 0–100 from consistency-validator */
     consistencyScore?: number
+    /** Vision draft surface kind when source is a screenshot */
+    visionSurface?: string
+    /** Vision distinctive signature */
+    visionSignature?: string
   }
   error?: string
 }

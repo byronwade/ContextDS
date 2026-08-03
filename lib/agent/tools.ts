@@ -31,6 +31,10 @@ import { contractDownloadPath, ensureAbsoluteUrl, normalizeDomain } from '@/lib/
 import { isBrowserServiceConfigured } from '@/lib/scanner/browser-service'
 import { getScan, getSite, listSites, saveScan } from '@/lib/storage/serverless-store'
 import { runSimpleScan } from '@/lib/workers/simple-scan'
+import {
+  loadImageAsBase64,
+  runScreenshotContract,
+} from '@/lib/workers/screenshot-contract'
 
 /** Prefer the Vercel/Docker browser scanner when wired; otherwise static CSS. */
 function defaultScanMode(): 'fast' | 'accurate' {
@@ -102,7 +106,7 @@ const systemPatchSchema = z.object({
 export const designContractTools = {
   scan_site: tool({
     description:
-      'Primary gather tool: scan a public site into curated tokens, layout/UX DNA, measured component recipes, philosophy, design-director DESIGN.md, semantic graph, and an installable Design Contract pack. Prefer accurate mode (browser) for elite quality. The chat UI renders an inline widget — keep follow-up text short.',
+      'Primary gather tool: scan a public site into curated tokens, layout/UX DNA, measured component recipes, philosophy, design-director DESIGN.md, semantic graph, and an installable Design Contract pack. Prefer accurate mode (browser) for elite quality. Public scans usually see MARKETING surfaces — for private app/IDE UIs use contract_from_screenshot instead. The chat UI renders an inline widget — keep follow-up text short.',
     inputSchema: z.object({
       url: z
         .string()
@@ -167,6 +171,83 @@ export const designContractTools = {
           : null,
         designMdPreview: result.designMd?.markdown?.slice(0, 4000),
         screenshots: result.screenshots,
+      }
+    },
+  }),
+
+  contract_from_screenshot: tool({
+    description:
+      'Build an APPLICATION Design Contract from a product UI screenshot (IDE, dashboard, workbench). Use when the user wants app design — not marketing — or when public URL scans cannot see authenticated UI (e.g. Cursor). Defaults to web-app / saas-workbench. Accepts imageUrl (https or data:) or imageBase64.',
+    inputSchema: z.object({
+      imageUrl: z
+        .string()
+        .optional()
+        .describe('https image URL or data:image/...;base64,... URI'),
+      imageBase64: z
+        .string()
+        .optional()
+        .describe('Raw base64 image bytes without a data: prefix'),
+      mimeType: z.string().optional().describe('image/png or image/jpeg'),
+      name: z
+        .string()
+        .max(80)
+        .optional()
+        .describe('Product name hint, e.g. "Cursor" or "Linear app"'),
+      preferApp: z
+        .boolean()
+        .default(true)
+        .describe('Bias classification toward web-app (default true)'),
+    }),
+    execute: async ({ imageUrl, imageBase64, mimeType, name, preferApp }) => {
+      let base64 = imageBase64
+      let mime = mimeType
+      if (!base64 && imageUrl) {
+        const loaded = await loadImageAsBase64(imageUrl)
+        base64 = loaded.base64
+        mime = mime || loaded.mimeType
+      }
+      if (!base64) {
+        return {
+          found: false,
+          suggestion:
+            'Provide imageUrl or imageBase64 — attach a screenshot of the application UI (not the marketing site).',
+        }
+      }
+
+      const result = await runScreenshotContract({
+        imageBase64: base64,
+        mimeType: mime,
+        name,
+        preferApp,
+      })
+
+      return {
+        found: true,
+        status: result.status,
+        domain: result.domain,
+        url: result.url,
+        source: 'screenshot',
+        summary: result.summary,
+        mode: 'vision',
+        tokens: slimTokens(result.curatedTokens),
+        brand: result.brandAnalysis,
+        designContract: result.designContract
+          ? {
+              slug: result.designContract.slug,
+              title: result.designContract.title,
+              installCommand: result.designContract.installCommand,
+              summary: result.designContract.summary,
+              download: result.designContract.download || contractDownloadPath(result.domain),
+            }
+          : null,
+        designMdPreview: result.designMd?.markdown?.slice(0, 4000),
+        screenshots: result.screenshots,
+        metadata: {
+          appType: result.metadata.appType,
+          visionSurface: result.metadata.visionSurface,
+          visionSignature: result.metadata.visionSignature,
+        },
+        note: 'Vision-derived application contract. YAML colors were sampled from the screenshot. Prefer authenticated CSS rescans later to raise confidence.',
       }
     },
   }),
