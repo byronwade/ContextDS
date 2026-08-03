@@ -710,12 +710,12 @@ export function ScanChat() {
                 onKeyDown={onComposerKeyDown}
                 placeholder="Ask about a site, or type / for commands"
                 disabled={busy && status === 'submitted'}
-                className="min-h-[44px] max-h-40 px-3.5 py-3 text-[14px] leading-snug placeholder:text-[var(--ui-ink-muted)]"
+                className="min-h-[40px] max-h-40 px-3.5 py-2.5 text-[14px] leading-snug placeholder:text-[var(--ui-ink-muted)]"
                 aria-label="Message"
               />
               <InputGroupAddon
                 align="inline-end"
-                className="self-end py-2 pr-2"
+                className="self-end py-1.5 pr-1.5"
               >
                 <PromptInputSubmit
                   status={status}
@@ -727,9 +727,6 @@ export function ScanChat() {
                 />
               </InputGroupAddon>
             </PromptInput>
-            <p className="mt-1.5 px-0.5 font-mono text-[11px] leading-none text-[var(--ui-ink-muted-soft)]">
-              / commands · Enter send
-            </p>
           </div>
         </div>
       </div>
