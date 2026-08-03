@@ -30,8 +30,6 @@ import {
 } from '@/components/ai-elements/message'
 import {
   PromptInput,
-  PromptInputBody,
-  PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
   type PromptInputMessage,
@@ -702,41 +700,37 @@ export function ScanChat() {
             <PromptInput
               onSubmit={onSubmit}
               className={cn(
-                'overflow-hidden rounded-[var(--radius-paper)] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] shadow-none',
-                'has-[[data-slot=input-group-control]:focus-visible]:border-[var(--ui-border-edge)]',
-                'has-[[data-slot=input-group-control]:focus-visible]:bg-[var(--ui-paper)]'
+                'relative overflow-hidden rounded-[14px] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] shadow-none',
+                'transition-[border-color,background-color] duration-150',
+                'has-[[data-slot=input-group-control]:focus-visible]:border-[var(--ui-ink-muted)]'
               )}
             >
-              <PromptInputBody>
-                <PromptInputTextarea
-                  value={text}
-                  onChange={(event) => setText(event.target.value)}
-                  onKeyDown={onComposerKeyDown}
-                  placeholder="Ask about a site, or type / for commands"
-                  disabled={busy && status === 'submitted'}
-                  className="min-h-[44px] max-h-48 px-3.5 pb-2 pt-3 text-[15px] leading-[1.45] text-[var(--ui-ink)] placeholder:text-[var(--ui-ink-muted-soft)]"
-                  aria-label="Message"
-                />
-              </PromptInputBody>
-              <PromptInputFooter className="h-9 items-center justify-end border-0 bg-transparent px-2.5 pb-2.5 pt-0">
-                <PromptInputSubmit
-                  status={status}
-                  disabled={!busy && !text.trim()}
-                  onStop={() => stop()}
-                  size="icon-xs"
-                  variant="default"
-                  className={cn(
-                    'h-7 w-7 min-h-7 max-h-7 shrink-0 rounded-full border-0 p-0 shadow-none disabled:opacity-100',
-                    !text.trim() && !busy
-                      ? 'bg-[var(--ui-paper-selected)] text-[var(--ui-ink-secondary)] hover:bg-[var(--ui-paper-selected)]'
-                      : 'bg-[var(--ui-accent)] text-[var(--ui-on-primary)] hover:bg-[var(--ui-accent-hover)]'
-                  )}
-                >
-                  {status === 'streaming' || status === 'submitted' ? null : (
-                    <ArrowUpIcon className="size-3.5" weight="bold" />
-                  )}
-                </PromptInputSubmit>
-              </PromptInputFooter>
+              <PromptInputTextarea
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                onKeyDown={onComposerKeyDown}
+                placeholder="Ask about a site, or type / for commands"
+                disabled={busy && status === 'submitted'}
+                className="min-h-[52px] max-h-48 w-full resize-none px-4 py-3.5 pr-12 text-[15px] leading-[1.45] text-[var(--ui-ink)] placeholder:text-[var(--ui-ink-muted)]"
+                aria-label="Message"
+              />
+              <PromptInputSubmit
+                status={status}
+                disabled={!busy && !text.trim()}
+                onStop={() => stop()}
+                size="icon-xs"
+                variant="default"
+                className={cn(
+                  'absolute bottom-2.5 right-2.5 z-10 h-7 w-7 min-h-7 max-h-7 rounded-full border-0 p-0 shadow-none disabled:opacity-100',
+                  !text.trim() && !busy
+                    ? 'bg-[var(--ui-paper-selected)] text-[var(--ui-ink-secondary)] hover:bg-[var(--ui-paper-hover)]'
+                    : 'bg-[var(--ui-accent)] text-[var(--ui-on-primary)] hover:bg-[var(--ui-accent-hover)]'
+                )}
+              >
+                {status === 'streaming' || status === 'submitted' ? null : (
+                  <ArrowUpIcon className="size-3.5" weight="bold" />
+                )}
+              </PromptInputSubmit>
             </PromptInput>
           </div>
         </div>
