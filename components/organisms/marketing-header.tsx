@@ -49,13 +49,8 @@ export function MarketingHeader({ currentPage = "home", showSearch = false }: Ma
     if (!target) return
 
     setScanLoading(true)
-    try {
-      router.push(`/?url=${encodeURIComponent(target)}`)
-    } catch (error) {
-      console.error('Scan error:', error)
-    } finally {
-      setScanLoading(false)
-    }
+    router.push(`/?url=${encodeURIComponent(target)}`)
+    setScanLoading(false)
   }
 
   const handleSearch = () => {

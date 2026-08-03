@@ -933,9 +933,6 @@ Return the corrected JSON:`
 // Global validator instance
 export const schemaValidator = new SchemaValidator()
 
-/** UI companion for rendering field errors from ValidationError[]. */
-export type { SchemaFieldErrors } from '@/components/molecules/schema-field-errors'
-
 // Convenience validation functions
 export async function validateTokenPack(data: any): Promise<ValidationResult<any>> {
   return schemaValidator.validateTokenPack(data)

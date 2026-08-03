@@ -545,21 +545,19 @@ export function ScanChat() {
 
   const onSaveSystem = async (system: WorkingSystem) => {
     setSavingSystem(true)
-    try {
-      const response = await fetch('/api/systems', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ id: system.id ?? undefined, system, visibility: 'public' }),
-      })
-      if (!response.ok) return
-      const stored = (await response.json()) as { id?: string }
-      if (stored.id) {
+    const response = await fetch('/api/systems', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: system.id ?? undefined, system, visibility: 'public' }),
+    }).catch(() => null)
+    if (response?.ok) {
+      const stored = (await response.json().catch(() => null)) as { id?: string } | null
+      if (stored?.id) {
         markSaved(stored.id)
         trackClientEvent('system_saved')
       }
-    } finally {
-      setSavingSystem(false)
     }
+    setSavingSystem(false)
   }
 
   useEffect(() => {
