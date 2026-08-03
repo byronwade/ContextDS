@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { ChatStatus, FileUIPart, SourceDocumentUIPart } from "ai";
+import { z } from "zod";
 import { ArrowElbowDownLeftIcon as CornerDownLeftIcon, ImageIcon, DesktopIcon as Monitor, PlusIcon, SquareIcon, XIcon } from '@/lib/phosphor'
 import { nanoid } from "nanoid";
 import type {
@@ -835,6 +836,19 @@ export const PromptInput = ({
   );
 
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const promptSchema = useMemo(
+    () =>
+      z
+        .object({
+          text: z.string(),
+          fileCount: z.number().int().nonnegative(),
+        })
+        .refine((value) => value.text.trim().length > 0 || value.fileCount > 0, {
+          message: "Add a message or attachment before sending.",
+          path: ["text"],
+        }),
+    []
+  );
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = useCallback(
     async (event) => {
@@ -848,8 +862,12 @@ export const PromptInput = ({
             return (formData.get("message") as string) || "";
           })();
 
-      if (!text.trim() && files.length === 0) {
-        setSubmitError("Add a message or attachment before sending.");
+      const parsed = promptSchema.safeParse({ text, fileCount: files.length });
+      if (!parsed.success) {
+        setSubmitError(
+          parsed.error.issues[0]?.message ||
+            "Add a message or attachment before sending."
+        );
         return;
       }
       setSubmitError(null);
@@ -900,7 +918,7 @@ export const PromptInput = ({
         // Don't clear on error - user may want to retry
       }
     },
-    [usingProvider, controller, files, onSubmit, clear]
+    [usingProvider, controller, files, onSubmit, clear, promptSchema]
   );
 
   // Render with or without local provider

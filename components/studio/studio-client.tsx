@@ -240,35 +240,32 @@ export default function StudioClient() {
     if (!isPro || exporting) return
     setExporting(true)
     setExportError(null)
-    try {
-      const response = await fetch('/api/contracts/authored', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ system }),
-      })
-      if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as {
-          error?: string
-        } | null
-        throw new Error(data?.error || `Export failed (${response.status})`)
-      }
-      const blob = await response.blob()
-      const disposition = response.headers.get('Content-Disposition') || ''
-      const match = disposition.match(/filename="([^"]+)"/)
-      const fileName = match?.[1] || `${system.slug}-design-contract.zip`
-      const href = URL.createObjectURL(blob)
-      const anchor = document.createElement('a')
-      anchor.href = href
-      anchor.download = fileName
-      document.body.appendChild(anchor)
-      anchor.click()
-      anchor.remove()
-      URL.revokeObjectURL(href)
-    } catch (error) {
-      setExportError(error instanceof Error ? error.message : 'Export failed')
-    } finally {
+    const response = await fetch('/api/contracts/authored', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system }),
+    }).catch(() => null)
+    if (!response?.ok) {
+      const data = response
+        ? ((await response.json().catch(() => null)) as { error?: string } | null)
+        : null
+      setExportError(data?.error || (response ? `Export failed (${response.status})` : 'Export failed'))
       setExporting(false)
+      return
     }
+    const blob = await response.blob()
+    const disposition = response.headers.get('Content-Disposition') || ''
+    const match = disposition.match(/filename="([^"]+)"/)
+    const fileName = match?.[1] || `${system.slug}-design-contract.zip`
+    const href = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = href
+    anchor.download = fileName
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(href)
+    setExporting(false)
   }
 
   return (
@@ -430,6 +427,7 @@ export default function StudioClient() {
                   <Input
                     value={system.fontDisplay}
                     onChange={(event) => update('fontDisplay', event.target.value)}
+                    aria-label="Display font"
                     className="rounded-xl border-[color:var(--soft-border)] bg-card/60"
                     placeholder="e.g. Geist"
                   />
@@ -439,6 +437,7 @@ export default function StudioClient() {
                     <Input
                       value={system.fontBody}
                       onChange={(event) => update('fontBody', event.target.value)}
+                      aria-label="Body font"
                       className="rounded-xl border-[color:var(--soft-border)] bg-card/60"
                     />
                   </Field>
@@ -446,6 +445,7 @@ export default function StudioClient() {
                     <Input
                       value={system.fontMono}
                       onChange={(event) => update('fontMono', event.target.value)}
+                      aria-label="Mono font"
                       className="rounded-xl border-[color:var(--soft-border)] bg-card/60"
                     />
                   </Field>
@@ -521,6 +521,7 @@ export default function StudioClient() {
                   value={system.philosophyNote}
                   onChange={(event) => update('philosophyNote', event.target.value)}
                   rows={3}
+                  aria-label="Philosophy note"
                   placeholder="What should agents feel when they build with this system?"
                   className="w-full rounded-xl border border-[color:var(--soft-border)] bg-card/60 px-3 py-2 text-sm text-foreground outline-none transition-shadow placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-ring/40"
                 />

@@ -439,6 +439,8 @@ export class SchemaValidator {
   ): Promise<{ success: boolean; data?: any; strategy?: string }> {
     let repairedData = JSON.parse(JSON.stringify(data)) // Deep clone
 
+    // Field-level errors are surfaced in the UI via SchemaFieldErrors
+    // (`data-slot="form-message"`) when a form consumes ValidationError[].
     for (const error of errors.filter(e => e.autoFixable)) {
       const applicableStrategies = this.repairStrategies.filter(strategy =>
         strategy.applicableErrors.some(code => error.code.includes(code))

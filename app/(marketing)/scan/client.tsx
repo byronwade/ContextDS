@@ -386,19 +386,22 @@ function ComposerSendButton({
   status,
   text,
   busy,
+  packPending,
   onStop,
 }: {
   status: 'ready' | 'submitted' | 'streaming' | 'error'
   text: string
   busy: boolean
+  packPending: boolean
   onStop: () => void
 }) {
   const attachments = usePromptInputAttachments()
   const canSend = Boolean(text.trim() || attachments.files.length > 0)
   return (
     <PromptInputSubmit
-      status={status}
-      disabled={!busy && !canSend}
+      status={packPending ? 'submitted' : status}
+      disabled={packPending || (!busy && !canSend)}
+      aria-busy={packPending || busy}
       onStop={onStop}
       size="icon-xs"
       variant="default"
@@ -894,6 +897,7 @@ export function ScanChat() {
                   status={status}
                   text={text}
                   busy={busy}
+                  packPending={packPending}
                   onStop={() => stop()}
                 />
               </div>

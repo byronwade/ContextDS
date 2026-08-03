@@ -230,6 +230,8 @@ function ComponentCard({ component, onCopy }: {
               size="sm"
               className="h-7 w-7 p-0"
               onClick={copyComponentData}
+              aria-label="Copy component data"
+              title="Copy component data"
             >
               <Copy className="h-3.5 w-3.5" />
             </Button>
@@ -238,6 +240,9 @@ function ComponentCard({ component, onCopy }: {
               size="sm"
               className="h-7 w-7 p-0"
               onClick={() => setExpanded(!expanded)}
+              aria-label={expanded ? 'Collapse component' : 'Expand component'}
+              aria-expanded={expanded}
+              title={expanded ? 'Collapse' : 'Expand'}
             >
               {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
             </Button>

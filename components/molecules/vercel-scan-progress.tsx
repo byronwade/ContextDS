@@ -155,7 +155,11 @@ export function VercelScanProgress({
             result ? "bg-success" :
             isLoading ? "bg-warning animate-pulse" : "bg-muted-foreground"
           )} />
-          <h2 className="text-lg font-semibold text-foreground font-mono">
+          <h2
+            className="text-lg font-semibold text-foreground font-mono"
+            role="status"
+            aria-live="polite"
+          >
             {error ? 'Scan Failed' :
              result ? 'Scan Complete' :
              isLoading ? 'Scanning' : 'Ready to Scan'} • {domain}

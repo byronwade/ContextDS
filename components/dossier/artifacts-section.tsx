@@ -201,7 +201,7 @@ export function ArtifactsSection({
                   className="gap-1 font-mono"
                   onClick={() => downloadText(doc.fileName, doc.markdown)}
                 >
-                  <DownloadSimpleIcon className="size-3" />
+                  <DownloadSimpleIcon data-icon="inline-start" className="size-3" />
                   download
                 </Button>
               </div>
