@@ -263,27 +263,36 @@ export function VercelScanInput({
       </div>
 
       {/* Error Message */}
-      {errorMessage && (
-        <div id="scan-error" className="mt-2 flex items-center gap-2 text-sm text-destructive">
+      {errorMessage ? (
+        <div
+          id="scan-error"
+          role="alert"
+          aria-live="assertive"
+          className="mt-2 flex items-center gap-2 text-sm text-destructive"
+        >
           <AlertCircle className="h-4 w-4" />
           {errorMessage}
         </div>
-      )}
+      ) : null}
 
       {/* Help Text */}
-      {!errorMessage && validationState === 'idle' && (
+      {!errorMessage && validationState === 'idle' ? (
         <div id="scan-help" className="mt-2 text-sm text-muted-foreground">
           Enter a website URL to extract design tokens, colors, and typography
         </div>
-      )}
+      ) : null}
 
       {/* Success Message */}
-      {validationState === 'valid' && !isLoading && (
-        <div className="mt-2 flex items-center gap-2 text-sm text-success">
+      {validationState === 'valid' && !isLoading ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className="mt-2 flex items-center gap-2 text-sm text-success"
+        >
           <CheckCircle2 className="h-4 w-4" />
           Ready to scan • Press Enter or click Scan
         </div>
-      )}
+      ) : null}
 
       {/* Suggestions Dropdown */}
       {showSuggestions && filteredSuggestions.length > 0 && (

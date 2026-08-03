@@ -141,6 +141,7 @@ export function MarketingHeader({ currentPage = "home", showSearch = false }: Ma
                     }
                   }
                 }}
+                aria-label={viewMode === "scan" ? "Website URL to scan" : "Search design tokens"}
                 placeholder={
                   viewMode === "scan"
                     ? "Paste URL..."
@@ -235,16 +236,26 @@ export function MarketingHeader({ currentPage = "home", showSearch = false }: Ma
         {/* Right: Navigation + Theme Toggle */}
         <div className="flex min-h-[56px] sm:min-h-[64px] select-none items-center justify-end gap-1.5 sm:gap-2 pr-2 sm:pr-4 md:pr-6">
           <RecentScansDropdown />
-          <Link prefetch={false} href="/community" className="hidden sm:inline-flex">
-            <Button variant="ghost" size="sm" className="h-7 sm:h-8 px-2 sm:px-3 text-xs font-medium text-grep-9 hover:text-foreground">
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="hidden h-7 px-2 text-xs font-medium text-grep-9 hover:text-foreground sm:inline-flex sm:h-8 sm:px-3"
+          >
+            <Link prefetch={false} href="/community">
               Community
-            </Button>
-          </Link>
-          <Link prefetch={false} href="/docs" className="hidden lg:inline-flex">
-            <Button variant="ghost" size="sm" className="h-7 sm:h-8 px-2 sm:px-3 text-xs font-medium text-grep-9 hover:text-foreground">
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="hidden h-7 px-2 text-xs font-medium text-grep-9 hover:text-foreground lg:inline-flex sm:h-8 sm:px-3"
+          >
+            <Link prefetch={false} href="/docs">
               Docs
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <ThemeToggle />
         </div>
       </div>

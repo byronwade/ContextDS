@@ -920,14 +920,18 @@ export const PromptInput = ({
         className="w-full"
         onSubmit={handleSubmit}
         ref={formRef}
-        noValidate
+        data-validate="prompt"
         {...props}
       >
         <InputGroup className={cn("overflow-hidden", className)}>
           {children}
         </InputGroup>
         {submitError ? (
-          <p role="alert" className="mt-2 px-1 text-xs text-destructive">
+          <p
+            role="alert"
+            data-slot="form-message"
+            className="mt-2 px-1 text-xs text-destructive"
+          >
             {submitError}
           </p>
         ) : null}
@@ -1292,6 +1296,7 @@ export const PromptInputSelectTrigger = ({
   ...props
 }: PromptInputSelectTriggerProps) => (
   <SelectTrigger
+    aria-label="Select option"
     className={cn(
       "border-none bg-transparent font-medium text-muted-foreground shadow-none transition-colors",
       "hover:bg-accent hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground",

@@ -65,16 +65,15 @@ export function InsightCard({
 
   const styles = severityStyles[severity] || severityStyles.info
 
-  return (
-    <div
-      className={cn(
-        "rounded-lg border p-4 transition-all duration-200",
-        styles.border,
-        styles.bg,
-        onClick && "cursor-pointer hover:shadow-md"
-      )}
-      onClick={onClick}
-    >
+  const className = cn(
+    "rounded-lg border p-4 text-left transition-all duration-200",
+    styles.border,
+    styles.bg,
+    onClick && "cursor-pointer hover:shadow-md"
+  )
+
+  const body = (
+    <>
       {/* Header */}
       <div className="flex items-start gap-3 mb-2">
         {Icon && (
@@ -136,6 +135,16 @@ export function InsightCard({
           </p>
         </div>
       )}
-    </div>
+    </>
   )
+
+  if (onClick) {
+    return (
+      <button type="button" className={className} onClick={onClick}>
+        {body}
+      </button>
+    )
+  }
+
+  return <div className={className}>{body}</div>
 }

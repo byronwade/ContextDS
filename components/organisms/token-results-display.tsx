@@ -189,6 +189,7 @@ export function TokenResultsDisplay({ tokens, domain, onCopy, onExport }: TokenR
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search tokens by value..."
+              aria-label="Search tokens by value"
               className="h-9 pl-9 pr-4 text-sm font-mono bg-background border-grep-3 focus-visible:border-blue-400"
             />
           </div>
@@ -196,6 +197,7 @@ export function TokenResultsDisplay({ tokens, domain, onCopy, onExport }: TokenR
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value as CategoryKey | 'all')}
+              aria-label="Filter token category"
               className="h-9 px-3 text-sm font-mono bg-background border border-grep-3 rounded-md text-grep-9 hover:text-foreground focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-950"
             >
               <option value="all">All categories ({stats.total})</option>

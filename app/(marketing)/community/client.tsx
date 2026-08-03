@@ -455,13 +455,15 @@ export default function CommunityClient() {
   const handleVote = async (siteId: string) => {
     if (hasVoted(siteId)) return
     setVotingId(siteId)
-    try {
-      const response = await fetch('/api/community/vote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ siteId }),
-      })
-      if (!response.ok) return
+    const response = await fetch('/api/community/vote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ siteId }),
+    }).catch((error: unknown) => {
+      console.error('Error voting:', error)
+      return null
+    })
+    if (response?.ok) {
       addVote(siteId)
       setSites((prev) =>
         prev.map((site) =>
@@ -475,11 +477,8 @@ export default function CommunityClient() {
             : site
         )
       )
-    } catch (error) {
-      console.error('Error voting:', error)
-    } finally {
-      setVotingId(null)
     }
+    setVotingId(null)
   }
 
   const loading = !loaded || isPending

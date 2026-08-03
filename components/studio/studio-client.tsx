@@ -340,6 +340,7 @@ export default function StudioClient() {
                 <Input
                   value={system.name}
                   onChange={(event) => update('name', event.target.value)}
+                  aria-label="System name"
                   className="rounded-xl border-[color:var(--soft-border)] bg-card/60"
                 />
               </Field>

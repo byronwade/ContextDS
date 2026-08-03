@@ -82,7 +82,7 @@ export function ArtifactsSection({
                 window.location.href = `/api/contracts/download?domain=${encodeURIComponent(domain)}`
               }}
             >
-              <DownloadSimpleIcon className="size-3.5" />
+              <DownloadSimpleIcon data-icon="inline-start" className="size-3.5" />
               Download ZIP
             </Button>
             {installCommand ? (

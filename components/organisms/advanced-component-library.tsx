@@ -159,6 +159,7 @@ export function AdvancedComponentLibrary({ componentLibrary, onCopy }: AdvancedC
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as any)}
+            aria-label="Sort components by"
             className="text-xs border border-grep-2 rounded px-2 py-1 bg-background"
           >
             <option value="confidence">Confidence</option>

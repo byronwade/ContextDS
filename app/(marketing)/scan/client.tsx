@@ -497,7 +497,8 @@ export function ScanChat() {
     }
   }, [messages, status, chatId])
 
-  const busy = status === 'submitted' || status === 'streaming'
+  const [packPending, setPackPending] = useState(false)
+  const busy = status === 'submitted' || status === 'streaming' || packPending
   const hasMessages = messages.length > 0 || Boolean(searchParams.get('url'))
 
   // --- Canvas ------------------------------------------------------------
@@ -623,62 +624,59 @@ export function ScanChat() {
         parseSlashCommand(rawText)?.args?.trim() ||
         (rawText && !rawText.startsWith('/') ? rawText.slice(0, 80) : '') ||
         'App UI'
-      try {
-        const response = await fetch('/api/contracts/from-image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            images: imageFiles.map((file) => ({
-              imageBase64: file.url || '',
-              mimeType: file.mediaType || 'image/png',
-            })),
-            name: nameHint,
-            preferApp: true,
-          }),
-        })
-        const payload = (await response.json()) as {
-          error?: string
-          code?: string
-          upgradePath?: string
-          domain?: string
-          imageCount?: number
-          designContract?: { installCommand?: string }
-          metadata?: { visionSignature?: string; appType?: string }
-          billing?: { appPacksRemaining?: number }
-        }
-        if (!response.ok) {
-          const upgradeHint =
-            response.status === 402
-              ? ` Buy credits at ${payload.upgradePath || '/pricing'} ($4 / 1 pack, $15 / 5 — never expire).`
-              : ''
-          void sendMessage({
-            text: `App Pack failed: ${payload.error || response.statusText}.${upgradeHint} ${rawText || ''}`.trim(),
-          })
-          return
-        }
-        pushRecent(payload.domain || '')
+      setPackPending(true)
+      const response = await fetch('/api/contracts/from-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          images: imageFiles.map((file) => ({
+            imageBase64: file.url || '',
+            mimeType: file.mediaType || 'image/png',
+          })),
+          name: nameHint,
+          preferApp: true,
+        }),
+      }).catch(() => null)
+      const payload = response
+        ? ((await response.json().catch(() => null)) as {
+            error?: string
+            code?: string
+            upgradePath?: string
+            domain?: string
+            imageCount?: number
+            designContract?: { installCommand?: string }
+            metadata?: { visionSignature?: string; appType?: string }
+            billing?: { appPacksRemaining?: number }
+          } | null)
+        : null
+      if (!response || !payload || !response.ok) {
+        const upgradeHint =
+          response?.status === 402
+            ? ` Buy credits at ${payload?.upgradePath || '/pricing'} ($4 / 1 pack, $15 / 5 — never expire).`
+            : ''
         void sendMessage({
-          text: [
-            `I built an App Pack (${payload.imageCount || imageFiles.length} screenshots) as \`${payload.domain}\`.`,
-            payload.metadata?.visionSignature
-              ? `Signature: ${payload.metadata.visionSignature}`
-              : null,
-            `App type: ${payload.metadata?.appType || 'saas-workbench'}.`,
-            typeof payload.billing?.appPacksRemaining === 'number'
-              ? `${payload.billing.appPacksRemaining} App Pack credits left.`
-              : null,
-            'Call get_tokens on that domain, summarize the system, and give the install command. This is app UI — not marketing.',
-          ]
-            .filter(Boolean)
-            .join(' '),
+          text: `App Pack failed: ${payload?.error || response?.statusText || 'unknown error'}.${upgradeHint} ${rawText || ''}`.trim(),
         })
-      } catch (error) {
-        void sendMessage({
-          text: `Could not process the App Pack: ${
-            error instanceof Error ? error.message : 'unknown error'
-          }`,
-        })
+        setPackPending(false)
+        return
       }
+      pushRecent(payload.domain || '')
+      void sendMessage({
+        text: [
+          `I built an App Pack (${payload.imageCount || imageFiles.length} screenshots) as \`${payload.domain}\`.`,
+          payload.metadata?.visionSignature
+            ? `Signature: ${payload.metadata.visionSignature}`
+            : null,
+          `App type: ${payload.metadata?.appType || 'saas-workbench'}.`,
+          typeof payload.billing?.appPacksRemaining === 'number'
+            ? `${payload.billing.appPacksRemaining} App Pack credits left.`
+            : null,
+          'Call get_tokens on that domain, summarize the system, and give the install command. This is app UI — not marketing.',
+        ]
+          .filter(Boolean)
+          .join(' '),
+      })
+      setPackPending(false)
       return
     }
 

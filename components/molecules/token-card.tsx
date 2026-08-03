@@ -65,6 +65,8 @@ export function TokenCard({
             variant="ghost"
             size="sm"
             onClick={handleCopy}
+            aria-label={`Copy ${token.name}`}
+            title={`Copy ${token.name}`}
             className="opacity-0 group-hover:opacity-100 transition-opacity shadow-interactive"
           >
             <Copy className="h-4 w-4" />
