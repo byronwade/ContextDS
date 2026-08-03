@@ -251,21 +251,21 @@ function SystemCard({ system, loadFont }: { system: LibrarySystem; loadFont: boo
   const forkSystem = async () => {
     if (forking) return
     setForking(true)
-    try {
-      const response = await fetch('/api/systems/fork', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ systemId: system.id }),
-      })
-      const data = (await response.json()) as { canvasHref?: string; error?: string }
-      if (!response.ok || !data.canvasHref) {
-        throw new Error(data.error || 'Fork failed')
-      }
-      trackClientEvent('system_forked')
-      window.location.href = data.canvasHref
-    } catch {
+    const response = await fetch('/api/systems/fork', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ systemId: system.id }),
+    })
+    const data = (await response.json().catch(() => null)) as {
+      canvasHref?: string
+      error?: string
+    } | null
+    if (!response.ok || !data?.canvasHref) {
       setForking(false)
+      return
     }
+    trackClientEvent('system_forked')
+    window.location.href = data.canvasHref
   }
 
   return (
@@ -389,22 +389,22 @@ export default function CommunityClient() {
   useEffect(() => {
     let cancelled = false
     startTransition(async () => {
-      try {
-        const response = await fetch(`/api/community/sites?sort=${sortBy}`)
-        if (!response.ok) throw new Error('Failed to load sites')
-        const data = await response.json()
-        if (cancelled) return
-        const next = (data.sites || []).map((site: Site) => ({
-          ...site,
-          hasVoted: hasVoted(site.id),
-        }))
-        setSites(next)
-      } catch (error) {
-        console.error('Error loading sites:', error)
-        if (!cancelled) setSites([])
-      } finally {
-        if (!cancelled) setLoaded(true)
+      const response = await fetch(`/api/community/sites?sort=${sortBy}`)
+      if (!response.ok) {
+        if (!cancelled) {
+          setSites([])
+          setLoaded(true)
+        }
+        return
       }
+      const data = await response.json()
+      if (cancelled) return
+      const next = (data.sites || []).map((site: Site) => ({
+        ...site,
+        hasVoted: hasVoted(site.id),
+      }))
+      setSites(next)
+      setLoaded(true)
     })
     return () => {
       cancelled = true
@@ -414,16 +414,14 @@ export default function CommunityClient() {
   useEffect(() => {
     let cancelled = false
     void (async () => {
-      try {
-        const response = await fetch('/api/systems?limit=100&visibility=public')
-        if (!response.ok) throw new Error('Failed to load systems')
-        const data = await response.json()
-        if (cancelled) return
-        setSystems(Array.isArray(data.systems) ? data.systems : [])
-      } catch (error) {
-        console.error('Error loading systems:', error)
+      const response = await fetch('/api/systems?limit=100&visibility=public')
+      if (!response.ok) {
         if (!cancelled) setSystems([])
+        return
       }
+      const data = await response.json()
+      if (cancelled) return
+      setSystems(Array.isArray(data.systems) ? data.systems : [])
     })()
     return () => {
       cancelled = true

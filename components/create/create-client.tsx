@@ -101,14 +101,18 @@ export default function CreateClient() {
     setBusy(true)
     setError(null)
     setNote(null)
-    try {
-      const message = await fn()
-      if (typeof message === 'string' && message) setNote(message)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Generation failed')
-    } finally {
-      setBusy(false)
+    const result = await fn()
+      .then((message) => ({ ok: true as const, message }))
+      .catch((err: unknown) => ({
+        ok: false as const,
+        error: err instanceof Error ? err.message : 'Generation failed',
+      }))
+    if (result.ok) {
+      if (typeof result.message === 'string' && result.message) setNote(result.message)
+    } else {
+      setError(result.error)
     }
+    setBusy(false)
   }
 
   const tabs: Array<{ id: Tab; label: string; icon: typeof SparkleIcon }> = [

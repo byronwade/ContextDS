@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 import {
   ProgressiveLoader,
@@ -63,6 +63,20 @@ interface ScanResultData {
   database?: any
 }
 
+const INITIAL_PROGRESSIVE_STATE: ProgressiveState<ScanResultData> = {
+  status: 'skeleton',
+  data: null,
+  progress: {
+    phase: 'initializing',
+    step: 0,
+    totalSteps: 6,
+    completedSteps: [],
+    estimatedCompletion: 0,
+  },
+  skeleton: true,
+  timestamp: 0,
+}
+
 export function ProgressiveScanResults({
   scanId,
   domain,
@@ -74,23 +88,29 @@ export function ProgressiveScanResults({
   const [scanData, setScanData] = useState<ScanResultData | null>(null)
   const [currentPhase, setCurrentPhase] = useState<ProgressivePhase>('initializing')
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [now, setNow] = useState(0)
 
-  const loader = useRef<ProgressiveLoader<ScanResultData>>(
-    new ProgressiveLoader<ScanResultData>({
-      skeletonTimeout: 1500, // Show skeleton for max 1.5s
-      minSkeletonDuration: 200, // Min 200ms for smooth transitions
-      transitionDuration: 250, // 250ms CSS transitions
-      streamingEnabled: true
-    })
+  const [loader] = useState(
+    () =>
+      new ProgressiveLoader<ScanResultData>({
+        skeletonTimeout: 1500,
+        minSkeletonDuration: 200,
+        transitionDuration: 250,
+        streamingEnabled: true,
+      })
   )
 
-  const [progressiveState, setProgressiveState] = useState<ProgressiveState<ScanResultData>>(
-    loader.current.getState()
-  )
+  const [progressiveState, setProgressiveState] =
+    useState<ProgressiveState<ScanResultData>>(INITIAL_PROGRESSIVE_STATE)
 
   useEffect(() => {
-    // Subscribe to progressive state changes
-    const unsubscribe = loader.current.subscribe((state) => {
+    setNow(Date.now())
+    const id = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => window.clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    const unsubscribe = loader.subscribe((state) => {
       setProgressiveState(state)
 
       if (state.data) {
@@ -106,15 +126,14 @@ export function ProgressiveScanResults({
       }
     })
 
-    // Start progressive loading immediately
     console.log('🚀 Starting progressive scan results - skeletons show immediately')
-    loader.current.start()
+    loader.start()
 
     return () => {
       unsubscribe()
-      loader.current.destroy()
+      loader.destroy()
     }
-  }, [onScanComplete, onError])
+  }, [loader, onScanComplete, onError])
 
   // Simulate receiving progressive updates (in real app, this would come from scanning system)
   useEffect(() => {
@@ -126,7 +145,7 @@ export function ProgressiveScanResults({
     }
 
     schedule(300, () => {
-      loader.current.update({
+      loader.update({
         phase: 'css-collection',
         step: 'static-css-collected',
         data: {
@@ -139,7 +158,7 @@ export function ProgressiveScanResults({
     })
 
     schedule(800, () => {
-      loader.current.update({
+      loader.update({
         phase: 'token-generation',
         step: 'legacy-tokens-generated',
         data: {
@@ -151,7 +170,7 @@ export function ProgressiveScanResults({
     })
 
     schedule(1200, () => {
-      loader.current.update({
+      loader.update({
         phase: 'analysis',
         step: 'layout-analysis-complete',
         data: {
@@ -163,7 +182,7 @@ export function ProgressiveScanResults({
     })
 
     schedule(1800, () => {
-      loader.current.update({
+      loader.update({
         phase: 'ai-processing',
         step: 'ai-insights-generated',
         data: {
@@ -176,7 +195,7 @@ export function ProgressiveScanResults({
     })
 
     schedule(2200, () => {
-      loader.current.complete({
+      loader.complete({
         domain: domain || 'example.com',
         url: url || 'https://example.com',
         favicon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
@@ -196,10 +215,10 @@ export function ProgressiveScanResults({
     return () => {
       for (const timer of timers) window.clearTimeout(timer)
     }
-  }, [scanId, domain, url])
+  }, [loader, scanId, domain, url])
 
   const shouldShowSkeleton =
-    progressiveState.status === 'loading' || progressiveState.status === 'streaming'
+    progressiveState.skeleton || progressiveState.status === 'skeleton'
   const transitionClasses =
     progressiveState.status === 'complete' ? 'opacity-100' : 'opacity-100 transition-opacity'
 
@@ -244,11 +263,20 @@ export function ProgressiveScanResults({
                     {PROGRESSIVE_PHASES[progressiveState.progress.phase as ProgressivePhase]}
                   </Badge>
                 </div>
-                {progressiveState.progress.estimatedCompletion > 0 && (
+                {progressiveState.progress.estimatedCompletion > 0 && now > 0 ? (
                   <span className="text-xs text-muted-foreground">
-                    Est. {Math.round((progressiveState.progress.estimatedCompletion - (Date.now() - progressiveState.timestamp)) / 1000)}s remaining
+                    Est.{' '}
+                    {Math.max(
+                      0,
+                      Math.round(
+                        (progressiveState.progress.estimatedCompletion -
+                          (now - progressiveState.timestamp)) /
+                          1000
+                      )
+                    )}
+                    s remaining
                   </span>
-                )}
+                ) : null}
               </div>
             </div>
             <div className="flex items-center gap-2">
