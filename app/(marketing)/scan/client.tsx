@@ -30,11 +30,13 @@ import {
 } from '@/components/ai-elements/message'
 import {
   PromptInput,
+  PromptInputBody,
+  PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
+  PromptInputTools,
   type PromptInputMessage,
 } from '@/components/ai-elements/prompt-input'
-import { InputGroupAddon } from '@/components/ui/input-group'
 import {
   Bubble,
   BubbleContent,
@@ -42,6 +44,7 @@ import {
 } from '@/components/ui/bubble'
 import { Marker, MarkerContent, MarkerIcon } from '@/components/ui/marker'
 import {
+  ArrowUpIcon,
   CheckIcon,
   CircleNotchIcon,
   CopyIcon,
@@ -656,14 +659,14 @@ export function ScanChat() {
           <ConversationScrollButton />
         </Conversation>
 
-        {/* Composer — single-row Cursor-style field, send inline */}
+        {/* Composer — Cursor-style writing surface + compact toolbar */}
         <div className="relative shrink-0 bg-[var(--ui-paper)]">
-          <div className="mx-auto w-full max-w-[712px] px-4 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-2 sm:px-6">
+          <div className="mx-auto w-full max-w-[712px] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-6">
             {slashMatches.length > 0 ? (
               <div
                 role="listbox"
                 aria-label="Slash commands"
-                className="mb-2 overflow-hidden rounded-[10px] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)]"
+                className="mb-2 overflow-hidden rounded-[12px] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)]"
               >
                 {slashMatches.map((command) => {
                   const active = command.name === activeSlash?.name
@@ -700,32 +703,45 @@ export function ScanChat() {
             <PromptInput
               onSubmit={onSubmit}
               className={cn(
-                'items-end overflow-hidden rounded-[10px] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] shadow-none',
-                'has-[[data-slot=input-group-control]:focus-visible]:border-[var(--ui-ink-muted)]'
+                'overflow-hidden rounded-[12px] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] shadow-none',
+                'has-[[data-slot=input-group-control]:focus-visible]:border-[var(--ui-ink)]'
               )}
             >
-              <PromptInputTextarea
-                value={text}
-                onChange={(event) => setText(event.target.value)}
-                onKeyDown={onComposerKeyDown}
-                placeholder="Ask about a site, or type / for commands"
-                disabled={busy && status === 'submitted'}
-                className="min-h-[40px] max-h-40 px-3.5 py-2.5 text-[14px] leading-snug placeholder:text-[var(--ui-ink-muted)]"
-                aria-label="Message"
-              />
-              <InputGroupAddon
-                align="inline-end"
-                className="self-end py-1.5 pr-1.5"
-              >
+              <PromptInputBody>
+                <PromptInputTextarea
+                  value={text}
+                  onChange={(event) => setText(event.target.value)}
+                  onKeyDown={onComposerKeyDown}
+                  placeholder="Ask about a site, or type / for commands"
+                  disabled={busy && status === 'submitted'}
+                  className="min-h-[52px] max-h-48 px-3.5 pb-1.5 pt-3 text-[15px] leading-relaxed placeholder:text-[var(--ui-ink-muted)]"
+                  aria-label="Message"
+                />
+              </PromptInputBody>
+              <PromptInputFooter className="items-center border-0 border-t border-[var(--ui-border-soft)] bg-transparent px-2.5 py-2">
+                <PromptInputTools>
+                  <span className="select-none text-[12px] text-[var(--ui-ink-muted)]">
+                    Enter to send
+                  </span>
+                </PromptInputTools>
                 <PromptInputSubmit
                   status={status}
                   disabled={!busy && !text.trim()}
                   onStop={() => stop()}
                   size="icon-xs"
-                  variant={busy || text.trim() ? 'default' : 'secondary'}
-                  className="rounded-[8px]"
-                />
-              </InputGroupAddon>
+                  variant="default"
+                  className={cn(
+                    'size-7 shrink-0 rounded-full border-0 shadow-none',
+                    !text.trim() && !busy
+                      ? 'bg-[var(--ui-ink)]/12 text-[var(--ui-ink-muted)] hover:bg-[var(--ui-ink)]/12 disabled:opacity-100'
+                      : 'bg-[var(--ui-accent)] text-[var(--ui-on-primary)] hover:bg-[var(--ui-accent-hover)]'
+                  )}
+                >
+                  {status === 'streaming' || status === 'submitted' ? null : (
+                    <ArrowUpIcon className="size-3.5" weight="bold" />
+                  )}
+                </PromptInputSubmit>
+              </PromptInputFooter>
             </PromptInput>
           </div>
         </div>

@@ -48,7 +48,7 @@ Outer cream canvas (`#f7f7f4` / dark `#161612`)
 Rules:
 - Stats strip + body + composer = **one paper sheet** (no chrome outside the sheet on desktop).
 - Home chat uses the same paper inset as docs/library — never flush the sheet to the sidebar.
-- Chat composer: single-row field (`max-w` 712px), edge border, inline send, grows with content.
+- Chat composer: writing surface + compact toolbar (`max-w` 712px), edge border, ↑ send, grows with content.
 - Prefer `--ui-border-soft` for internal dividers; `--ui-border` for card outlines; `--ui-border-edge` for stronger panel outlines / secondary buttons.
 - Theme defaults to **light**; FOUC script + `html.light` enforce it.
 - Keep uppercase/mono labels scarce — prefer calm sentence-case chrome.

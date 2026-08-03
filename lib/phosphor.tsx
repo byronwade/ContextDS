@@ -28,6 +28,7 @@ function duotone(Base: Icon): Icon {
 export const ArrowDownIcon = duotone(P.ArrowDownIcon)
 export const ArrowElbowDownLeftIcon = duotone(P.ArrowElbowDownLeftIcon)
 export const ArrowSquareOutIcon = duotone(P.ArrowSquareOutIcon)
+export const ArrowUpIcon = duotone(P.ArrowUpIcon)
 export const ArrowUpRightIcon = duotone(P.ArrowUpRightIcon)
 export const ArrowsClockwiseIcon = duotone(P.ArrowsClockwiseIcon)
 export const CaretDownIcon = duotone(P.CaretDownIcon)
