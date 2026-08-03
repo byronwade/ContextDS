@@ -30,8 +30,8 @@ export function PageCanvas({
   variant?: PageCanvasVariant
 }) {
   return (
- <div className={cn('min-h-0 flex-1 overflow-y-auto', className)}>
- <div className={cn(INNER[variant], innerClassName)}>{children}</div>
+    <div className={cn('min-h-0 flex-1 overflow-y-auto', className)}>
+      <div className={cn(INNER[variant], innerClassName)}>{children}</div>
     </div>
   )
 }
