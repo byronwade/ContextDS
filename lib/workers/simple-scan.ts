@@ -758,19 +758,46 @@ export async function runSimpleScan({
   const clientCurated = slimCuratedForClient(curated)
   const clientGraph = slimSemanticGraph(semanticGraph)
 
-  const contractScreenshots = screenshots?.length
-    ? screenshots.map((shot) => ({
-        label: shot.label,
-        url: shot.url,
-        note: 'Captured during accurate browser scan — use as visual ground truth.',
-      }))
-    : [
-        {
-          label: 'homepage',
-          url: target.toString(),
-          note: 'Preserve hierarchy, density, and material from the live homepage observation.',
-        },
-      ]
+  const captureSource: CapturedScreenshot[] =
+    browserScreenshotSet && browserScreenshotSet.length > 0
+      ? browserScreenshotSet.slice(0, 12)
+      : browserScreenshot?.base64
+        ? [
+            {
+              label: 'homepage',
+              viewport: 'desktop',
+              mime: browserScreenshot.mime,
+              base64: browserScreenshot.base64,
+            },
+          ]
+        : []
+
+  const contractScreenshots =
+    captureSource.length > 0
+      ? captureSource.map((capture, index) => {
+          const persisted = screenshots?.[index]
+          return {
+            label: capture.label || persisted?.label || `surface-${index + 1}`,
+            url: persisted?.url,
+            mime: capture.mime || persisted?.mime || 'image/jpeg',
+            bytesBase64: capture.base64,
+            note: 'Captured during accurate browser scan — open the pack image when struggling.',
+          }
+        })
+      : screenshots?.length
+        ? screenshots.map((shot) => ({
+            label: shot.label,
+            url: shot.url,
+            mime: shot.mime,
+            note: 'Captured during accurate browser scan — use as visual ground truth.',
+          }))
+        : [
+            {
+              label: 'homepage',
+              url: target.toString(),
+              note: 'Preserve hierarchy, density, and material from the live homepage observation.',
+            },
+          ]
 
   // Classify the site into an engine profile + app type from real scan evidence
   const appTypeDetection = detectAppType({

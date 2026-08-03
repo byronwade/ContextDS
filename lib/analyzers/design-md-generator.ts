@@ -73,6 +73,12 @@ export type DesignMdInput = {
     transitions?: Array<{ value: string; weight: number }>
     keyframes?: Array<{ name: string; css?: string }>
   } | null
+  /** Pack-local / remote screenshots agents should open when stuck */
+  referenceScreenshots?: Array<{
+    label: string
+    path?: string
+    url?: string
+  }> | null
 }
 
 export type MeasuredComponentRecipe = {
@@ -681,8 +687,23 @@ export function generateDesignMd(input: DesignMdInput): DesignMdArtifact {
     '',
     '## References',
     '',
-    'Approved references live under `design/references/` and may include screenshots, golden states, and pattern notes. Register why each reference matters, what to preserve, and what not to copy. See `design/references/manifest.json` when present. A project may start with zero references.',
-    '',
+    ...(input.referenceScreenshots?.some((shot) => shot.path || shot.url)
+      ? [
+          'Captured surface screenshots are part of this contract. **Open these images when hierarchy, density, chrome, or materials are ambiguous** — do not invent UI from tokens alone if the screenshot contradicts your guess.',
+          '',
+          ...input.referenceScreenshots.map((shot) => {
+            if (shot.path) return `- \`${shot.path}\` — ${shot.label}`
+            if (shot.url) return `- ${shot.label}: ${shot.url}`
+            return `- ${shot.label}`
+          }),
+          '',
+          'Full registry: `design/REFERENCES.md` and `design/references/manifest.json`. Preserve hierarchy, spacing rhythm, accent scarcity, and typography roles — do not copy pixel-perfect chrome or product copy.',
+          '',
+        ]
+      : [
+          'Approved references live under `design/references/` and may include screenshots, golden states, and pattern notes. Register why each reference matters, what to preserve, and what not to copy. See `design/references/manifest.json` when present. A project may start with zero references.',
+          '',
+        ]),
     '## Colors',
     '',
     `Palette ranked by observed CSS usage, render evidence, and color science (${philosophy.systems.color.polarity}, ${philosophy.systems.color.temperature}).`,

@@ -104,7 +104,7 @@ export interface StoredScanResult {
       spacingCount: number
       fileCount: number
     }
-    files: Array<{ path: string; content: string }>
+    files: Array<{ path: string; content: string; encoding?: 'utf8' | 'base64' }>
     /** Present on API responses so clients can download the full pack */
     download?: string
   }

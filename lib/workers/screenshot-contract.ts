@@ -235,20 +235,17 @@ export async function runScreenshotContract(
     },
   ]
 
-  const contractScreenshots =
-    uploadedScreenshots.length > 0
-      ? uploadedScreenshots.map((shot) => ({
-          label: shot.label,
-          url: shot.url,
-          note: 'User-uploaded application screenshot — visual ground truth for this vision-derived contract.',
-        }))
-      : [
-          {
-            label: 'app-screenshot',
-            url,
-            note: `${images.length} App Pack screenshots (not persisted — set BLOB_READ_WRITE_TOKEN).`,
-          },
-        ]
+  // Always embed App Pack bytes so agents can open local reference images offline
+  const contractScreenshots = images.map((image, index) => {
+    const uploaded = uploadedScreenshots[index]
+    return {
+      label: uploaded?.label || `app-screenshot-${index + 1}`,
+      url: uploaded?.url,
+      mime: image.mimeType || uploaded?.mime || 'image/png',
+      bytesBase64: image.imageBase64,
+      note: 'User-uploaded application screenshot — open this pack image when struggling with layout or materials.',
+    }
+  })
 
   const contractPack = buildDesignContractPackage({
     ...mapped.designMdInput,

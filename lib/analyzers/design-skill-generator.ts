@@ -33,6 +33,8 @@ export type DesignSkillInput = {
   } | null
   /** Measured component recipe keys from accurate scans */
   measuredComponents?: string[] | null
+  /** Pack-local screenshot paths under design/references/surfaces/ */
+  referenceScreenshots?: string[] | null
 }
 
 export type DesignSkillArtifact = {
@@ -87,10 +89,11 @@ ${
 ## Required workflow
 
 1. **Read \`${designMd}\` first** — YAML front matter is normative; principles explain intent.
-2. **Map tokens before coding** — colors, type, spacing, radius, motion, components you will use.
-3. **Prefer measured recipes** — \`components.*\` in YAML (especially accurate-scan recipes) over inventing controls.
-4. **Generate UI** using only those tokens (Tailwind theme values or CSS variables).
-5. **Self-check** against Preferred Guidance and Do's / Don'ts in \`${designMd}\`.
+2. **Open reference screenshots** under \`design/references/surfaces/\` when layout, density, chrome, or materials are unclear — match the image before inventing UI.
+3. **Map tokens before coding** — colors, type, spacing, radius, motion, components you will use.
+4. **Prefer measured recipes** — \`components.*\` in YAML (especially accurate-scan recipes) over inventing controls.
+5. **Generate UI** using only those tokens (Tailwind theme values or CSS variables).
+6. **Self-check** against Preferred Guidance and Do's / Don'ts in \`${designMd}\`, and against the screenshots if something still feels off.
 
 ## Token quick reference
 
@@ -134,6 +137,14 @@ ${
     : ''
 }
 
+${
+  input.referenceScreenshots?.length
+    ? `## Visual references (open when stuck)\n\n${input.referenceScreenshots
+        .map((path) => `- \`${path}\``)
+        .join('\n')}\n\nIf you are struggling, load these images and match hierarchy, density, and materials.\n`
+    : `## Visual references\n\nSee \`design/references/surfaces/\` and \`design/REFERENCES.md\` when screenshots are present.\n`
+}
+
 ## Hard rules
 
 - Never invent brand colors not present in \`${designMd}\`.
@@ -142,6 +153,7 @@ ${
 - Keep accent scarce — primary CTAs are rare, not decoration.
 - Primary CTA must use \`components.button-primary\` (and its \`hover\` state when present).
 - If a value is missing, ask or derive from the nearest scale step — do not freestyle.
+- When unsure about structure or material, open the reference screenshots before guessing.
 - Do not edit \`.design/generated/\`; change \`${designMd}\` and re-resolve.
 
 ## Output expectations
