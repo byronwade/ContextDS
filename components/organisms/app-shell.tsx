@@ -289,7 +289,7 @@ export function AppShell({
           </div>
         ) : null}
 
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-0 md:p-2 md:pl-0">
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-0 md:p-2">
           <header className="flex h-14 shrink-0 items-center gap-2 border-b border-[var(--ui-border-soft)] px-3 md:hidden">
             <Button
               variant="ghost"
@@ -306,7 +306,7 @@ export function AppShell({
           </header>
 
           <main
-            className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--ui-paper)] md:rounded-[var(--radius-shell)] md:border md:border-[var(--ui-border)]"
+            className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--ui-paper)] md:rounded-[var(--radius-shell)] md:border md:border-[var(--ui-border-edge)]"
             id="main-content"
           >
             <div className="hidden shrink-0 border-b border-[var(--ui-border-soft)] bg-[var(--ui-paper-subtle)] md:block">

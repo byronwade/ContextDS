@@ -48,7 +48,7 @@ const inputGroupAddonVariants = cva(
         "block-start":
           "order-first w-full justify-start px-3 pt-3 group-has-[>input]/input-group:pt-2.5 [.border-b]:pb-3",
         "block-end":
-          "order-last w-full justify-start px-3 pb-3 group-has-[>input]/input-group:pb-2.5 [.border-t]:pt-3",
+          "order-last w-full justify-start px-2.5 py-1.5 group-has-[>input]/input-group:pb-2 [.border-t]:pt-0",
       },
     },
     defaultVariants: {
@@ -152,7 +152,7 @@ function InputGroupTextarea({
     <Textarea
       data-slot="input-group-control"
       className={cn(
-        "flex-1 resize-none rounded-none border-0 bg-transparent py-3 shadow-none focus-visible:ring-0 dark:bg-transparent",
+        "flex-1 resize-none rounded-none border-0 bg-transparent py-2.5 shadow-none focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent",
         className
       )}
       {...props}

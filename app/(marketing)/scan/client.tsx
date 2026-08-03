@@ -34,6 +34,7 @@ import {
   PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
+  PromptInputTools,
   type PromptInputMessage,
 } from '@/components/ai-elements/prompt-input'
 import {
@@ -342,15 +343,15 @@ function EmptyState({
   disabled?: boolean
 }) {
   return (
-    <div className="mx-auto flex w-full max-w-[640px] flex-1 flex-col items-center justify-center px-4 pb-12 pt-16 animate-fade-in">
+    <div className="mx-auto flex w-full max-w-[712px] flex-1 flex-col items-center justify-center px-1 pb-10 pt-14 animate-fade-in">
       <h1 className="text-[clamp(2rem,5vw,2.75rem)] font-normal leading-[1.15] tracking-[-0.04em] text-[var(--ui-ink)]">
         designcontracts
         <span className="text-[var(--ui-accent)]">.sh</span>
       </h1>
-      <p className="mt-4 max-w-sm text-center text-[15px] leading-relaxed text-[var(--ui-ink-secondary)]">
+      <p className="mt-3 max-w-sm text-center text-[15px] leading-relaxed text-[var(--ui-ink-secondary)]">
         Paste a URL. Get an installable Design Contract.
       </p>
-      <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+      <div className="mt-7 flex flex-wrap items-center justify-center gap-1.5">
         {EXAMPLES.map((example, index) => (
           <button
             key={example.label}
@@ -358,7 +359,7 @@ function EmptyState({
             disabled={disabled}
             onClick={() => onPick(example.prompt)}
             className={cn(
-              'h-9 rounded-[var(--radius-md)] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] px-3 text-[13px] text-[var(--ui-ink-secondary)] transition',
+              'h-8 rounded-[var(--radius-md)] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] px-2.5 text-[13px] text-[var(--ui-ink-secondary)] transition',
               'hover:border-[var(--ui-border-edge)] hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)] disabled:opacity-50',
               'animate-slide-in'
             )}
@@ -369,7 +370,7 @@ function EmptyState({
         ))}
       </div>
 
-      <div className="mt-10 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
         {CAPABILITIES.map((capability) => (
           <button
             key={capability.label}
@@ -657,14 +658,14 @@ export function ScanChat() {
           <ConversationScrollButton />
         </Conversation>
 
-        {/* Composer — single hairline field on cream paper */}
-        <div className="relative shrink-0 bg-[var(--ui-paper)]">
-          <div className="mx-auto w-full max-w-[640px] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 sm:px-6">
+        {/* Composer — compact Cursor-style dock aligned to chat column */}
+        <div className="relative shrink-0 border-t border-[var(--ui-border-soft)] bg-[var(--ui-paper)]">
+          <div className="mx-auto w-full max-w-[712px] px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:px-6">
             {slashMatches.length > 0 ? (
               <div
                 role="listbox"
                 aria-label="Slash commands"
-                className="mb-2 overflow-hidden rounded-[var(--radius-paper)] border border-[var(--ui-border)] bg-[var(--ui-paper)]"
+                className="mb-2 overflow-hidden rounded-[var(--radius-md)] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)]"
               >
                 {slashMatches.map((command) => {
                   const active = command.name === activeSlash?.name
@@ -700,28 +701,34 @@ export function ScanChat() {
             ) : null}
             <PromptInput
               onSubmit={onSubmit}
-              className="overflow-hidden rounded-[var(--radius-paper)] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] shadow-none"
+              className="overflow-hidden rounded-[10px] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] shadow-none has-[[data-slot=input-group-control]:focus-visible]:border-[var(--ui-ink-muted)]"
             >
               <PromptInputBody>
                 <PromptInputTextarea
                   value={text}
                   onChange={(event) => setText(event.target.value)}
                   onKeyDown={onComposerKeyDown}
-                  placeholder="Ask about a site, or / for commands"
+                  placeholder="Ask about a site, or type / for commands"
                   disabled={busy && status === 'submitted'}
-                  className="min-h-[52px] px-3 pt-3 text-[15px] leading-relaxed placeholder:text-[var(--ui-ink-muted)]"
+                  className="min-h-10 max-h-40 px-3.5 py-2.5 text-[14px] leading-snug placeholder:text-[var(--ui-ink-muted)]"
                   aria-label="Message"
                 />
               </PromptInputBody>
-              <PromptInputFooter className="px-2 pb-2">
-                <span className="truncate text-[12px] text-[var(--ui-ink-muted)]">
-                  Enter to send
-                </span>
+              <PromptInputFooter>
+                <PromptInputTools>
+                  <span className="select-none font-mono text-[11px] text-[var(--ui-ink-muted)]">
+                    / commands · ⏎ send
+                  </span>
+                </PromptInputTools>
                 <PromptInputSubmit
                   status={status}
                   disabled={!busy && !text.trim()}
                   onStop={() => stop()}
-                  className="rounded-[var(--radius-md)]"
+                  size="icon-xs"
+                  variant={
+                    busy || text.trim() ? 'default' : 'secondary'
+                  }
+                  className="rounded-[8px]"
                 />
               </PromptInputFooter>
             </PromptInput>

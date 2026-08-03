@@ -1050,7 +1050,10 @@ export const PromptInputTextarea = ({
 
   return (
     <InputGroupTextarea
-      className={cn("field-sizing-content max-h-48 min-h-16", className)}
+      className={cn(
+        "field-sizing-content max-h-48 min-h-10 py-2.5 text-[15px] leading-snug",
+        className
+      )}
       name="message"
       onCompositionEnd={handleCompositionEnd}
       onCompositionStart={handleCompositionStart}
@@ -1090,7 +1093,10 @@ export const PromptInputFooter = ({
 }: PromptInputFooterProps) => (
   <InputGroupAddon
     align="block-end"
-    className={cn("justify-between gap-1", className)}
+    className={cn(
+      "justify-between gap-2 border-t border-[var(--ui-border-soft)] bg-[var(--ui-paper-subtle)] px-2.5 py-1.5",
+      className
+    )}
     {...props}
   />
 );
