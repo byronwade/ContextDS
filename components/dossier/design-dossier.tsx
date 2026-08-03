@@ -447,7 +447,7 @@ export function DesignDossier({
         <h1 className="font-serif text-4xl tracking-tight text-foreground">{domain}</h1>
         <p className="text-sm text-muted-foreground">{error}</p>
         <Button className="mt-2 gap-2" onClick={onRescan}>
-          <ArrowsClockwiseIcon className="size-3.5" />
+          <ArrowsClockwiseIcon data-icon="inline-start" className="size-3.5" />
           Scan again
         </Button>
       </div>

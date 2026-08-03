@@ -945,13 +945,15 @@ export const PromptInput = ({
           {children}
         </InputGroup>
         {submitError ? (
-          <p
-            role="alert"
-            data-slot="form-message"
-            className="mt-2 px-1 text-xs text-destructive"
-          >
-            {submitError}
-          </p>
+          <div className="mt-2 px-1">
+            <p
+              role="alert"
+              data-slot="form-message"
+              className="text-xs text-destructive"
+            >
+              {submitError}
+            </p>
+          </div>
         ) : null}
       </form>
     </>

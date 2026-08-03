@@ -386,22 +386,22 @@ function ComposerSendButton({
   status,
   text,
   busy,
-  packPending,
+  isPending,
   onStop,
 }: {
   status: 'ready' | 'submitted' | 'streaming' | 'error'
   text: string
   busy: boolean
-  packPending: boolean
+  isPending: boolean
   onStop: () => void
 }) {
   const attachments = usePromptInputAttachments()
   const canSend = Boolean(text.trim() || attachments.files.length > 0)
   return (
     <PromptInputSubmit
-      status={packPending ? 'submitted' : status}
-      disabled={packPending || (!busy && !canSend)}
-      aria-busy={packPending || busy}
+      status={isPending ? 'submitted' : status}
+      disabled={isPending || (!busy && !canSend)}
+      aria-busy={isPending || busy}
       onStop={onStop}
       size="icon-xs"
       variant="default"
@@ -500,8 +500,8 @@ export function ScanChat() {
     }
   }, [messages, status, chatId])
 
-  const [packPending, setPackPending] = useState(false)
-  const busy = status === 'submitted' || status === 'streaming' || packPending
+  const [isPending, setIsPending] = useState(false)
+  const busy = status === 'submitted' || status === 'streaming' || isPending
   const hasMessages = messages.length > 0 || Boolean(searchParams.get('url'))
 
   // --- Canvas ------------------------------------------------------------
@@ -625,7 +625,7 @@ export function ScanChat() {
         parseSlashCommand(rawText)?.args?.trim() ||
         (rawText && !rawText.startsWith('/') ? rawText.slice(0, 80) : '') ||
         'App UI'
-      setPackPending(true)
+      setIsPending(true)
       const response = await fetch('/api/contracts/from-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -658,7 +658,7 @@ export function ScanChat() {
         void sendMessage({
           text: `App Pack failed: ${payload?.error || response?.statusText || 'unknown error'}.${upgradeHint} ${rawText || ''}`.trim(),
         })
-        setPackPending(false)
+        setIsPending(false)
         return
       }
       pushRecent(payload.domain || '')
@@ -677,7 +677,7 @@ export function ScanChat() {
           .filter(Boolean)
           .join(' '),
       })
-      setPackPending(false)
+      setIsPending(false)
       return
     }
 
@@ -897,7 +897,7 @@ export function ScanChat() {
                   status={status}
                   text={text}
                   busy={busy}
-                  packPending={packPending}
+                  isPending={isPending}
                   onStop={() => stop()}
                 />
               </div>

@@ -36,6 +36,11 @@ export function EnhancedAIAnalysisDisplay({
 
   // Real-time store for live updates
   const { metrics: liveMetrics, isConnected, activities } = useRealtimeStore()
+  const statusLabel = isLoading
+    ? 'Analyzing design system…'
+    : isConnected
+      ? 'Live analysis connected'
+      : 'Analysis ready'
 
   // Use live metrics if available, fallback to provided metrics
   const currentMetrics = liveMetrics && Object.keys(liveMetrics).length > 0 ? liveMetrics : metrics
@@ -67,6 +72,9 @@ export function EnhancedAIAnalysisDisplay({
 
   return (
     <div className="space-y-6">
+      <p className="sr-only" role="status" aria-live="polite">
+        {statusLabel}
+      </p>
       {/* Enhanced Header with System Overview */}
       <div className="rounded-xl border-2 border-grep-3 bg-gradient-to-br from-grep-0 to-grep-1 overflow-hidden">
         <div className="px-4 sm:px-6 py-3 sm:py-4 border-b-2 border-grep-3 bg-background/80 backdrop-blur-sm">

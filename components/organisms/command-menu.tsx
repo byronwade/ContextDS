@@ -45,8 +45,8 @@ export function CommandMenu() {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      const chord = (event.metaKey || event.ctrlKey) && event.code === 'KeyK'
-      if (!chord) return
+      if (!(event.metaKey || event.ctrlKey)) return
+      if (event.key !== 'k' && event.key !== 'K') return
       event.preventDefault()
       setOpen((prev) => !prev)
     }
