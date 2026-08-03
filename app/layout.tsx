@@ -5,9 +5,11 @@ import { ErrorBoundary } from "@/components/atoms/error-boundary";
 import { WebVitalsReporter } from "@/components/atoms/web-vitals-reporter";
 import { ComprehensiveSEOTracking } from "@/components/atoms/seo-analytics";
 import { AnalyticsProvider } from "@/components/providers/analytics-provider";
+import { AppProviders } from "@/components/providers/app-providers";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { generateHomepageMetadata } from "@/lib/seo/meta-tags";
 import { generateOrganizationSchema, generateWebsiteSchema, generateSoftwareApplicationSchema } from "@/lib/seo/structured-data";
+import { safeJsonLd } from "@/lib/seo/safe-json-ld";
 import { RESOURCE_HINTS } from "@/lib/seo/performance";
 import "./globals.css";
 
@@ -88,19 +90,19 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(organizationSchema)
+            __html: safeJsonLd(organizationSchema),
           }}
         />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(websiteSchema)
+            __html: safeJsonLd(websiteSchema),
           }}
         />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(softwareApplicationSchema)
+            __html: safeJsonLd(softwareApplicationSchema),
           }}
         />
 
@@ -159,13 +161,15 @@ export default function RootLayout({
         <SkipLinks />
         <WebVitalsReporter />
         <ComprehensiveSEOTracking />
-        <AnalyticsProvider>
-          <TooltipProvider>
-            <ErrorBoundary>
-              {children}
-            </ErrorBoundary>
-          </TooltipProvider>
-        </AnalyticsProvider>
+        <AppProviders>
+          <AnalyticsProvider>
+            <TooltipProvider>
+              <ErrorBoundary>
+                {children}
+              </ErrorBoundary>
+            </TooltipProvider>
+          </AnalyticsProvider>
+        </AppProviders>
       </body>
     </html>
   );

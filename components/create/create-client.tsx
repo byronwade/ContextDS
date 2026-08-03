@@ -208,12 +208,15 @@ export default function CreateClient() {
                   value={briefName}
                   onChange={(event) => setBriefName(event.target.value)}
                   placeholder="System name"
+                  aria-label="System name"
                   className="rounded-xl"
                 />
                 <textarea
                   value={brief}
                   onChange={(event) => setBrief(event.target.value)}
                   rows={6}
+                  aria-label="Design brief"
+                  placeholder="Describe the product personality, density, and materials…"
                   className="w-full rounded-xl border border-[color:var(--soft-border)] bg-card/40 px-3 py-2 text-sm leading-relaxed text-foreground"
                 />
                 <Button
@@ -293,6 +296,7 @@ export default function CreateClient() {
                   value={recipeName}
                   onChange={(event) => setRecipeName(event.target.value)}
                   placeholder="Optional rename"
+                  aria-label="Optional recipe rename"
                   className="rounded-xl"
                 />
                 <Button
@@ -353,12 +357,14 @@ export default function CreateClient() {
                   value={importName}
                   onChange={(event) => setImportName(event.target.value)}
                   placeholder="Optional system name"
+                  aria-label="Optional system name"
                   className="rounded-xl"
                 />
                 <textarea
                   value={importText}
                   onChange={(event) => setImportText(event.target.value)}
                   rows={10}
+                  aria-label="Tokens or DESIGN.md to import"
                   placeholder='{ "$metadata": { "name": "Acme" }, "color": { "primary": { "$value": "#2563eb" } } }'
                   className="w-full rounded-xl border border-[color:var(--soft-border)] bg-card/40 px-3 py-2 font-mono text-[12px] leading-relaxed text-foreground"
                   data-testid="create-import-input"
@@ -427,6 +433,7 @@ export default function CreateClient() {
                   value={blendDomains}
                   onChange={(event) => setBlendDomains(event.target.value)}
                   placeholder="stripe.com, linear.app, vercel.com"
+                  aria-label="Domains to blend"
                   className="rounded-xl"
                   data-testid="create-blend-domains"
                 />
@@ -434,6 +441,7 @@ export default function CreateClient() {
                   value={blendName}
                   onChange={(event) => setBlendName(event.target.value)}
                   placeholder="Optional blend name"
+                  aria-label="Optional blend name"
                   className="rounded-xl"
                 />
                 <Button
@@ -490,6 +498,7 @@ export default function CreateClient() {
                   value={structureDomain}
                   onChange={(event) => setStructureDomain(event.target.value)}
                   placeholder="Structure domain (layout)"
+                  aria-label="Structure domain for layout"
                   className="rounded-xl"
                   data-testid="create-restyle-structure"
                 />
@@ -497,6 +506,7 @@ export default function CreateClient() {
                   value={skinDomain}
                   onChange={(event) => setSkinDomain(event.target.value)}
                   placeholder="Skin domain (tokens)"
+                  aria-label="Skin domain for tokens"
                   className="rounded-xl"
                   data-testid="create-restyle-skin"
                 />
@@ -504,6 +514,7 @@ export default function CreateClient() {
                   value={restyleName}
                   onChange={(event) => setRestyleName(event.target.value)}
                   placeholder="Optional system name"
+                  aria-label="Optional restyle system name"
                   className="rounded-xl"
                 />
                 <Button
@@ -578,6 +589,7 @@ export default function CreateClient() {
                   value={mutateDomain}
                   onChange={(event) => setMutateDomain(event.target.value)}
                   placeholder="Scanned domain"
+                  aria-label="Scanned domain to mutate"
                   className="rounded-xl"
                   data-testid="create-mutate-domain"
                 />
@@ -605,6 +617,8 @@ export default function CreateClient() {
                     value={mutateDirective}
                     onChange={(event) => setMutateDirective(event.target.value)}
                     rows={3}
+                    aria-label="Evolution directive"
+                    placeholder="e.g. warmer neutrals, denser type"
                     className="w-full rounded-xl border border-[color:var(--soft-border)] bg-card/40 px-3 py-2 text-sm leading-relaxed text-foreground"
                     data-testid="create-mutate-directive"
                   />
@@ -645,7 +659,7 @@ export default function CreateClient() {
             {tab === 'scan' ? (
               <section role="tabpanel" id="create-panel-scan" aria-labelledby="create-tab-scan" className="space-y-4" data-testid="create-scan">
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <Link
+                  <Link prefetch={false}
                     href="/?url="
                     className="rounded-2xl border border-[color:var(--soft-border)] bg-card/40 p-5 transition-colors hover:bg-[var(--ui-paper-hover)]"
                   >
@@ -655,7 +669,7 @@ export default function CreateClient() {
                       Free public CSS → installable pack. Open Chat and paste a domain.
                     </p>
                   </Link>
-                  <Link
+                  <Link prefetch={false}
                     href="/?hint=app"
                     className="rounded-2xl border border-[color:var(--soft-border)] bg-card/40 p-5 transition-colors hover:bg-[var(--ui-paper-hover)]"
                   >
@@ -667,7 +681,7 @@ export default function CreateClient() {
                       Attach ≥5 product UI screenshots in Chat. Credits never expire.
                     </p>
                   </Link>
-                  <Link
+                  <Link prefetch={false}
                     href="/studio"
                     className="rounded-2xl border border-[color:var(--soft-border)] bg-card/40 p-5 transition-colors hover:bg-[var(--ui-paper-hover)]"
                   >
@@ -678,7 +692,7 @@ export default function CreateClient() {
                       packs.
                     </p>
                   </Link>
-                  <Link
+                  <Link prefetch={false}
                     href="/community"
                     className="rounded-2xl border border-[color:var(--soft-border)] bg-card/40 p-5 transition-colors hover:bg-[var(--ui-paper-hover)]"
                   >

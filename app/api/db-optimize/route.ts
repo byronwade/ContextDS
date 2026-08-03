@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           success: false,
           error: 'Invalid action. Use: optimize, indexes, or analyze'
-        }, { status: 400 })
+        }, { status: 400 , headers: { 'Cache-Control': 'private, no-store' } })
     }
 
     const duration = Date.now() - startTime
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
       errorType: error instanceof Error ? error.constructor.name : 'Error'
-    }, { status: 500 })
+    }, { status: 500 , headers: { 'Cache-Control': 'private, no-store' } })
   }
 }
 
@@ -151,7 +151,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({
           success: false,
           error: 'Invalid action. Use: health, metrics, or reset'
-        }, { status: 400 })
+        }, { status: 400 , headers: { 'Cache-Control': 'private, no-store' } })
     }
 
   } catch (error) {
@@ -160,7 +160,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    }, { status: 500 , headers: { 'Cache-Control': 'private, no-store' } })
   }
 }
 

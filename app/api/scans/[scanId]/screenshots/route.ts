@@ -53,8 +53,6 @@ export async function GET(
   } catch (error) {
     console.error('[Screenshots API] Error:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch screenshots' },
-      { status: 500 }
-    )
+      { error: 'Failed to fetch screenshots' }, { status: 500 , headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } })
   }
 }

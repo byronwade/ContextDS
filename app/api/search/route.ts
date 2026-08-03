@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       '127.0.0.1'
     const { success } = await searchRatelimit.limit(identifier)
     if (!success) {
-      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 , headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
     }
 
     const { searchParams } = new URL(request.url)
@@ -129,11 +129,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid search parameters', details: error.issues },
-        { status: 400 }
-      )
+        { error: 'Invalid search parameters', details: error.issues }, { status: 400 , headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
     }
     console.error('Search error:', error)
-    return NextResponse.json({ error: 'Search failed' }, { status: 500 })
+    return NextResponse.json({ error: 'Search failed' }, { status: 500 , headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
   }
 }

@@ -92,6 +92,8 @@ export const ConversationScrollButton = ({
         size="icon"
         type="button"
         variant="outline"
+        aria-label="Scroll to bottom"
+        title="Scroll to bottom"
         {...props}
       >
         <ArrowDownIcon className="size-4" />

@@ -13,37 +13,33 @@ export async function GET(request: NextRequest) {
         const stats = await metricsClient.getRealtimeStats(5)
         if (!stats) {
           return NextResponse.json(
-            { error: 'Database not initialized. Please run migrations.' },
-            { status: 503 }
-          )
+            { error: 'Database not initialized. Please run migrations.' }, { status: 503 , headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
         }
-        return NextResponse.json(stats)
+        return NextResponse.json(stats, { headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
 
       case 'timeseries':
         const metric = searchParams.get('metric') || 'page_views'
         const data = await metricsClient.getTimeSeriesData(metric, hours)
-        return NextResponse.json({ data: data || [] })
+        return NextResponse.json({ data: data || [] }, { headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
 
       case 'endpoints':
         const endpoints = await metricsClient.getTopEndpoints(10)
-        return NextResponse.json({ endpoints: endpoints || [] })
+        return NextResponse.json({ endpoints: endpoints || [] }, { headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
 
       case 'searches':
         const searches = await metricsClient.getTopSearchQueries(10)
-        return NextResponse.json({ searches: searches || [] })
+        return NextResponse.json({ searches: searches || [] }, { headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
 
       case 'scans':
         const scans = await metricsClient.getRecentScans(20)
-        return NextResponse.json({ scans: scans || [] })
+        return NextResponse.json({ scans: scans || [] }, { headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
 
       default:
-        return NextResponse.json({ error: 'Invalid type' }, { status: 400 })
+        return NextResponse.json({ error: 'Invalid type' }, { status: 400 , headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
     }
   } catch (error) {
     console.error('Metrics API error:', error)
     return NextResponse.json(
-      { error: 'Database error. Please ensure tables exist and migrations are run.' },
-      { status: 500 }
-    )
+      { error: 'Database error. Please ensure tables exist and migrations are run.' }, { status: 500 , headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
   }
 }

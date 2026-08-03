@@ -20,7 +20,5 @@ export async function GET(
       migrateTo: domain
         ? `/api/sites/${encodeURIComponent(domain)}/versions`
         : '/api/sites/{domain}/versions',
-    },
-    { status: 410 }
-  )
+    }, { status: 410 , headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } })
 }

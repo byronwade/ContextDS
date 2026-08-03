@@ -90,7 +90,7 @@ export function VercelHeader({
       aria-label="Site header"
     >
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link
+        <Link prefetch={false}
           href="/"
           className="group flex items-baseline gap-1 outline-offset-4 transition-opacity hover:opacity-80"
         >
@@ -141,7 +141,7 @@ export function VercelHeader({
                 (item.href === "/docs" && currentPage === "docs") ||
                 (item.href === "/about" && currentPage === "about")
               return (
-                <Link
+                <Link prefetch={false}
                   key={item.href}
                   href={item.href}
                   className={cn(
@@ -178,7 +178,7 @@ export function VercelHeader({
             aria-label="Mobile navigation"
           >
             {NAV.map((item) => (
-              <Link
+              <Link prefetch={false}
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}

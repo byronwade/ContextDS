@@ -32,9 +32,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       {
         error: 'Billing is not configured',
         hint: 'Set STRIPE_SECRET_KEY plus STRIPE_PRICE_PACK / STRIPE_PRICE_PACK_BUNDLE and/or STRIPE_PRICE_PRO',
-      },
-      { status: 503 }
-    )
+      }, { status: 503 , headers: { 'Cache-Control': 'private, no-store' } })
   }
 
   let email: string | undefined
@@ -51,18 +49,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   if (sku === 'pro' && !getProPriceIdOptional()) {
     return NextResponse.json(
-      { error: 'Pro price not configured (STRIPE_PRICE_PRO)' },
-      { status: 503 }
-    )
+      { error: 'Pro price not configured (STRIPE_PRICE_PRO)' }, { status: 503 , headers: { 'Cache-Control': 'private, no-store' } })
   }
   if (sku !== 'pro' && !getCreditPriceId(sku)) {
     return NextResponse.json(
       {
         error: `Credit price not configured for ${sku}`,
         hint: 'Set STRIPE_PRICE_PACK and STRIPE_PRICE_PACK_BUNDLE',
-      },
-      { status: 503 }
-    )
+      }, { status: 503 , headers: { 'Cache-Control': 'private, no-store' } })
   }
 
   try {
@@ -77,9 +71,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   } catch (error) {
     console.error('[billing/checkout]', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Checkout failed' },
-      { status: 500 }
-    )
+      { error: error instanceof Error ? error.message : 'Checkout failed' }, { status: 500 , headers: { 'Cache-Control': 'private, no-store' } })
   }
 }
 

@@ -294,7 +294,7 @@ export default function StudioClient() {
             <div className="flex flex-wrap items-center gap-2">
               {!isPro && ready ? (
                 <Button asChild variant="outline" size="sm" className="gap-2">
-                  <Link href="/pricing">
+                  <Link prefetch={false} href="/pricing">
                     <SparkleIcon className="size-3.5 text-[var(--ui-accent)]" />
                     Unlock export with Pro
                   </Link>
@@ -612,7 +612,7 @@ export default function StudioClient() {
                         ships with Pro.
                       </p>
                       <Button asChild size="sm" className="gap-2">
-                        <Link href="/pricing">
+                        <Link prefetch={false} href="/pricing">
                           <SparkleIcon className="size-3.5" />
                           Upgrade to Pro
                         </Link>

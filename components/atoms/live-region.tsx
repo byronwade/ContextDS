@@ -12,15 +12,15 @@ export function LiveRegion({ message, politeness = 'polite', className }: LiveRe
   const regionRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (regionRef.current && message) {
-      // Clear and then set the message to ensure screen readers announce it
-      regionRef.current.textContent = ''
-      setTimeout(() => {
-        if (regionRef.current) {
-          regionRef.current.textContent = message
-        }
-      }, 100)
-    }
+    if (!regionRef.current || !message) return
+    // Clear and then set the message to ensure screen readers announce it
+    regionRef.current.textContent = ''
+    const timer = window.setTimeout(() => {
+      if (regionRef.current) {
+        regionRef.current.textContent = message
+      }
+    }, 100)
+    return () => window.clearTimeout(timer)
   }, [message])
 
   return (

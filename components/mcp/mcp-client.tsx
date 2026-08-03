@@ -217,7 +217,7 @@ export default function McpClient({ tools }: { tools: McpToolSummary[] }) {
                       still work without a key. Need one App Pack? Buy credits instead.
                     </p>
                     <Button asChild size="sm" className="w-full gap-2">
-                      <Link href="/pricing">
+                      <Link prefetch={false} href="/pricing">
                         <SparkleIcon className="size-3.5" />
                         See pricing
                       </Link>

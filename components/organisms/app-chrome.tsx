@@ -32,7 +32,7 @@ export function AppChrome({ currentPage = 'home', className }: AppChromeProps) {
       )}
       role="banner"
     >
-      <Link
+      <Link prefetch={false}
         href="/"
         className="flex items-baseline gap-0.5 outline-offset-4 transition-opacity hover:opacity-80"
         aria-label="designcontracts.sh home"
@@ -50,7 +50,7 @@ export function AppChrome({ currentPage = 'home', className }: AppChromeProps) {
               (item.href === '/community' && currentPage === 'community') ||
               (item.href === '/docs' && currentPage === 'docs')
             return (
-              <Link
+              <Link prefetch={false}
                 key={item.href}
                 href={item.href}
                 className={cn(
@@ -84,7 +84,7 @@ export function AppChrome({ currentPage = 'home', className }: AppChromeProps) {
           aria-label="Mobile navigation"
         >
           {NAV.map((item) => (
-            <Link
+            <Link prefetch={false}
               key={item.href}
               href={item.href}
               onClick={() => setOpen(false)}

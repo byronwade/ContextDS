@@ -11,6 +11,6 @@ export async function GET(
     return NextResponse.json({ domain, count: versions.length, versions })
   } catch (error) {
     console.error('Error loading scan versions:', error)
-    return NextResponse.json({ error: 'Failed to load versions' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to load versions' }, { status: 500 , headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } })
   }
 }

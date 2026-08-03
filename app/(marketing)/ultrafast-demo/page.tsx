@@ -46,6 +46,7 @@ export default function UltraFastDemoPage() {
   const [demoUrl, setDemoUrl] = useState("https://tailwindcss.com")
   const [isScanning, setIsScanning] = useState(false)
   const [scanStartTime, setScanStartTime] = useState<number | null>(null)
+  const [elapsedMs, setElapsedMs] = useState(0)
   const [currentScanId, setCurrentScanId] = useState<string | null>(null)
   const [scanResults, setScanResults] = useState<any>(null)
   const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetric[]>([])
@@ -55,6 +56,17 @@ export default function UltraFastDemoPage() {
     cacheHitRate: 0.84,
     ultraFastScans: 89
   })
+
+  useEffect(() => {
+    if (!isScanning || !scanStartTime) {
+      setElapsedMs(0)
+      return
+    }
+    const tick = () => setElapsedMs(Date.now() - scanStartTime)
+    tick()
+    const id = window.setInterval(tick, 100)
+    return () => window.clearInterval(id)
+  }, [isScanning, scanStartTime])
 
   // Initialize performance metrics
   useEffect(() => {
@@ -228,6 +240,7 @@ export default function UltraFastDemoPage() {
               <div className="flex gap-3">
                 <Input
                   placeholder="Enter website URL (e.g., https://tailwindcss.com)"
+                  aria-label="Website URL to scan"
                   value={demoUrl}
                   onChange={(e) => setDemoUrl(e.target.value)}
                   className="flex-1"
@@ -259,7 +272,7 @@ export default function UltraFastDemoPage() {
                     <span>Scan started - skeletons should appear within 50ms</span>
                     <Badge variant="secondary" className="ml-auto">
                       <Timer className="h-3 w-3 mr-1" />
-                      {scanStartTime ? `${Date.now() - scanStartTime}ms` : '0ms'}
+                      {`${elapsedMs}ms`}
                     </Badge>
                   </div>
                 </div>

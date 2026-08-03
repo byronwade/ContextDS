@@ -225,7 +225,7 @@ export default function PricingPage() {
                   </div>
                 ) : (
                   <Button asChild variant="outline" className="mt-8 w-full">
-                    <Link href={plan.cta.href}>{plan.cta.label}</Link>
+                    <Link prefetch={false} href={plan.cta.href}>{plan.cta.label}</Link>
                   </Button>
                 )}
               </div>
@@ -303,7 +303,7 @@ export default function PricingPage() {
                 />
               </div>
               <Button asChild variant="outline">
-                <Link href="/">Open chat</Link>
+                <Link prefetch={false} href="/">Open chat</Link>
               </Button>
             </div>
           </div>

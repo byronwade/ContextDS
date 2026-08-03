@@ -487,7 +487,7 @@ function EmptyState({ onStart }: { onStart: () => void }) {
         by hand.
       </p>
       <Button size="sm" variant="outline" onClick={onStart}>
-        <SparkleIcon /> Start from scratch
+        <SparkleIcon data-icon="inline-start" /> Start from scratch
       </Button>
     </div>
   )
@@ -621,7 +621,7 @@ export function DesignCanvas({
           aria-label="System name"
           value={system.name}
           onChange={(event) => patch({ name: event.target.value }, `name → ${event.target.value}`)}
-          className="min-w-0 flex-1 bg-transparent font-serif text-xl tracking-tight text-foreground outline-none"
+          className="min-w-0 flex-1 bg-transparent font-serif text-xl tracking-tight text-foreground outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-[var(--ui-accent)]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ui-paper)]"
         />
         <span className={OVERLINE}>{originLabel(system.origin)}</span>
         <Button

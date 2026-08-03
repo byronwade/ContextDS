@@ -63,11 +63,14 @@ export function RealtimeTokenPreview({ className }: RealtimeTokenPreviewProps) {
     }
 
     // Initial load with longer delay to show loading state
-    setTimeout(() => fetchColors(), 800)
+    const initialTimer = window.setTimeout(() => fetchColors(), 800)
 
     // Refresh colors every 30 seconds
-    const interval = setInterval(() => fetchColors(true), 30000)
-    return () => clearInterval(interval)
+    const interval = window.setInterval(() => fetchColors(true), 30000)
+    return () => {
+      window.clearTimeout(initialTimer)
+      window.clearInterval(interval)
+    }
   }, [])
 
   if (loading) {

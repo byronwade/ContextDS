@@ -75,8 +75,6 @@ export async function GET() {
         lastUpdated: new Date().toISOString(),
         storage: { redis: false, blob: false, mode: 'memory' },
         error: 'Failed to fetch stats',
-      },
-      { status: 500 }
-    )
+      }, { status: 500 , headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
   }
 }

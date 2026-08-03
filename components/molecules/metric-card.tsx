@@ -53,16 +53,15 @@ export function MetricCard({
     neutral: "text-grep-7"
   }
 
-  return (
-    <div
-      className={cn(
-        "relative rounded-lg border p-4 transition-all duration-200",
-        statusStyles[status],
-        onClick && "cursor-pointer",
-        isLoading && "animate-pulse"
-      )}
-      onClick={onClick}
-    >
+  const className = cn(
+    "relative rounded-lg border p-4 text-left transition-all duration-200",
+    statusStyles[status],
+    onClick && "cursor-pointer",
+    isLoading && "animate-pulse"
+  )
+
+  const body = (
+    <>
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="text-xs font-semibold uppercase tracking-wider text-grep-9">
@@ -74,7 +73,7 @@ export function MetricCard({
       </div>
 
       {/* Value */}
-      <div className="mb-2">
+      <div className="mb-2" role="status" aria-live="polite" aria-atomic="true">
         {isLoading ? (
           <div className="h-8 w-20 bg-grep-2 rounded animate-pulse" />
         ) : (
@@ -124,6 +123,16 @@ export function MetricCard({
           {trend.value}%
         </div>
       )}
-    </div>
+    </>
   )
+
+  if (onClick) {
+    return (
+      <button type="button" className={className} onClick={onClick}>
+        {body}
+      </button>
+    )
+  }
+
+  return <div className={className}>{body}</div>
 }

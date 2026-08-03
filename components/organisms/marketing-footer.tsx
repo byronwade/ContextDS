@@ -54,7 +54,7 @@ export function MarketingFooter() {
               <ul className="space-y-2">
                 {column.links.map((link) => (
                   <li key={`${column.title}-${link.href}-${link.label}`}>
-                    <Link
+                    <Link prefetch={false}
                       href={link.href}
                       className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >

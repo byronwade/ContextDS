@@ -117,53 +117,48 @@ export function SEOAnalytics({
     }
 
     // Enhanced tracking for design token interactions
-    const trackTokenInteractions = () => {
-      document.addEventListener('click', (event) => {
-        const target = event.target as HTMLElement
+    const onDocumentClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
 
-        // Track token card clicks
-        if (target.closest('[data-token-card]')) {
-          const tokenType = target.closest('[data-token-card]')?.getAttribute('data-token-type')
-          if (window.gtag && tokenType) {
-            window.gtag('event', 'token_interaction', {
-              event_category: 'Design Tokens',
-              event_label: tokenType,
-              value: 1
-            })
-          }
+      if (target.closest('[data-token-card]')) {
+        const tokenType = target.closest('[data-token-card]')?.getAttribute('data-token-type')
+        if (window.gtag && tokenType) {
+          window.gtag('event', 'token_interaction', {
+            event_category: 'Design Tokens',
+            event_label: tokenType,
+            value: 1
+          })
         }
+      }
 
-        // Track scan interactions
-        if (target.closest('[data-scan-action]')) {
-          const action = target.closest('[data-scan-action]')?.getAttribute('data-scan-action')
-          if (window.gtag && action) {
-            window.gtag('event', 'scan_action', {
-              event_category: 'Site Scanner',
-              event_label: action,
-              value: 1
-            })
-          }
+      if (target.closest('[data-scan-action]')) {
+        const action = target.closest('[data-scan-action]')?.getAttribute('data-scan-action')
+        if (window.gtag && action) {
+          window.gtag('event', 'scan_action', {
+            event_category: 'Site Scanner',
+            event_label: action,
+            value: 1
+          })
         }
+      }
 
-        // Track community interactions
-        if (target.closest('[data-community-action]')) {
-          const action = target.closest('[data-community-action]')?.getAttribute('data-community-action')
-          if (window.gtag && action) {
-            window.gtag('event', 'community_interaction', {
-              event_category: 'Community',
-              event_label: action,
-              value: 1
-            })
-          }
+      if (target.closest('[data-community-action]')) {
+        const action = target.closest('[data-community-action]')?.getAttribute('data-community-action')
+        if (window.gtag && action) {
+          window.gtag('event', 'community_interaction', {
+            event_category: 'Community',
+            event_label: action,
+            value: 1
+          })
         }
-      })
+      }
     }
 
-    trackTokenInteractions()
+    document.addEventListener('click', onDocumentClick)
 
-    // Cleanup function
     return () => {
       window.removeEventListener('load', trackCWVForSEO)
+      document.removeEventListener('click', onDocumentClick)
     }
   }, [trackingId, enableWebVitals, enableSearchConsole, enableClarityTracking])
 
@@ -231,13 +226,20 @@ export function EnhancedWebVitalsReporter() {
       }).catch(console.error)
     }
 
-    // Track after load
+    let loadTimer: number | undefined
+    const onLoad = () => {
+      loadTimer = window.setTimeout(trackDetailedMetrics, 1000)
+    }
+
     if (document.readyState === 'complete') {
-      setTimeout(trackDetailedMetrics, 1000)
+      onLoad()
     } else {
-      window.addEventListener('load', () => {
-        setTimeout(trackDetailedMetrics, 1000)
-      })
+      window.addEventListener('load', onLoad)
+    }
+
+    return () => {
+      window.removeEventListener('load', onLoad)
+      if (loadTimer !== undefined) window.clearTimeout(loadTimer)
     }
   }, [])
 
@@ -279,10 +281,7 @@ export function SEOErrorTracker() {
       }
     }
 
-    window.addEventListener('error', trackSEOErrors)
-
-    // Track unhandled promise rejections
-    window.addEventListener('unhandledrejection', (event) => {
+    const trackUnhandledRejection = (event: PromiseRejectionEvent) => {
       const errorData = {
         message: event.reason?.message || 'Unhandled Promise Rejection',
         reason: String(event.reason),
@@ -295,10 +294,14 @@ export function SEOErrorTracker() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(errorData)
       }).catch(console.error)
-    })
+    }
+
+    window.addEventListener('error', trackSEOErrors)
+    window.addEventListener('unhandledrejection', trackUnhandledRejection)
 
     return () => {
       window.removeEventListener('error', trackSEOErrors)
+      window.removeEventListener('unhandledrejection', trackUnhandledRejection)
     }
   }, [])
 

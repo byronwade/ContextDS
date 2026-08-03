@@ -65,6 +65,13 @@ export default function MetricsPage() {
 
   // Real-time store for live updates
   const { metrics: liveMetrics, isConnected, activities, lastUpdate } = useRealtimeStore()
+  const [now, setNow] = useState(0)
+
+  useEffect(() => {
+    setNow(Date.now())
+    const id = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => window.clearInterval(id)
+  }, [])
 
   // Fetch realtime stats
   useEffect(() => {
@@ -196,11 +203,11 @@ export default function MetricsPage() {
             <span className="text-sm text-grep-9">
               {isConnected ? 'Live Data Stream' : 'Disconnected'}
             </span>
-            {lastUpdate && (
+            {lastUpdate && now > 0 ? (
               <span className="text-xs text-grep-9 font-mono ml-2">
-                Updated {Math.floor((Date.now() - lastUpdate) / 1000)}s ago
+                Updated {Math.floor((now - lastUpdate) / 1000)}s ago
               </span>
-            )}
+            ) : null}
           </div>
         </div>
 

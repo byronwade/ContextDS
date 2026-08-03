@@ -149,7 +149,7 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
                 {domain}
               </p>
             </div>
-            <Link
+            <Link prefetch={false}
               href={`/site/${domain}` as `/site/${string}`}
               onClick={() => stashSiteHandoff(domain, data)}
               className="inline-flex h-8 shrink-0 items-center gap-1 rounded-[var(--radius-md)] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] px-2.5 text-[12px] text-[var(--ui-ink-secondary)] transition hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]"

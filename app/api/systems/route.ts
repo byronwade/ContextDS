@@ -95,9 +95,7 @@ export async function GET(request: NextRequest) {
       const customerId = entitlement?.customerId || entitlement?.stripeCustomerId
       if (!customerId) {
         return NextResponse.json(
-          { error: 'Sign in via Stripe checkout to list your private systems', systems: [] },
-          { status: 401 }
-        )
+          { error: 'Sign in via Stripe checkout to list your private systems', systems: [] }, { status: 401 , headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
       }
       const systems = await listSystems({
         limit,
@@ -115,7 +113,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ systems, total: systems.length })
   } catch (error) {
     console.error('Error loading systems:', error)
-    return NextResponse.json({ error: 'Failed to load systems' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to load systems' }, { status: 500 , headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
   }
 }
 
@@ -124,19 +122,17 @@ export async function POST(request: NextRequest) {
     const contentType = request.headers.get('content-type')
     if (!contentType || !contentType.includes('application/json')) {
       return NextResponse.json(
-        { error: 'Content-Type must be application/json' },
-        { status: 415 }
-      )
+        { error: 'Content-Type must be application/json' }, { status: 415 , headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
     }
 
     const contentLength = request.headers.get('content-length')
     if (contentLength && Number.parseInt(contentLength, 10) > MAX_BODY_BYTES) {
-      return NextResponse.json({ error: 'Request body too large' }, { status: 413 })
+      return NextResponse.json({ error: 'Request body too large' }, { status: 413 , headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
     }
 
     const raw = await request.text()
     if (raw.length > MAX_BODY_BYTES) {
-      return NextResponse.json({ error: 'Request body too large' }, { status: 413 })
+      return NextResponse.json({ error: 'Request body too large' }, { status: 413 , headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
     }
 
     const params = saveRequestSchema.parse(JSON.parse(raw))
@@ -150,15 +146,13 @@ export async function POST(request: NextRequest) {
           error:
             'Private systems require a billing session. Complete checkout at /pricing first.',
           upgradePath: '/pricing',
-        },
-        { status: 401 }
-      )
+        }, { status: 401 , headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
     }
 
     if (params.id) {
       const existing = await getSystem(params.id)
       if (existing && !canAccessSystem(existing, customerId)) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 , headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
       }
     }
 
@@ -173,20 +167,18 @@ export async function POST(request: NextRequest) {
       ownerEmail: entitlement?.email ?? null,
     })
 
-    return NextResponse.json(stored)
+    return NextResponse.json(stored, { headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid system payload', details: error.issues },
-        { status: 400 }
-      )
+        { error: 'Invalid system payload', details: error.issues }, { status: 400 , headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
     }
 
     if (error instanceof SyntaxError) {
-      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 , headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
     }
 
     console.error('Error saving system:', error)
-    return NextResponse.json({ error: 'Failed to save system' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to save system' }, { status: 500 , headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } })
   }
 }

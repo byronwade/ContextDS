@@ -27,7 +27,13 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
   return (
     <>
       {children}
-      <Suspense fallback={null}>
+      <Suspense
+        fallback={
+          <span className="sr-only" role="status">
+            Loading analytics…
+          </span>
+        }
+      >
         <RouteAnalytics />
       </Suspense>
       <Analytics />

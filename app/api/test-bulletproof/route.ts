@@ -178,7 +178,7 @@ export async function GET(request: NextRequest) {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
       errorType: error instanceof Error ? error.constructor.name : 'Error'
-    }, { status: 500 })
+    }, { status: 500 , headers: { 'Cache-Control': 'private, no-store' } })
   }
 }
 
@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: false,
         error: 'URL is required'
-      }, { status: 400 })
+      }, { status: 400 , headers: { 'Cache-Control': 'private, no-store' } })
     }
 
     console.log(`[bulletproof-test] Custom test: ${url}`)
@@ -239,6 +239,6 @@ export async function POST(request: NextRequest) {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
       errorType: error instanceof Error ? error.constructor.name : 'Error'
-    }, { status: 500 })
+    }, { status: 500 , headers: { 'Cache-Control': 'private, no-store' } })
   }
 }

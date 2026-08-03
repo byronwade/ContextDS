@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET
 
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 , headers: { 'Cache-Control': 'private, no-store' } })
   }
 
   try {
@@ -68,9 +68,7 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         error: error instanceof Error ? error.message : 'Cleanup failed'
-      },
-      { status: 500 }
-    )
+      }, { status: 500 , headers: { 'Cache-Control': 'private, no-store' } })
   }
 }
 

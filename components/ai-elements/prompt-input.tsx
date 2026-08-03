@@ -834,6 +834,8 @@ export const PromptInput = ({
     [referencedSources, clearReferencedSources]
   );
 
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const handleSubmit: FormEventHandler<HTMLFormElement> = useCallback(
     async (event) => {
       event.preventDefault();
@@ -845,6 +847,12 @@ export const PromptInput = ({
             const formData = new FormData(form);
             return (formData.get("message") as string) || "";
           })();
+
+      if (!text.trim() && files.length === 0) {
+        setSubmitError("Add a message or attachment before sending.");
+        return;
+      }
+      setSubmitError(null);
 
       // Reset form immediately after capturing text to avoid race condition
       // where user input during async blob conversion would be lost
@@ -912,11 +920,17 @@ export const PromptInput = ({
         className="w-full"
         onSubmit={handleSubmit}
         ref={formRef}
+        noValidate
         {...props}
       >
         <InputGroup className={cn("overflow-hidden", className)}>
           {children}
         </InputGroup>
+        {submitError ? (
+          <p role="alert" className="mt-2 px-1 text-xs text-destructive">
+            {submitError}
+          </p>
+        ) : null}
       </form>
     </>
   );

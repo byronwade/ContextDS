@@ -117,7 +117,7 @@ function SiteCard({
   return (
     <li className="group relative flex flex-col overflow-hidden rounded-[var(--radius-paper)] border border-[var(--ui-border)] bg-[var(--ui-paper)] transition-colors duration-150 hover:border-[var(--ui-border-edge)]">
       {/* Palette band — the site's system at a glance */}
-      <Link
+      <Link prefetch={false}
         href={`/site/${site.domain}`}
         className="block h-14 w-full"
         aria-label={`Open ${site.domain} design contract`}
@@ -156,7 +156,7 @@ function SiteCard({
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <Link
+            <Link prefetch={false}
               href={`/site/${site.domain}`}
               className="block truncate text-lg font-medium tracking-tight text-foreground transition-colors after:absolute after:inset-0 hover:text-[var(--ui-accent)]"
               style={primaryFont ? { fontFamily: `'${primaryFont}', sans-serif` } : undefined}
@@ -271,7 +271,7 @@ function SystemCard({ system, loadFont }: { system: LibrarySystem; loadFont: boo
   return (
     <li className="group relative flex flex-col overflow-hidden rounded-[var(--radius-paper)] border border-[var(--ui-border)] bg-[var(--ui-paper)] transition-colors duration-150 hover:border-[var(--ui-border-edge)]">
       {/* Palette band — the authored system at a glance */}
-      <Link
+      <Link prefetch={false}
         href={href}
         className="block h-14 w-full"
         aria-label={`Continue editing ${system.name}`}
@@ -301,7 +301,7 @@ function SystemCard({ system, loadFont }: { system: LibrarySystem; loadFont: boo
             <SparkleIcon className="size-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <Link
+            <Link prefetch={false}
               href={href}
               className="block truncate text-lg font-medium tracking-tight text-foreground transition-colors after:absolute after:inset-0 hover:text-[var(--ui-accent)]"
               style={primaryFont ? { fontFamily: `'${primaryFont}', sans-serif` } : undefined}
@@ -355,7 +355,7 @@ function SystemCard({ system, loadFont }: { system: LibrarySystem; loadFont: boo
               <SparkleIcon className="size-3" aria-hidden />
               {forking ? 'Forking…' : 'Fork'}
             </button>
-            <Link
+            <Link prefetch={false}
               href={href}
               className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-md)] border border-[var(--ui-border)] px-2.5 text-[11px] text-[var(--ui-ink-muted)] transition-colors hover:border-[var(--ui-border-edge)] hover:text-[var(--ui-ink)]"
               aria-label={`Continue editing ${system.name}`}
@@ -569,9 +569,10 @@ export default function CommunityClient() {
                       type="button"
                       role="tab"
                       aria-selected={sortBy === value}
+                      disabled={loading}
                       onClick={() => setSortBy(value)}
                       className={cn(
-                        'rounded-[6px] px-2.5 py-1.5 text-[12px] transition-colors sm:text-[13px]',
+                        'rounded-[6px] px-2.5 py-1.5 text-[12px] transition-colors sm:text-[13px] disabled:opacity-50',
                         sortBy === value
                           ? 'border border-[var(--ui-border)] bg-[var(--ui-paper)] text-[var(--ui-ink)]'
                           : 'text-[var(--ui-ink-muted)] hover:text-[var(--ui-ink)]'
@@ -620,7 +621,7 @@ export default function CommunityClient() {
                     </Button>
                   ) : null}
                   <Button asChild>
-                    <Link href="/">Open chat</Link>
+                    <Link prefetch={false} href="/">Open chat</Link>
                   </Button>
                 </div>
               </div>

@@ -391,16 +391,15 @@ export const CodeBlockContent = ({
 
   // Async highlighting result (populated after shiki loads)
   const [asyncTokens, setAsyncTokens] = useState<TokenizedCode | null>(null);
-  const asyncKeyRef = useRef({ code, language });
+  const [highlightKey, setHighlightKey] = useState(`${language}\u0000${code}`);
 
-  // Invalidate stale async tokens synchronously during render
-  if (
-    asyncKeyRef.current.code !== code ||
-    asyncKeyRef.current.language !== language
-  ) {
-    asyncKeyRef.current = { code, language };
-    setAsyncTokens(null);
-  }
+  useEffect(() => {
+    const nextKey = `${language}\u0000${code}`;
+    if (nextKey !== highlightKey) {
+      setHighlightKey(nextKey);
+      setAsyncTokens(null);
+    }
+  }, [code, language, highlightKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -525,6 +524,7 @@ export const CodeBlockLanguageSelectorTrigger = ({
   ...props
 }: CodeBlockLanguageSelectorTriggerProps) => (
   <SelectTrigger
+    aria-label="Select code language"
     className={cn(
       "h-7 border-none bg-transparent px-2 text-xs shadow-none",
       className

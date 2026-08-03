@@ -48,9 +48,11 @@ export function ComponentShowcase({
   return (
     <div className="rounded-lg border border-grep-2 bg-grep-0 overflow-hidden hover:border-grep-4 transition-colors">
       {/* Header */}
-      <div
-        className="p-3 bg-background cursor-pointer"
+      <button
+        type="button"
+        className="w-full p-3 bg-background cursor-pointer text-left"
         onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -81,16 +83,16 @@ export function ComponentShowcase({
             )}>
               {Math.min(100, Math.round(confidence))}% {getConfidenceLabel(confidence)}
             </div>
-            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+            <span className="inline-flex h-6 w-6 items-center justify-center" aria-hidden>
               {expanded ? (
                 <ChevronUp className="h-3.5 w-3.5" />
               ) : (
                 <ChevronDown className="h-3.5 w-3.5" />
               )}
-            </Button>
+            </span>
           </div>
         </div>
-      </div>
+      </button>
 
       {/* Expanded content */}
       {expanded && (

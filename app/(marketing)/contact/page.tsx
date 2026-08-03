@@ -57,11 +57,11 @@ export default function ContactPage() {
 
         <p className="mt-12 text-sm text-muted-foreground">
           Prefer to explore first?{' '}
-          <Link href="/" className="text-foreground underline-offset-4 hover:underline">
+          <Link prefetch={false} href="/" className="text-foreground underline-offset-4 hover:underline">
             Open Chat
           </Link>{' '}
           or browse the{' '}
-          <Link href="/community" className="text-foreground underline-offset-4 hover:underline">
+          <Link prefetch={false} href="/community" className="text-foreground underline-offset-4 hover:underline">
             Library
           </Link>
           .

@@ -25,10 +25,17 @@ export function RecentScansDropdown() {
     setMounted(true)
   }, [])
 
-  const formatTime = (timestamp: number) => {
-    if (!mounted) return ''
+  const [now, setNow] = useState(0)
 
-    const now = Date.now()
+  useEffect(() => {
+    setNow(Date.now())
+    const id = window.setInterval(() => setNow(Date.now()), 60_000)
+    return () => window.clearInterval(id)
+  }, [])
+
+  const formatTime = (timestamp: number) => {
+    if (!mounted || !now) return ''
+
     const diff = now - timestamp
     const minutes = Math.floor(diff / 60000)
     const hours = Math.floor(diff / 3600000)
@@ -65,37 +72,40 @@ export function RecentScansDropdown() {
 
         <div className="max-h-[400px] overflow-y-auto">
           {recentScans.map((scan) => (
-            <DropdownMenuItem key={scan.id} asChild className="cursor-pointer">
-              <Link
-                href={scan.url}
-                className="flex items-start justify-between gap-3 px-3 py-2 hover:bg-grep-1"
-                onClick={() => setOpen(false)}
-              >
-                <div className="flex-1 min-w-0">
+            <DropdownMenuItem
+              key={scan.id}
+              className="group cursor-default focus:bg-transparent"
+              onSelect={(event) => event.preventDefault()}
+            >
+              <div className="flex w-full items-start justify-between gap-3 px-1 py-1">
+                <Link
+                  prefetch={false}
+                  href={scan.url}
+                  className="min-w-0 flex-1 rounded px-2 py-1 hover:bg-grep-1"
+                  onClick={() => setOpen(false)}
+                >
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
-                    <code className="text-xs text-foreground truncate">{scan.domain}</code>
+                    <div className="h-2 w-2 shrink-0 rounded-full bg-green-500" />
+                    <code className="truncate text-xs text-foreground">{scan.domain}</code>
                   </div>
-                  <div className="flex items-center gap-3 mt-1 text-[10px] text-grep-9">
+                  <div className="mt-1 flex items-center gap-3 text-[10px] text-grep-9">
                     <span>{scan.tokensExtracted} tokens</span>
                     <span>·</span>
                     <span>{scan.confidence}% conf.</span>
                     <span>·</span>
                     <span suppressHydrationWarning>{formatTime(scan.scannedAt)}</span>
                   </div>
-                </div>
+                </Link>
                 <button
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    removeScan(scan.id)
-                  }}
-                  className="shrink-0 p-1 hover:bg-grep-2 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                  type="button"
+                  onClick={() => removeScan(scan.id)}
+                  className="shrink-0 rounded p-1 opacity-0 transition-opacity hover:bg-grep-2 group-hover:opacity-100"
                   title="Remove from recent scans"
+                  aria-label={`Remove ${scan.domain} from recent scans`}
                 >
                   <Trash2 className="h-3 w-3 text-grep-9" />
                 </button>
-              </Link>
+              </div>
             </DropdownMenuItem>
           ))}
         </div>

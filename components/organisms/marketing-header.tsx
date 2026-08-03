@@ -74,7 +74,7 @@ export function MarketingHeader({ currentPage = "home", showSearch = false }: Ma
         {/* Left: Brand + Live Stats */}
         <div className="flex items-center pl-3 sm:pl-4 md:pl-6 gap-2 sm:gap-4">
           <div className="flex items-center gap-2 pr-2 sm:pr-3">
-            <Link className="outline-offset-4 flex items-center gap-1.5 sm:gap-2" href="/">
+            <Link prefetch={false} className="outline-offset-4 flex items-center gap-1.5 sm:gap-2" href="/">
               <Palette className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 dark:text-blue-400" />
               <span className="text-base sm:text-lg font-semibold text-black dark:text-white">Design Contracts</span>
               <span className="hidden xs:inline text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900">Beta</span>
@@ -235,12 +235,12 @@ export function MarketingHeader({ currentPage = "home", showSearch = false }: Ma
         {/* Right: Navigation + Theme Toggle */}
         <div className="flex min-h-[56px] sm:min-h-[64px] select-none items-center justify-end gap-1.5 sm:gap-2 pr-2 sm:pr-4 md:pr-6">
           <RecentScansDropdown />
-          <Link href="/community" className="hidden sm:inline-flex">
+          <Link prefetch={false} href="/community" className="hidden sm:inline-flex">
             <Button variant="ghost" size="sm" className="h-7 sm:h-8 px-2 sm:px-3 text-xs font-medium text-grep-9 hover:text-foreground">
               Community
             </Button>
           </Link>
-          <Link href="/docs" className="hidden lg:inline-flex">
+          <Link prefetch={false} href="/docs" className="hidden lg:inline-flex">
             <Button variant="ghost" size="sm" className="h-7 sm:h-8 px-2 sm:px-3 text-xs font-medium text-grep-9 hover:text-foreground">
               Docs
             </Button>

@@ -120,82 +120,88 @@ export function ProgressiveScanResults({
   useEffect(() => {
     if (!scanId) return
 
-    // Simulate progressive data streaming
-    const simulateProgressiveUpdates = () => {
-      setTimeout(() => {
-        loader.current.update({
-          phase: 'css-collection',
-          step: 'static-css-collected',
-          data: {
-            domain,
-            url,
-            summary: { tokensExtracted: 45, confidence: 0, completeness: 0.2, reliability: 0.1, processingTime: 0 }
-          },
-          progress: 15
-        })
-      }, 300) // 300ms - First data arrives
-
-      setTimeout(() => {
-        loader.current.update({
-          phase: 'token-generation',
-          step: 'legacy-tokens-generated',
-          data: {
-            tokens: { colors: ['#FF0000', '#00FF00', '#0000FF'], typography: { families: ['Inter'] } },
-            summary: { tokensExtracted: 127, confidence: 0.6, completeness: 0.5, reliability: 0.4, processingTime: 800 }
-          },
-          progress: 45
-        })
-      }, 800) // 800ms - Tokens arrive
-
-      setTimeout(() => {
-        loader.current.update({
-          phase: 'analysis',
-          step: 'layout-analysis-complete',
-          data: {
-            layoutDNA: { containers: [], spacing: [], archetypes: [] },
-            summary: { tokensExtracted: 156, confidence: 0.75, completeness: 0.7, reliability: 0.6, processingTime: 1200 }
-          },
-          progress: 70
-        })
-      }, 1200) // 1.2s - Layout analysis
-
-      setTimeout(() => {
-        loader.current.update({
-          phase: 'ai-processing',
-          step: 'ai-insights-generated',
-          data: {
-            comprehensiveAnalysis: { recommendations: { quick_wins: [], critical: [] } },
-            brandAnalysis: { mood: 'modern', personality: [] },
-            summary: { tokensExtracted: 189, confidence: 0.85, completeness: 0.9, reliability: 0.8, processingTime: 1800 }
-          },
-          progress: 90
-        })
-      }, 1800) // 1.8s - AI insights
-
-      setTimeout(() => {
-        loader.current.complete({
-          domain: domain || 'example.com',
-          url: url || 'https://example.com',
-          favicon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-          summary: { tokensExtracted: 234, confidence: 0.92, completeness: 1.0, reliability: 0.95, processingTime: 2200 },
-          tokens: { colors: ['#FF0000', '#00FF00', '#0000FF'], typography: { families: ['Inter', 'Roboto'] } },
-          curatedTokens: { colors: ['#FF0000', '#00FF00', '#0000FF'], typography: { families: ['Inter', 'Roboto'] } },
-          layoutDNA: { containers: [], spacing: [], archetypes: [] },
-          promptPack: { version: '1.0' },
-          brandAnalysis: { mood: 'modern', personality: ['clean', 'professional'] },
-          componentLibrary: { summary: { totalComponents: 12 } },
-          comprehensiveAnalysis: { recommendations: { quick_wins: ['Use consistent spacing'], critical: [] } },
-          metadata: { cssSources: 15, scanId },
-          database: { siteId: 'site-123', scanId, tokenSetId: 'tokens-123', stored: true }
-        })
-      }, 2200) // 2.2s - Complete scan
+    const timers: number[] = []
+    const schedule = (delay: number, fn: () => void) => {
+      timers.push(window.setTimeout(fn, delay))
     }
 
-    simulateProgressiveUpdates()
+    schedule(300, () => {
+      loader.current.update({
+        phase: 'css-collection',
+        step: 'static-css-collected',
+        data: {
+          domain,
+          url,
+          summary: { tokensExtracted: 45, confidence: 0, completeness: 0.2, reliability: 0.1, processingTime: 0 }
+        },
+        progress: 15
+      })
+    })
+
+    schedule(800, () => {
+      loader.current.update({
+        phase: 'token-generation',
+        step: 'legacy-tokens-generated',
+        data: {
+          tokens: { colors: ['#FF0000', '#00FF00', '#0000FF'], typography: { families: ['Inter'] } },
+          summary: { tokensExtracted: 127, confidence: 0.6, completeness: 0.5, reliability: 0.4, processingTime: 800 }
+        },
+        progress: 45
+      })
+    })
+
+    schedule(1200, () => {
+      loader.current.update({
+        phase: 'analysis',
+        step: 'layout-analysis-complete',
+        data: {
+          layoutDNA: { containers: [], spacing: [], archetypes: [] },
+          summary: { tokensExtracted: 156, confidence: 0.75, completeness: 0.7, reliability: 0.6, processingTime: 1200 }
+        },
+        progress: 70
+      })
+    })
+
+    schedule(1800, () => {
+      loader.current.update({
+        phase: 'ai-processing',
+        step: 'ai-insights-generated',
+        data: {
+          comprehensiveAnalysis: { recommendations: { quick_wins: [], critical: [] } },
+          brandAnalysis: { mood: 'modern', personality: [] },
+          summary: { tokensExtracted: 189, confidence: 0.85, completeness: 0.9, reliability: 0.8, processingTime: 1800 }
+        },
+        progress: 90
+      })
+    })
+
+    schedule(2200, () => {
+      loader.current.complete({
+        domain: domain || 'example.com',
+        url: url || 'https://example.com',
+        favicon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+        summary: { tokensExtracted: 234, confidence: 0.92, completeness: 1.0, reliability: 0.95, processingTime: 2200 },
+        tokens: { colors: ['#FF0000', '#00FF00', '#0000FF'], typography: { families: ['Inter', 'Roboto'] } },
+        curatedTokens: { colors: ['#FF0000', '#00FF00', '#0000FF'], typography: { families: ['Inter', 'Roboto'] } },
+        layoutDNA: { containers: [], spacing: [], archetypes: [] },
+        promptPack: { version: '1.0' },
+        brandAnalysis: { mood: 'modern', personality: ['clean', 'professional'] },
+        componentLibrary: { summary: { totalComponents: 12 } },
+        comprehensiveAnalysis: { recommendations: { quick_wins: ['Use consistent spacing'], critical: [] } },
+        metadata: { cssSources: 15, scanId },
+        database: { siteId: 'site-123', scanId, tokenSetId: 'tokens-123', stored: true }
+      })
+    })
+
+    return () => {
+      for (const timer of timers) window.clearTimeout(timer)
+    }
   }, [scanId, domain, url])
 
-  const shouldShowSkeleton = loader.current.shouldShowSkeleton()
-  const transitionClasses = loader.current.getTransitionClasses()
+  const shouldShowSkeleton =
+    progressiveState.status === 'loading' || progressiveState.status === 'streaming'
+  const transitionClasses =
+    progressiveState.status === 'complete' ? 'opacity-100' : 'opacity-100 transition-opacity'
 
   const progressPercentage = progressiveState.progress.step / progressiveState.progress.totalSteps * 100
 

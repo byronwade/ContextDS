@@ -17,12 +17,12 @@ export async function GET(
     const id = normalizeId(rawId)
 
     if (!id) {
-      return NextResponse.json({ error: 'System id is required' }, { status: 400 })
+      return NextResponse.json({ error: 'System id is required' }, { status: 400 , headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } })
     }
 
     const stored = await getSystem(id)
     if (!stored) {
-      return NextResponse.json({ error: 'System not found' }, { status: 404 })
+      return NextResponse.json({ error: 'System not found' }, { status: 404 , headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } })
     }
 
     if (stored.visibility === 'private') {
@@ -30,14 +30,14 @@ export async function GET(
       const customerId = entitlement?.customerId || entitlement?.stripeCustomerId
       if (!canAccessSystem(stored, customerId) && process.env.BILLING_BYPASS !== '1') {
         // Opaque 404 — don't leak private id existence
-        return NextResponse.json({ error: 'System not found' }, { status: 404 })
+        return NextResponse.json({ error: 'System not found' }, { status: 404 , headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } })
       }
     }
 
-    return NextResponse.json(stored)
+    return NextResponse.json(stored, { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } })
   } catch (error) {
     console.error('Error loading system:', error)
-    return NextResponse.json({ error: 'Failed to load system' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to load system' }, { status: 500 , headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } })
   }
 }
 
@@ -50,12 +50,12 @@ export async function DELETE(
     const id = normalizeId(rawId)
 
     if (!id) {
-      return NextResponse.json({ error: 'System id is required' }, { status: 400 })
+      return NextResponse.json({ error: 'System id is required' }, { status: 400 , headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } })
     }
 
     const stored = await getSystem(id)
     if (!stored) {
-      return NextResponse.json({ error: 'System not found' }, { status: 404 })
+      return NextResponse.json({ error: 'System not found' }, { status: 404 , headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } })
     }
 
     const entitlement = await getEntitlementFromRequest(request)
@@ -63,23 +63,23 @@ export async function DELETE(
 
     if (stored.visibility === 'private') {
       if (!canAccessSystem(stored, customerId) && process.env.BILLING_BYPASS !== '1') {
-        return NextResponse.json({ error: 'System not found' }, { status: 404 })
+        return NextResponse.json({ error: 'System not found' }, { status: 404 , headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } })
       }
     } else if (stored.ownerCustomerId && stored.ownerCustomerId !== customerId) {
       // Public systems with an owner can only be deleted by that owner
       if (process.env.BILLING_BYPASS !== '1') {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 , headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } })
       }
     }
 
     const deleted = await deleteSystem(id)
     if (!deleted) {
-      return NextResponse.json({ error: 'System not found' }, { status: 404 })
+      return NextResponse.json({ error: 'System not found' }, { status: 404 , headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } })
     }
 
     return NextResponse.json({ deleted: true, id })
   } catch (error) {
     console.error('Error deleting system:', error)
-    return NextResponse.json({ error: 'Failed to delete system' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to delete system' }, { status: 500 , headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } })
   }
 }

@@ -53,13 +53,13 @@ export default function AboutPage() {
         </section>
 
         <div className="mt-12 flex flex-wrap gap-2">
-          <Link
+          <Link prefetch={false}
             href="/"
             className="inline-flex h-10 items-center rounded-[var(--radius-md)] bg-[var(--ui-accent)] px-[18px] text-sm font-medium text-[var(--ui-on-primary)] transition hover:bg-[var(--ui-accent-hover)]"
           >
             Open Chat
           </Link>
-          <Link
+          <Link prefetch={false}
             href="/contact"
             className="inline-flex h-10 items-center rounded-[var(--radius-md)] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] px-[18px] text-sm font-medium text-[var(--ui-ink)] transition hover:bg-[var(--ui-paper-hover)]"
           >

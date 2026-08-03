@@ -189,6 +189,7 @@ export default function BulletproofTestPage() {
           <CardContent className="space-y-4">
             <Input
               placeholder="https://example.com"
+              aria-label="Website URL to test"
               value={customUrl}
               onChange={(e) => setCustomUrl(e.target.value)}
             />
@@ -256,7 +257,14 @@ export default function BulletproofTestPage() {
       )}
 
       {/* Test Results */}
-      {results.length > 0 && (
+      {results.length === 0 ? (
+        <div className="space-y-3 rounded-lg border border-dashed px-6 py-12 text-center">
+          <h2 className="text-xl font-semibold">No test results yet</h2>
+          <p className="text-sm text-muted-foreground">
+            Run a preset or custom test to see bulletproof scan outcomes here.
+          </p>
+        </div>
+      ) : (
         <div className="space-y-4">
           <h2 className="text-2xl font-bold">🔍 Test Results</h2>
           {results.map((result, index) => (

@@ -20,7 +20,7 @@ CREATE POLICY "Sites are publicly readable" ON sites
   FOR SELECT USING (owner_optout = false);
 
 CREATE POLICY "Users can insert sites" ON sites
-  FOR INSERT WITH CHECK (true);
+  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 
 -- Scans policies (public read for completed scans of public sites)
 CREATE POLICY "Scans are publicly readable" ON scans

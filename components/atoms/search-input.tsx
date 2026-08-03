@@ -12,7 +12,18 @@ interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
-  ({ className, onSearch, loading, showIcon = true, onKeyDown, ...props }, ref) => {
+  (
+    {
+      className,
+      onSearch,
+      loading,
+      showIcon = true,
+      onKeyDown,
+      "aria-label": ariaLabel,
+      ...props
+    },
+    ref
+  ) => {
     const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
       if (event.key === 'Enter' && onSearch) {
         onSearch((event.target as HTMLInputElement).value)
@@ -29,6 +40,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         )}
         <Input
           ref={ref}
+          aria-label={ariaLabel ?? props.placeholder ?? 'Search'}
           className={cn(
             "transition-all duration-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 hover:border-neutral-300",
             "dark:focus:border-blue-500 dark:focus:ring-blue-900/20 dark:hover:border-neutral-600",

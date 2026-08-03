@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
             error: 'Database connection failed'
           }
         }
-      }, { status: 503 })
+      }, { status: 503 , headers: { 'Cache-Control': 'private, no-store' } })
     }
 
     // 2. Critical query performance tests
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
 
     const statusCode = healthStatus === 'healthy' ? 200 : healthStatus === 'degraded' ? 200 : 503
 
-    return NextResponse.json(healthReport, { status: statusCode })
+    return NextResponse.json(healthReport, { status: statusCode , headers: { 'Cache-Control': 'private, no-store' } })
 
   } catch (error) {
     console.error('❌ Health check failed:', error)
@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
       error: error instanceof Error ? error.message : 'Health check failed',
       responseTime: Date.now() - startTime
-    }, { status: 503 })
+    }, { status: 503 , headers: { 'Cache-Control': 'private, no-store' } })
   }
 }
 

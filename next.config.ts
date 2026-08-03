@@ -33,13 +33,27 @@ const nextConfig: NextConfig = {
 
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'stripe.com', pathname: '/**' },
-      { protocol: 'https', hostname: 'github.com', pathname: '/**' },
-      { protocol: 'https', hostname: 'figma.com', pathname: '/**' },
-      { protocol: 'https', hostname: 'vercel.com', pathname: '/**' },
-      { protocol: 'https', hostname: '*.public.blob.vercel-storage.com', pathname: '/**' },
-      { protocol: 'https', hostname: 'designcontracts.sh', pathname: '/**' },
-      { protocol: 'https', hostname: 'cdn.designcontracts.sh', pathname: '/**' },
+      { protocol: 'https', hostname: 'stripe.com', pathname: '/img/**' },
+      { protocol: 'https', hostname: 'github.com', pathname: '/assets/**' },
+      { protocol: 'https', hostname: 'figma.com', pathname: '/uploads/**' },
+      { protocol: 'https', hostname: 'vercel.com', pathname: '/api/**' },
+      {
+        protocol: 'https',
+        hostname: '*.public.blob.vercel-storage.com',
+        pathname: '/screenshots/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.public.blob.vercel-storage.com',
+        pathname: '/sites/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.public.blob.vercel-storage.com',
+        pathname: '/contracts/**',
+      },
+      { protocol: 'https', hostname: 'designcontracts.sh', pathname: '/images/**' },
+      { protocol: 'https', hostname: 'cdn.designcontracts.sh', pathname: '/images/**' },
       { protocol: 'https', hostname: 'images.designcontracts.sh', pathname: '/**' },
     ],
     formats: ['image/avif', 'image/webp'],

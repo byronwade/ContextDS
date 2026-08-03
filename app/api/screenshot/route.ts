@@ -152,9 +152,7 @@ export async function POST(request: NextRequest) {
 
     if (!url || !siteId || !scanId) {
       return NextResponse.json(
-        { error: 'Missing required fields: url, siteId, scanId' },
-        { status: 400 }
-      )
+        { error: 'Missing required fields: url, siteId, scanId' }, { status: 400 , headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } })
     }
 
     // Validate URL format
@@ -163,27 +161,21 @@ export async function POST(request: NextRequest) {
       parsedUrl = new URL(url)
     } catch {
       return NextResponse.json(
-        { error: 'Invalid URL format' },
-        { status: 400 }
-      )
+        { error: 'Invalid URL format' }, { status: 400 , headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } })
     }
 
     // Validate protocol
     const allowedProtocols = ['http:', 'https:']
     if (!allowedProtocols.includes(parsedUrl.protocol)) {
       return NextResponse.json(
-        { error: 'Invalid URL protocol. Only HTTP and HTTPS are allowed.' },
-        { status: 400 }
-      )
+        { error: 'Invalid URL protocol. Only HTTP and HTTPS are allowed.' }, { status: 400 , headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } })
     }
 
     // SSRF protection with DNS resolution
     const ssrfError = await validateSSRF(parsedUrl)
     if (ssrfError) {
       return NextResponse.json(
-        { error: ssrfError },
-        { status: 400 }
-      )
+        { error: ssrfError }, { status: 400 , headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } })
     }
 
     const results: Array<{ viewport: string; url: string; width: number; height: number }> = []
@@ -302,9 +294,7 @@ export async function POST(request: NextRequest) {
 
     if (results.length === 0) {
       return NextResponse.json(
-        { error: 'Failed to capture any screenshots' },
-        { status: 500 }
-      )
+        { error: 'Failed to capture any screenshots' }, { status: 500 , headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } })
     }
 
     return NextResponse.json({
@@ -318,9 +308,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : 'Screenshot capture failed'
-      },
-      { status: 500 }
-    )
+      }, { status: 500 , headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } })
   }
 }
 
@@ -334,9 +322,7 @@ export async function GET(request: NextRequest) {
 
     if (!scanId) {
       return NextResponse.json(
-        { error: 'Missing scanId parameter' },
-        { status: 400 }
-      )
+        { error: 'Missing scanId parameter' }, { status: 400 , headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } })
     }
 
     // Fetch screenshots with content data joined
@@ -368,8 +354,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : 'Failed to fetch screenshots'
-      },
-      { status: 500 }
-    )
+      }, { status: 500 , headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } })
   }
 }

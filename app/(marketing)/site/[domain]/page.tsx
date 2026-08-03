@@ -180,7 +180,7 @@ export default function SitePage() {
           <div className="mt-4 flex flex-wrap gap-3">
             <Button onClick={runFreshScan}>Scan now</Button>
             <Button variant="outline" asChild>
-              <Link href={`/?url=${encodeURIComponent(domain)}`}>Open in Chat</Link>
+              <Link prefetch={false} href={`/?url=${encodeURIComponent(domain)}`}>Open in Chat</Link>
             </Button>
           </div>
         </div>
