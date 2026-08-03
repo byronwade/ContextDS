@@ -659,14 +659,14 @@ export function ScanChat() {
           <ConversationScrollButton />
         </Conversation>
 
-        {/* Composer — Cursor-style writing surface + compact toolbar */}
+        {/* Composer — warm field on paper, even padding, token colors only */}
         <div className="relative shrink-0 bg-[var(--ui-paper)]">
           <div className="mx-auto w-full max-w-[712px] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-6">
             {slashMatches.length > 0 ? (
               <div
                 role="listbox"
                 aria-label="Slash commands"
-                className="mb-2 overflow-hidden rounded-[12px] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)]"
+                className="mb-2 overflow-hidden rounded-[var(--radius-paper)] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)]"
               >
                 {slashMatches.map((command) => {
                   const active = command.name === activeSlash?.name
@@ -678,10 +678,10 @@ export function ScanChat() {
                       aria-selected={active}
                       onClick={() => completeSlash(command)}
                       className={cn(
-                        'flex w-full items-baseline gap-2 px-3 py-2 text-left transition-colors',
+                        'flex w-full items-baseline gap-2 px-3.5 py-2 text-left transition-colors',
                         active
                           ? 'bg-[var(--ui-accent-soft)]'
-                          : 'hover:bg-[var(--ui-paper-subtle)]'
+                          : 'hover:bg-[var(--ui-paper-hover)]'
                       )}
                     >
                       <span className="font-mono text-[12px] text-[var(--ui-ink)]">
@@ -703,8 +703,9 @@ export function ScanChat() {
             <PromptInput
               onSubmit={onSubmit}
               className={cn(
-                'overflow-hidden rounded-[12px] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] shadow-none',
-                'has-[[data-slot=input-group-control]:focus-visible]:border-[var(--ui-ink)]'
+                'overflow-hidden rounded-[var(--radius-paper)] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] shadow-none',
+                'has-[[data-slot=input-group-control]:focus-visible]:border-[var(--ui-border-edge)]',
+                'has-[[data-slot=input-group-control]:focus-visible]:bg-[var(--ui-paper)]'
               )}
             >
               <PromptInputBody>
@@ -714,13 +715,13 @@ export function ScanChat() {
                   onKeyDown={onComposerKeyDown}
                   placeholder="Ask about a site, or type / for commands"
                   disabled={busy && status === 'submitted'}
-                  className="min-h-[52px] max-h-48 px-3.5 pb-1.5 pt-3 text-[15px] leading-relaxed placeholder:text-[var(--ui-ink-muted)]"
+                  className="min-h-[40px] max-h-48 px-3 py-2.5 text-[15px] leading-[1.45] text-[var(--ui-ink)] placeholder:text-[var(--ui-ink-muted-soft)]"
                   aria-label="Message"
                 />
               </PromptInputBody>
-              <PromptInputFooter className="items-center border-0 border-t border-[var(--ui-border-soft)] bg-transparent px-2.5 py-2">
+              <PromptInputFooter className="h-10 items-center gap-2 border-t border-[var(--ui-border-soft)] bg-transparent px-3 py-0">
                 <PromptInputTools>
-                  <span className="select-none text-[12px] text-[var(--ui-ink-muted)]">
+                  <span className="select-none text-[12px] leading-none text-[var(--ui-ink-muted-soft)]">
                     Enter to send
                   </span>
                 </PromptInputTools>
@@ -731,9 +732,9 @@ export function ScanChat() {
                   size="icon-xs"
                   variant="default"
                   className={cn(
-                    'size-7 shrink-0 rounded-full border-0 shadow-none',
+                    'h-7 w-7 min-h-7 max-h-7 shrink-0 rounded-full border-0 p-0 shadow-none disabled:opacity-100',
                     !text.trim() && !busy
-                      ? 'bg-[var(--ui-ink)]/12 text-[var(--ui-ink-muted)] hover:bg-[var(--ui-ink)]/12 disabled:opacity-100'
+                      ? 'bg-[var(--ui-paper-selected)] text-[var(--ui-ink-secondary)] hover:bg-[var(--ui-paper-selected)]'
                       : 'bg-[var(--ui-accent)] text-[var(--ui-on-primary)] hover:bg-[var(--ui-accent-hover)]'
                   )}
                 >

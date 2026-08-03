@@ -1094,7 +1094,7 @@ export const PromptInputFooter = ({
   <InputGroupAddon
     align="block-end"
     className={cn(
-      "justify-between gap-2 border-t border-[var(--ui-border-soft)] bg-transparent px-2.5 py-2",
+      "h-10 items-center justify-between gap-2 border-t border-[var(--ui-border-soft)] bg-transparent px-3 py-0",
       className
     )}
     {...props}
