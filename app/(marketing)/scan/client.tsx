@@ -77,9 +77,9 @@ const EXAMPLES = [
 
 const CAPABILITIES = [
   {
-    label: 'App UI from screenshot',
+    label: 'App Pack (5+ shots)',
     prompt:
-      'I want an APPLICATION Design Contract from a product UI screenshot — not the marketing site. Ask me to attach a screenshot, then call contract_from_screenshot.',
+      'I want a Pro App Pack — an APPLICATION Design Contract from at least 5 product UI screenshots, not the marketing site. Ask me to attach ≥5 shots, then call contract_from_screenshot.',
   },
   { label: 'Critique a system', prompt: "Critique stripe.com's design system — how consistent is it?" },
   { label: 'Compare two sites', prompt: 'Compare the design systems of linear.app and vercel.com' },
@@ -92,7 +92,7 @@ const CAPABILITIES = [
 
 const TOOL_LABELS: Record<string, string> = {
   scan_site: 'Scanning site',
-  contract_from_screenshot: 'Reading app screenshot',
+  contract_from_screenshot: 'Building App Pack',
   get_tokens: 'Reading cached contract',
   get_design_md: 'Reading DESIGN.md',
   resolve_graph: 'Walking the semantic graph',
@@ -609,6 +609,13 @@ export function ScanChat() {
 
     if (imageFiles.length > 0) {
       if (busy) return
+      const minShots = 5
+      if (imageFiles.length < minShots) {
+        void sendMessage({
+          text: `App Packs need at least ${minShots} product UI screenshots (you attached ${imageFiles.length}). Add more shots of the same app — sidebar, editor, settings, lists, modals — then send again. Pro is $9/mo with 12 packs; upgrade at /pricing if you haven’t.`,
+        })
+        return
+      }
       setText('')
       setSlashIndex(0)
       trackClientEvent('chat_message')
@@ -616,39 +623,50 @@ export function ScanChat() {
         parseSlashCommand(rawText)?.args?.trim() ||
         (rawText && !rawText.startsWith('/') ? rawText.slice(0, 80) : '') ||
         'App UI'
-      const primary = imageFiles[0]
-      const dataUrl = primary.url || ''
       try {
         const response = await fetch('/api/contracts/from-image', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            imageBase64: dataUrl,
-            mimeType: primary.mediaType || 'image/png',
+            images: imageFiles.map((file) => ({
+              imageBase64: file.url || '',
+              mimeType: file.mediaType || 'image/png',
+            })),
             name: nameHint,
             preferApp: true,
           }),
         })
         const payload = (await response.json()) as {
           error?: string
+          code?: string
+          upgradePath?: string
           domain?: string
+          imageCount?: number
           designContract?: { installCommand?: string }
           metadata?: { visionSignature?: string; appType?: string }
+          billing?: { appPacksRemaining?: number }
         }
         if (!response.ok) {
+          const upgradeHint =
+            response.status === 402
+              ? ` Upgrade at ${payload.upgradePath || '/pricing'} (Pro $9/mo, 12 App Packs).`
+              : ''
           void sendMessage({
-            text: `Screenshot → Design Contract failed: ${payload.error || response.statusText}. ${rawText || ''}`.trim(),
+            text: `App Pack failed: ${payload.error || response.statusText}.${upgradeHint} ${rawText || ''}`.trim(),
           })
           return
         }
         pushRecent(payload.domain || '')
         void sendMessage({
           text: [
-            `I extracted an APPLICATION Design Contract from my screenshot as \`${payload.domain}\`.`,
+            `I built a Pro App Pack (${payload.imageCount || imageFiles.length} screenshots) as \`${payload.domain}\`.`,
             payload.metadata?.visionSignature
               ? `Signature: ${payload.metadata.visionSignature}`
               : null,
             `App type: ${payload.metadata?.appType || 'saas-workbench'}.`,
+            typeof payload.billing?.appPacksRemaining === 'number'
+              ? `${payload.billing.appPacksRemaining} App Packs remaining this month.`
+              : null,
             'Call get_tokens on that domain, summarize the system, and give the install command. This is app UI — not marketing.',
           ]
             .filter(Boolean)
@@ -656,7 +674,7 @@ export function ScanChat() {
         })
       } catch (error) {
         void sendMessage({
-          text: `Could not process the screenshot: ${
+          text: `Could not process the App Pack: ${
             error instanceof Error ? error.message : 'unknown error'
           }`,
         })
@@ -845,8 +863,8 @@ export function ScanChat() {
             <PromptInput
               onSubmit={onSubmit}
               accept="image/*"
-              multiple={false}
-              maxFiles={1}
+              multiple
+              maxFiles={12}
               maxFileSize={6_000_000}
               className={cn(
                 'relative overflow-hidden rounded-[14px] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] shadow-none',
@@ -867,13 +885,13 @@ export function ScanChat() {
               <div className="absolute bottom-2.5 right-2.5 z-10 flex items-center gap-1">
                 <PromptInputActionMenu>
                   <PromptInputActionMenuTrigger
-                    tooltip="Attach app screenshot"
+                    tooltip="Attach App Pack screenshots (5+)"
                     className="h-7 w-7 min-h-7 rounded-full border-0 bg-transparent p-0 text-[var(--ui-ink-muted)] shadow-none hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]"
                   >
                     <PlusIcon className="size-3.5" />
                   </PromptInputActionMenuTrigger>
                   <PromptInputActionMenuContent align="end">
-                    <PromptInputActionAddAttachments label="App screenshot (for product UI)" />
+                    <PromptInputActionAddAttachments label="App Pack screenshots (min 5, Pro)" />
                   </PromptInputActionMenuContent>
                 </PromptInputActionMenu>
                 <ComposerSendButton

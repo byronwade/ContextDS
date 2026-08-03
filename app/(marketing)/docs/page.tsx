@@ -25,8 +25,14 @@ const endpoints = [
   {
     method: 'POST',
     path: '/api/contracts/from-image',
-    body: '{ "imageBase64": "<…>", "name": "Cursor", "preferApp": true }',
-    note: 'Application Design Contract from a product UI screenshot (web-app). Multipart image upload also works.',
+    body: '{ "images": [{ "imageBase64": "<…>" }, "…×5+" ], "name": "Cursor", "preferApp": true }',
+    note: 'Pro App Pack — ≥5 product UI screenshots → web-app Design Contract. Requires Pro ($9/mo).',
+  },
+  {
+    method: 'POST',
+    path: '/api/billing/checkout',
+    body: '{ "email": "you@example.com" }',
+    note: 'Start Stripe Checkout for Design Contracts Pro.',
   },
   {
     method: 'GET',
@@ -156,14 +162,16 @@ SCANNER_SERVICE_URL=https://designcontracts-scanner.vercel.app`}
 
           <section className="mt-12 space-y-3 pb-8">
             <h2 className="text-[13px] font-medium tracking-tight text-[var(--ui-ink)]">
-              Application UI from screenshots
+              Pro App Packs (application UI)
             </h2>
             <p className="text-[13px] leading-relaxed text-[var(--ui-ink-secondary)]">
               Public crawls usually see marketing sites. For product chrome (Cursor, dashboards,
-              workbenches), attach a screenshot in chat or POST{' '}
+              workbenches), attach at least five screenshots in chat or POST{' '}
               <code className="text-[var(--ui-ink)]">/api/contracts/from-image</code>. Vision
-              samples colors and shell into a <code className="text-[var(--ui-ink)]">web-app</code>{' '}
-              Design Contract. Requires AI Gateway.
+              synthesizes a <code className="text-[var(--ui-ink)]">web-app</code> Design Contract
+              across the set. App Packs are Pro ($9/mo, 12 packs, 7-day trial) via Stripe Checkout
+              at <code className="text-[var(--ui-ink)]">/pricing</code>. Requires AI Gateway.
+              Local/dev: set <code className="text-[var(--ui-ink)]">BILLING_BYPASS=1</code>.
             </p>
           </section>
       </PageCanvas>

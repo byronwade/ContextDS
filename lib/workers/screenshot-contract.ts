@@ -1,16 +1,17 @@
 /**
- * Screenshot → installable Design Contract worker.
+ * Screenshot → installable Design Contract worker (Pro App Packs).
  *
- * Parallel to simple-scan for cases where the target UI is an application
- * surface (often behind auth) and the user provides a screenshot instead of
- * a public marketing URL.
+ * Requires a minimum set of product UI screenshots (default 5) so vision can
+ * synthesize a coherent application Design Contract — not a one-shot guess.
  */
 
 import { put } from '@vercel/blob'
 import {
   extractVisionContractDraft,
   mapVisionDraftToContractInput,
+  normalizeScreenshotImages,
   syntheticUploadDomain,
+  type ScreenshotImageInput,
 } from '@/lib/analyzers/screenshot-contract'
 import { generateDesignMd } from '@/lib/analyzers/design-md-generator'
 import { generateDesignSkill } from '@/lib/analyzers/design-skill-generator'
@@ -18,10 +19,14 @@ import type { DriftObservation } from '@/lib/contracts/contextds-drift'
 import { buildDesignContractPackage } from '@/lib/contracts/design-contract-package'
 import { contractDownloadPath, normalizeDomain } from '@/lib/domain'
 import { isAiGatewayConfigured } from '@/lib/ai/gateway'
+import { BILLING } from '@/lib/billing/config'
 import { getScan, saveScan, type StoredScanResult } from '@/lib/storage/serverless-store'
 
 export type ScreenshotContractInput = {
-  imageBase64: string
+  /** Preferred multi-image App Pack payload */
+  images?: ScreenshotImageInput[]
+  /** @deprecated Prefer `images` */
+  imageBase64?: string
   mimeType?: string
   /** Product name hint, e.g. "Cursor" */
   name?: string | null
@@ -29,6 +34,8 @@ export type ScreenshotContractInput = {
   preferApp?: boolean
   /** Optional stable domain override */
   domain?: string | null
+  minImages?: number
+  maxImages?: number
 }
 
 export type ScreenshotContractResult = {
@@ -36,6 +43,7 @@ export type ScreenshotContractResult = {
   domain: string
   url: string
   source: 'screenshot'
+  imageCount: number
   summary: StoredScanResult['summary']
   curatedTokens?: StoredScanResult['curatedTokens']
   brandAnalysis?: StoredScanResult['brandAnalysis']
@@ -47,6 +55,7 @@ export type ScreenshotContractResult = {
   metadata: StoredScanResult['metadata'] & {
     visionSurface?: string
     visionSignature?: string
+    appPackImages?: number
   }
   storage: {
     siteId: string
@@ -69,15 +78,31 @@ function stripDataUrl(input: string): { base64: string; mime?: string } {
   return { base64: input.replace(/\s+/g, '') }
 }
 
+function coerceImages(input: ScreenshotContractInput): ScreenshotImageInput[] {
+  const raw = normalizeScreenshotImages({
+    images: input.images,
+    imageBase64: input.imageBase64,
+    mimeType: input.mimeType,
+  })
+  return raw.map((image) => {
+    const parsed = stripDataUrl(image.imageBase64)
+    return {
+      imageBase64: parsed.base64,
+      mimeType: image.mimeType || parsed.mime || 'image/png',
+    }
+  })
+}
+
 async function persistImage(
   scanId: string,
   buffer: Buffer,
-  mime: string
+  mime: string,
+  index: number
 ): Promise<{ url: string } | null> {
   if (!process.env.BLOB_READ_WRITE_TOKEN) return null
   try {
     const ext = mime.includes('jpeg') || mime.includes('jpg') ? 'jpg' : 'png'
-    const pathname = `screenshots/${scanId}/vision-source-${Date.now()}.${ext}`
+    const pathname = `screenshots/${scanId}/vision-${index + 1}-${Date.now()}.${ext}`
     const blob = await put(pathname, buffer, {
       access: 'public',
       contentType: mime,
@@ -100,31 +125,56 @@ export async function runScreenshotContract(
   }
 
   const startedAt = Date.now()
-  const parsed = stripDataUrl(input.imageBase64)
-  const mime = input.mimeType || parsed.mime || 'image/png'
-  const base64 = parsed.base64
-  if (!base64 || base64.length < 200) {
-    throw new Error('Image payload is empty or too small')
+  const minImages = input.minImages ?? BILLING.minAppPackImages
+  const maxImages = input.maxImages ?? BILLING.maxAppPackImages
+  const images = coerceImages(input)
+
+  if (images.length < minImages) {
+    throw new Error(
+      `App Packs require at least ${minImages} product UI screenshots (received ${images.length}).`
+    )
   }
-  // ~6MB base64 ceiling
-  if (base64.length > 8_000_000) {
-    throw new Error('Image is too large — use a PNG/JPEG under ~6MB')
+  if (images.length > maxImages) {
+    throw new Error(
+      `App Packs accept at most ${maxImages} screenshots per run (received ${images.length}).`
+    )
+  }
+
+  for (const image of images) {
+    if (!image.imageBase64 || image.imageBase64.length < 200) {
+      throw new Error('One or more images are empty or too small')
+    }
+    if (image.imageBase64.length > 8_000_000) {
+      throw new Error('One or more images are too large — use PNG/JPEG under ~6MB each')
+    }
   }
 
   const scanId = createId('scan')
   const tokenSetId = createId('tokens')
   const domain = normalizeDomain(input.domain || syntheticUploadDomain(input.name))
-  const url = `https://${domain}/` // synthetic provenance URL
+  const url = `https://${domain}/`
   const preferApp = input.preferApp !== false
 
-  const buffer = Buffer.from(base64, 'base64')
-  const uploaded = await persistImage(scanId, buffer, mime)
+  const uploadedScreenshots: Array<{ label: string; url: string; mime: string }> = []
+  for (let i = 0; i < images.length; i++) {
+    const image = images[i]!
+    const buffer = Buffer.from(image.imageBase64, 'base64')
+    const uploaded = await persistImage(scanId, buffer, image.mimeType || 'image/png', i)
+    if (uploaded) {
+      uploadedScreenshots.push({
+        label: `app-screenshot-${i + 1}`,
+        url: uploaded.url,
+        mime: image.mimeType || 'image/png',
+      })
+    }
+  }
 
   const draft = await extractVisionContractDraft({
-    imageBase64: base64,
-    mimeType: mime,
+    images,
     nameHint: input.name,
     preferApp,
+    minImages,
+    maxImages,
   })
 
   const mapped = mapVisionDraftToContractInput({
@@ -163,13 +213,14 @@ export async function runScreenshotContract(
     {
       surface: 'site',
       kind: 'vision-source',
-      summary: `Design Contract drafted from a user-provided application screenshot (${draft.surfaceKind}). Tokens are vision-sampled, not CSS-measured.`,
+      summary: `Design Contract drafted from ${images.length} user-provided application screenshots (${draft.surfaceKind}). Tokens are vision-sampled across an App Pack, not CSS-measured.`,
       observedAt: scannedAt,
       evidence: {
         surfaceKind: draft.surfaceKind,
         polarity: draft.polarity,
         density: draft.density,
         productName: draft.productName,
+        imageCount: images.length,
       },
       suggestedAction:
         'Treat vision tokens as a strong starting grammar. Re-scan authenticated app surfaces with CSS when available to raise confidence.',
@@ -184,13 +235,20 @@ export async function runScreenshotContract(
     },
   ]
 
-  const contractScreenshots = [
-    {
-      label: 'app-screenshot',
-      url: uploaded?.url || url,
-      note: 'User-uploaded application screenshot — visual ground truth for this vision-derived contract.',
-    },
-  ]
+  const contractScreenshots =
+    uploadedScreenshots.length > 0
+      ? uploadedScreenshots.map((shot) => ({
+          label: shot.label,
+          url: shot.url,
+          note: 'User-uploaded application screenshot — visual ground truth for this vision-derived contract.',
+        }))
+      : [
+          {
+            label: 'app-screenshot',
+            url,
+            note: `${images.length} App Pack screenshots (not persisted — set BLOB_READ_WRITE_TOKEN).`,
+          },
+        ]
 
   const contractPack = buildDesignContractPackage({
     ...mapped.designMdInput,
@@ -239,7 +297,7 @@ export async function runScreenshotContract(
         shadows: curated.shadows?.length || 0,
       },
       confidence: mapped.confidence,
-      completeness: 70,
+      completeness: Math.min(88, 62 + images.length * 3),
       reliability: Math.round((mapped.confidence + 70) / 2),
       processingTime,
     },
@@ -268,9 +326,12 @@ export async function runScreenshotContract(
       description: designSkill.description,
     },
     designContract,
-    screenshots: uploaded
-      ? [{ label: 'app-screenshot', url: uploaded.url, mime, viewport: 'desktop' }]
-      : undefined,
+    screenshots: uploadedScreenshots.map((shot) => ({
+      label: shot.label,
+      url: shot.url,
+      mime: shot.mime,
+      viewport: 'desktop',
+    })),
     uxDna: {
       shell: mapped.designMdInput.uxEvidence?.shell ?? undefined,
       density: mapped.designMdInput.uxEvidence?.density ?? undefined,
@@ -288,6 +349,7 @@ export async function runScreenshotContract(
       appTypeConfidence: mapped.confidence / 100,
       visionSurface: draft.surfaceKind,
       visionSignature: draft.distinctiveSignature,
+      appPackImages: images.length,
     },
   }
 
@@ -298,6 +360,7 @@ export async function runScreenshotContract(
     domain,
     url,
     source: 'screenshot',
+    imageCount: images.length,
     summary: stored.summary,
     curatedTokens: stored.curatedTokens,
     brandAnalysis: stored.brandAnalysis,

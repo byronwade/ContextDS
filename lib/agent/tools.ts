@@ -177,16 +177,29 @@ export const designContractTools = {
 
   contract_from_screenshot: tool({
     description:
-      'Build an APPLICATION Design Contract from a product UI screenshot (IDE, dashboard, workbench). Use when the user wants app design — not marketing — or when public URL scans cannot see authenticated UI (e.g. Cursor). Defaults to web-app / saas-workbench. Accepts imageUrl (https or data:) or imageBase64.',
+      'Build an APPLICATION Design Contract from a Pro App Pack (≥5 product UI screenshots). Use when the user wants app design — not marketing — or when public URL scans cannot see authenticated UI (e.g. Cursor). Defaults to web-app / saas-workbench. Prefer imageUrls[] or images[] with at least 5 shots.',
     inputSchema: z.object({
+      imageUrls: z
+        .array(z.string())
+        .optional()
+        .describe('https or data: image URLs — need ≥5 for an App Pack'),
+      images: z
+        .array(
+          z.object({
+            imageBase64: z.string(),
+            mimeType: z.string().optional(),
+          })
+        )
+        .optional()
+        .describe('Base64 images — need ≥5 for an App Pack'),
       imageUrl: z
         .string()
         .optional()
-        .describe('https image URL or data:image/...;base64,... URI'),
+        .describe('Single URL (insufficient alone — collect ≥5)'),
       imageBase64: z
         .string()
         .optional()
-        .describe('Raw base64 image bytes without a data: prefix'),
+        .describe('Single base64 (insufficient alone — collect ≥5)'),
       mimeType: z.string().optional().describe('image/png or image/jpeg'),
       name: z
         .string()
@@ -198,28 +211,60 @@ export const designContractTools = {
         .default(true)
         .describe('Bias classification toward web-app (default true)'),
     }),
-    execute: async ({ imageUrl, imageBase64, mimeType, name, preferApp }) => {
-      let base64 = imageBase64
-      let mime = mimeType
-      if (!base64 && imageUrl) {
-        const loaded = await loadImageAsBase64(imageUrl)
-        base64 = loaded.base64
-        mime = mime || loaded.mimeType
-      }
-      if (!base64) {
+    execute: async ({
+      imageUrls,
+      images,
+      imageUrl,
+      imageBase64,
+      mimeType,
+      name,
+      preferApp,
+    }) => {
+      const { assertCanCreateAppPack, consumeAppPackCredit } = await import(
+        '@/lib/billing/entitlements'
+      )
+      const { BILLING } = await import('@/lib/billing/config')
+
+      const gate = await assertCanCreateAppPack()
+      if (!gate.ok) {
         return {
           found: false,
-          suggestion:
-            'Provide imageUrl or imageBase64 — attach a screenshot of the application UI (not the marketing site).',
+          error: gate.error,
+          code: gate.code,
+          upgradePath: gate.upgradePath,
+          suggestion: `App Packs are Pro ($${BILLING.proPriceUsd}/mo, ${BILLING.appPacksPerMonth} packs). Ask the user to upgrade at /pricing, then attach ≥${BILLING.minAppPackImages} product UI screenshots.`,
+        }
+      }
+
+      const packed: Array<{ imageBase64: string; mimeType?: string }> = [
+        ...(images || []),
+      ]
+
+      const urls = [...(imageUrls || []), ...(imageUrl ? [imageUrl] : [])]
+      for (const url of urls) {
+        const loaded = await loadImageAsBase64(url)
+        packed.push({ imageBase64: loaded.base64, mimeType: loaded.mimeType })
+      }
+      if (imageBase64) {
+        packed.push({ imageBase64, mimeType })
+      }
+
+      if (packed.length < BILLING.minAppPackImages) {
+        return {
+          found: false,
+          code: 'min_images',
+          suggestion: `App Packs need at least ${BILLING.minAppPackImages} product UI screenshots (got ${packed.length}). Ask the user to attach more shots of the same app (sidebar, editor, settings, lists, modals) — not the marketing site.`,
+          minAppPackImages: BILLING.minAppPackImages,
+          received: packed.length,
         }
       }
 
       const result = await runScreenshotContract({
-        imageBase64: base64,
-        mimeType: mime,
+        images: packed,
         name,
         preferApp,
       })
+      await consumeAppPackCredit(gate.entitlement)
 
       return {
         found: true,
@@ -227,8 +272,9 @@ export const designContractTools = {
         domain: result.domain,
         url: result.url,
         source: 'screenshot',
+        imageCount: result.imageCount,
         summary: result.summary,
-        mode: 'vision',
+        mode: 'vision-app-pack',
         tokens: slimTokens(result.curatedTokens),
         brand: result.brandAnalysis,
         designContract: result.designContract
@@ -246,8 +292,9 @@ export const designContractTools = {
           appType: result.metadata.appType,
           visionSurface: result.metadata.visionSurface,
           visionSignature: result.metadata.visionSignature,
+          appPackImages: result.imageCount,
         },
-        note: 'Vision-derived application contract. YAML colors were sampled from the screenshot. Prefer authenticated CSS rescans later to raise confidence.',
+        note: 'Vision App Pack — YAML colors sampled across multiple product UI screenshots. Prefer authenticated CSS rescans later to raise confidence.',
       }
     },
   }),

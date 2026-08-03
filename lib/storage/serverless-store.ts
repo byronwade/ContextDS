@@ -171,6 +171,8 @@ export interface StoredScanResult {
     visionSurface?: string
     /** Vision distinctive signature */
     visionSignature?: string
+    /** Number of screenshots in a Pro App Pack */
+    appPackImages?: number
   }
   error?: string
 }

@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
   mapVisionDraftToContractInput,
+  normalizeScreenshotImages,
   syntheticUploadDomain,
   type VisionContractDraft,
 } from '@/lib/analyzers/screenshot-contract'
 import { generateDesignMd } from '@/lib/analyzers/design-md-generator'
+import { BILLING } from '@/lib/billing/config'
 
 const draft: VisionContractDraft = {
   productName: 'Cursor',
@@ -57,6 +59,19 @@ const draft: VisionContractDraft = {
 }
 
 describe('screenshot-contract mapping', () => {
+  it('normalizes multi-image App Pack payloads', () => {
+    const images = normalizeScreenshotImages({
+      images: [
+        { imageBase64: 'aaa', mimeType: 'image/png' },
+        { imageBase64: 'bbb', mimeType: 'image/jpeg' },
+      ],
+    })
+    expect(images).toHaveLength(2)
+    expect(BILLING.minAppPackImages).toBe(5)
+    expect(BILLING.proPriceUsd).toBe(9)
+    expect(BILLING.appPacksPerMonth).toBe(12)
+  })
+
   it('maps vision drafts to web-app packs with measured recipes', () => {
     const domain = syntheticUploadDomain('Cursor')
     expect(domain).toMatch(/cursor-.*\.upload$/)

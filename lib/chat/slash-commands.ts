@@ -39,12 +39,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   {
     name: 'app',
     args: '<product name?>',
-    description: 'App UI from a screenshot (attach an image)',
+    description: 'Pro App Pack — attach ≥5 product UI screenshots',
     example: '/app Cursor',
     expand: (args) =>
       args.trim()
-        ? `I want the APPLICATION design system for ${args.trim()}, not the marketing site. Use my attached screenshot (or ask me to attach one) and call contract_from_screenshot with preferApp=true.`
-        : 'I want an APPLICATION Design Contract from a product UI screenshot — not marketing. I will attach an image; call contract_from_screenshot.',
+        ? `I want a Pro App Pack for ${args.trim()} — APPLICATION design, not marketing. I will attach at least 5 product UI screenshots; call contract_from_screenshot with preferApp=true.`
+        : 'I want a Pro App Pack — an APPLICATION Design Contract from at least 5 product UI screenshots (not marketing). Call contract_from_screenshot when I have enough images attached.',
   },
   {
     name: 'canvas',

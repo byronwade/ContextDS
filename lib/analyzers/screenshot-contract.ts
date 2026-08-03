@@ -15,6 +15,7 @@ import type { EngineAppType, EngineProfile } from '@/lib/analyzers/app-type'
 import type { DesignMdInput, MeasuredComponentRecipe } from '@/lib/analyzers/design-md-generator'
 import type { DesignPhilosophy } from '@/lib/analyzers/design-philosophy'
 import { generatePhilosophy } from '@/lib/analyzers/design-philosophy'
+import { BILLING } from '@/lib/billing/config'
 
 const Hex = z
   .string()
@@ -114,13 +115,27 @@ const VisionDraftSchema = z.object({
 
 export type VisionContractDraft = z.infer<typeof VisionDraftSchema>
 
-export type ExtractScreenshotContractInput = {
+export type ScreenshotImageInput = {
   imageBase64: string
+  mimeType?: string
+}
+
+export type ExtractScreenshotContractInput = {
+  /**
+   * Preferred: multiple product UI screenshots (min 5 for App Packs).
+   * Falls back to a single `imageBase64` for backward compatibility in tests.
+   */
+  images?: ScreenshotImageInput[]
+  /** @deprecated Prefer `images` — single-image shorthand */
+  imageBase64?: string
   mimeType?: string
   /** Optional product hint, e.g. "Cursor IDE" */
   nameHint?: string | null
   /** Force application bias (default true for this flow) */
   preferApp?: boolean
+  /** Enforce minimum image count (default from BILLING.minAppPackImages) */
+  minImages?: number
+  maxImages?: number
 }
 
 const PROFILE_FOR: Record<EngineAppType, EngineProfile> = {
@@ -194,13 +209,48 @@ function recipeFromVision(
   }
 }
 
-/** Run multimodal structured extraction. Throws if Gateway missing. */
+export function normalizeScreenshotImages(
+  input: ExtractScreenshotContractInput
+): ScreenshotImageInput[] {
+  if (input.images && input.images.length > 0) {
+    return input.images.map((image) => ({
+      imageBase64: image.imageBase64.replace(/\s+/g, ''),
+      mimeType: image.mimeType || 'image/png',
+    }))
+  }
+  if (input.imageBase64) {
+    return [
+      {
+        imageBase64: input.imageBase64.replace(/\s+/g, ''),
+        mimeType: input.mimeType || 'image/png',
+      },
+    ]
+  }
+  return []
+}
+
+/** Run multimodal structured extraction across App Pack screenshots. */
 export async function extractVisionContractDraft(
   input: ExtractScreenshotContractInput
 ): Promise<VisionContractDraft> {
   if (!isAiGatewayConfigured()) {
     throw new Error(
       'AI Gateway is required for screenshot → Design Contract. Set AI_GATEWAY_API_KEY or deploy on Vercel.'
+    )
+  }
+
+  const minImages = input.minImages ?? BILLING.minAppPackImages
+  const maxImages = input.maxImages ?? BILLING.maxAppPackImages
+  const images = normalizeScreenshotImages(input)
+
+  if (images.length < minImages) {
+    throw new Error(
+      `App Packs require at least ${minImages} product UI screenshots (received ${images.length}).`
+    )
+  }
+  if (images.length > maxImages) {
+    throw new Error(
+      `App Packs accept at most ${maxImages} screenshots per run (received ${images.length}).`
     )
   }
 
@@ -220,15 +270,18 @@ export async function extractVisionContractDraft(
     messages: [
       {
         role: 'system',
-        content: `You are a principal product designer reconstructing an APPLICATION design system from a single screenshot.
+        content: `You are a principal product designer reconstructing an APPLICATION design system from ${images.length} product UI screenshots (an App Pack).
 
 Rules:
+- Treat the set as one product: synthesize a coherent system, not ${images.length} unrelated palettes.
+- Prefer the most repeated colors, radii, type sizes, and chrome patterns across shots.
 - Sample real colors from the pixels. Output valid hex only.
 - Prefer application chrome (sidebar, top bar, dense panels, editor, lists) over marketing hero language.
-- ${preferApp ? 'Bias toward web-app / workbench classification unless the image is clearly a marketing landing page.' : 'Classify honestly.'}
+- ${preferApp ? 'Bias toward web-app / workbench classification unless every image is clearly a marketing landing page.' : 'Classify honestly.'}
 - Guess fonts from visual character (geometric sans, humanist, mono) — say so as stacks, e.g. "Inter, system-ui, sans-serif".
 - Do not invent loud accents the UI does not use. Scarcity matters.
-- Density and shell measurements should match what you see.
+- Density and shell measurements should match what you see across the set (use medians when shots disagree).
+- Call out cross-screen consistency in distinctiveSignature.
 - No marketing fluff. No emoji.`,
       },
       {
@@ -237,14 +290,20 @@ Rules:
           {
             type: 'text',
             text: hint
-              ? `Extract a Design Contract draft from this application screenshot of "${hint}".`
-              : 'Extract a Design Contract draft from this application screenshot.',
+              ? `Extract a Design Contract draft from these ${images.length} application screenshots of "${hint}". Images are labeled shot 1…${images.length} in order.`
+              : `Extract a Design Contract draft from these ${images.length} application screenshots. Images are labeled shot 1…${images.length} in order.`,
           },
-          {
-            type: 'image',
-            image: Buffer.from(input.imageBase64, 'base64'),
-            mediaType: input.mimeType || 'image/png',
-          },
+          ...images.flatMap((image, index) => [
+            {
+              type: 'text' as const,
+              text: `Shot ${index + 1}/${images.length}:`,
+            },
+            {
+              type: 'image' as const,
+              image: Buffer.from(image.imageBase64, 'base64'),
+              mediaType: image.mimeType || 'image/png',
+            },
+          ]),
         ],
       },
     ],
@@ -274,7 +333,7 @@ export function mapVisionDraftToContractInput(args: {
   preferApp?: boolean
 }): ScreenshotContractMapped {
   const preferApp = args.preferApp !== false
-  const { appType, profile, reasons } = mapSurfaceToAppType(args.draft.surfaceKind, preferApp)
+  const { appType, reasons } = mapSurfaceToAppType(args.draft.surfaceKind, preferApp)
   const draft = args.draft
   const colors = draft.colors
 
@@ -405,12 +464,13 @@ export function mapVisionDraftToContractInput(args: {
     'surface-card': recipeFromVision(draft.components.surfaceCard),
   }
 
+  // Multi-shot App Packs start higher; single-shot mapping still used in unit tests
   const confidence =
     preferApp && draft.surfaceKind !== 'marketing-site'
-      ? 72
+      ? 78
       : draft.surfaceKind === 'marketing-site'
         ? 58
-        : 68
+        : 70
 
   const designMdInput: ScreenshotContractMapped['designMdInput'] = {
     domain: args.domain,
