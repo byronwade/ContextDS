@@ -26,13 +26,13 @@ const endpoints = [
     method: 'POST',
     path: '/api/contracts/from-image',
     body: '{ "images": [{ "imageBase64": "<…>" }, "…×5+" ], "name": "Cursor", "preferApp": true }',
-    note: 'Pro App Pack — ≥5 product UI screenshots → web-app Design Contract. Requires Pro ($9/mo).',
+    note: 'App Pack — ≥5 product UI screenshots → web-app Design Contract. Requires credits ($4/$15) or Pro.',
   },
   {
     method: 'POST',
     path: '/api/billing/checkout',
-    body: '{ "email": "you@example.com" }',
-    note: 'Start Stripe Checkout for Design Contracts Pro.',
+    body: '{ "sku": "pack_single" | "pack_bundle" | "pro", "email": "you@example.com" }',
+    note: 'Stripe Checkout — default pack_single (one-time credits).',
   },
   {
     method: 'GET',
@@ -162,15 +162,16 @@ SCANNER_SERVICE_URL=https://designcontracts-scanner.vercel.app`}
 
           <section className="mt-12 space-y-3 pb-8">
             <h2 className="text-[13px] font-medium tracking-tight text-[var(--ui-ink)]">
-              Pro App Packs (application UI)
+              App Packs (application UI)
             </h2>
             <p className="text-[13px] leading-relaxed text-[var(--ui-ink-secondary)]">
               Public crawls usually see marketing sites. For product chrome (Cursor, dashboards,
               workbenches), attach at least five screenshots in chat or POST{' '}
               <code className="text-[var(--ui-ink)]">/api/contracts/from-image</code>. Vision
               synthesizes a <code className="text-[var(--ui-ink)]">web-app</code> Design Contract
-              across the set. App Packs are Pro ($9/mo, 12 packs, 7-day trial) via Stripe Checkout
-              at <code className="text-[var(--ui-ink)]">/pricing</code>. Requires AI Gateway.
+              across the set. Buy one-time credits ($4 / 1 pack, $15 / 5 — never expire) or optional
+              Pro ($12/mo for MCP + monthly credits) at{' '}
+              <code className="text-[var(--ui-ink)]">/pricing</code>. Requires AI Gateway.
               Local/dev: set <code className="text-[var(--ui-ink)]">BILLING_BYPASS=1</code>.
             </p>
           </section>

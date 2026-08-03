@@ -4,17 +4,17 @@ import Link from 'next/link'
 import { CheckIcon, MinusIcon } from '@phosphor-icons/react/dist/ssr'
 import { AppShell } from '@/components/organisms/app-shell'
 import { PageCanvas } from '@/components/molecules/page-canvas'
-import { ProCheckoutButton } from '@/components/molecules/pro-checkout-button'
+import { CheckoutButton } from '@/components/molecules/pro-checkout-button'
 import { Button } from '@/components/ui/button'
-import { BILLING, PRO_PLAN } from '@/lib/billing/config'
+import { BILLING, CREDIT_SKUS, PRO_PLAN } from '@/lib/billing/config'
 import { cn } from '@/lib/utils'
 
 export const metadata: Metadata = {
   title: 'Pricing — designcontracts.sh',
-  description: `Free URL scans for everyone. Pro is $${BILLING.proPriceUsd}/mo for App Packs (≥${BILLING.minAppPackImages} screenshots), Studio, and MCP.`,
+  description: `Buy App Pack credits (never expire) from $${BILLING.packSingleUsd}. Optional Pro $${BILLING.proPriceUsd}/mo for MCP + monthly credits.`,
   openGraph: {
     title: 'Pricing — designcontracts.sh',
-    description: `Pro $${BILLING.proPriceUsd}/mo — ${BILLING.appPacksPerMonth} App Packs from product UI screenshots.`,
+    description: `Credits-first App Packs. $${BILLING.packSingleUsd} for one, $${BILLING.packBundleUsd} for five. Pro optional.`,
   },
 }
 
@@ -26,44 +26,38 @@ const plans = [
     description: 'Scan public sites and read every contract in the Library.',
     features: [
       'Public URL scans (marketing surfaces)',
-      'Full Design System Dossier for any scanned site',
-      'Library access with community contracts',
-      'DESIGN.md + tokens.json export',
-      'Public MCP read tools (get_tokens, layout_profile)',
+      'Full Design System Dossier',
+      'Library access',
+      'DESIGN.md + tokens.json from scans',
+      'Public MCP read tools',
     ],
-    cta: { label: 'Start scanning', href: '/' as Route, kind: 'link' as const },
+    cta: { kind: 'link' as const, label: 'Start scanning', href: '/' as Route },
     highlight: false,
+  },
+  {
+    name: 'App Pack credits',
+    price: CREDIT_SKUS.pack_single.priceLabel,
+    period: 'one-time',
+    description:
+      'Pay for the work you actually do. Credits never expire — generate one system and move on.',
+    features: [
+      `${CREDIT_SKUS.pack_single.priceLabel} → ${CREDIT_SKUS.pack_single.credits} App Pack`,
+      `${CREDIT_SKUS.pack_bundle.priceLabel} → ${CREDIT_SKUS.pack_bundle.credits} App Packs (best value)`,
+      `≥${BILLING.minAppPackImages} product UI screenshots per pack`,
+      'Credits never expire or auto-renew',
+      'No subscription required',
+    ],
+    cta: { kind: 'credits' as const },
+    highlight: true,
   },
   {
     name: 'Pro',
     price: `$${BILLING.proPriceUsd}`,
     period: 'per month',
-    description: `Application Design Contracts from real product UI — ${BILLING.appPacksPerMonth} App Packs included.`,
-    features: [
-      `App Packs: ≥${BILLING.minAppPackImages} screenshots → web-app Design Contract`,
-      `${BILLING.appPacksPerMonth} App Packs / month (≈ $${(BILLING.proPriceUsd / BILLING.appPacksPerMonth).toFixed(2)} each)`,
-      `${BILLING.trialDays}-day free trial`,
-      'Everything in Free, unlimited accurate URL scans',
-      'Design Contract Studio — author + export',
-      'MCP server API key',
-      'Private contracts & version history',
-    ],
-    cta: { label: 'Start free trial', kind: 'checkout' as const },
-    highlight: true,
-  },
-  {
-    name: 'Team',
-    price: '$29',
-    period: 'per seat / month',
-    description: 'Shared contract libraries for product teams and agencies.',
-    features: [
-      'Everything in Pro',
-      'Shared team workspace and contract library',
-      'Org-wide MCP keys with usage analytics',
-      'Role-based permissions & SSO',
-      'Onboarding + migration help',
-    ],
-    cta: { label: 'Contact us', href: '/contact' as Route, kind: 'link' as const },
+    description:
+      'For people who live in the agent loop — not a one-shot download.',
+    features: PRO_PLAN.features,
+    cta: { kind: 'pro' as const, label: 'Start Pro trial' },
     highlight: false,
   },
 ]
@@ -71,40 +65,39 @@ const plans = [
 const comparison: Array<{
   feature: string
   free: string | boolean
+  credits: string | boolean
   pro: string | boolean
-  team: string | boolean
 }> = [
-  { feature: 'Public URL scans', free: true, pro: 'Unlimited', team: 'Unlimited' },
+  { feature: 'Public URL scans', free: true, credits: true, pro: true },
   {
     feature: `App Packs (≥${BILLING.minAppPackImages} screenshots)`,
     free: false,
-    pro: `${BILLING.appPacksPerMonth} / mo`,
-    team: 'Higher limits',
+    credits: 'Pay per pack',
+    pro: `${BILLING.proCreditsPerMonth} / mo + buy more`,
   },
-  { feature: 'Design System Dossier', free: true, pro: true, team: true },
-  { feature: 'Design Contract Studio', free: false, pro: true, team: true },
-  { feature: 'MCP server (write tools + API key)', free: false, pro: true, team: true },
-  { feature: 'Private contracts', free: false, pro: true, team: true },
-  { feature: 'Team workspace & SSO', free: false, pro: false, team: true },
+  { feature: 'Credits never expire', free: false, credits: true, pro: true },
+  { feature: 'Personal MCP API key', free: false, credits: false, pro: true },
+  { feature: 'Studio export', free: false, credits: false, pro: true },
+  { feature: 'Subscription', free: false, credits: false, pro: true },
 ]
 
 const faqs = [
   {
-    question: 'Why aren’t App Packs $1/month?',
-    answer: `Each App Pack runs multimodal vision across ≥${BILLING.minAppPackImages} screenshots. At roughly $0.15–$0.40 in AI cost per pack, $${BILLING.proPriceUsd}/mo with ${BILLING.appPacksPerMonth} included packs stays cheap for you (~$${(BILLING.proPriceUsd / BILLING.appPacksPerMonth).toFixed(2)}/pack) while covering compute with a little margin.`,
+    question: 'Why not only a monthly plan?',
+    answer: `Most people generate one application Design Contract (or a few tweaks) and leave. Charging $${BILLING.proPriceUsd}/mo for that invites cancel-after-month-1 churn. Credits match the real job: pay once, credits never expire.`,
+  },
+  {
+    question: 'When should I buy Pro?',
+    answer: `When you keep pulling contracts into Claude / Cursor via MCP, iterate across many apps, or want Studio export. Pro adds ${BILLING.proCreditsPerMonth} credits every month (unused stack) plus a personal MCP key — sticky value beyond a single pack.`,
   },
   {
     question: 'What is an App Pack?',
-    answer: `A Pro feature that turns ${BILLING.minAppPackImages}–${BILLING.maxAppPackImages} product UI screenshots (IDE, dashboard, authenticated chrome) into an installable web-app Design Contract. Public URL scans usually only see marketing sites — App Packs are how you capture real app design.`,
+    answer: `${BILLING.minAppPackImages}–${BILLING.maxAppPackImages} product UI screenshots → one installable web-app Design Contract. Public URL scans usually only see marketing sites.`,
   },
   {
-    question: 'What exactly is a Design Contract?',
+    question: 'Do unused Pro credits disappear?',
     answer:
-      "An installable pack — DESIGN.md grammar, agent skills, references and config — that pins a site's design system so AI agents keep new UI on-system over time. Scans produce one automatically; Pro App Packs do the same from screenshots.",
-  },
-  {
-    question: 'Can I cancel anytime?',
-    answer: `Yes — manage billing in the Stripe Customer Portal from this page after checkout. Pro includes a ${BILLING.trialDays}-day trial so you can try App Packs before paying.`,
+      'No. Monthly Pro credits stack onto your balance. If you cancel Pro, leftover credits stay for App Packs; the MCP key stops working.',
   },
 ]
 
@@ -128,12 +121,11 @@ export default function PricingPage() {
               Pricing
             </p>
             <h1 className="text-display-lg mt-3 text-[var(--ui-ink)] sm:text-[56px] sm:tracking-[-1.6px]">
-              Scan free. App Packs on Pro.
+              Pay for packs. Subscribe only if you stay.
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
-              URL scans stay free. Pro ({PRO_PLAN.priceLabel}) unlocks multi-screenshot
-              application contracts — {BILLING.appPacksPerMonth} App Packs / month,{' '}
-              {BILLING.trialDays}-day trial.
+              URL scans stay free. App Packs are one-time credits that never expire.
+              Pro is optional — for MCP + monthly top-ups if you keep designing in your agent.
             </p>
           </div>
         </section>
@@ -161,7 +153,7 @@ export default function PricingPage() {
                   </h2>
                   {plan.highlight ? (
                     <span className="rounded-full bg-[var(--ui-canvas)]/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ui-canvas)]">
-                      Recommended
+                      Most people
                     </span>
                   ) : null}
                 </div>
@@ -211,20 +203,27 @@ export default function PricingPage() {
                     </li>
                   ))}
                 </ul>
-                {plan.cta.kind === 'checkout' ? (
-                  <div className="mt-8">
-                    <ProCheckoutButton
-                      label={plan.cta.label}
+                {plan.cta.kind === 'credits' ? (
+                  <div className="mt-8 space-y-2">
+                    <CheckoutButton
+                      sku="pack_single"
+                      label={`Buy 1 pack · $${BILLING.packSingleUsd}`}
                       variant="secondary"
                       className="border-transparent bg-[var(--ui-accent)] text-[var(--ui-on-primary)] hover:bg-[var(--ui-accent-hover)]"
                     />
+                    <CheckoutButton
+                      sku="pack_bundle"
+                      label={`Buy 5 packs · $${BILLING.packBundleUsd}`}
+                      variant="outline"
+                      className="border-[var(--ui-canvas)]/30 bg-transparent text-[var(--ui-canvas)] hover:bg-[var(--ui-canvas)]/10"
+                    />
+                  </div>
+                ) : plan.cta.kind === 'pro' ? (
+                  <div className="mt-8">
+                    <CheckoutButton sku="pro" label={plan.cta.label} variant="outline" />
                   </div>
                 ) : (
-                  <Button
-                    asChild
-                    variant={plan.highlight ? 'secondary' : 'outline'}
-                    className="mt-8 w-full"
-                  >
+                  <Button asChild variant="outline" className="mt-8 w-full">
                     <Link href={plan.cta.href}>{plan.cta.label}</Link>
                   </Button>
                 )}
@@ -235,15 +234,17 @@ export default function PricingPage() {
 
         <section className="px-4 py-12 sm:px-6">
           <div className="mx-auto max-w-3xl">
-            <h2 className="text-display-lg text-center text-[var(--ui-ink)]">Compare plans</h2>
+            <h2 className="text-display-lg text-center text-[var(--ui-ink)]">Compare</h2>
             <div className="mt-8 overflow-x-auto rounded-[var(--radius-paper)] border border-[var(--ui-border)] bg-[var(--ui-paper)]">
               <table className="w-full min-w-[520px] text-sm">
                 <thead>
                   <tr className="border-b border-border/40 text-left">
                     <th className="px-4 py-3 font-medium text-muted-foreground">Feature</th>
                     <th className="px-4 py-3 text-center font-medium text-muted-foreground">Free</th>
-                    <th className="px-4 py-3 text-center font-medium text-[var(--ui-accent)]">Pro</th>
-                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">Team</th>
+                    <th className="px-4 py-3 text-center font-medium text-[var(--ui-accent)]">
+                      Credits
+                    </th>
+                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">Pro</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -254,10 +255,10 @@ export default function PricingPage() {
                         <CellValue value={row.free} />
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <CellValue value={row.pro} />
+                        <CellValue value={row.credits} />
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <CellValue value={row.team} />
+                        <CellValue value={row.pro} />
                       </td>
                     </tr>
                   ))}
@@ -288,15 +289,17 @@ export default function PricingPage() {
         <section className="px-4 py-20 text-center sm:px-6">
           <div className="mx-auto max-w-xl">
             <h2 className="text-display-lg text-[var(--ui-ink)]">
-              Capture app UI that crawlers never see
+              One system, or a seat in the loop
             </h2>
             <p className="mt-3 text-sm text-muted-foreground">
-              Attach {BILLING.minAppPackImages}+ product screenshots on Pro — or paste a public URL
-              for a free marketing-surface scan.
+              Most people buy a pack. Subscribe only if MCP and monthly credits earn their keep.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <div className="w-full max-w-[220px]">
-                <ProCheckoutButton label="Start Pro trial" />
+                <CheckoutButton
+                  sku="pack_single"
+                  label={`Get 1 App Pack · $${BILLING.packSingleUsd}`}
+                />
               </div>
               <Button asChild variant="outline">
                 <Link href="/">Open chat</Link>

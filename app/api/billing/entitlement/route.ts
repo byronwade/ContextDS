@@ -1,36 +1,40 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server'
 import {
   getEntitlementFromRequest,
   publicEntitlementView,
-} from '@/lib/billing/entitlements';
-import { FREE_TIER, PRO_PLAN } from '@/lib/billing/config';
-import { isStripeConfigured } from '@/lib/billing/stripe';
+} from '@/lib/billing/entitlements'
+import { BILLING, CREDIT_SKUS, FREE_TIER, PRO_PLAN } from '@/lib/billing/config'
+import { isStripeConfigured } from '@/lib/billing/stripe'
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/billing/entitlement
- * Current Pro status + App Pack remaining for the browser session.
+ * Current plan + App Pack credit balance for the browser session.
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const entitlement = await getEntitlementFromRequest(request);
+  const entitlement = await getEntitlementFromRequest(request)
   return NextResponse.json({
     ...publicEntitlementView(entitlement),
     billingConfigured: isStripeConfigured(),
-    plan: {
+    catalog: {
       free: {
-        urlScans: 'unlimited*',
-        appPacks: FREE_TIER.appPacksPerMonth,
+        name: FREE_TIER.name,
+        urlScans: FREE_TIER.urlScansNote,
+        appPackCredits: FREE_TIER.appPackCredits,
       },
+      packs: Object.values(CREDIT_SKUS),
       pro: {
         name: PRO_PLAN.name,
         priceLabel: PRO_PLAN.priceLabel,
-        appPacksPerMonth: PRO_PLAN.appPacksPerMonth,
+        creditsPerMonth: PRO_PLAN.creditsPerMonth,
         minAppPackImages: PRO_PLAN.minAppPackImages,
         maxAppPackImages: PRO_PLAN.maxAppPackImages,
         trialDays: PRO_PLAN.trialDays,
+        features: PRO_PLAN.features,
       },
+      minAppPackImages: BILLING.minAppPackImages,
     },
-  });
+  })
 }

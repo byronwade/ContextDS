@@ -47,12 +47,24 @@ export default function McpClient({ tools }: { tools: McpToolSummary[] }) {
 
   const snippet = useMemo(() => configSnippet(apiKey), [apiKey])
 
-  const generateKey = () => {
-    const random = crypto
-      .getRandomValues(new Uint8Array(18))
-      .reduce((acc, byte) => acc + byte.toString(36).padStart(2, '0'), '')
-      .slice(0, 32)
-    setApiKey(`dc_live_${random}`)
+  const [keyError, setKeyError] = useState<string | null>(null)
+  const [keyLoading, setKeyLoading] = useState(false)
+
+  const generateKey = async () => {
+    setKeyLoading(true)
+    setKeyError(null)
+    try {
+      const response = await fetch('/api/billing/mcp-key', { method: 'POST' })
+      const data = (await response.json()) as { apiKey?: string; error?: string }
+      if (!response.ok || !data.apiKey) {
+        throw new Error(data.error || 'Could not issue MCP key')
+      }
+      setApiKey(data.apiKey)
+    } catch (error) {
+      setKeyError(error instanceof Error ? error.message : 'Key issue failed')
+    } finally {
+      setKeyLoading(false)
+    }
   }
 
   return (
@@ -179,21 +191,34 @@ export default function McpClient({ tools }: { tools: McpToolSummary[] }) {
                         Generate a key and drop it into the config on the left.
                       </p>
                     )}
-                    <Button size="sm" className="w-full gap-2" onClick={generateKey}>
+                    <Button
+                      size="sm"
+                      className="w-full gap-2"
+                      disabled={keyLoading}
+                      onClick={() => void generateKey()}
+                    >
                       <PlugsIcon className="size-3.5" />
-                      {apiKey ? 'Rotate key' : 'Generate API key'}
+                      {keyLoading
+                        ? 'Issuing…'
+                        : apiKey
+                          ? 'Rotate key'
+                          : 'Generate API key'}
                     </Button>
+                    {keyError ? (
+                      <p className="text-xs text-[var(--ui-danger)]">{keyError}</p>
+                    ) : null}
                   </div>
                 ) : (
                   <div className="mt-4 space-y-3">
                     <p className="text-xs leading-relaxed text-muted-foreground">
-                      The MCP server ships with Pro. Public read tools stay free —
-                      scanning, research and pack composition need a key.
+                      Personal MCP keys are a Pro builder perk — keep contracts inside
+                      Claude / Cursor with a key that stays yours. Public read tools
+                      still work without a key. Need one App Pack? Buy credits instead.
                     </p>
                     <Button asChild size="sm" className="w-full gap-2">
                       <Link href="/pricing">
                         <SparkleIcon className="size-3.5" />
-                        Upgrade to Pro
+                        See pricing
                       </Link>
                     </Button>
                   </div>

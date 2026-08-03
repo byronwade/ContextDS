@@ -22,11 +22,27 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, Mcp-Session-Id, MCP-Protocol-Version',
 }
 
-function authorized(request: NextRequest): boolean {
-  const required = process.env.MCP_API_KEY?.trim()
-  if (!required) return true
+async function authorized(request: NextRequest): Promise<boolean> {
   const header = request.headers.get('authorization') ?? ''
-  return header.startsWith('Bearer ') && header.slice(7).trim() === required
+  const bearer = header.startsWith('Bearer ') ? header.slice(7).trim() : ''
+
+  // Shared env key (ops / single-tenant)
+  const required = process.env.MCP_API_KEY?.trim()
+  if (required && bearer === required) return true
+
+  // Personal Pro key (dc_live_…)
+  if (bearer.startsWith('dc_live_')) {
+    const { resolveMcpKey, customerHasValidProForMcp } = await import(
+      '@/lib/billing/mcp-keys'
+    )
+    const resolved = await resolveMcpKey(bearer)
+    if (!resolved) return false
+    return customerHasValidProForMcp(resolved.customerId)
+  }
+
+  // No key required when MCP_API_KEY unset — public read stays open
+  if (!required) return true
+  return false
 }
 
 export async function OPTIONS() {
@@ -52,7 +68,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  if (!authorized(request)) {
+  if (!(await authorized(request))) {
     return NextResponse.json(
       { jsonrpc: '2.0', id: null, error: { code: -32001, message: 'Unauthorized' } },
       { status: 401, headers: CORS }

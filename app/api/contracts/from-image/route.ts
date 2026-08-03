@@ -129,8 +129,9 @@ export async function POST(request: NextRequest) {
           code: gate.code,
           upgradePath: gate.upgradePath,
           plan: {
-            priceLabel: `$${BILLING.proPriceUsd}/mo`,
-            appPacksPerMonth: BILLING.appPacksPerMonth,
+            packSingleUsd: BILLING.packSingleUsd,
+            packBundleUsd: BILLING.packBundleUsd,
+            proPriceLabel: `$${BILLING.proPriceUsd}/mo`,
             minAppPackImages: BILLING.minAppPackImages,
           },
         },
@@ -176,9 +177,8 @@ export async function POST(request: NextRequest) {
       found: true,
       ...result,
       billing: {
-        plan: 'pro',
-        appPacksRemaining: remaining.appPacksRemaining ?? null,
-        appPacksPerMonth: BILLING.appPacksPerMonth,
+        appPackCredits: remaining.appPackCredits ?? remaining.appPacksRemaining ?? null,
+        appPacksRemaining: remaining.appPackCredits ?? remaining.appPacksRemaining ?? null,
       },
       note: `Vision App Pack (${result.imageCount} screenshots). Install with the pack’s --profile web-app flags. Re-scan authenticated CSS when you can to raise confidence.`,
     })

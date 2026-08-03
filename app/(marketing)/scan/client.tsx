@@ -79,7 +79,7 @@ const CAPABILITIES = [
   {
     label: 'App Pack (5+ shots)',
     prompt:
-      'I want a Pro App Pack — an APPLICATION Design Contract from at least 5 product UI screenshots, not the marketing site. Ask me to attach ≥5 shots, then call contract_from_screenshot.',
+      'I want an App Pack — an APPLICATION Design Contract from at least 5 product UI screenshots, not the marketing site. Ask me to attach ≥5 shots, then call contract_from_screenshot.',
   },
   { label: 'Critique a system', prompt: "Critique stripe.com's design system — how consistent is it?" },
   { label: 'Compare two sites', prompt: 'Compare the design systems of linear.app and vercel.com' },
@@ -612,7 +612,7 @@ export function ScanChat() {
       const minShots = 5
       if (imageFiles.length < minShots) {
         void sendMessage({
-          text: `App Packs need at least ${minShots} product UI screenshots (you attached ${imageFiles.length}). Add more shots of the same app — sidebar, editor, settings, lists, modals — then send again. Pro is $9/mo with 12 packs; upgrade at /pricing if you haven’t.`,
+          text: `App Packs need at least ${minShots} product UI screenshots (you attached ${imageFiles.length}). Add more shots of the same app — sidebar, editor, settings, lists, modals — then send again. Credits are $4 for 1 pack or $15 for 5 (never expire) at /pricing.`,
         })
         return
       }
@@ -649,7 +649,7 @@ export function ScanChat() {
         if (!response.ok) {
           const upgradeHint =
             response.status === 402
-              ? ` Upgrade at ${payload.upgradePath || '/pricing'} (Pro $9/mo, 12 App Packs).`
+              ? ` Buy credits at ${payload.upgradePath || '/pricing'} ($4 / 1 pack, $15 / 5 — never expire).`
               : ''
           void sendMessage({
             text: `App Pack failed: ${payload.error || response.statusText}.${upgradeHint} ${rawText || ''}`.trim(),
@@ -659,13 +659,13 @@ export function ScanChat() {
         pushRecent(payload.domain || '')
         void sendMessage({
           text: [
-            `I built a Pro App Pack (${payload.imageCount || imageFiles.length} screenshots) as \`${payload.domain}\`.`,
+            `I built an App Pack (${payload.imageCount || imageFiles.length} screenshots) as \`${payload.domain}\`.`,
             payload.metadata?.visionSignature
               ? `Signature: ${payload.metadata.visionSignature}`
               : null,
             `App type: ${payload.metadata?.appType || 'saas-workbench'}.`,
             typeof payload.billing?.appPacksRemaining === 'number'
-              ? `${payload.billing.appPacksRemaining} App Packs remaining this month.`
+              ? `${payload.billing.appPacksRemaining} App Pack credits left.`
               : null,
             'Call get_tokens on that domain, summarize the system, and give the install command. This is app UI — not marketing.',
           ]
@@ -891,7 +891,7 @@ export function ScanChat() {
                     <PlusIcon className="size-3.5" />
                   </PromptInputActionMenuTrigger>
                   <PromptInputActionMenuContent align="end">
-                    <PromptInputActionAddAttachments label="App Pack screenshots (min 5, Pro)" />
+                    <PromptInputActionAddAttachments label="App Pack screenshots (min 5, credits)" />
                   </PromptInputActionMenuContent>
                 </PromptInputActionMenu>
                 <ComposerSendButton

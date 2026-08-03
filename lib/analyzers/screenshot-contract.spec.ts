@@ -68,8 +68,8 @@ describe('screenshot-contract mapping', () => {
     })
     expect(images).toHaveLength(2)
     expect(BILLING.minAppPackImages).toBe(5)
-    expect(BILLING.proPriceUsd).toBe(9)
-    expect(BILLING.appPacksPerMonth).toBe(12)
+    expect(BILLING.packSingleUsd).toBe(4)
+    expect(BILLING.packBundleCredits).toBe(5)
   })
 
   it('maps vision drafts to web-app packs with measured recipes', () => {

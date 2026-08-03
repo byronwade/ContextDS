@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type Stripe from 'stripe'
+import { BILLING, PRO_PLAN } from '@/lib/billing/config'
+import {
+  grantCreditPack,
+  grantProEntitlement,
+  revokeProKeepCredits,
+} from '@/lib/billing/entitlements'
 import { getStripe, isStripeConfigured } from '@/lib/billing/stripe'
-import { grantProEntitlement, revokeEntitlement } from '@/lib/billing/entitlements'
-import { PRO_PLAN } from '@/lib/billing/config'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -34,7 +38,7 @@ async function syncSubscription(subscription: Stripe.Subscription): Promise<void
 
   const status = mapStatus(subscription.status)
   if (status === 'canceled') {
-    await revokeEntitlement(customerId)
+    await revokeProKeepCredits(customerId)
     return
   }
 
@@ -49,21 +53,40 @@ async function syncSubscription(subscription: Stripe.Subscription): Promise<void
     // optional
   }
 
-  // Preserve in-period App Pack usage (omit appPacksUsed)
   await grantProEntitlement({
     stripeCustomerId: customerId,
     stripeSubscriptionId: subscription.id,
     email,
     status,
     currentPeriodEnd: periodEndMs(subscription),
-    appPacksIncluded: PRO_PLAN.appPacksPerMonth,
+    creditsPerMonth: PRO_PLAN.creditsPerMonth,
   })
 }
 
-/**
- * POST /api/billing/webhook
- * Stripe → Design Contracts entitlement sync.
- */
+async function fulfillPaymentSession(session: Stripe.Checkout.Session): Promise<void> {
+  if (session.mode !== 'payment') return
+  const customerId =
+    typeof session.customer === 'string' ? session.customer : session.customer?.id
+  if (!customerId) return
+
+  const creditsMeta = Number(session.metadata?.credits || 0)
+  const credits =
+    creditsMeta > 0
+      ? creditsMeta
+      : session.metadata?.sku === 'pack_bundle'
+        ? BILLING.packBundleCredits
+        : BILLING.packSingleCredits
+
+  const email =
+    session.customer_details?.email ?? session.customer_email ?? undefined
+
+  await grantCreditPack({
+    stripeCustomerId: customerId,
+    email,
+    credits,
+  })
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!isStripeConfigured()) {
     return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 })
@@ -99,7 +122,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
-        if (session.mode === 'subscription' && session.subscription) {
+        if (session.mode === 'payment') {
+          await fulfillPaymentSession(session)
+        } else if (session.mode === 'subscription' && session.subscription) {
           const subId =
             typeof session.subscription === 'string'
               ? session.subscription
@@ -118,7 +143,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         const sub = event.data.object as Stripe.Subscription
         const customerId =
           typeof sub.customer === 'string' ? sub.customer : sub.customer.id
-        await revokeEntitlement(customerId)
+        await revokeProKeepCredits(customerId)
         break
       }
       default:

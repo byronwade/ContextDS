@@ -177,7 +177,7 @@ export const designContractTools = {
 
   contract_from_screenshot: tool({
     description:
-      'Build an APPLICATION Design Contract from a Pro App Pack (≥5 product UI screenshots). Use when the user wants app design — not marketing — or when public URL scans cannot see authenticated UI (e.g. Cursor). Defaults to web-app / saas-workbench. Prefer imageUrls[] or images[] with at least 5 shots.',
+      'Build an APPLICATION Design Contract from an App Pack (≥5 product UI screenshots). Requires App Pack credits (one-time) or Pro. Use when the user wants app design — not marketing — or when public URL scans cannot see authenticated UI (e.g. Cursor). Defaults to web-app / saas-workbench. Prefer imageUrls[] or images[] with at least 5 shots.',
     inputSchema: z.object({
       imageUrls: z
         .array(z.string())
@@ -232,7 +232,7 @@ export const designContractTools = {
           error: gate.error,
           code: gate.code,
           upgradePath: gate.upgradePath,
-          suggestion: `App Packs are Pro ($${BILLING.proPriceUsd}/mo, ${BILLING.appPacksPerMonth} packs). Ask the user to upgrade at /pricing, then attach ≥${BILLING.minAppPackImages} product UI screenshots.`,
+          suggestion: `App Packs need credits ($${BILLING.packSingleUsd} for 1, $${BILLING.packBundleUsd} for 5 — never expire) or Pro ($${BILLING.proPriceUsd}/mo). Ask the user to buy at /pricing, then attach ≥${BILLING.minAppPackImages} product UI screenshots.`,
         }
       }
 

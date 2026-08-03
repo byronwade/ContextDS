@@ -3,9 +3,8 @@
 /**
  * Premium entitlements (client).
  *
- * Server source of truth: signed `dc_pro` cookie + Redis (see lib/billing/).
- * Client polls /api/billing/entitlement and keeps a short local cache.
- * Legacy `?pro=1` still works for local demos when BILLING_BYPASS isn't set.
+ * Credits-first: App Pack credits never expire.
+ * Pro is optional (MCP key + monthly credit top-up).
  */
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
@@ -13,8 +12,12 @@ import { BILLING } from '@/lib/billing/config'
 
 const STORAGE_KEY = 'dc.entitlement.pro'
 
+export type CheckoutSku = 'pack_single' | 'pack_bundle' | 'pro'
+
 type EntitlementSnapshot = {
   isPro: boolean
+  plan: 'free' | 'credits' | 'pro'
+  appPackCredits: number
   appPacksRemaining: number
   appPacksPerMonth: number
   minAppPackImages: number
@@ -25,8 +28,10 @@ type EntitlementSnapshot = {
 const listeners = new Set<() => void>()
 let snapshot: EntitlementSnapshot = {
   isPro: false,
+  plan: 'free',
+  appPackCredits: 0,
   appPacksRemaining: 0,
-  appPacksPerMonth: BILLING.appPacksPerMonth,
+  appPacksPerMonth: BILLING.proCreditsPerMonth,
   minAppPackImages: BILLING.minAppPackImages,
   billingConfigured: false,
   ready: false,
@@ -67,15 +72,21 @@ async function refreshEntitlement(): Promise<void> {
     if (response.ok) {
       const data = (await response.json()) as {
         isPro?: boolean
+        plan?: 'free' | 'credits' | 'pro'
+        appPackCredits?: number
         appPacksRemaining?: number
         appPacksPerMonth?: number
         minAppPackImages?: number
         billingConfigured?: boolean
       }
+      const credits = data.appPackCredits ?? data.appPacksRemaining ?? 0
+      const legacyPro = readLegacyFlag()
       snapshot = {
-        isPro: Boolean(data.isPro) || readLegacyFlag(),
-        appPacksRemaining: data.appPacksRemaining ?? 0,
-        appPacksPerMonth: data.appPacksPerMonth ?? BILLING.appPacksPerMonth,
+        isPro: Boolean(data.isPro) || legacyPro,
+        plan: data.plan || (legacyPro ? 'pro' : credits > 0 ? 'credits' : 'free'),
+        appPackCredits: credits,
+        appPacksRemaining: credits,
+        appPacksPerMonth: data.appPacksPerMonth ?? BILLING.proCreditsPerMonth,
         minAppPackImages: data.minAppPackImages ?? BILLING.minAppPackImages,
         billingConfigured: Boolean(data.billingConfigured),
         ready: true,
@@ -107,7 +118,9 @@ export function useEntitlements() {
 
   return {
     isPro: state.isPro,
+    plan: state.plan,
     ready: state.ready,
+    appPackCredits: state.appPackCredits,
     appPacksRemaining: state.appPacksRemaining,
     appPacksPerMonth: state.appPacksPerMonth,
     minAppPackImages: state.minAppPackImages,
@@ -116,11 +129,14 @@ export function useEntitlements() {
   }
 }
 
-export async function startProCheckout(email?: string): Promise<string> {
+export async function startCheckout(
+  sku: CheckoutSku = 'pack_single',
+  email?: string
+): Promise<string> {
   const response = await fetch('/api/billing/checkout', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(email ? { email } : {}),
+    body: JSON.stringify({ sku, ...(email ? { email } : {}) }),
   })
   const data = (await response.json()) as { url?: string; error?: string }
   if (!response.ok || !data.url) {
@@ -129,7 +145,12 @@ export async function startProCheckout(email?: string): Promise<string> {
   return data.url
 }
 
-export function useProCheckout() {
+/** @deprecated Prefer startCheckout('pro') */
+export async function startProCheckout(email?: string): Promise<string> {
+  return startCheckout('pro', email)
+}
+
+export function useCheckout(sku: CheckoutSku = 'pack_single') {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -137,7 +158,7 @@ export function useProCheckout() {
     setLoading(true)
     setError(null)
     try {
-      const url = await startProCheckout(email)
+      const url = await startCheckout(sku, email)
       window.location.href = url
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Checkout failed')
@@ -148,10 +169,14 @@ export function useProCheckout() {
   return { checkout, loading, error }
 }
 
+/** @deprecated Prefer useCheckout('pro') */
+export function useProCheckout() {
+  return useCheckout('pro')
+}
+
 export const PRO_FEATURES = [
-  `${BILLING.appPacksPerMonth} App Packs / month — application Design Contracts from ≥${BILLING.minAppPackImages} screenshots`,
-  'Design Contract Studio — author and export your own contracts',
-  'MCP server access — tokens and contracts inside Claude, Cursor and any MCP client',
-  'Unlimited accurate scans with browser capture',
-  'Private contracts and version history',
+  `${BILLING.proCreditsPerMonth} App Pack credits every month (unused stack)`,
+  'Personal MCP API key for Claude / Cursor',
+  'Studio export',
+  'For people who keep designing in the agent loop',
 ] as const
