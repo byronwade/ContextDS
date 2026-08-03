@@ -12,7 +12,13 @@ import {
   wcagGrade,
   type CuratedLike,
   type TokenLike,
+  type UxEvidence,
 } from '@/lib/analyzers/design-philosophy'
+import { validateConsistency } from '@/lib/analyzers/consistency-validator'
+import { generateDesignMd } from '@/lib/analyzers/design-md-generator'
+import { generateDesignSkill } from '@/lib/analyzers/design-skill-generator'
+import type { CuratedTokenSet } from '@/lib/analyzers/token-curator'
+import { composeDesignMdProse } from '@/lib/ai/design-md-composer'
 import {
   applyPatch,
   createWorkingSystem,
@@ -23,7 +29,7 @@ import {
 } from '@/lib/design-system/working-system'
 import { contractDownloadPath, ensureAbsoluteUrl, normalizeDomain } from '@/lib/domain'
 import { isBrowserServiceConfigured } from '@/lib/scanner/browser-service'
-import { getScan, getSite, listSites } from '@/lib/storage/serverless-store'
+import { getScan, getSite, listSites, saveScan } from '@/lib/storage/serverless-store'
 import { runSimpleScan } from '@/lib/workers/simple-scan'
 
 /** Prefer the Vercel/Docker browser scanner when wired; otherwise static CSS. */
@@ -346,7 +352,7 @@ export const designContractTools = {
 
   critique_design: tool({
     description:
-      'Deterministic design critique for a scanned domain: generated philosophy, principles, and measurable flags (contrast coverage, grid conformance, font sprawl). Use to answer "how good/consistent is this design system?"',
+      'Deterministic design critique for a scanned domain: philosophy (with UX DNA when available), consistency score, principles, and measurable flags. Use for "how good/consistent is this design system?"',
     inputSchema: z.object({
       domain: z.string(),
     }),
@@ -359,12 +365,36 @@ export const designContractTools = {
       }
 
       const brand = scan?.brandAnalysis as { personality?: string } | undefined
+      const uxDna = scan?.uxDna as
+        | {
+            shell?: UxEvidence['shell']
+            density?: UxEvidence['density']
+            interaction?: UxEvidence['interaction']
+            keyframes?: unknown[]
+          }
+        | undefined
+      const ux: UxEvidence | null = uxDna
+        ? {
+            shell: uxDna.shell ?? null,
+            density: uxDna.density ?? null,
+            interaction: uxDna.interaction
+              ? {
+                  rules: uxDna.interaction.rules,
+                  effects: uxDna.interaction.effects ?? [],
+                }
+              : null,
+            keyframeCount: Array.isArray(uxDna.keyframes) ? uxDna.keyframes.length : 0,
+          }
+        : null
+
       const philosophy = generatePhilosophy({
         domain: key,
         curated,
         personality: brand?.personality ?? null,
+        ux,
       })
       const { color, type, space, shape } = philosophy.systems
+      const consistency = validateConsistency(curated as CuratedTokenSet)
 
       // Contrast coverage: inks × surfaces that clear AA
       const surfaces = [...color.neutrals.slice(0, 2), ...color.neutrals.slice(-2)]
@@ -382,7 +412,7 @@ export const designContractTools = {
         }
       }
 
-      const flags: string[] = []
+      const flags: string[] = [...consistency.colorConsistency.recommendations.slice(0, 2)]
       if (type.families.length > 3) {
         flags.push(`font sprawl: ${type.families.length} families (aim for 2)`)
       }
@@ -399,6 +429,9 @@ export const designContractTools = {
       if (color.chromatic.length > 12) {
         flags.push(`palette sprawl: ${color.chromatic.length} chromatic colors`)
       }
+      if (!ux) {
+        flags.push('no UX DNA stored — rescan in accurate mode for shell/density/interaction critique')
+      }
 
       return {
         found: true,
@@ -407,6 +440,12 @@ export const designContractTools = {
         statement: philosophy.statement,
         traits: philosophy.traits,
         principles: philosophy.principles,
+        consistency: {
+          overall: consistency.overallScore,
+          color: consistency.colorConsistency.score,
+          spacing: consistency.spacingConsistency.score,
+          typography: consistency.typographyConsistency.score,
+        },
         metrics: {
           neutrals: color.neutrals.length,
           chromatic: color.chromatic.length,
@@ -415,8 +454,264 @@ export const designContractTools = {
           spacingGrid: space.base ? `${space.base}px @ ${space.gridFit}%` : null,
           radii: shape.radiiPx,
           contrastAA: checkedPairs > 0 ? `${aaPairs}/${checkedPairs} core pairings` : null,
+          motionTempo: philosophy.systems.motion.tempo,
+          hasUxDna: Boolean(ux),
         },
-        flags,
+        flags: Array.from(new Set(flags)).slice(0, 10),
+        nextStep:
+          'If prose feels generic, call refine_design_md to rewrite director guidance from measured evidence.',
+      }
+    },
+  }),
+
+  refine_design_md: tool({
+    description:
+      'Recompose DESIGN.md director prose (and skill) for a scanned domain from stored tokens + UX DNA + philosophy — does not invent new token values. Use after critique_design or when the user wants sharper site-specific guidance.',
+    inputSchema: z.object({
+      domain: z.string(),
+      focus: z
+        .string()
+        .max(200)
+        .optional()
+        .describe('Optional sharpening focus, e.g. "motion scarcity", "type pairing", "dense app shell"'),
+    }),
+    execute: async ({ domain, focus }) => {
+      const key = normalizeDomain(domain)
+      const scan = await getScan(key)
+      const curated = scan?.curatedTokens as CuratedLike | undefined
+      if (!scan || !curated) {
+        return { found: false, domain: key, suggestion: `Scan ${key} first with scan_site.` }
+      }
+
+      const brand = scan.brandAnalysis as {
+        personality?: string
+        primaryColors?: string[]
+      } | null
+      const uxDna = scan.uxDna as
+        | {
+            shell?: UxEvidence['shell']
+            density?: UxEvidence['density']
+            interaction?: {
+              rules: number
+              effects: Array<{ value: string; weight: number }>
+            }
+            components?: Record<string, unknown> | null
+            transitions?: Array<{ value: string; weight: number }>
+            keyframes?: Array<{ name: string; css?: string }>
+          }
+        | undefined
+
+      const uxEvidence: UxEvidence | null = uxDna
+        ? {
+            shell: uxDna.shell ?? null,
+            density: uxDna.density ?? null,
+            interaction: uxDna.interaction
+              ? {
+                  rules: uxDna.interaction.rules,
+                  effects: uxDna.interaction.effects ?? [],
+                }
+              : null,
+            keyframeCount: uxDna.keyframes?.length ?? 0,
+          }
+        : null
+
+      const philosophy = generatePhilosophy({
+        domain: key,
+        curated,
+        personality: brand?.personality ?? null,
+        primaryFont: curated.typography?.families?.[0]?.value
+          ? String(curated.typography.families[0].value)
+          : null,
+        ux: uxEvidence,
+      })
+
+      const layout = scan.layoutDNA as {
+        containers?: { maxWidth?: string | null; strategy?: string }
+        breakpoints?: Array<number | string>
+        gridSystem?: string
+        spacingBase?: number | null
+        archetypes?: Array<string | { type: string; confidence?: number }>
+      } | null
+
+      const archetype =
+        typeof layout?.archetypes?.[0] === 'string'
+          ? layout.archetypes[0]
+          : layout?.archetypes?.[0]?.type || layout?.gridSystem || 'marketing site'
+
+      const measuredComponents =
+        (uxDna?.components as Record<
+          string,
+          {
+            backgroundColor?: string
+            textColor?: string
+            borderColor?: string
+            rounded?: string
+            padding?: string
+            fontSize?: string
+            fontWeight?: string
+            boxShadow?: string
+            sampleCount?: number
+            hover?: Record<string, string>
+          } | null
+        > | null) ?? null
+
+      const measuredKeys = measuredComponents
+        ? Object.keys(measuredComponents).filter((k) => measuredComponents[k])
+        : []
+
+      const aiProse = await composeDesignMdProse({
+        domain: key,
+        url: scan.url,
+        philosophy,
+        archetype,
+        confidence: scan.summary.confidence,
+        colorKeys: (curated.colors ?? []).slice(0, 12).map((c) => String(c.value)),
+        headlineFont: String(curated.typography?.families?.[0]?.value || 'system-ui'),
+        bodyFont: String(
+          curated.typography?.families?.[1]?.value ||
+            curated.typography?.families?.[0]?.value ||
+            'system-ui'
+        ),
+        spacingBase: philosophy.systems.space.base || layout?.spacingBase || 8,
+        motionTempo: philosophy.systems.motion.tempo,
+        shellSummary: uxEvidence?.shell
+          ? [
+              uxEvidence.shell.header
+                ? `${uxEvidence.shell.header.height}px header`
+                : null,
+              uxEvidence.shell.sidebar
+                ? `${uxEvidence.shell.sidebar.width}px sidebar`
+                : null,
+            ]
+              .filter(Boolean)
+              .join(', ') || null
+          : null,
+        densitySummary: uxEvidence?.density
+          ? `${uxEvidence.density.elementsInViewport} els/viewport`
+          : null,
+        interactionSummary: uxEvidence?.interaction?.effects
+          ?.slice(0, 6)
+          .map((e) => e.value)
+          .join('; '),
+        measuredComponentsSummary: measuredKeys.join(', ') || null,
+        keyframeSummary: uxDna?.keyframes?.map((frame) => frame.name).slice(0, 6).join(', ') || null,
+      })
+
+      // Optionally bias preferred bullets via focus note in overview when AI returns
+      if (aiProse && focus?.trim()) {
+        aiProse.overview = `${aiProse.overview} Focus for this refinement: ${focus.trim()}.`
+      }
+
+      const designMd = generateDesignMd({
+        domain: key,
+        url: scan.url,
+        curatedTokens: {
+          colors: (curated.colors ?? []).map((c) => ({
+            name: c.name,
+            value: String(c.value),
+            usage: c.usage,
+          })),
+          typography: {
+            families: (curated.typography?.families ?? []).map((t) => ({
+              value: String(t.value),
+              usage: t.usage,
+            })),
+            sizes: (curated.typography?.sizes ?? []).map((t) => ({
+              value: String(t.value),
+              usage: t.usage,
+            })),
+            weights: (curated.typography?.weights ?? []).map((t) => ({
+              value: String(t.value),
+              usage: t.usage,
+            })),
+          },
+          spacing: (curated.spacing ?? []).map((t) => ({
+            value: String(t.value),
+            usage: t.usage,
+          })),
+          radius: (curated.radius ?? []).map((t) => ({
+            value: String(t.value),
+            usage: t.usage,
+          })),
+          shadows: (curated.shadows ?? []).map((t) => ({
+            value: String(t.value),
+            usage: t.usage,
+          })),
+          motion: (curated.motion ?? []).map((t) => ({
+            value: String(t.value),
+            usage: t.usage,
+          })),
+        },
+        layoutDNA: layout,
+        brandAnalysis: brand,
+        confidence: scan.summary.confidence,
+        philosophy,
+        uxEvidence,
+        uxMotion: {
+          transitions: uxDna?.transitions,
+          keyframes: uxDna?.keyframes,
+        },
+        measuredComponents,
+        aiProse,
+      })
+
+      const skill = generateDesignSkill({
+        domain: key,
+        url: scan.url,
+        designMdFileName: designMd.fileName,
+        curatedTokens: {
+          colors: (curated.colors ?? []).map((c) => ({ value: String(c.value), name: c.name })),
+          typography: {
+            families: (curated.typography?.families ?? []).map((t) => ({
+              value: String(t.value),
+            })),
+            sizes: (curated.typography?.sizes ?? []).map((t) => ({ value: String(t.value) })),
+          },
+          spacing: (curated.spacing ?? []).map((t) => ({ value: String(t.value) })),
+          radius: (curated.radius ?? []).map((t) => ({ value: String(t.value) })),
+        },
+        personality: brand?.personality,
+        philosophy: {
+          title: philosophy.title,
+          statement: philosophy.statement,
+          traits: philosophy.traits,
+          principles: philosophy.principles,
+          motionTempo: philosophy.systems.motion.tempo,
+          typeVoice: philosophy.systems.type.voice,
+          shapeCharacter: philosophy.systems.shape.character,
+          depth: philosophy.systems.shape.depth,
+        },
+        measuredComponents: measuredKeys,
+      })
+
+      await saveScan({
+        ...scan,
+        designMd: {
+          markdown: designMd.markdown,
+          fileName: designMd.fileName,
+          summary: designMd.summary,
+        },
+        designSkill: {
+          markdown: skill.markdown,
+          fileName: skill.fileName,
+          skillName: skill.skillName,
+          description: skill.description,
+        },
+      })
+
+      return {
+        found: true,
+        domain: key,
+        refined: true,
+        aiComposed: Boolean(aiProse),
+        focus: focus ?? null,
+        fileName: designMd.fileName,
+        markdown: designMd.markdown,
+        summary: designMd.summary,
+        signature: aiProse?.distinctiveSignature ?? philosophy.traits.slice(0, 4).join(', '),
+        note: aiProse
+          ? 'Director prose rewritten from measured philosophy/UX DNA. YAML tokens unchanged.'
+          : 'AI Gateway unavailable — regenerated deterministic philosophy prose; YAML tokens unchanged.',
       }
     },
   }),

@@ -68,6 +68,11 @@ export type DesignMdInput = {
   aiProse?: DesignMdProse | null
   /** Live computed component recipes from the browser audit */
   measuredComponents?: Record<string, MeasuredComponentRecipe | null> | null
+  /** Named keyframes + transition weights from accurate scans */
+  uxMotion?: {
+    transitions?: Array<{ value: string; weight: number }>
+    keyframes?: Array<{ name: string; css?: string }>
+  } | null
 }
 
 export type MeasuredComponentRecipe = {
@@ -80,6 +85,14 @@ export type MeasuredComponentRecipe = {
   fontWeight?: string
   boxShadow?: string
   sampleCount?: number
+  hover?: {
+    backgroundColor?: string
+    textColor?: string
+    borderColor?: string
+    boxShadow?: string
+    opacity?: string
+    transform?: string
+  }
 }
 
 export type DesignMdArtifact = {
@@ -322,6 +335,18 @@ function pickMotion(input: DesignMdInput): Record<string, string> {
     if (/^\d*\.?\d+(ms|s)$/.test(value)) durations.push(value)
     else if (/^(cubic-bezier|ease|linear|steps)/.test(value)) easings.push(value)
   }
+
+  // Accurate scans: "200ms ease-out (opacity)" weighted transitions
+  for (const entry of input.uxMotion?.transitions ?? []) {
+    const value = String(entry.value).trim()
+    const durationMatch = value.match(/^(\d*\.?\d+(?:ms|s))\b/)
+    if (durationMatch) durations.push(durationMatch[1])
+    const easingMatch = value.match(
+      /\b(cubic-bezier\([^)]+\)|ease(?:-in|-out|-in-out)?|linear|steps\([^)]+\))/
+    )
+    if (easingMatch) easings.push(easingMatch[1])
+  }
+
   const uniqueDurations = Array.from(new Set(durations)).slice(0, 4)
   const uniqueEasings = Array.from(new Set(easings)).slice(0, 3)
   const map: Record<string, string> = {}
@@ -330,6 +355,17 @@ function pickMotion(input: DesignMdInput): Record<string, string> {
   else if (uniqueDurations[0]) map.base = uniqueDurations[0]
   if (uniqueDurations[2]) map.slow = uniqueDurations[2]
   if (uniqueEasings[0]) map.easing = uniqueEasings[0]
+
+  const keyframeNames = (input.uxMotion?.keyframes ?? [])
+    .map((frame) => frame.name)
+    .filter(Boolean)
+    .slice(0, 4)
+  if (keyframeNames[0]) map.enter = keyframeNames[0]
+  if (keyframeNames[1]) map.exit = keyframeNames[1]
+  if (keyframeNames.length > 2) {
+    map.keyframes = keyframeNames.join(', ')
+  }
+
   return map
 }
 
@@ -736,6 +772,46 @@ export function generateDesignMd(input: DesignMdInput): DesignMdArtifact {
   }
 }
 
+function emitRecipeProps(
+  lines: string[],
+  recipe: Partial<MeasuredComponentRecipe> & {
+    opacity?: string
+    transform?: string
+  },
+  indent: string
+): void {
+  if (recipe.backgroundColor) {
+    lines.push(`${indent}backgroundColor: ${yamlEscape(recipe.backgroundColor)}`)
+  }
+  if (recipe.textColor) {
+    lines.push(`${indent}textColor: ${yamlEscape(recipe.textColor)}`)
+  }
+  if (recipe.borderColor) {
+    lines.push(`${indent}borderColor: ${yamlEscape(recipe.borderColor)}`)
+  }
+  if (recipe.rounded) {
+    lines.push(`${indent}rounded: ${yamlEscape(recipe.rounded)}`)
+  }
+  if (recipe.padding) {
+    lines.push(`${indent}padding: ${yamlEscape(recipe.padding)}`)
+  }
+  if (recipe.fontSize) {
+    lines.push(`${indent}fontSize: ${yamlEscape(recipe.fontSize)}`)
+  }
+  if (recipe.fontWeight) {
+    lines.push(`${indent}fontWeight: ${yamlEscape(String(recipe.fontWeight))}`)
+  }
+  if (recipe.boxShadow) {
+    lines.push(`${indent}boxShadow: ${yamlEscape(recipe.boxShadow)}`)
+  }
+  if (recipe.opacity) {
+    lines.push(`${indent}opacity: ${yamlEscape(recipe.opacity)}`)
+  }
+  if (recipe.transform) {
+    lines.push(`${indent}transform: ${yamlEscape(recipe.transform)}`)
+  }
+}
+
 function componentsYamlFromMeasured(
   measured: DesignMdInput['measuredComponents']
 ): string[] {
@@ -748,29 +824,10 @@ function componentsYamlFromMeasured(
   const lines: string[] = ['components:']
   for (const [key, recipe] of entries) {
     lines.push(`  ${slugToken(key, key)}:`)
-    if (recipe.backgroundColor) {
-      lines.push(`    backgroundColor: ${yamlEscape(recipe.backgroundColor)}`)
-    }
-    if (recipe.textColor) {
-      lines.push(`    textColor: ${yamlEscape(recipe.textColor)}`)
-    }
-    if (recipe.borderColor) {
-      lines.push(`    borderColor: ${yamlEscape(recipe.borderColor)}`)
-    }
-    if (recipe.rounded) {
-      lines.push(`    rounded: ${yamlEscape(recipe.rounded)}`)
-    }
-    if (recipe.padding) {
-      lines.push(`    padding: ${yamlEscape(recipe.padding)}`)
-    }
-    if (recipe.fontSize) {
-      lines.push(`    fontSize: ${yamlEscape(recipe.fontSize)}`)
-    }
-    if (recipe.fontWeight) {
-      lines.push(`    fontWeight: ${yamlEscape(String(recipe.fontWeight))}`)
-    }
-    if (recipe.boxShadow) {
-      lines.push(`    boxShadow: ${yamlEscape(recipe.boxShadow)}`)
+    emitRecipeProps(lines, recipe, '    ')
+    if (recipe.hover && Object.keys(recipe.hover).length > 0) {
+      lines.push('    hover:')
+      emitRecipeProps(lines, recipe.hover, '      ')
     }
   }
   return lines

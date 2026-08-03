@@ -16,6 +16,7 @@ describe('designContractTools', () => {
         'get_design_md',
         'get_tokens',
         'open_canvas',
+        'refine_design_md',
         'resolve_graph',
         'restyle_page',
         'scan_site',

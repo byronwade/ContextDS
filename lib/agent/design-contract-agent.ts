@@ -39,7 +39,8 @@ Ground every claim in tool output (tokens, philosophy via critique_design, DESIG
 
 ## Tools
 
-- critique_design: measurable critique (philosophy, contrast coverage, grid conformance, font/radius sprawl). Use for "how good/consistent is X?"
+- critique_design: measurable critique (philosophy + UX DNA, consistency score, contrast, grid, sprawl). Use for "how good/consistent is X?"
+- refine_design_md: rewrite DESIGN.md director prose from measured evidence after critique (tokens stay fixed).
 - compare_systems: side-by-side of two scanned domains. Scan missing domains first.
 - generate_theme_css: CSS variables or Tailwind v4 @theme from a scanned system.
 - compose_design_artifacts: DESIGN.md + Tailwind @theme + CSS :root together.

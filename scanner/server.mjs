@@ -552,14 +552,82 @@ function auditInPage() {
       if (existing) {
         existing.sampleCount += 1
         existing._area += recipe._area
+        if (!existing._el) existing._el = el
       } else {
-        votes.set(key, { ...recipe, sampleCount: 1 })
+        votes.set(key, { ...recipe, sampleCount: 1, _el: el })
       }
     }
     return Array.from(votes.values()).sort(
       (a, b) => b.sampleCount - a.sampleCount || b._area - a._area
     )
   }
+
+  /** Pull :hover deltas from stylesheets that match this element (no real hover needed). */
+  const hoverStateFromSheets = (el) => {
+    if (!el) return null
+    const deltas = {}
+    const visit = (rules) => {
+      for (const rule of Array.from(rules || [])) {
+        if (rule.cssRules && (rule.type === 4 || rule.type === 12)) {
+          visit(rule.cssRules)
+          continue
+        }
+        if (rule.type !== 1 || !rule.selectorText || !/:hover\b/.test(rule.selectorText)) continue
+        const bases = rule.selectorText
+          .split(',')
+          .map((part) => part.replace(/:hover\b/gi, '').trim())
+          .filter(Boolean)
+        let matched = false
+        for (const base of bases) {
+          try {
+            if (el.matches(base)) {
+              matched = true
+              break
+            }
+          } catch {
+            // invalid selector fragment
+          }
+        }
+        if (!matched) continue
+        for (const prop of [
+          'background-color',
+          'color',
+          'box-shadow',
+          'border-color',
+          'opacity',
+          'transform',
+        ]) {
+          const value = rule.style.getPropertyValue(prop)
+          if (!value) continue
+          if (prop === 'background-color') {
+            const rgb = parseRgb(value)
+            if (rgb) deltas.backgroundColor = rgbToHex(rgb)
+          } else if (prop === 'color') {
+            const rgb = parseRgb(value)
+            if (rgb) deltas.textColor = rgbToHex(rgb)
+          } else if (prop === 'border-color') {
+            const rgb = parseRgb(value)
+            if (rgb) deltas.borderColor = rgbToHex(rgb)
+          } else if (prop === 'box-shadow') {
+            deltas.boxShadow = value.slice(0, 120)
+          } else if (prop === 'opacity') {
+            deltas.opacity = value
+          } else if (prop === 'transform') {
+            deltas.transform = value.slice(0, 80)
+          }
+        }
+      }
+    }
+    for (const sheet of Array.from(document.styleSheets)) {
+      try {
+        visit(sheet.cssRules)
+      } catch {
+        // cross-origin
+      }
+    }
+    return Object.keys(deltas).length ? deltas : null
+  }
+
   const stripInternal = (recipe) => {
     if (!recipe) return null
     const {
@@ -572,8 +640,9 @@ function auditInPage() {
       fontWeight,
       boxShadow,
       sampleCount,
+      hover,
     } = recipe
-    return {
+    const out = {
       backgroundColor,
       textColor,
       borderColor,
@@ -584,6 +653,14 @@ function auditInPage() {
       boxShadow,
       sampleCount,
     }
+    if (hover && Object.keys(hover).length) out.hover = hover
+    return out
+  }
+
+  const withHover = (recipe) => {
+    if (!recipe) return null
+    const hover = hoverStateFromSheets(recipe._el)
+    return hover ? { ...recipe, hover } : recipe
   }
 
   const buttonEls = document.querySelectorAll(
@@ -594,17 +671,21 @@ function auditInPage() {
   const quiet = buttonClusters.filter(
     (r) => !r.backgroundColor || r._chroma < 18 || r._luma > 0.92
   )
-  const primaryBtn =
+  const primaryRaw =
     filled.sort((a, b) => b._chroma - a._chroma || b.sampleCount - a.sampleCount)[0] ||
     buttonClusters[0] ||
     null
-  const secondaryBtn =
-    quiet.find((r) => r !== primaryBtn) ||
-    buttonClusters.find((r) => r !== primaryBtn) ||
+  const secondaryRaw =
+    quiet.find((r) => r !== primaryRaw) ||
+    buttonClusters.find((r) => r !== primaryRaw) ||
     null
+  const primaryBtn = withHover(primaryRaw)
+  const secondaryBtn = withHover(secondaryRaw)
 
   const inputClusters = clusterRecipes(
-    document.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]), textarea, select'),
+    document.querySelectorAll(
+      'input:not([type="hidden"]):not([type="submit"]):not([type="button"]), textarea, select'
+    ),
     24
   )
   const cardClusters = clusterRecipes(
@@ -614,11 +695,24 @@ function auditInPage() {
     30
   ).filter((r) => r._area > 8000)
 
+  const linkClusters = clusterRecipes(
+    document.querySelectorAll('main a[href], article a[href], p a[href]'),
+    30
+  ).filter((r) => r.textColor)
+  const badgeClusters = clusterRecipes(
+    document.querySelectorAll(
+      '[class*="badge" i], [class*="chip" i], [class*="tag" i], [class*="pill" i]'
+    ),
+    20
+  ).filter((r) => r._area < 40000)
+
   const components = {
     'button-primary': stripInternal(primaryBtn),
     'button-secondary': stripInternal(secondaryBtn),
-    input: stripInternal(inputClusters[0]),
+    input: stripInternal(withHover(inputClusters[0])),
     'surface-card': stripInternal(cardClusters[0]),
+    link: stripInternal(linkClusters[0]),
+    badge: stripInternal(badgeClusters[0]),
   }
 
   return {

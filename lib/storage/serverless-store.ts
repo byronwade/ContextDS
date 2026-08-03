@@ -82,6 +82,9 @@ export interface StoredScanResult {
       typographyCount: number
       spacingCount: number
       hasComponents: boolean
+      hasMotion?: boolean
+      hasPhilosophy?: boolean
+      aiComposed?: boolean
     }
   }
   designSkill?: {
@@ -162,6 +165,8 @@ export interface StoredScanResult {
     }
     /** Multi-page crawl summary */
     crawl?: { pages: number; paths: string[] }
+    /** Token-system consistency 0–100 from consistency-validator */
+    consistencyScore?: number
   }
   error?: string
 }

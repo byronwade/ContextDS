@@ -34,6 +34,7 @@ import {
 } from '@/lib/scanner/browser-service'
 import { reconcileWithAudit, type RenderCoverage } from '@/lib/analyzers/render-audit'
 import { sanitizeCuratedTokens } from '@/lib/analyzers/token-sanitizer'
+import { validateConsistency } from '@/lib/analyzers/consistency-validator'
 import { analyzeWithWallace, mergeCuratedSets } from '@/lib/scanner/wallace-bridge'
 import { uploadScreenshot } from '@/lib/storage/blob-storage'
 import { trackStatEvent } from '@/lib/storage/platform-stats'
@@ -688,6 +689,7 @@ export async function runSimpleScan({
     densitySummary,
     interactionSummary,
     measuredComponentsSummary,
+    keyframeSummary: browserKeyframes?.map((frame) => frame.name).slice(0, 8).join(', ') || null,
     screenshotBase64: browserScreenshot?.base64 ?? null,
     screenshotMime: browserScreenshot?.mime ?? 'image/png',
   })
@@ -698,6 +700,10 @@ export async function runSimpleScan({
     curatedTokens: curated,
     headings: browserAudit?.headings ?? null,
     measuredComponents: browserAudit?.components ?? null,
+    uxMotion: {
+      transitions: browserAudit?.transitions?.slice(0, 12),
+      keyframes: browserKeyframes?.slice(0, 12),
+    },
     layoutDNA: {
       containers: {
         maxWidth: layoutDNA.containers.maxWidth,
@@ -723,14 +729,31 @@ export async function runSimpleScan({
     aiProse,
   }
   const designMd = generateDesignMd(designMdInput)
+  const measuredComponentKeys = browserAudit?.components
+    ? Object.entries(browserAudit.components)
+        .filter(([, recipe]) => Boolean(recipe))
+        .map(([key]) => key)
+    : []
   const designSkill = generateDesignSkill({
     domain,
     url: target.toString(),
     designMdFileName: designMd.fileName,
     curatedTokens: curated,
     personality: brandAnalysis.personality,
+    philosophy: {
+      title: philosophy.title,
+      statement: philosophy.statement,
+      traits: philosophy.traits,
+      principles: philosophy.principles,
+      motionTempo: philosophy.systems.motion.tempo,
+      typeVoice: philosophy.systems.type.voice,
+      shapeCharacter: philosophy.systems.shape.character,
+      depth: philosophy.systems.shape.depth,
+    },
+    measuredComponents: measuredComponentKeys,
   })
 
+  const consistency = validateConsistency(curated)
   const processingTime = Date.now() - startedAt
   const clientCurated = slimCuratedForClient(curated)
   const clientGraph = slimSemanticGraph(semanticGraph)
@@ -929,6 +952,7 @@ export async function runSimpleScan({
       appType: appTypeDetection.appType,
       appTypeConfidence: appTypeDetection.confidence,
       renderCoverage: renderCoverage ?? undefined,
+      consistencyScore: consistency.overallScore,
       crawl: crawledPages
         ? { pages: crawledPages.length, paths: crawledPages.map((entry) => entry.path) }
         : undefined,

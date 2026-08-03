@@ -66,6 +66,7 @@ export type ComposeDesignMdProseInput = {
   densitySummary?: string | null
   interactionSummary?: string | null
   measuredComponentsSummary?: string | null
+  keyframeSummary?: string | null
   /** Optional homepage screenshot (base64, no data: prefix) for visual grounding */
   screenshotBase64?: string | null
   screenshotMime?: string | null
@@ -101,6 +102,7 @@ Shell: ${input.shellSummary ?? 'unknown'}
 Density: ${input.densitySummary ?? 'unknown'}
 Interaction feedback: ${input.interactionSummary ?? 'unknown'}
 Measured components: ${input.measuredComponentsSummary ?? 'none'}
+Named keyframes: ${input.keyframeSummary ?? 'none'}
 Color roles present: ${input.colorKeys.join(', ')}
 
 Philosophy title: ${input.philosophy.title}

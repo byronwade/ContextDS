@@ -115,6 +115,7 @@ describe('generateDesignMd', () => {
           padding: '10px 18px',
           fontWeight: '600',
           sampleCount: 4,
+          hover: { backgroundColor: '#D94400', transform: 'translateY(-1px)' },
         },
         'surface-card': {
           backgroundColor: '#FAFAF7',
@@ -125,12 +126,20 @@ describe('generateDesignMd', () => {
           sampleCount: 3,
         },
       },
+      uxMotion: {
+        transitions: [{ value: '160ms ease-out (opacity)', weight: 8 }],
+        keyframes: [{ name: 'fade-in' }, { name: 'slide-up' }],
+      },
     })
 
     expect(artifact.markdown).toContain('button-primary:')
     expect(artifact.markdown).toContain('#F54E00')
     expect(artifact.markdown).toContain('10px 18px')
+    expect(artifact.markdown).toContain('hover:')
+    expect(artifact.markdown).toContain('translateY(-1px)')
     expect(artifact.markdown).toContain('measured from live computed styles')
+    expect(artifact.markdown).toContain('160ms')
+    expect(artifact.markdown).toContain('fade-in')
   })
 
   it('prefers AI prose when provided without inventing tokens', () => {

@@ -328,6 +328,76 @@ function systemGapExampleJson(domain: string, createdAt: string): string {
   )}\n`
 }
 
+type GapClassification =
+  | 'local-exception'
+  | 'mapping-defect'
+  | 'missing-recipe'
+  | 'missing-skill'
+  | 'contract-defect'
+
+function classifyDriftKind(kind: string): GapClassification {
+  if (/component|recipe|missing/i.test(kind)) return 'missing-recipe'
+  if (/coverage|render|mapping|dormant/i.test(kind)) return 'mapping-defect'
+  if (/crawl|surface|unverified/i.test(kind)) return 'local-exception'
+  if (/typo|type|motion|contrast/i.test(kind)) return 'contract-defect'
+  return 'mapping-defect'
+}
+
+function gapSlug(kind: string, index: number): string {
+  const base = kind
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 48)
+  return `system-gap-${base || 'observation'}-${index + 1}`
+}
+
+/** Turn scan drift observations into engine-valid gap proposals (still human-reviewed). */
+function gapsFromDrift(
+  domain: string,
+  createdAt: string,
+  observations: DriftObservation[]
+): DesignContractFile[] {
+  const files: DesignContractFile[] = []
+  const usable = observations.filter((obs) => obs.summary?.trim()).slice(0, 8)
+  usable.forEach((obs, index) => {
+    const id = gapSlug(obs.kind, index)
+    const classification = classifyDriftKind(obs.kind)
+    files.push({
+      path: `design/gaps/${id}.json`,
+      content: `${JSON.stringify(
+        {
+          $schema:
+            'https://raw.githubusercontent.com/byronwade/Design/main/schemas/system-gap.schema.json',
+          schemaVersion: 1,
+          id,
+          classification,
+          status: 'proposed',
+          summary: obs.summary,
+          evidence: {
+            source: `design-contracts scan of ${domain}`,
+            surface: obs.surface,
+            kind: obs.kind,
+            observedAt: obs.observedAt,
+            ...(obs.evidence ? { details: obs.evidence } : {}),
+          },
+          proposal: {
+            targetArtifact: 'DESIGN.md',
+            change:
+              obs.suggestedAction ||
+              'Review measured evidence and strengthen the contract recipe or mapping.',
+            reason: obs.summary,
+          },
+          createdAt,
+        },
+        null,
+        2
+      )}\n`,
+    })
+  })
+  return files
+}
+
 function gapsReadmeMd(): string {
   return `Gaps are proposals — classified as \`local-exception\`, \`mapping-defect\`, \`missing-recipe\`, \`missing-skill\`, or \`contract-defect\` (see \`schemas/system-gap.schema.json\`).
 They never change \`DESIGN.md\` automatically; a human reviews each gap and accepts or rejects it.
@@ -345,12 +415,30 @@ export function buildDesignContractPackage(
   const slug = slugify(domain)
   const generatedAt = new Date().toISOString()
   const designMd = generateDesignMd(input)
+  const measuredComponentKeys = input.measuredComponents
+    ? Object.entries(input.measuredComponents)
+        .filter(([, recipe]) => Boolean(recipe))
+        .map(([key]) => key)
+    : []
   const siteSkill = generateDesignSkill({
     domain,
     url: input.url,
     designMdFileName: 'DESIGN.md',
     curatedTokens: input.curatedTokens,
     personality: input.brandAnalysis?.personality,
+    philosophy: input.philosophy
+      ? {
+          title: input.philosophy.title,
+          statement: input.philosophy.statement,
+          traits: input.philosophy.traits,
+          principles: input.philosophy.principles,
+          motionTempo: input.philosophy.systems.motion.tempo,
+          typeVoice: input.philosophy.systems.type.voice,
+          shapeCharacter: input.philosophy.systems.shape.character,
+          depth: input.philosophy.systems.shape.depth,
+        }
+      : null,
+    measuredComponents: measuredComponentKeys,
   })
 
   const installCommand = `npx --yes github:byronwade/Design init --profile ${profile}${
@@ -388,13 +476,17 @@ export function buildDesignContractPackage(
       content: '',
     },
     {
-      path: 'design/gaps/system-gap.example.json',
-      content: systemGapExampleJson(domain, generatedAt),
-    },
-    {
       path: 'design/gaps/README.md',
       content: gapsReadmeMd(),
     },
+    ...((input.driftObservations?.length
+      ? gapsFromDrift(domain, generatedAt, input.driftObservations)
+      : [
+          {
+            path: 'design/gaps/system-gap.example.json',
+            content: systemGapExampleJson(domain, generatedAt),
+          },
+        ]) as DesignContractFile[]),
     { path: '.design/config.json', content: configJson(profile, appType) },
     {
       path: '.design/receipts/contextds-drift.json',

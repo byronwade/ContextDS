@@ -55,6 +55,14 @@ export type BrowserRenderAudit = {
       fontWeight?: string
       boxShadow?: string
       sampleCount?: number
+      hover?: {
+        backgroundColor?: string
+        textColor?: string
+        borderColor?: string
+        boxShadow?: string
+        opacity?: string
+        transform?: string
+      }
     } | null
   > | null
   /** Rendered transitions/animations attached to visible elements */
