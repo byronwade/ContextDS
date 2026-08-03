@@ -75,7 +75,7 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
     return (
       <div
         className={cn(
-          'flex items-center gap-2.5 rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper)] px-3 py-2.5 shadow-[var(--shadow-paper)]',
+          'flex items-center gap-2.5 rounded-[12px] border border-[var(--ui-border)] bg-[var(--ui-paper)] px-3 py-2.5',
           className
         )}
       >
@@ -152,7 +152,7 @@ export function ScanResultWidget({ data, state, className }: ScanResultWidgetPro
             <Link
               href={`/site/${domain}` as `/site/${string}`}
               onClick={() => stashSiteHandoff(domain, data)}
-              className="inline-flex h-7 shrink-0 items-center gap-1 rounded-[7px] bg-[var(--ui-paper)] px-2 text-[12px] text-[var(--ui-ink-secondary)] shadow-[var(--shadow-control)] transition hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]"
+              className="inline-flex h-8 shrink-0 items-center gap-1 rounded-[var(--radius-md)] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] px-2.5 text-[12px] text-[var(--ui-ink-secondary)] transition hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)]"
             >
               Open
               <ArrowUpRight className="size-3.5" />

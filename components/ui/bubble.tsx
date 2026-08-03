@@ -42,9 +42,9 @@ const bubbleContentVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-[var(--ui-accent-soft)] px-3.5 py-2 text-[var(--ui-ink)] shadow-[var(--shadow-control)]',
+          'border border-[var(--ui-border)] bg-[var(--ui-paper)] px-3.5 py-2 text-[var(--ui-ink)]',
         secondary:
-          'bg-[var(--ui-paper-subtle)] px-3.5 py-2 text-[var(--ui-ink)] shadow-[var(--shadow-control)]',
+          'border border-[var(--ui-border-soft)] bg-[var(--ui-paper-subtle)] px-3.5 py-2 text-[var(--ui-ink)]',
         muted: 'bg-[var(--ui-paper-subtle)] px-3.5 py-2 text-[var(--ui-ink-secondary)]',
         tinted:
           'bg-[var(--ui-accent-soft)] px-3.5 py-2 text-[var(--ui-ink)]',
@@ -125,7 +125,7 @@ function BubbleReactions({
     <div
       data-slot="bubble-reactions"
       className={cn(
-        'z-10 flex items-center gap-0.5 rounded-full border border-[var(--ui-border-soft)] bg-[var(--ui-paper)] px-1.5 py-0.5 text-[12px] shadow-[var(--shadow-control)]',
+        'z-10 flex items-center gap-0.5 rounded-full border border-[var(--ui-border)] bg-[var(--ui-paper)] px-1.5 py-0.5 text-[12px]',
         side === 'bottom' ? '-mt-2.5' : 'order-first -mb-2.5',
         align === 'end' ? 'self-end mr-2' : 'self-start ml-2',
         className

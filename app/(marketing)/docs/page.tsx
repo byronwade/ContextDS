@@ -63,7 +63,7 @@ export default function DocsPage() {
               </li>
               <li>Download the pack and install it with the Design CLI.</li>
             </ol>
-            <pre className="overflow-x-auto rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] p-3.5 font-mono text-[12px] leading-relaxed shadow-[var(--shadow-paper)]">
+            <pre className="overflow-x-auto rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] p-3.5 font-mono text-[12px] leading-relaxed">
               {`npx --yes github:byronwade/Design init --profile web-marketing --app-type marketing-site
 npx --yes github:byronwade/Design resolve --request "rebuild the hero"`}
             </pre>
@@ -80,7 +80,7 @@ npx --yes github:byronwade/Design resolve --request "rebuild the hero"`}
               <code className="text-[var(--ui-ink)]">content-studio</code>, or{' '}
               <code className="text-[var(--ui-ink)]">marketing-site</code> — then run the loop:
             </p>
-            <pre className="overflow-x-auto rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] p-3.5 font-mono text-[12px] leading-relaxed shadow-[var(--shadow-paper)]">
+            <pre className="overflow-x-auto rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] p-3.5 font-mono text-[12px] leading-relaxed">
               {`npx --yes github:byronwade/Design init --profile web-app --app-type saas-workbench
 npx --yes github:byronwade/Design resolve --request "rebuild the hero"
 # build the change with the resolved semantic tokens
@@ -102,7 +102,7 @@ npx --yes github:byronwade/Design verify --mode release`}
             {endpoints.map((endpoint) => (
               <article
                 key={endpoint.path}
-                className="space-y-2 rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper)] px-3.5 py-3 shadow-[var(--shadow-paper)]"
+                className="space-y-2 rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper)] px-3.5 py-3 "
               >
                 <p className="font-mono text-[13px] text-[var(--ui-ink)]">
                   <span className="text-[var(--ui-ink-muted)]">{endpoint.method}</span>{' '}
@@ -129,7 +129,7 @@ npx --yes github:byronwade/Design verify --mode release`}
               <code className="text-[var(--ui-ink)]">resolve_graph</code>, and{' '}
               <code className="text-[var(--ui-ink)]">get_contract_download</code>.
             </p>
-            <pre className="overflow-x-auto rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] p-3.5 font-mono text-[12px] leading-relaxed shadow-[var(--shadow-paper)]">
+            <pre className="overflow-x-auto rounded-[10px] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)] p-3.5 font-mono text-[12px] leading-relaxed">
               {`POST /api/agent/chat
 { "messages": [ /* UIMessage[] from useChat */ ] }
 

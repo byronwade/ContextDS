@@ -246,7 +246,7 @@ function FileCard({ file, defaultOpen }: { file: ChatFile; defaultOpen?: boolean
   const [open, setOpen] = useState(defaultOpen ?? true)
   const [copied, setCopied] = useState(false)
   return (
-    <div className="mt-1 overflow-hidden rounded-[12px] border border-[var(--ui-border-soft)] bg-[var(--ui-paper-subtle)] shadow-[var(--shadow-control)]">
+    <div className="mt-1 overflow-hidden rounded-[12px] border border-[var(--ui-border)] bg-[var(--ui-paper-subtle)]">
       <div className="flex items-center gap-2 border-b border-[var(--ui-border-soft)] px-3 py-2">
         <FileTextIcon className="size-4 shrink-0 text-[var(--ui-accent)]" />
         <button
@@ -363,8 +363,8 @@ function EmptyState({
             disabled={disabled}
             onClick={() => onPick(example.prompt)}
             className={cn(
-              'h-7 rounded-[7px] bg-[var(--ui-paper)] px-2.5 font-mono text-[12px] text-[var(--ui-ink-secondary)] shadow-[var(--shadow-control)] transition',
-              'hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)] hover:shadow-[var(--shadow-control-hover)] disabled:opacity-50',
+              'h-8 rounded-[var(--radius-md)] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] px-2.5 font-mono text-[12px] text-[var(--ui-ink-secondary)] transition',
+              'hover:bg-[var(--ui-paper-hover)] hover:text-[var(--ui-ink)] disabled:opacity-50',
               'animate-slide-in'
             )}
             style={{ animationDelay: `${index * 40}ms` }}
@@ -674,7 +674,7 @@ export function ScanChat() {
               <div
                 role="listbox"
                 aria-label="Slash commands"
-                className="mb-2 overflow-hidden rounded-[10px] border border-[var(--ui-border-soft)] bg-[var(--ui-paper)] shadow-[var(--shadow-control)]"
+                className="mb-2 overflow-hidden rounded-[12px] border border-[var(--ui-border)] bg-[var(--ui-paper)]"
               >
                 {slashMatches.map((command) => {
                   const active = command.name === activeSlash?.name
@@ -710,7 +710,7 @@ export function ScanChat() {
             ) : null}
             <PromptInput
               onSubmit={onSubmit}
-              className="overflow-hidden rounded-[10px] border border-[var(--ui-border-soft)] bg-[var(--ui-paper)] shadow-[var(--shadow-control)]"
+              className="overflow-hidden rounded-[12px] border border-[var(--ui-border)] bg-[var(--ui-paper)]"
             >
               <PromptInputBody>
                 <PromptInputTextarea

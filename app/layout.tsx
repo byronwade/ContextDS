@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { SkipLinks } from "@/components/atoms/skip-links";
 import { ErrorBoundary } from "@/components/atoms/error-boundary";
 import { WebVitalsReporter } from "@/components/atoms/web-vitals-reporter";
@@ -11,7 +11,8 @@ import { generateOrganizationSchema, generateWebsiteSchema, generateSoftwareAppl
 import { RESOURCE_HINTS } from "@/lib/seo/performance";
 import "./globals.css";
 
-const geistSans = Geist({
+/* Inter substitutes licensed CursorGothic; keep --font-geist-* var names for compat */
+const inter = Inter({
   variable: "--font-geist-sans",
   subsets: ["latin"],
   display: "swap",
@@ -19,7 +20,7 @@ const geistSans = Geist({
   fallback: ["system-ui", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
 });
 
-const geistMono = Geist_Mono({
+const jetbrainsMono = JetBrains_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
   display: "swap",
@@ -39,22 +40,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Generate structured data for root level
   const organizationSchema = generateOrganizationSchema();
   const websiteSchema = generateWebsiteSchema();
   const softwareApplicationSchema = generateSoftwareApplicationSchema();
 
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+ <html lang="en" className="light" suppressHydrationWarning>
       <head>
-        {/* SEO Meta Tags */}
         <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
         <meta name="googlebot" content="index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1" />
 
-        {/* Canonical URL */}
         <link rel="canonical" href="https://designcontracts.sh" />
 
-        {/* Resource hints for performance */}
         {RESOURCE_HINTS.dnsPrefetch.map((href) => (
           <link key={href} rel="dns-prefetch" href={href} />
         ))}
@@ -78,18 +75,16 @@ export default function RootLayout({
           <link key={href} rel="prefetch" href={href} />
         ))}
 
-        {/* Favicon and app icons */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
 
-        {/* Dark-first warm paper theme colors */}
-        <meta name="theme-color" content="#161310" />
-        <meta name="theme-color" content="#161310" media="(prefers-color-scheme: dark)" />
-        <meta name="theme-color" content="#f3eee5" media="(prefers-color-scheme: light)" />
+        {/* Light-first cream theme colors */}
+        <meta name="theme-color" content="#f7f7f4" />
+        <meta name="theme-color" content="#161612" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#f7f7f4" media="(prefers-color-scheme: light)" />
 
-        {/* Structured Data - JSON-LD */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -109,14 +104,10 @@ export default function RootLayout({
           }}
         />
 
-        {/* Critical CSS will be inlined by Next.js */}
-
-        {/* Performance optimization script */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                // Theme initialization - prevent FOUC
                 function setTheme(theme) {
                   const root = document.documentElement;
                   const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -128,20 +119,16 @@ export default function RootLayout({
                 }
 
                 try {
-                  const stored = localStorage.getItem('theme') || 'dark';
+                  const stored = localStorage.getItem('theme') || 'light';
                   setTheme(stored);
                 } catch (e) {
-                  setTheme('dark');
+                  setTheme('light');
                 }
 
-                // Performance optimizations
-                // Preload critical resources when network is idle
                 if ('requestIdleCallback' in window) {
                   requestIdleCallback(() => {
-                    // Preload critical API endpoints
                     fetch('/api/stats', { method: 'HEAD' }).catch(() => {});
 
-                    // Warm up critical routes
                     const criticalRoutes = ['/community', '/scan'];
                     criticalRoutes.forEach(route => {
                       const link = document.createElement('link');
@@ -152,9 +139,7 @@ export default function RootLayout({
                   });
                 }
 
-                // Prevent layout shift for dynamic content
                 document.addEventListener('DOMContentLoaded', () => {
-                  // Reserve space for elements that might cause layout shift
                   const dynamicElements = document.querySelectorAll('[data-dynamic-content]');
                   dynamicElements.forEach(el => {
                     if (!el.style.minHeight) {
@@ -168,7 +153,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+ className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <SkipLinks />

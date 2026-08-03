@@ -67,7 +67,7 @@ function Segmented<T extends string | number>({
           className={cn(
             'flex-1 rounded-full px-2.5 py-1.5 text-xs transition-colors',
             option.value === value
-              ? 'bg-background text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.2)]'
+              ? 'border border-[var(--ui-border)] bg-[var(--ui-paper)] text-foreground'
               : 'text-muted-foreground hover:text-foreground'
           )}
         >
@@ -481,7 +481,7 @@ export default function StudioClient() {
                       className={cn(
                         'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-colors',
                         view === value
-                          ? 'bg-background text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.2)]'
+                          ? 'border border-[var(--ui-border)] bg-[var(--ui-paper)] text-foreground'
                           : 'text-muted-foreground hover:text-foreground'
                       )}
                     >

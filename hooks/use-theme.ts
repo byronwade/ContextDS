@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 
 export type Theme = 'light' | 'dark' | 'system'
 
-const DEFAULT_THEME: Theme = 'dark'
+const DEFAULT_THEME: Theme = 'light'
 
 function readStoredTheme(): Theme {
   if (typeof window === 'undefined') return DEFAULT_THEME
@@ -27,16 +27,15 @@ function applyTheme(theme: Theme) {
   root.classList.add(actualTheme)
   root.style.colorScheme = actualTheme
 
-  // Keep browser chrome in sync
   const meta = document.querySelector('meta[name="theme-color"]:not([media])')
   if (meta) {
-    meta.setAttribute('content', actualTheme === 'dark' ? '#161310' : '#f3eee5')
+    meta.setAttribute('content', actualTheme === 'dark' ? '#161612' : '#f7f7f4')
   }
 }
 
 export function useTheme() {
   const [theme, setThemeState] = useState<Theme>(DEFAULT_THEME)
-  const [resolved, setResolved] = useState<'light' | 'dark'>('dark')
+  const [resolved, setResolved] = useState<'light' | 'dark'>('light')
   const [mounted, setMounted] = useState(false)
 
   const setTheme = (next: Theme) => {

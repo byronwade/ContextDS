@@ -15,7 +15,7 @@ const INNER: Record<PageCanvasVariant, string> = {
 
 /**
  * Scrollable main canvas for non-chat product pages inside AppShell.
- * Warm Paper Workbench — see DESIGN.md.
+ * Editorial Cream Workbench — see DESIGN.md.
  */
 export function PageCanvas({
   children,
@@ -30,8 +30,8 @@ export function PageCanvas({
   variant?: PageCanvasVariant
 }) {
   return (
-    <div className={cn('min-h-0 flex-1 overflow-y-auto', className)}>
-      <div className={cn(INNER[variant], innerClassName)}>{children}</div>
+ <div className={cn('min-h-0 flex-1 overflow-y-auto', className)}>
+ <div className={cn(INNER[variant], innerClassName)}>{children}</div>
     </div>
   )
 }

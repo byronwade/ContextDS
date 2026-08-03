@@ -460,7 +460,7 @@ export default function CommunityClient() {
       <div className="min-h-0 flex-1 overflow-y-auto" role="region" aria-label="Design Contracts library">
         <section className="border-b border-[color:var(--soft-border)] px-4 pb-6 pt-8 sm:px-6">
           <div className="mx-auto max-w-5xl">
-            <h1 className="font-serif text-3xl tracking-tight text-foreground">Library</h1>
+            <h1 className="text-display-md text-foreground">Library</h1>
             <p className="mt-2 max-w-xl text-sm text-muted-foreground">
               Every card previews a real system — palette, primary face, corner language.
               Open one, or ask Chat to gather a new site.
@@ -511,7 +511,7 @@ export default function CommunityClient() {
                     className={cn(
                       'rounded-full px-3 py-1.5 text-xs transition-colors sm:text-[13px]',
                       kind === value
-                        ? 'bg-background text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.2)]'
+                        ? 'border border-[var(--ui-border)] bg-[var(--ui-paper)] text-foreground'
                         : 'text-muted-foreground hover:text-foreground'
                     )}
                   >
@@ -541,7 +541,7 @@ export default function CommunityClient() {
                       className={cn(
                         'rounded-full px-3 py-1.5 text-xs transition-colors sm:text-[13px]',
                         sortBy === value
-                          ? 'bg-background text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.2)]'
+                          ? 'border border-[var(--ui-border)] bg-[var(--ui-paper)] text-foreground'
                           : 'text-muted-foreground hover:text-foreground'
                       )}
                     >

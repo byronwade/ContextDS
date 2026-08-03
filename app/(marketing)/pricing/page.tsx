@@ -105,73 +105,111 @@ const faqs = [
 ]
 
 function CellValue({ value }: { value: string | boolean }) {
-  if (value === true) return <CheckIcon weight="duotone" className="mx-auto size-4 text-[var(--ui-success)]" />
-  if (value === false) return <MinusIcon weight="duotone" className="mx-auto size-4 text-muted-foreground/40" />
-  return <span className="font-mono text-xs text-foreground">{value}</span>
+ if (value === true) return <CheckIcon weight="duotone" className="mx-auto size-4 text-[var(--ui-success)]" />
+ if (value === false) return <MinusIcon weight="duotone" className="mx-auto size-4 text-muted-foreground/40" />
+ return <span className="font-mono text-xs text-foreground">{value}</span>
 }
 
 export default function PricingPage() {
   return (
     <AppShell currentPage="pricing">
       <PageCanvas variant="operational">
-        <section className="px-4 pb-4 pt-10 sm:px-6">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+ <section className="px-4 pb-4 pt-10 sm:px-6">
+ <div className="mx-auto max-w-3xl text-center">
+ <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ui-ink-muted)]">
               Pricing
             </p>
-            <h1 className="mt-3 font-serif text-5xl tracking-tight text-foreground sm:text-6xl">
+ <h1 className="text-display-lg mt-3 text-[var(--ui-ink)] sm:text-[56px] sm:tracking-[-1.6px]">
               Scan free. Create with Pro.
             </h1>
-            <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+ <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
               Reading design systems is free forever. Pro is for making your own —
               the Studio, the MCP server, and private contracts.
             </p>
           </div>
         </section>
 
-        <section className="px-4 py-12 sm:px-6">
-          <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-3">
+ <section className="px-4 py-12 sm:px-6">
+ <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-3">
             {plans.map((plan) => (
               <div
                 key={plan.name}
-                className={cn(
-                  "flex flex-col rounded-2xl border p-6",
+ className={cn(
+                  "flex flex-col rounded-[var(--radius-paper)] border p-8",
                   plan.highlight
-                    ? "border-[color-mix(in_oklab,var(--ui-accent)_45%,transparent)] bg-[color-mix(in_oklab,var(--ui-accent)_5%,transparent)]"
-                    : "border-[color:var(--soft-border)] bg-card/40"
+                    ? "border-[var(--ui-ink)] bg-[var(--ui-ink)] text-[var(--ui-canvas)]"
+                    : "border-[var(--ui-border)] bg-[var(--ui-paper)]"
                 )}
               >
-                <div className="flex items-center justify-between">
-                  <h2 className="font-serif text-2xl tracking-tight text-foreground">
+ <div className="flex items-center justify-between">
+                  <h2
+ className={cn(
+                      "text-display-sm",
+                      plan.highlight ? "text-[var(--ui-canvas)]" : "text-[var(--ui-ink)]"
+                    )}
+                  >
                     {plan.name}
                   </h2>
                   {plan.highlight && (
-                    <span className="rounded-full border border-[color-mix(in_oklab,var(--ui-accent)_45%,transparent)] px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--ui-accent)]">
+ <span className="rounded-full bg-[var(--ui-canvas)]/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ui-canvas)]">
                       Recommended
                     </span>
                   )}
                 </div>
-                <p className="mt-4">
-                  <span className="font-mono text-4xl text-foreground">{plan.price}</span>
-                  <span className="ml-2 font-mono text-[11px] text-muted-foreground">
+ <p className="mt-4">
+                  <span
+ className={cn(
+                      "font-mono text-4xl",
+                      plan.highlight ? "text-[var(--ui-canvas)]" : "text-[var(--ui-ink)]"
+                    )}
+                  >
+                    {plan.price}
+                  </span>
+                  <span
+ className={cn(
+                      "ml-2 font-mono text-[11px]",
+                      plan.highlight ? "text-[var(--ui-canvas)]/70" : "text-muted-foreground"
+                    )}
+                  >
                     {plan.period}
                   </span>
                 </p>
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                <p
+ className={cn(
+                    "mt-3 text-sm leading-relaxed",
+                    plan.highlight ? "text-[var(--ui-canvas)]/75" : "text-muted-foreground"
+                  )}
+                >
                   {plan.description}
                 </p>
-                <ul className="mt-6 flex-1 space-y-2.5">
+ <ul className="mt-6 flex-1 space-y-2.5">
                   {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                      <CheckIcon weight="duotone" className="mt-0.5 size-3.5 shrink-0 text-[var(--ui-success)]" />
+                    <li
+                      key={feature}
+ className={cn(
+                        "flex items-start gap-2.5 text-sm",
+                        plan.highlight ? "text-[var(--ui-canvas)]/80" : "text-muted-foreground"
+                      )}
+                    >
+                      <CheckIcon
+                        weight="duotone"
+ className={cn(
+                          "mt-0.5 size-3.5 shrink-0",
+                          plan.highlight ? "text-[var(--ui-canvas)]" : "text-[var(--ui-success)]"
+                        )}
+                      />
                       {feature}
                     </li>
                   ))}
                 </ul>
                 <Button
                   asChild
-                  variant={plan.highlight ? "default" : "outline"}
-                  className="mt-8 w-full"
+                  variant={plan.highlight ? "secondary" : "outline"}
+ className={cn(
+                    "mt-8 w-full",
+                    plan.highlight &&
+                      "border-transparent bg-[var(--ui-accent)] text-[var(--ui-on-primary)] hover:bg-[var(--ui-accent-hover)]"
+                  )}
                 >
                   <Link href={plan.cta.href as Route}>{plan.cta.label}</Link>
                 </Button>
@@ -180,28 +218,28 @@ export default function PricingPage() {
           </div>
         </section>
 
-        <section className="px-4 py-12 sm:px-6">
-          <div className="mx-auto max-w-3xl">
-            <h2 className="text-center font-serif text-3xl tracking-tight text-foreground">
+ <section className="px-4 py-12 sm:px-6">
+ <div className="mx-auto max-w-3xl">
+ <h2 className="text-display-lg text-center text-[var(--ui-ink)]">
               Compare plans
             </h2>
-            <div className="mt-8 overflow-x-auto rounded-2xl border border-[color:var(--soft-border)]">
-              <table className="w-full min-w-[520px] text-sm">
+ <div className="mt-8 overflow-x-auto rounded-[var(--radius-paper)] border border-[var(--ui-border)] bg-[var(--ui-paper)]">
+ <table className="w-full min-w-[520px] text-sm">
                 <thead>
-                  <tr className="border-b border-border/40 text-left">
-                    <th className="px-4 py-3 font-medium text-muted-foreground">Feature</th>
-                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">Free</th>
-                    <th className="px-4 py-3 text-center font-medium text-[var(--ui-accent)]">Pro</th>
-                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">Team</th>
+ <tr className="border-b border-border/40 text-left">
+ <th className="px-4 py-3 font-medium text-muted-foreground">Feature</th>
+ <th className="px-4 py-3 text-center font-medium text-muted-foreground">Free</th>
+ <th className="px-4 py-3 text-center font-medium text-[var(--ui-accent)]">Pro</th>
+ <th className="px-4 py-3 text-center font-medium text-muted-foreground">Team</th>
                   </tr>
                 </thead>
                 <tbody>
                   {comparison.map((row) => (
-                    <tr key={row.feature} className="border-b border-border/30 last:border-b-0">
-                      <td className="px-4 py-3 text-foreground">{row.feature}</td>
-                      <td className="px-4 py-3 text-center"><CellValue value={row.free} /></td>
-                      <td className="px-4 py-3 text-center"><CellValue value={row.pro} /></td>
-                      <td className="px-4 py-3 text-center"><CellValue value={row.team} /></td>
+ <tr key={row.feature} className="border-b border-border/30 last:border-b-0">
+ <td className="px-4 py-3 text-foreground">{row.feature}</td>
+ <td className="px-4 py-3 text-center"><CellValue value={row.free} /></td>
+ <td className="px-4 py-3 text-center"><CellValue value={row.pro} /></td>
+ <td className="px-4 py-3 text-center"><CellValue value={row.team} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -210,18 +248,18 @@ export default function PricingPage() {
           </div>
         </section>
 
-        <section className="px-4 py-12 sm:px-6">
-          <div className="mx-auto max-w-2xl">
-            <h2 className="text-center font-serif text-3xl tracking-tight text-foreground">
+ <section className="px-4 py-12 sm:px-6">
+ <div className="mx-auto max-w-2xl">
+ <h2 className="text-display-lg text-center text-[var(--ui-ink)]">
               Questions
             </h2>
-            <div className="mt-8 space-y-0 border-t border-border/40">
+ <div className="mt-8 space-y-0 border-t border-border/40">
               {faqs.map((faq) => (
-                <details key={faq.question} className="group border-b border-border/40 py-4">
-                  <summary className="cursor-pointer select-none list-none text-[15px] font-medium text-foreground transition-colors hover:text-[var(--ui-accent)]">
+ <details key={faq.question} className="group border-b border-border/40 py-4">
+ <summary className="cursor-pointer select-none list-none text-[15px] font-medium text-foreground transition-colors hover:text-[var(--ui-accent)]">
                     {faq.question}
                   </summary>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+ <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                     {faq.answer}
                   </p>
                 </details>
@@ -230,15 +268,15 @@ export default function PricingPage() {
           </div>
         </section>
 
-        <section className="px-4 py-20 text-center sm:px-6">
-          <div className="mx-auto max-w-xl">
-            <h2 className="font-serif text-3xl tracking-tight text-foreground">
+ <section className="px-4 py-20 text-center sm:px-6">
+ <div className="mx-auto max-w-xl">
+ <h2 className="text-display-lg text-[var(--ui-ink)]">
               Gather your first system in seconds
             </h2>
-            <p className="mt-3 text-sm text-muted-foreground">
+ <p className="mt-3 text-sm text-muted-foreground">
               Paste a URL in Chat — the dossier, the pack and the philosophy are free.
             </p>
-            <div className="mt-6 flex justify-center gap-3">
+ <div className="mt-6 flex justify-center gap-3">
               <Button asChild>
                 <Link href="/">Open chat</Link>
               </Button>

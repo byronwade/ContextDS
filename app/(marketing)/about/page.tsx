@@ -32,9 +32,7 @@ export default function AboutPage() {
   return (
     <AppShell currentPage="about">
       <PageCanvas variant="document">
-        <h1 className="text-[22px] font-semibold tracking-tight text-[var(--ui-ink)] sm:text-[26px]">
-          About
-        </h1>
+        <h1 className="text-display-md text-[var(--ui-ink)]">About</h1>
         <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-[var(--ui-ink-secondary)]">
           designcontracts.sh makes every public design system discoverable and installable for AI
           agents — starting from a URL in chat.
@@ -57,13 +55,13 @@ export default function AboutPage() {
         <div className="mt-12 flex flex-wrap gap-2">
           <Link
             href="/"
-            className="inline-flex h-8 items-center rounded-[7px] bg-[var(--ui-accent)] px-2.5 text-[13px] font-medium text-[var(--ui-paper)] shadow-[var(--shadow-control-primary)] transition hover:bg-[var(--ui-accent-hover)]"
+            className="inline-flex h-10 items-center rounded-[var(--radius-md)] bg-[var(--ui-accent)] px-[18px] text-sm font-medium text-[var(--ui-on-primary)] transition hover:bg-[var(--ui-accent-hover)]"
           >
             Open Chat
           </Link>
           <Link
             href="/contact"
-            className="inline-flex h-8 items-center rounded-[7px] bg-[var(--ui-paper)] px-2.5 text-[13px] font-medium text-[var(--ui-ink)] shadow-[var(--shadow-control)] transition hover:bg-[var(--ui-paper-hover)]"
+            className="inline-flex h-10 items-center rounded-[var(--radius-md)] border border-[var(--ui-border-edge)] bg-[var(--ui-paper)] px-[18px] text-sm font-medium text-[var(--ui-ink)] transition hover:bg-[var(--ui-paper-hover)]"
           >
             Contact
           </Link>
